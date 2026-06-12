@@ -1,0 +1,92 @@
+{
+  "run_id": "20260612T165311Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 7270,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.6"
+        }
+      ]
+    },
+    {
+      "spec": "d04-bare-binary-invalid-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d04-bare-binary-invalid-config.spec.ts",
+            "title": "bare binary with invalid config hard-fails on stderr naming config-schema, no window",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 35,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d04-bare-binary-invalid-config.spec.ts",
+          "name": "gate-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d05-doctor-pandoc-nonexecutable.spec.ts",
+            "title": "--doctor with a non-executable pandoc path fails pandoc-executable and exits 1",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 33,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

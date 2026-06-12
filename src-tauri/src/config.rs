@@ -59,6 +59,43 @@ pub struct Pandoc {
     pub extra_args: Vec<String>,
 }
 
+/// Inclusive editor font-size range, in px.
+pub const FONT_SIZE_MIN: u32 = 8;
+pub const FONT_SIZE_MAX: u32 = 48;
+/// Inclusive preview debounce range, in ms.
+pub const DEBOUNCE_MS_MIN: u32 = 0;
+pub const DEBOUNCE_MS_MAX: u32 = 10_000;
+
+/// The single source of truth for the config-values invariants. Both the
+/// settings save path (`save_config`) and the doctor's `config-values` check
+/// call this; the ranges are never duplicated. Fails loudly with the exact
+/// offending value, no defaulting or clamping.
+pub fn validate(config: &Config) -> Result<()> {
+    let fs = config.editor.font_size;
+    if fs < FONT_SIZE_MIN || fs > FONT_SIZE_MAX {
+        return Err(Error::InvalidArgument(format!(
+            "editor.font_size must be between {FONT_SIZE_MIN} and {FONT_SIZE_MAX}, got {fs}"
+        )));
+    }
+    let dbg = config.preview.debounce_ms;
+    if dbg > DEBOUNCE_MS_MAX {
+        return Err(Error::InvalidArgument(format!(
+            "preview.debounce_ms must be between {DEBOUNCE_MS_MIN} and {DEBOUNCE_MS_MAX}, got {dbg}"
+        )));
+    }
+    if config.pandoc.path.trim().is_empty() {
+        return Err(Error::InvalidArgument(
+            "pandoc.path must not be empty".into(),
+        ));
+    }
+    if config.pandoc.from_format.trim().is_empty() {
+        return Err(Error::InvalidArgument(
+            "pandoc.from_format must not be empty".into(),
+        ));
+    }
+    Ok(())
+}
+
 pub fn config_path() -> Result<PathBuf> {
     // dirs::config_dir honors $XDG_CONFIG_HOME on Linux.
     let base = dirs::config_dir().ok_or_else(|| {
@@ -97,6 +134,7 @@ pub fn get_config() -> Result<Config> {
 
 #[tauri::command]
 pub fn save_config(config: Config) -> Result<()> {
+    validate(&config)?;
     save(&config)
 }
 

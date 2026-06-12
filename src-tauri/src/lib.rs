@@ -1,4 +1,5 @@
 mod config;
+mod doctor;
 mod error;
 mod fsops;
 mod render;
@@ -102,6 +103,27 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
 }
 
 pub fn run() {
+    // Argument parsing and the startup gate run BEFORE any Tauri builder work,
+    // so a failed diagnostic never spawns a window.
+    let args: Vec<String> = std::env::args().skip(1).collect();
+
+    // Consumer 1: `--doctor` prints the full report to stdout and exits 0/1,
+    // never creating a window.
+    if args.iter().any(|a| a == "--doctor") {
+        let report = doctor::run();
+        print!("{}", report.render());
+        std::process::exit(if report.all_ok() { 0 } else { 1 });
+    }
+
+    // Consumer 2: the startup gate. The battery runs before the builder; any
+    // failure hard-fails with the report on stderr and a nonzero exit, before
+    // any window is created.
+    let report = doctor::run();
+    if !report.all_ok() {
+        eprint!("{}", report.render());
+        std::process::exit(1);
+    }
+
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())

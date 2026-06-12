@@ -19,7 +19,6 @@
   import Toolbar from "./lib/components/Toolbar.svelte";
 
   let config = $state<Config | null>(null);
-  let configError = $state<string | null>(null);
   let configPath = $state("");
 
   let projectRoot = $state<string | null>(null);
@@ -52,13 +51,12 @@
   const dirOf = (path: string) => path.slice(0, path.lastIndexOf("/"));
 
   onMount(async () => {
-    try {
-      configPath = await api.getConfigPath();
-      config = await api.getConfig();
-    } catch (e) {
-      configError = String(e);
-      return;
-    }
+    // The startup gate (the Rust doctor battery) has already proven the config
+    // exists, parses, and is valid before this window was created, so these
+    // calls cannot fail for config reasons. There is no in-app config-error
+    // screen: a misconfigured environment never reaches the webview.
+    configPath = await api.getConfigPath();
+    config = await api.getConfig();
     await listen<string>("menu", (event) => handleMenu(event.payload));
 
     // E2E proof harness. Present only when the proof orchestrator sets
@@ -434,25 +432,7 @@
   }
 </script>
 
-{#if configError}
-  <div
-    class="flex h-full flex-col items-center justify-center gap-4 bg-zinc-900 p-8 text-zinc-100"
-  >
-    <h1 class="text-xl font-semibold">Configuration required</h1>
-    <pre class="max-w-2xl rounded bg-zinc-800 p-4 text-sm whitespace-pre-wrap text-red-300">{configError}</pre>
-    <p class="text-sm text-zinc-400">
-      Run <code class="rounded bg-zinc-800 px-1.5 py-0.5">just setup</code> (or
-      <code class="rounded bg-zinc-800 px-1.5 py-0.5">scripts/first-run.sh</code>) in the
-      project directory, then retry.
-    </p>
-    <button
-      class="rounded bg-sky-600 px-4 py-1.5 text-sm text-white hover:bg-sky-500"
-      onclick={() => location.reload()}
-    >
-      Retry
-    </button>
-  </div>
-{:else if config}
+{#if config}
   <div class="flex h-full flex-col">
     <Toolbar
       onAction={toolbarAction}

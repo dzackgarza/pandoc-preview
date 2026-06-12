@@ -143,8 +143,9 @@ fi
 
 # ── Doctor spec runner: no app launch, no socket. The spec spawns the
 # plain binary (or the launcher PTY driver) itself; we only hand it the
-# binary path and the per-spec manifest/run dir. Spawned process groups are
-# bounded inside the spec (spawnDoctor group-kills on timeout). ──────────
+# binary path and the per-spec manifest/run dir. The --doctor specs
+# (D1/D4/D5) self-terminate (spawnDoctor group-kills on timeout); the
+# launcher specs (D2/D3) hand off to the real GUI, reaped below. ─────────
 run_doctor_spec() {
     local spec="$1" spec_dir="$2" abs_spec_dir="$3"
     set +e
@@ -156,7 +157,28 @@ run_doctor_spec() {
     local spec_status=$?
     set -e
     sed -n '1,80p' "$spec_dir/playwright.log"
+    # The launcher specs (D2/D3) hand off by exec-ing the real GUI, which
+    # lingers as a reparented process after the PTY driver observed the
+    # hand-off and exited. Reap any GUI bound to THIS spec's hermetic XDG dir
+    # (matched precisely on its unique config path) so lingering hand-off GUIs
+    # cannot accumulate and starve the shared display for later specs. Matched
+    # by the per-spec XDG path, so it can never touch the real user session.
+    reap_handoff_guis "$abs_spec_dir/xdg-config"
     return "$spec_status"
+}
+
+# Kill any pandoc-preview process whose environment binds the given hermetic
+# XDG_CONFIG_HOME. Precise (per-spec path) and safe (never matches the real
+# user config). Used to reap launcher hand-off GUIs after a doctor spec.
+reap_handoff_guis() {
+    local xdg="$1" pid env_file
+    for pid in $(pgrep -f 'target/debug/.*pandoc-preview' 2>/dev/null); do
+        env_file="/proc/$pid/environ"
+        [ -r "$env_file" ] || continue
+        if tr '\0' '\n' < "$env_file" 2>/dev/null | grep -qxF "XDG_CONFIG_HOME=$xdg"; then
+            kill -KILL "$pid" 2>/dev/null || true
+        fi
+    done
 }
 
 # ── Per-spec: provision → launch app → drive → assert teardown ─────
