@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: App.svelte sets .dark on <html> from config. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: "Inter", "Cantarell", system-ui, sans-serif;
+  user-select: none;
+}
+
+/* CodeMirror must fill its pane and stay scrollable. */
+.cm-host {
+  height: 100%;
+  user-select: text;
+}
+.cm-host .cm-editor {
+  height: 100%;
+}
+.cm-host .cm-scroller {
+  overflow: auto;
+}

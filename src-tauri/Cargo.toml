@@ -1,0 +1,22 @@
+[package]
+name = "pandoc-preview"
+version = "0.1.0"
+description = "Overleaf-style markdown editor with a pandoc preview backend"
+edition = "2021"
+
+[lib]
+name = "pandoc_preview_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+dirs = "5"
+thiserror = "2"
