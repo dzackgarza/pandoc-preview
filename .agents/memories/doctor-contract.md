@@ -11,7 +11,7 @@ Ordered, named, structured checks in the Rust backend (`doctor` module):
 - `config-values` — same invariants the settings save path enforces (font_size 8–48, debounce_ms 0–10000, non-empty pandoc path/from_format); validation logic shared with `save_config`, never duplicated
 - `pandoc-executable` — `pandoc.path` resolves (PATH or absolute), is executable, `pandoc --version` exits 0; version string captured
 - `pandoc-invocation` — probe render with the FULL configured arg set (`--from <from_format>` + `extra_args`, stdin empty) exits 0, proving the whole invocation contract, not just the binary
-- `pdf-engine` — lualatex present (PDF export is owned surface)
+- `export-plugins` — every configured `[export.<id>]` entry is well-formed ({input}/{output} placeholders present, non-empty label/extension, argv >= 1) and its argv[0] resolves to an executable. Supersedes the original `pdf-engine` check (2026-06-13): that check asserted lualatex on PATH while the export command never passed `--pdf-engine` and thus ran pandoc's implicit pdflatex default — check and command were out of sync. See [[export-plugins-contract]]. No full probe run (would compile real documents); honest limit.
 
 Consumers:
 

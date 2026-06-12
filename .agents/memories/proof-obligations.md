@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P11)
+# Proof Obligations (P1–P15)
 
 User-approved external proof obligations for Pandoc Preview. Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config. No internal behaviours, no forced error modes. An assertion is admissible only if it would fail on a plausibly broken app (unwired pandoc, frozen preview, UI-only fake state, junk output).
 
@@ -20,11 +20,15 @@ A per-run temp project containing `demo.md` with:
 - **P4 — Math rendering (MathJax, always).** Math is hard-coded to MathJax — KaTeX cannot cover pandoc's full math syntax range, so no engine option exists anywhere (config, settings UI, first-run script). Preview contains `span.math mjx-container` whose assistive MathML flattens to exactly `ζ(2)=π2/6`; the literal `$\zeta(2)` does not appear as text.
 - **P5 — Relative resource resolution.** Preview `img[alt="scatter"]` has `naturalWidth == 64 && naturalHeight == 48` (real pixels decoded through the asset-protocol `<base href>` chain).
 - **P6 — File manager mutates the real directory.** (a) Sidebar lists exactly the non-hidden entries of the opened folder, directories first. (b) Creating `chapter2.md` via the UI yields a real empty file on disk and the editor opens it. (c) Renaming to `chapter-two.md` makes the old path absent and the new present on disk.
-- **P7 — Export HTML artifact.** Export HTML to a chosen temp path: file exists at exactly that path, parsed DOM repeats P1 witnesses, `img` `src` is a `data:` URI (self-contained).
-- **P8 — Export PDF artifact.** Export PDF: valid PDF whose extracted text contains "Geometry of Numbers" and "Minkowski bound". lualatex is a hard dependency — fail loudly, never skip.
+- **P7 — Export HTML artifact (shipped default plugin).** Export HTML to a chosen temp path: file exists at exactly that path, parsed DOM repeats P1 witnesses, `img` `src` is a `data:` URI (self-contained). The export runs the configured `[export.html]` plugin command ([[export-plugins-contract]]), not a hard-coded invocation.
+- **P8 — Export PDF artifact (shipped default plugin).** Export PDF via the configured `[export.pdf]` plugin: valid PDF whose extracted text contains "Geometry of Numbers" and "Minkowski bound", AND whose `pdfinfo` Creator/Producer discriminates the configured engine (lualatex → LuaTeX, not pdfTeX) — proving the configured command is what actually ran. lualatex is a hard dependency — fail loudly, never skip. (Revised 2026-06-13: the original P8 never discriminated the engine; exports silently ran pandoc's implicit pdflatex default.)
 - **P9 — Settings round-trip to XDG TOML.** With hermetic `XDG_CONFIG_HOME`, change font size 14→18 and theme dark→light via Settings, save. On-disk `pandoc-preview/config.toml` parses to exactly `font_size = 18`, `theme = "light"`, all other keys unchanged; editor computed font-size 18px.
 - **P10 — First-run script → bootable app.** Drive `scripts/first-run.sh` in a real PTY through the gum prompts: config.toml parses to exactly the selected values, and a subsequent app launch reaches the editor UI (not the config-error screen).
 - **P11 — Compile log reflects the real subprocess.** After a successful render, the Compile Log tab contains the configured `--from markdown` and a zero exit status. (Known cosmetic defect found at design time: `render.rs::format_log` produces `exit status: exit status: 0`.)
+- **P12 — Custom export pipeline honored.** A user-defined `[export.<id>]` plugin whose command is an arbitrary executable (e.g. a script writing a discriminating witness derived from the real input file to `{output}`) runs verbatim on export: the witness file appears at exactly the chosen path with content proving the configured argv ran against the real source. Proves the export surface is plugin-shaped, not pandoc-shaped ([[export-plugins-contract]]).
+- **P13 — Splitter tracks the pointer.** Dragging the editor/preview divider moves it to the pointer position (within a few px), including when the drag path crosses the preview iframe, and it never sticks or jumps. (Observed bug 2026-06-13: hand-rolled drag in App.svelte — no pointer capture, so the iframe swallows pointermove; ratio computed against the whole main row including the sidebar, so the divider does not land at the pointer.)
+- **P14 — Tab switch preserves the split.** Switching Preview ↔ Compile Log changes neither pane's width. (Observed bug 2026-06-13: clicking the Compile Log tab makes pane sizes jump.)
+- **P15 — Sidebar toggle preserves the editor:preview ratio.** Hiding/showing the file tree keeps the relative split of the two panes.
 
 ## Verification vehicle
 
