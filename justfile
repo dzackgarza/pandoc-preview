@@ -28,6 +28,11 @@ deps:
 dev:
     bunx tauri dev
 
+# Run the full external proof suite (P1–P11) against the real app on the
+# real display. Optionally pass one or more spec filenames.
+proof *specs:
+    scripts/proof-run.sh {{specs}}
+
 # Build release bundles (deb, rpm, appimage).
 build:
     bunx tauri build

@@ -6,6 +6,12 @@ mod render;
 use tauri::menu::{AboutMetadata, Menu, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 use tauri::{AppHandle, Emitter, Runtime};
 
+/// Stable Unix socket path for the in-app Playwright bridge (e2e-testing
+/// builds only). Must equal `mcpSocket` in tests/proof/fixtures.ts; the
+/// proof orchestrator removes any stale socket before each app launch.
+#[cfg(feature = "e2e-testing")]
+pub const PLAYWRIGHT_SOCKET: &str = "/tmp/pandoc-preview-playwright.sock";
+
 fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let file = SubmenuBuilder::new(app, "File")
         .item(
@@ -81,16 +87,14 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .item(&PredefinedMenuItem::about(
             app,
             Some("About Pandoc Preview"),
-            Some(
-                AboutMetadata {
-                    name: Some("Pandoc Preview".into()),
-                    version: Some(env!("CARGO_PKG_VERSION").into()),
-                    comments: Some(
-                        "Overleaf-style markdown editor with a pandoc preview backend".into(),
-                    ),
-                    ..Default::default()
-                },
-            ),
+            Some(AboutMetadata {
+                name: Some("Pandoc Preview".into()),
+                version: Some(env!("CARGO_PKG_VERSION").into()),
+                comments: Some(
+                    "Overleaf-style markdown editor with a pandoc preview backend".into(),
+                ),
+                ..Default::default()
+            }),
         )?)
         .build()?;
 
@@ -98,9 +102,21 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_clipboard_manager::init());
+
+    // E2E proof bridge: present only in `e2e-testing` builds, never in a
+    // user build. No behaviour change for normal users.
+    #[cfg(feature = "e2e-testing")]
+    {
+        builder = builder.plugin(tauri_plugin_playwright::init_with_config(
+            tauri_plugin_playwright::PluginConfig::new().socket_path(PLAYWRIGHT_SOCKET),
+        ));
+    }
+
+    builder
         .invoke_handler(tauri::generate_handler![
             config::get_config,
             config::save_config,
@@ -116,6 +132,22 @@ pub fn run() {
             render::export_document,
         ])
         .setup(|app| {
+            // Grant the playwright plugin's pw_result IPC permission, but only
+            // in e2e builds and only at runtime — the user build's static
+            // capability set is never touched. Without this, the eval-result
+            // IPC is denied and every bridge eval times out.
+            #[cfg(feature = "e2e-testing")]
+            {
+                use tauri::Manager;
+                app.handle().add_capability(
+                    r#"{
+                        "identifier": "e2e-playwright",
+                        "windows": ["main"],
+                        "permissions": ["playwright:default"]
+                    }"#,
+                )?;
+            }
+
             let menu = build_menu(app.handle())?;
             app.set_menu(menu)?;
             app.on_menu_event(|app, event| {

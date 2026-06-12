@@ -60,6 +60,43 @@
       return;
     }
     await listen<string>("menu", (event) => handleMenu(event.payload));
+
+    // E2E proof harness. Present only when the proof orchestrator sets
+    // VITE_PPE_E2E (scripts/proof-run.sh) — never in a user build. It exposes
+    // the app's real internal functions so Playwright can reach project-open
+    // and export, whose only user affordance is the native file dialog the
+    // webview cannot drive. Every exposed function is the same code path the
+    // menu/dialog callbacks invoke; it adds no new behaviour, only an entry
+    // point that bypasses the OS dialog.
+    if (import.meta.env.VITE_PPE_E2E) {
+      // Fire-and-forget triggers: the bridge's eval expects a synchronous
+      // return value, so these kick off the real async work and return void
+      // immediately. Specs await the resulting observable state (sidebar,
+      // currentFile, on-disk artifact) via waitForFunction/disk polling.
+      (window as unknown as { __PPE_E2E__: unknown }).__PPE_E2E__ = {
+        openProject: (dir: string) => {
+          void openProject(dir);
+        },
+        exportTo: (format: "html" | "pdf", target: string) => {
+          (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ = "pending";
+          exportToPath(format, target).then(
+            () => {
+              (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ = "done";
+            },
+            (e: unknown) => {
+              (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ =
+                "error: " + String(e);
+            },
+          );
+        },
+        getEditorText: () => editor.getContent(),
+        appendAtEnd: (text: string) => {
+          editor.appendAtEnd(text);
+        },
+        currentFile: () => currentFile,
+        configFontSize: () => config?.editor.font_size ?? null,
+      };
+    }
   });
 
   $effect(() => {
@@ -122,10 +159,7 @@
     }
   }
 
-  async function openFolder() {
-    const dir = await open({ directory: true, title: "Open Project Folder" });
-    if (!dir) return;
-    if (!(await resolveDirty())) return;
+  async function openProject(dir: string) {
     projectRoot = dir;
     currentFile = null;
     dirty = false;
@@ -134,6 +168,13 @@
     status = "idle";
     await refreshTree();
     toastInfo(`Opened ${dir}`);
+  }
+
+  async function openFolder() {
+    const dir = await open({ directory: true, title: "Open Project Folder" });
+    if (!dir) return;
+    if (!(await resolveDirty())) return;
+    await openProject(dir);
   }
 
   /** If the buffer is dirty, offer to save it. Returns false to abort. */
@@ -259,18 +300,12 @@
     }
   }
 
-  async function exportDoc(format: "html" | "pdf") {
+  async function exportToPath(format: "html" | "pdf", target: string) {
     if (!currentFile) {
       toastError("No file open to export.");
       return;
     }
     if (dirty) await saveCurrent();
-    const target = await saveDialog({
-      title: `Export ${format.toUpperCase()}`,
-      defaultPath: currentFile.replace(/\.[^/.]*$/, "") + "." + format,
-      filters: [{ name: format.toUpperCase(), extensions: [format] }],
-    });
-    if (!target) return;
     toastInfo(`Exporting ${format.toUpperCase()}…`);
     try {
       const res = await api.exportDocument(currentFile, target, format);
@@ -284,6 +319,20 @@
     } catch (e) {
       toastError(String(e));
     }
+  }
+
+  async function exportDoc(format: "html" | "pdf") {
+    if (!currentFile) {
+      toastError("No file open to export.");
+      return;
+    }
+    const target = await saveDialog({
+      title: `Export ${format.toUpperCase()}`,
+      defaultPath: currentFile.replace(/\.[^/.]*$/, "") + "." + format,
+      filters: [{ name: format.toUpperCase(), extensions: [format] }],
+    });
+    if (!target) return;
+    await exportToPath(format, target);
   }
 
   // ---- toolbar / menu dispatch --------------------------------------------

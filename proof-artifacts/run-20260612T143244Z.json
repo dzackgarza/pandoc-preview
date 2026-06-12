@@ -1,0 +1,39 @@
+{
+  "run_id": "20260612T143244Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p04-math-katex.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p04-math-katex.spec.ts",
+            "title": "katex engine renders span.katex with the exact TeX annotation",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1229,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p04-math-katex.spec.ts",
+          "name": "tex-annotation",
+          "value": "\\zeta(2) = \\pi^2/6"
+        }
+      ]
+    }
+  ]
+}

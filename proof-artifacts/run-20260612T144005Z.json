@@ -1,0 +1,39 @@
+{
+  "run_id": "20260612T144005Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p09-settings-roundtrip.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p09-settings-roundtrip.spec.ts",
+            "title": "Settings changes persist to config.toml and re-style the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 579,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p09-settings-roundtrip.spec.ts",
+          "name": "config-font-size",
+          "value": 18
+        }
+      ]
+    }
+  ]
+}

@@ -20,3 +20,14 @@ serde_json = "1"
 toml = "0.8"
 dirs = "5"
 thiserror = "2"
+
+# E2E proof harness: the in-app Playwright socket bridge. Gated behind the
+# `e2e-testing` cargo feature so a normal user build never embeds it. The
+# proof binary (scripts/proof-run.sh) builds with --features e2e-testing.
+tauri-plugin-playwright = { version = "0.4", optional = true }
+
+[features]
+# dynamic-acl lets the e2e build grant the playwright plugin's pw_result
+# permission at runtime (inside the cfg block), so a user build's capability
+# set is untouched.
+e2e-testing = ["dep:tauri-plugin-playwright", "tauri/dynamic-acl"]

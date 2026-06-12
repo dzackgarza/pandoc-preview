@@ -116,7 +116,11 @@ fn render_sync(source: String, base_dir: String, base_url: String) -> Result<Ren
     })
 }
 
-fn export_sync(source_path: String, output_path: String, format: ExportFormat) -> Result<ExportResult> {
+fn export_sync(
+    source_path: String,
+    output_path: String,
+    format: ExportFormat,
+) -> Result<ExportResult> {
     let cfg = config::load()?;
     let source = PathBuf::from(&source_path);
     let dir = source

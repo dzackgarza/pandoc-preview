@@ -26,7 +26,11 @@ fn build_tree(dir: &Path) -> Result<Vec<FileNode>> {
         nodes.push(FileNode {
             name,
             path: path.display().to_string(),
-            children: if is_dir { Some(build_tree(&path)?) } else { None },
+            children: if is_dir {
+                Some(build_tree(&path)?)
+            } else {
+                None
+            },
             is_dir,
         });
     }

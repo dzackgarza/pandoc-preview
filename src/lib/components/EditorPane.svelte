@@ -107,6 +107,19 @@
     view.focus();
   }
 
+  /** Append text at the end of the buffer through the real CM update
+   * pipeline, so the docChanged updateListener fires exactly as it does for
+   * user typing (used by the E2E harness; the bridge cannot synthesize key
+   * events into CodeMirror's contentEditable). */
+  export function appendAtEnd(text: string) {
+    const end = view.state.doc.length;
+    view.dispatch({
+      changes: { from: end, insert: text },
+      selection: EditorSelection.cursor(end + text.length),
+    });
+    view.focus();
+  }
+
   /** Wrap the current selection (or insert a placeholder) with markdown markers. */
   export function wrapSelection(before: string, after: string, placeholder = "text") {
     const { from, to } = view.state.selection.main;
