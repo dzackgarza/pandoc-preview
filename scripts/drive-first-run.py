@@ -9,7 +9,7 @@ Usage: drive-first-run.py <first_run_sh> <xdg_config_home> <home>
 
 Selects deterministic values the P10 spec asserts against:
   theme=light, font_size=20, line_wrapping=yes, line_numbers=yes,
-  debounce_ms=350, math=mathjax, pandoc=<detected>, from=markdown, no extra args.
+  debounce_ms=350, pandoc=<detected>, from=markdown, no extra args.
 
 gum requires a TTY; pexpect.spawn provides one. Any deviation (missing gum,
 unexpected prompt, nonzero exit) raises and fails the proof loudly.
@@ -62,11 +62,6 @@ child.send("\r")
 child.expect("debounce")
 child.send("\x15")
 child.send("350\r")
-
-# gum choose: math engine -> move down once (katex -> mathjax), Enter.
-child.expect("Math rendering")
-child.send("\x1b[B")
-child.send("\r")
 
 # gum input: pandoc path, prefilled with detected -> accept.
 child.expect("Pandoc executable")

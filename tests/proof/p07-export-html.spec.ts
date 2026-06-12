@@ -25,14 +25,13 @@ test('Export HTML writes a self-contained artifact carrying the P1 witnesses', a
 
   const target = join(manifest.runDir, 'export-witness.html');
   // Fire the real export (api.exportDocument -> pandoc) and poll for the
-  // artifact. NOTE / PROOF DEBT: with the configured math = "katex", the real
-  // export runs pandoc with --embed-resources --katex, which performs a
-  // BLOCKING network fetch of the KaTeX assets to inline them. In the hermetic
-  // proof environment that fetch stalls, so export_document never resolves and
-  // this file never appears. render.rs sets no timeout on the export
-  // subprocess, so the app hangs. This is a real, externally-observable
-  // finding, recorded as proof debt rather than worked around (changing the
-  // engine to mathjax to make the test green would be gaming).
+  // artifact. NOTE / PROOF DEBT: the real export runs pandoc with
+  // --embed-resources --mathjax, which performs a BLOCKING network fetch of
+  // the MathJax assets to inline them. In the hermetic proof environment that
+  // fetch stalls, so export_document never resolves and this file never
+  // appears. render.rs sets no timeout on the export subprocess, so the app
+  // hangs. This is a real, externally-observable finding, recorded as proof
+  // debt rather than worked around.
   await exportTo(tauriPage, 'html', target);
   for (let i = 0; i < 80 && !existsSync(target); i++) {
     await sleep(250);
@@ -41,7 +40,7 @@ test('Export HTML writes a self-contained artifact carrying the P1 witnesses', a
     const state = await tauriPage.evaluate(`String(window.__PPE_EXPORT__)`);
     throw new Error(
       `Export HTML artifact never appeared at ${target} (export state: ${String(state)}). ` +
-        `Known cause: --embed-resources + --katex blocks on a network fetch of KaTeX assets ` +
+        `Known cause: --embed-resources + --mathjax blocks on a network fetch of MathJax assets ` +
         `under the hermetic HOME, and export_document has no subprocess timeout.`,
     );
   }

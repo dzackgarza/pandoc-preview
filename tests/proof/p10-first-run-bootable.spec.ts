@@ -25,7 +25,6 @@ test('first-run.sh config parses to the selected values and boots the editor', a
   expect(editor.line_numbers).toBe(true);
   const preview = cfg.preview as Record<string, unknown>;
   expect(preview.debounce_ms).toBe(350);
-  expect(preview.math).toBe('mathjax');
   expect((cfg.pandoc as Record<string, unknown>).from_format).toBe('markdown');
 
   // (2) The app booted into the editor UI, not the config-error screen.

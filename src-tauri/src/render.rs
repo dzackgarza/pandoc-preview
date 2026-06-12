@@ -4,8 +4,12 @@ use std::process::{Command, Stdio};
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{self, MathEngine};
+use crate::config;
 use crate::error::{Error, Result};
+
+/// Math is always MathJax: KaTeX cannot cover the full range of math syntax
+/// pandoc accepts, so there is no engine choice anywhere in the app.
+const MATH_FLAG: &str = "--mathjax";
 
 #[derive(Debug, Serialize)]
 pub struct RenderResult {
@@ -27,13 +31,6 @@ pub struct ExportResult {
 pub enum ExportFormat {
     Html,
     Pdf,
-}
-
-fn math_flag(engine: MathEngine) -> &'static str {
-    match engine {
-        MathEngine::Katex => "--katex",
-        MathEngine::Mathjax => "--mathjax",
-    }
 }
 
 fn format_log(program: &str, args: &[String], output: &std::process::Output) -> String {
@@ -72,7 +69,7 @@ fn render_sync(source: String, base_dir: String, base_url: String) -> Result<Ren
         "--to".into(),
         "html5".into(),
         "--standalone".into(),
-        math_flag(cfg.preview.math).into(),
+        MATH_FLAG.into(),
         // Resolve relative resources (images, includes) against the open file's
         // directory, both for pandoc itself and for the webview via <base>.
         "--resource-path".into(),
@@ -137,10 +134,10 @@ fn export_sync(
         ExportFormat::Html => {
             // Self-contained single file: inline images, CSS, and math assets.
             args.push("--embed-resources".into());
-            args.push(math_flag(cfg.preview.math).into());
+            args.push(MATH_FLAG.into());
         }
         ExportFormat::Pdf => {
-            args.push(math_flag(cfg.preview.math).into());
+            args.push(MATH_FLAG.into());
         }
     }
     args.extend(cfg.pandoc.extra_args.iter().cloned());

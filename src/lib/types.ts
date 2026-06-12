@@ -11,7 +11,6 @@ export interface Config {
   };
   preview: {
     debounce_ms: number;
-    math: "katex" | "mathjax";
   };
   pandoc: {
     path: string;

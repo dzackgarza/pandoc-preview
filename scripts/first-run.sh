@@ -67,8 +67,6 @@ if ! [[ "$DEBOUNCE_MS" =~ ^[0-9]+$ ]] || [ "$DEBOUNCE_MS" -gt 10000 ]; then
     exit 1
 fi
 
-MATH=$(gum choose --header "Math rendering engine (passed to pandoc)" "katex" "mathjax")
-
 # --- pandoc -----------------------------------------------------------------
 
 PANDOC_DETECTED=$(command -v pandoc)
@@ -101,7 +99,7 @@ done <<<"$EXTRA_ARGS_RAW"
 # --- confirm and write -------------------------------------------------------
 
 SUMMARY="theme=$THEME font_size=$FONT_SIZE line_wrapping=$LINE_WRAPPING line_numbers=$LINE_NUMBERS
-debounce_ms=$DEBOUNCE_MS math=$MATH
+debounce_ms=$DEBOUNCE_MS
 pandoc=$PANDOC_PATH from=$FROM_FORMAT extra_args=[$EXTRA_ARGS_TOML]"
 
 gum style --border rounded --padding "1 2" --margin "1 0" "$SUMMARY"
@@ -132,9 +130,9 @@ line_numbers = $LINE_NUMBERS
 
 [preview]
 # Editor idle time in ms before the preview re-renders (0–10000).
+# Math is always MathJax (no option): KaTeX cannot cover pandoc's full
+# math syntax range.
 debounce_ms = $DEBOUNCE_MS
-# Math engine flag passed to pandoc: "katex" or "mathjax".
-math = "$MATH"
 
 [pandoc]
 # Pandoc executable: bare name resolved via PATH or an absolute path.

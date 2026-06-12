@@ -109,13 +109,6 @@
             Render debounce (ms)
             <input type="number" min="0" max="10000" step="50" bind:value={draft.preview.debounce_ms} class={inputCls} />
           </label>
-          <label class={labelCls}>
-            Math engine
-            <select bind:value={draft.preview.math} class={inputCls}>
-              <option value="katex">KaTeX</option>
-              <option value="mathjax">MathJax</option>
-            </select>
-          </label>
         {:else if pane === "pandoc"}
           <label class={labelCls}>
             Pandoc executable

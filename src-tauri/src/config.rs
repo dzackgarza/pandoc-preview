@@ -46,15 +46,6 @@ pub struct Editor {
 pub struct Preview {
     /// Milliseconds of editor idle time before re-rendering the preview.
     pub debounce_ms: u32,
-    /// Math rendering engine passed to pandoc.
-    pub math: MathEngine,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum MathEngine {
-    Katex,
-    Mathjax,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

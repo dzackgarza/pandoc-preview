@@ -7,8 +7,8 @@
 # manifest.json with the absolute paths the spec will assert against.
 #
 # The config is the canonical witness config: theme=dark, font_size=14,
-# math=katex (P4), debounce_ms=200 (P2). P9 mutates it to font_size=18,
-# theme=light through the real Settings UI.
+# debounce_ms=200 (P2). Math is always MathJax (no config option). P9
+# mutates it to font_size=18, theme=light through the real Settings UI.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -49,7 +49,7 @@ if [ "$SPEC" = "p10-first-run-bootable.spec.ts" ]; then
     fi
 else
     # Canonical witness config: theme=dark, font_size=14 (P9 base),
-    # math=katex (P4), debounce_ms=200 (P2).
+    # debounce_ms=200 (P2).
     cat > "$CONFIG_PATH" <<EOF
 [general]
 theme = "dark"
@@ -61,7 +61,6 @@ line_numbers = true
 
 [preview]
 debounce_ms = 200
-math = "katex"
 
 [pandoc]
 path = "$PANDOC_BIN"
