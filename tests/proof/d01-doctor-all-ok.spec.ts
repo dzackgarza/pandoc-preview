@@ -10,13 +10,13 @@ import { execFileSync } from 'node:child_process';
 // string captured by the pandoc-executable check, exit code 0, and it NEVER
 // creates a window (it must terminate on its own).
 //
-// The valid config is provisioned by scripts/provision-proof.sh for this
-// spec. The independent oracle for the captured version is the real
-// `pandoc --version` run here, in a separate process — not the app's report.
-//
-// Today --doctor does not exist: the binary launches the GUI and never exits.
-// spawnDoctor bounds that and reports killedByTimeout, which makes the
-// no-window / self-exit assertion fail first — the contract red.
+// The valid config is provisioned by scripts/provision-proof.sh for this spec,
+// and (2026-06-13) now carries the two shipped default [export.*] plugin
+// tables: the battery's `export-plugins` check validates each entry's shape and
+// that its argv[0] resolves to an executable (doctor-contract.md, supersedes
+// the old `pdf-engine` check). The independent oracle for the captured version
+// is the real `pandoc --version` run here, in a separate process — not the
+// app's report.
 
 test('--doctor reports every check OK with the real pandoc version and exits 0', async () => {
   const manifest = loadDoctorManifest();
@@ -29,17 +29,20 @@ test('--doctor reports every check OK with the real pandoc version and exits 0',
 
   const report = result.stdout;
 
-  // The full named check battery appears in the report (contract order).
+  // The full named check battery appears in the report (contract order). The
+  // export-plugins check supersedes the old pdf-engine check (doctor-contract).
   for (const check of [
     'config-exists',
     'config-schema',
     'config-values',
     'pandoc-executable',
     'pandoc-invocation',
-    'pdf-engine',
+    'export-plugins',
   ]) {
     expect(report.includes(check)).toBe(true);
   }
+  // The superseded check name must be gone, not merely supplemented.
+  expect(report.includes('pdf-engine')).toBe(false);
 
   // Every check is OK: the report contains no FAIL marker on a valid env.
   expect(/\bFAIL\b/.test(report)).toBe(false);

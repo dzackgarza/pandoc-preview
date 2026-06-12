@@ -54,6 +54,32 @@ export async function exportTo(
   );
 }
 
+// ── Export by configured plugin id (P12) ──────────────────────────────────
+// The export surface is plugin-shaped (export-plugins-contract.md): export
+// targets are the [export.<id>] config entries, and the E2E hook drives them
+// by id through the SAME command path the menu uses. A plugin id is an
+// arbitrary user-defined string (e.g. "witness"), not the html/pdf literals,
+// so this drives the real plugin dispatch rather than a fixed format switch.
+export async function exportByPlugin(
+  page: EvaluatesScripts,
+  pluginId: string,
+  target: string,
+): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.exportTo(${JSON.stringify(pluginId)}, ${JSON.stringify(target)}); return null; })()`,
+  );
+}
+
+// Read the hook's last-export state marker (window.__PPE_EXPORT__), used only
+// to enrich the diagnostic when an expected artifact never appears. It is a
+// pointer for the failure message, never a substitute for the on-disk proof.
+export async function exportState(page: EvaluatesScripts): Promise<string> {
+  return asString(
+    await page.evaluate(`String(window.__PPE_EXPORT__)`),
+    'exportState',
+  );
+}
+
 export async function editorText(page: EvaluatesScripts): Promise<string> {
   return asString(
     await page.evaluate(`window.__PPE_E2E__.getEditorText()`),

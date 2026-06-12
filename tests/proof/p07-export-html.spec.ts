@@ -5,12 +5,15 @@ import { loadRunManifest } from './support/run-manifest';
 import { recordObservation } from './support/observations';
 import { openAndSelectDemo, exportTo, waitForPreview, sleep } from './support/app';
 
-// P7 — Export HTML artifact. Export demo.md to a chosen temp path via the
-// REAL export boundary (api.exportDocument -> pandoc --embed-resources). The
-// only part bypassed is the native save dialog the webview cannot drive; the
-// chosen path and pandoc invocation are real. Then this process asserts:
-// the file exists at exactly that path, its parsed DOM repeats the P1
-// witnesses, and the image is inlined as a self-contained data: URI.
+// P7 — Export HTML artifact (shipped default plugin). Export demo.md to a
+// chosen temp path via the REAL export boundary, driving the configured
+// [export.html] plugin (export-plugins-contract.md: command = pandoc ...
+// --embed-resources --mathjax ...). Provisioning writes that plugin table into
+// the hermetic config; the export must run the CONFIGURED plugin command, not a
+// hard-coded pandoc invocation. The only bypassed surface is the native save
+// dialog. Then this process asserts: the file exists at exactly that path, its
+// parsed DOM repeats the P1 witnesses, and the image is inlined as a
+// self-contained data: URI.
 //
 // The exported bytes are parsed by the REAL webview engine via DOMParser
 // (page.evaluate), not a hand-rolled regex.

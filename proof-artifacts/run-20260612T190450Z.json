@@ -1,0 +1,75 @@
+{
+  "run_id": "20260612T190450Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p13-splitter-tracks-pointer.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p13-splitter-tracks-pointer.spec.ts",
+            "title": "Dragging the divider lands it at the pointer position",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1360,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m6\u001b[39m\nReceived:    \u001b[31m19.80729166666663\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p14-tab-switch-preserves-split.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p14-tab-switch-preserves-split.spec.ts",
+            "title": "Switching Preview <-> Compile Log does not move either pane",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 804,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m307.0625\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p15-sidebar-toggle-preserves-ratio.spec.ts",
+            "title": "Hiding the file-tree sidebar preserves the editor:preview ratio",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1081,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m0.02\u001b[39m\nReceived:    \u001b[31m0.10463982019834484\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

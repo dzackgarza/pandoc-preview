@@ -22,6 +22,59 @@ ABS_SPEC_DIR="$(realpath "$SPEC_DIR")"
 
 PANDOC_BIN="$(command -v pandoc)"
 
+# Absolute path to the committed P12 custom export plugin (an arbitrary
+# executable, NOT pandoc). Referenced verbatim as argv[0] in [export.witness].
+WITNESS_PLUGIN="$REPO_ROOT/tests/proof/fixtures/plugins/witness-export.sh"
+
+# ── Export plugin tables (export-plugins-contract.md) ──────────────────
+# The two shipped default plugins, written EXACTLY as the contract specifies:
+# [export.html] with --embed-resources --mathjax, [export.pdf] with
+# --pdf-engine=lualatex. Appended to the config for the specs whose obligation
+# is the plugin-shaped export surface (p07/p08/p12) and the doctor export-plugins
+# check (d01). No other spec receives these tables: the current Config has
+# deny_unknown_fields and no `export` field, so adding them to a green spec's
+# config would change its boot behaviour.
+emit_default_export_tables() {
+    local out="$1"
+    cat >> "$out" <<EOF
+
+[export.html]
+label = "HTML (self-contained)"
+extension = "html"
+command = [
+  "pandoc", "--from", "markdown", "--standalone",
+  "--embed-resources", "--mathjax",
+  "{input}", "--output", "{output}",
+]
+
+[export.pdf]
+label = "PDF"
+extension = "pdf"
+command = [
+  "pandoc", "--from", "markdown", "--standalone",
+  "--pdf-engine=lualatex",
+  "{input}", "--output", "{output}",
+]
+EOF
+}
+
+# The P12 custom plugin: an arbitrary user-defined [export.witness] entry whose
+# command is the committed witness-export.sh, not pandoc. Proves the export
+# surface runs the configured argv verbatim against the real source.
+emit_witness_export_table() {
+    local out="$1"
+    cat >> "$out" <<EOF
+
+[export.witness]
+label = "Witness"
+extension = "txt"
+command = [
+  "$WITNESS_PLUGIN",
+  "{input}", "{output}",
+]
+EOF
+}
+
 # ── Doctor (D-series) provisioning ─────────────────────────────────────
 # The D-series asserts on the doctor battery at the process/launcher level,
 # not the webview. Each D-spec needs a purpose-built (often broken) config —
@@ -78,8 +131,11 @@ EOF
     }
 
     case "$SPEC" in
-    d01-*) # valid env: every check OK
+    d01-*) # valid env: every check OK, incl. the export-plugins check, so the
+        # config carries the two shipped default [export.*] plugin tables that
+        # check validates (export-plugins-contract.md, doctor-contract.md D1).
         write_valid_config "$PANDOC_BIN"
+        emit_default_export_tables "$CONFIG_PATH"
         ;;
     d02-*) # no config: leave the config dir absent (gum first-run creates it)
         : ;;
@@ -159,6 +215,22 @@ from_format = "markdown"
 extra_args = []
 EOF
 fi
+
+# ── Export-plugin config variant (p07/p08/p12 only) ────────────────────
+# These three specs assert on the plugin-shaped export surface
+# (export-plugins-contract.md), so their config carries the [export.*] tables.
+# p07/p08 exercise the two shipped defaults; p12 adds the custom witness plugin.
+# No other P-spec gets these tables (the current schema's deny_unknown_fields
+# would change their boot behaviour).
+case "$SPEC" in
+p07-export-html.spec.ts | p08-export-pdf.spec.ts)
+    emit_default_export_tables "$CONFIG_PATH"
+    ;;
+p12-export-custom-pipeline.spec.ts)
+    emit_default_export_tables "$CONFIG_PATH"
+    emit_witness_export_table "$CONFIG_PATH"
+    ;;
+esac
 
 jq -n \
     --arg runId "$RUN_ID" \

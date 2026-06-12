@@ -1,0 +1,158 @@
+{
+  "run_id": "20260612T191236Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p13-splitter-tracks-pointer.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p13-splitter-tracks-pointer.spec.ts",
+            "title": "Dragging the divider lands it at the pointer position",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1070,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m6\u001b[39m\nReceived:    \u001b[31m19.80729166666663\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p14-tab-switch-preserves-split.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p14-tab-switch-preserves-split.spec.ts",
+            "title": "Switching Preview <-> Compile Log does not move either pane",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 883,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m307.0625\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p15-sidebar-toggle-preserves-ratio.spec.ts",
+            "title": "Hiding the file-tree sidebar preserves the editor:preview ratio",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 616,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m0.02\u001b[39m\nReceived:    \u001b[31m0.10463982019834484\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p12-export-custom-pipeline.spec.ts",
+      "results": null,
+      "observations": []
+    },
+    {
+      "spec": "p08-export-pdf.spec.ts",
+      "results": null,
+      "observations": []
+    },
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 62,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 951,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "d02-launcher-no-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d02-launcher-no-config.spec.ts",
+            "title": "launcher with no config routes through gum first-run and boots the app",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 31816,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d02-launcher-no-config.spec.ts",
+          "name": "launcher-exit",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}
