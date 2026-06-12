@@ -20,6 +20,98 @@ RUN_ID="$3"
 mkdir -p "$SPEC_DIR"/{home,xdg-config,xdg-cache,xdg-state}
 ABS_SPEC_DIR="$(realpath "$SPEC_DIR")"
 
+PANDOC_BIN="$(command -v pandoc)"
+
+# ── Doctor (D-series) provisioning ─────────────────────────────────────
+# The D-series asserts on the doctor battery at the process/launcher level,
+# not the webview. Each D-spec needs a purpose-built (often broken) config —
+# broken environments are the doctor's product surface — and no witness
+# project. Provisioning writes the doctor-shaped config, then a lean manifest.
+case "$SPEC" in
+d0[1-5]-*.spec.ts)
+    CONFIG_DIR="$ABS_SPEC_DIR/xdg-config/pandoc-preview"
+    CONFIG_PATH="$CONFIG_DIR/config.toml"
+
+    write_valid_config() {
+        local pandoc_path="$1"
+        mkdir -p "$CONFIG_DIR"
+        cat > "$CONFIG_PATH" <<EOF
+[general]
+theme = "dark"
+
+[editor]
+font_size = 14
+line_wrapping = false
+line_numbers = true
+
+[preview]
+debounce_ms = 200
+
+[pandoc]
+path = "$pandoc_path"
+from_format = "markdown"
+extra_args = []
+EOF
+    }
+
+    # The exact observed stale key regression (schema removed 'math').
+    write_stale_key_config() {
+        mkdir -p "$CONFIG_DIR"
+        cat > "$CONFIG_PATH" <<EOF
+[general]
+theme = "dark"
+math = "mathjax"
+
+[editor]
+font_size = 14
+line_wrapping = false
+line_numbers = true
+
+[preview]
+debounce_ms = 200
+
+[pandoc]
+path = "$PANDOC_BIN"
+from_format = "markdown"
+extra_args = []
+EOF
+    }
+
+    case "$SPEC" in
+    d01-*) # valid env: every check OK
+        write_valid_config "$PANDOC_BIN"
+        ;;
+    d02-*) # no config: leave the config dir absent (gum first-run creates it)
+        : ;;
+    d03-*) # config carrying the exact observed stale key
+        write_stale_key_config
+        ;;
+    d04-*) # invalid config: stale key -> config-schema fails the startup gate
+        write_stale_key_config
+        ;;
+    d05-*) # valid config, but pandoc.path -> a real NON-executable file
+        NONEXEC="$ABS_SPEC_DIR/not-pandoc"
+        printf '#!/bin/sh\necho nope\n' > "$NONEXEC"
+        chmod 0644 "$NONEXEC" # readable, NOT executable
+        write_valid_config "$NONEXEC"
+        ;;
+    esac
+
+    jq -n \
+        --arg runId "$RUN_ID" \
+        --arg spec "$SPEC" \
+        --arg runDir "$ABS_SPEC_DIR" \
+        --arg xdgConfigHome "$ABS_SPEC_DIR/xdg-config" \
+        --arg configPath "$CONFIG_PATH" \
+        '{runId: $runId, spec: $spec, runDir: $runDir,
+          xdgConfigHome: $xdgConfigHome, configPath: $configPath}' \
+        > "$SPEC_DIR/manifest.json"
+
+    echo "provisioned $SPEC (doctor) at $ABS_SPEC_DIR"
+    exit 0
+    ;;
+esac
+
 # ── Hermetic project copy (independent per spec, mutable by P6) ────────
 PROJECT_DIR="$ABS_SPEC_DIR/project"
 cp -r "$REPO_ROOT/tests/proof/fixtures/project" "$PROJECT_DIR"
@@ -30,7 +122,6 @@ if [ ! -f "$DEMO_FILE" ]; then
 fi
 
 # ── config.toml under the hermetic XDG_CONFIG_HOME ─────────────────────
-PANDOC_BIN="$(command -v pandoc)"
 CONFIG_DIR="$ABS_SPEC_DIR/xdg-config/pandoc-preview"
 CONFIG_PATH="$CONFIG_DIR/config.toml"
 mkdir -p "$CONFIG_DIR"

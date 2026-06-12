@@ -17,6 +17,11 @@ SOCKET=/tmp/pandoc-preview-playwright.sock
 LOCK=/tmp/pandoc-preview-proof.lock
 PIDFILE=/tmp/pandoc-preview-proof.pgids
 APP_BIN="$REPO_ROOT/src-tauri/target/debug/pandoc-preview"
+# The doctor (D-series) obligations assert on the PLAIN user binary as a
+# process: stdout/stderr report, exit code, no lingering window. The
+# e2e-testing feature is irrelevant to them, so they use a separately-built
+# plain binary at a dedicated path that the e2e build never overwrites.
+DOCTOR_BIN="$REPO_ROOT/src-tauri/target/debug/doctor/pandoc-preview"
 DEV_URL=http://localhost:1420
 
 # ── Singleton: exactly one proof run at a time ─────────────────────
@@ -90,21 +95,69 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# ── Build the e2e binary once, start vite once (with the harness gate) ─
-( cd src-tauri && cargo build --features e2e-testing )
-setsid env VITE_PPE_E2E=1 bun run dev > "$RUNS_ROOT/vite.log" 2>&1 &
-VITE_PGID=$!
-TRACKED_PGIDS+=("$VITE_PGID")
-echo "$VITE_PGID" >> "$PIDFILE"
-for _ in $(seq 1 60); do
-    curl -sf "$DEV_URL" > /dev/null 2>&1 && break
-    sleep 0.5
+# ── Classify specs: doctor (D-series, process/launcher) vs app (P-series) ─
+# D-series specs assert on the plain binary/launcher as a process; they need
+# no vite server and no e2e webview bridge. P-series specs drive the real
+# webview. We build only what the requested specs require.
+HAVE_DOCTOR=0
+HAVE_APP=0
+for spec in "${SPECS[@]}"; do
+    case "$spec" in
+    d0[1-5]-*.spec.ts) HAVE_DOCTOR=1 ;;
+    *) HAVE_APP=1 ;;
+    esac
 done
-if ! curl -sf "$DEV_URL" > /dev/null 2>&1; then
-    echo "FATAL: vite never became ready at $DEV_URL" >&2
-    cat "$RUNS_ROOT/vite.log" >&2
-    exit 1
+
+# ── Build the PLAIN user binary for the doctor specs (no e2e feature) ──
+# Built into the standard target dir so it reuses the shared dependency
+# cache, then copied aside to DOCTOR_BIN BEFORE the e2e build (below)
+# overwrites target/debug/pandoc-preview with the feature-gated artifact.
+if [ "$HAVE_DOCTOR" -eq 1 ]; then
+    mkdir -p "$(dirname "$DOCTOR_BIN")"
+    ( cd src-tauri && cargo build )
+    if [ ! -x "$APP_BIN" ]; then
+        echo "FATAL: plain doctor binary not built at $APP_BIN" >&2
+        exit 1
+    fi
+    cp "$APP_BIN" "$DOCTOR_BIN"
 fi
+
+# ── Build the e2e binary + start vite only if app specs are present ────
+VITE_PGID=""
+if [ "$HAVE_APP" -eq 1 ]; then
+    ( cd src-tauri && cargo build --features e2e-testing )
+    setsid env VITE_PPE_E2E=1 bun run dev > "$RUNS_ROOT/vite.log" 2>&1 &
+    VITE_PGID=$!
+    TRACKED_PGIDS+=("$VITE_PGID")
+    echo "$VITE_PGID" >> "$PIDFILE"
+    for _ in $(seq 1 60); do
+        curl -sf "$DEV_URL" > /dev/null 2>&1 && break
+        sleep 0.5
+    done
+    if ! curl -sf "$DEV_URL" > /dev/null 2>&1; then
+        echo "FATAL: vite never became ready at $DEV_URL" >&2
+        cat "$RUNS_ROOT/vite.log" >&2
+        exit 1
+    fi
+fi
+
+# ── Doctor spec runner: no app launch, no socket. The spec spawns the
+# plain binary (or the launcher PTY driver) itself; we only hand it the
+# binary path and the per-spec manifest/run dir. Spawned process groups are
+# bounded inside the spec (spawnDoctor group-kills on timeout). ──────────
+run_doctor_spec() {
+    local spec="$1" spec_dir="$2" abs_spec_dir="$3"
+    set +e
+    PROOF_DOCTOR_BIN="$DOCTOR_BIN" \
+        PROOF_RUN_MANIFEST="$spec_dir/manifest.json" \
+        PROOF_RUN_DIR="$abs_spec_dir" \
+        bun x playwright test --config tests/proof/playwright.config.ts "$spec" \
+        > "$spec_dir/playwright.log" 2>&1
+    local spec_status=$?
+    set -e
+    sed -n '1,80p' "$spec_dir/playwright.log"
+    return "$spec_status"
+}
 
 # ── Per-spec: provision → launch app → drive → assert teardown ─────
 OVERALL=passed
@@ -156,8 +209,17 @@ for spec in "${SPECS[@]}"; do
     scripts/provision-proof.sh "$spec_dir" "$spec" "$RUN_ID"
     abs_spec_dir="$(realpath "$spec_dir")"
 
-    run_app_spec "$spec" "$spec_dir" "$abs_spec_dir"
-    spec_status=$?
+    # `set -e`-safe status capture: a failing spec must not abort the loop;
+    # the per-spec status is recorded and aggregated into the artifact.
+    spec_status=0
+    case "$spec" in
+    d0[1-5]-*.spec.ts)
+        run_doctor_spec "$spec" "$spec_dir" "$abs_spec_dir" || spec_status=$?
+        ;;
+    *)
+        run_app_spec "$spec" "$spec_dir" "$abs_spec_dir" || spec_status=$?
+        ;;
+    esac
 
     if [ "$spec_status" -ne 0 ]; then
         OVERALL=failed
@@ -167,7 +229,9 @@ for spec in "${SPECS[@]}"; do
     fi
 done
 
-kill_group "$VITE_PGID"
+if [ -n "$VITE_PGID" ]; then
+    kill_group "$VITE_PGID"
+fi
 rm -f "$PIDFILE"
 
 # ── Aggregate the artifact ─────────────────────────────────────────
