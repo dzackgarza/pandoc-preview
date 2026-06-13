@@ -52,7 +52,9 @@ test-commit:
     just -f ~/ai/quality-control/justfile-rust test-commit
 
 test:
+    just -f .agents/justfile arch-no-pandoc-in-core
     just -f ~/ai/quality-control/justfile-rust test
 
 test-ci:
+    just -f .agents/justfile arch-no-pandoc-in-core
     just -f ~/ai/quality-control/justfile-rust test-ci

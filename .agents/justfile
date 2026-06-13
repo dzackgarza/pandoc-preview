@@ -1,0 +1,9 @@
+# Agent-facing recipes (architecture hygiene, anti-gaming). All [private]:
+# invisible to `just --list` on the top-level surface. The top-level justfile
+# composes these where a measure must be enforced.
+
+# B2 (Milestone B): the app core owns no pandoc command knowledge — it lives only
+# in the pandoc renderer plugin. Architecture/ownership gate, not a proof spec.
+[private]
+arch-no-pandoc-in-core:
+    @bash {{justfile_directory()}}/check-no-pandoc-in-core.sh

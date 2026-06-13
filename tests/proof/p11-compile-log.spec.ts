@@ -3,13 +3,14 @@ import { loadRunManifest } from './support/run-manifest';
 import { recordObservation } from './support/observations';
 import { openAndSelectDemo, waitForPreview } from './support/app';
 
-// P11 — Compile log reflects the real subprocess. After a successful render,
-// the Compile Log tab shows the real pandoc command line including the
-// configured `--from markdown`, and a zero exit status. render.rs quotes
-// args with {:?}, so the configured input format appears as "--from"
-// "markdown". The exit-status line reports the real process exit (0).
+// P11 — Compile log reflects the real render subprocess. After a successful
+// render, the Compile Log tab shows the real command line and a zero exit status.
+// After Milestone B the preview is produced by the ACTIVE renderer plugin, so the
+// logged command is that plugin's command (the pandoc renderer's render.sh) — the
+// pandoc flags now live inside the renderer script, not in the app core. The
+// log's command therefore names the active renderer (pandoc-renderer).
 //
-// Known cosmetic defect (contract): format_log doubles the prefix, yielding
+// Known cosmetic defect (contract): the log doubles the exit prefix, yielding
 // `exit status: exit status: 0`. We assert the real zero exit without
 // over-coupling to the doubling, and record the raw line for the artifact.
 
@@ -35,8 +36,8 @@ test('the compile log shows the real --from markdown command and a zero exit', a
   expect(typeof logText).toBe('string');
   const log = logText as string;
 
-  // The configured input format reaches the real subprocess command line.
-  expect(log.includes('"--from" "markdown"')).toBe(true);
+  // The real render subprocess command is the active renderer plugin's command.
+  expect(log.includes('pandoc-renderer')).toBe(true);
   // A zero exit status is reported (real process success).
   expect(/exit status:(?:\s*exit status:)?\s*0\b/.test(log)).toBe(true);
 

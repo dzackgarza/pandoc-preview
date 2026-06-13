@@ -77,6 +77,30 @@ install_plugin_fixtures() {
     done
 }
 
+# Default renderer setup (Milestone B): install the shipped pandoc renderer plugin
+# and append [plugins]/[renderer]/[plugin.pandoc-renderer]. The app core is
+# renderer-agnostic; the preview is rendered by this plugin (the old core pandoc
+# argv now lives in pandoc-renderer/render.sh), so P1-P18 stay byte-identical. The
+# pandoc path/from_format/extra_args that used to be core [pandoc] config are now
+# this plugin's config section.
+emit_pandoc_renderer() {
+    local config_path="$1" plugins_dir="$2" pandoc_path="$3"
+    install_plugin_fixtures "$plugins_dir" pandoc-renderer
+    cat >> "$config_path" <<EOF
+
+[plugins]
+dir = "$plugins_dir"
+
+[renderer]
+active = "pandoc-renderer"
+
+[plugin.pandoc-renderer]
+path = "$pandoc_path"
+from_format = "markdown"
+extra_args = []
+EOF
+}
+
 # The P12 custom plugin: an arbitrary user-defined [export.witness] entry whose
 # command is the committed witness-export.sh, not pandoc. Proves the export
 # surface runs the configured argv verbatim against the real source.
@@ -103,6 +127,7 @@ case "$SPEC" in
 d0[1-9]-*.spec.ts)
     CONFIG_DIR="$ABS_SPEC_DIR/xdg-config/pandoc-preview"
     CONFIG_PATH="$CONFIG_DIR/config.toml"
+    PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
 
     write_valid_config() {
         local pandoc_path="$1"
@@ -118,15 +143,13 @@ line_numbers = true
 
 [preview]
 debounce_ms = 200
-
-[pandoc]
-path = "$pandoc_path"
-from_format = "markdown"
-extra_args = []
 EOF
         # [export] is REQUIRED by the schema: every valid config carries the two
         # shipped default plugin tables (export-plugins-contract.md).
         emit_default_export_tables "$CONFIG_PATH"
+        # The pandoc renderer is the active renderer (its checks are the doctor's
+        # pandoc-executable/pandoc-invocation rows; D1/D5 assert on them).
+        emit_pandoc_renderer "$CONFIG_PATH" "$PLUGINS_DIR" "$pandoc_path"
     }
 
     # The exact observed stale key regression (schema removed 'math').
@@ -158,19 +181,27 @@ EOF
         # write_valid_config now writes (export-plugins-contract.md, D1).
         write_valid_config "$PANDOC_BIN"
         ;;
-    d02-*) # no config: leave the config dir absent (gum first-run creates it)
-        : ;;
-    d03-*) # config carrying the exact observed stale key
+    d02-*) # no config: leave the config dir absent (gum first-run creates it).
+        # first-run.sh writes [plugins].dir = <config_dir>/plugins; pre-install the
+        # shipped pandoc renderer there so the recovered app boots (renderer-agnostic
+        # core delegates the preview to it).
+        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
+        ;;
+    d03-*) # config carrying the exact observed stale key; recovers via first-run
         write_stale_key_config
+        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
         ;;
     d04-*) # invalid config: stale key -> config-schema fails the startup gate
+        # (bare binary; no recovery, no boot, so no renderer needed).
         write_stale_key_config
         ;;
     d06-*) # existing stale/invalid config: `just setup` must reconfigure it
         write_stale_key_config
+        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
         ;;
     d07-*) # existing config-class-invalid config: `just dev` must recover it
         write_stale_key_config
+        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
         ;;
     d05-*) # valid config, but pandoc.path -> a real NON-executable file
         NONEXEC="$ABS_SPEC_DIR/not-pandoc"
@@ -184,13 +215,9 @@ EOF
         # The witness-tool.marker is created so witness-tool's own checks all pass
         # and the ONLY failing check is plugin-config:ratio-tool.
         write_valid_config "$PANDOC_BIN"
-        PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
         install_plugin_fixtures "$PLUGINS_DIR" witness-tool ratio-tool
         touch "$CONFIG_DIR/witness-tool.marker"
         cat >> "$CONFIG_PATH" <<EOF
-
-[plugins]
-dir = "$PLUGINS_DIR"
 
 [plugin.witness-tool]
 greeting = "hi"
@@ -205,12 +232,8 @@ EOF
         # contributed witness-tool-marker check FAILs on its real condition while
         # witness-tool-runnable passes.
         write_valid_config "$PANDOC_BIN"
-        PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
         install_plugin_fixtures "$PLUGINS_DIR" witness-tool ratio-tool
         cat >> "$CONFIG_PATH" <<EOF
-
-[plugins]
-dir = "$PLUGINS_DIR"
 
 [plugin.witness-tool]
 greeting = "hi"
@@ -250,10 +273,13 @@ CONFIG_DIR="$ABS_SPEC_DIR/xdg-config/pandoc-preview"
 CONFIG_PATH="$CONFIG_DIR/config.toml"
 mkdir -p "$CONFIG_DIR"
 
+PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
 if [ "$SPEC" = "p10-first-run-bootable.spec.ts" ]; then
     # P10 boots from a config produced by the REAL first-run.sh, driven
     # through a real PTY answering the gum prompts. No canonical config is
-    # written here; the script must produce it.
+    # written here; the script must produce it. first-run.sh writes
+    # [plugins].dir = <config_dir>/plugins; pre-install the shipped pandoc renderer
+    # there so the booted app's renderer-agnostic core can delegate the preview.
     "$REPO_ROOT/scripts/drive-first-run.py" \
         "$REPO_ROOT/scripts/first-run.sh" \
         "$ABS_SPEC_DIR/xdg-config" \
@@ -262,6 +288,7 @@ if [ "$SPEC" = "p10-first-run-bootable.spec.ts" ]; then
         echo "FATAL: first-run.sh did not write $CONFIG_PATH" >&2
         exit 1
     fi
+    install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
 else
     # Canonical witness config: theme=dark, font_size=14 (P9 base),
     # debounce_ms=200 (P2).
@@ -276,16 +303,31 @@ line_numbers = true
 
 [preview]
 debounce_ms = 200
-
-[pandoc]
-path = "$PANDOC_BIN"
-from_format = "markdown"
-extra_args = []
 EOF
     # [export] is REQUIRED by the schema (export-plugins-contract.md): every
     # valid config carries the two shipped default plugin tables. Without them
     # the config would fail config-schema and the app would never boot.
     emit_default_export_tables "$CONFIG_PATH"
+    # Renderer setup (Milestone B): the core is renderer-agnostic and delegates the
+    # preview to the active renderer plugin. Default = pandoc renderer (keeps the
+    # preview byte-identical to the old core path); p20 swaps in the generic
+    # renderer to prove the abstraction.
+    case "$SPEC" in
+    p20-generic-renderer.spec.ts)
+        install_plugin_fixtures "$PLUGINS_DIR" generic-renderer
+        cat >> "$CONFIG_PATH" <<EOF
+
+[plugins]
+dir = "$PLUGINS_DIR"
+
+[renderer]
+active = "generic-renderer"
+EOF
+        ;;
+    *)
+        emit_pandoc_renderer "$CONFIG_PATH" "$PLUGINS_DIR" "$PANDOC_BIN"
+        ;;
+    esac
 fi
 
 # ── Custom export plugin (p12 only) ────────────────────────────────────
@@ -297,38 +339,18 @@ p12-export-custom-pipeline.spec.ts)
     emit_witness_export_table "$CONFIG_PATH"
     ;;
 p19-plugin-run-by-id.spec.ts)
-    # A1: the generic plugin firewall discovers fixtures from the plugins dir and
-    # runs one by id. Install ONLY witness-tool (the spec runs it; ratio-tool's
-    # schema would require config the app's startup gate validates). The
-    # witness-tool.marker is created so witness-tool's contributed doctor checks
-    # all pass and the app boots; the spec then drives runPlugin by id.
-    PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
+    # A1: the generic plugin firewall runs a tools plugin by id. The canonical
+    # config above already set up the pandoc renderer + [plugins].dir (so the
+    # preview works); here we ADD the witness-tool plugin into that same dir and
+    # its config section. The witness-tool.marker is created so witness-tool's
+    # contributed doctor checks pass and the app boots; the spec then drives
+    # runPlugin by id.
     install_plugin_fixtures "$PLUGINS_DIR" witness-tool
     touch "$CONFIG_DIR/witness-tool.marker"
     cat >> "$CONFIG_PATH" <<EOF
 
-[plugins]
-dir = "$PLUGINS_DIR"
-
 [plugin.witness-tool]
 greeting = "hi"
-EOF
-    ;;
-p20-generic-renderer.spec.ts)
-    # B1: the generic renderer (a non-pandoc script, md stdin -> HTML stdout) is
-    # the ACTIVE renderer. Install it and select it. It has no required config, so
-    # no [plugin.generic-renderer] section is needed. RED today: render_preview
-    # ignores [renderer] and hardcodes pandoc, so the generic renderer's marker is
-    # absent. GREEN: render_preview delegates to the active renderer plugin.
-    PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
-    install_plugin_fixtures "$PLUGINS_DIR" generic-renderer
-    cat >> "$CONFIG_PATH" <<EOF
-
-[plugins]
-dir = "$PLUGINS_DIR"
-
-[renderer]
-active = "generic-renderer"
 EOF
     ;;
 esac

@@ -25,7 +25,12 @@ test('first-run.sh config parses to the selected values and boots the editor', a
   expect(editor.line_numbers).toBe(true);
   const preview = cfg.preview as Record<string, unknown>;
   expect(preview.debounce_ms).toBe(350);
-  expect((cfg.pandoc as Record<string, unknown>).from_format).toBe('markdown');
+  // first-run.sh now produces the renderer-plugin config (Milestone B): the app is
+  // renderer-agnostic, so pandoc settings live in the pandoc renderer plugin's own
+  // section and the active renderer is selected by id.
+  expect((cfg.renderer as Record<string, unknown>).active).toBe('pandoc-renderer');
+  const pandocRenderer = (cfg.plugin as Record<string, Record<string, unknown>>)['pandoc-renderer'];
+  expect(pandocRenderer.from_format).toBe('markdown');
 
   // (2) The app booted into the editor UI, not the config-error screen. The
   // activity bar's Explorer control is always present once the editor UI renders

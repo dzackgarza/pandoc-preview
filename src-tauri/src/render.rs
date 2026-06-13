@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -9,20 +8,16 @@ use tauri::{AppHandle, Manager, Runtime};
 use crate::config::{self, PLACEHOLDER_INPUT, PLACEHOLDER_MATHJAX, PLACEHOLDER_OUTPUT};
 use crate::error::{Error, Result};
 
-/// Math is always MathJax: KaTeX cannot cover the full range of math syntax
-/// pandoc accepts, so there is no engine choice anywhere in the app.
-///
 /// MathJax always loads from the LOCALLY-BUNDLED, version-pinned copy shipped as
 /// an app resource — never a CDN (decision A, mathjax-offline-local-source-decision.md).
-/// The bundle is the SVG build (self-contained, no runtime font fetch). It is
-/// addressed two ways because the two consumers run in different origin contexts:
-///   - Preview (in-webview srcdoc): `--mathjax=<asset-protocol-url>`, resolved by
-///     the frontend via `convertFileSrc` and passed in as `mathjax_url`.
-///   - Export (external pandoc + `--embed-resources`): the `[export.html]` plugin
-///     carries `--mathjax={mathjax}`; this module substitutes `{mathjax}` with
-///     `file://<resource_dir>/mathjax/tex-full-svg-a11y.min.js`.
-const MATH_FLAG_PREFIX: &str = "--mathjax=";
-
+/// The bundle is the SVG build (self-contained, no runtime font fetch). The
+/// EXPORT path consumes it here: the `[export.html]` plugin command carries the
+/// generic `{mathjax}` placeholder, which `export_sync` substitutes with
+/// `file://<resource_dir>/mathjax/tex-full-svg-a11y.min.js`. (The PREVIEW path's
+/// MathJax URL is resolved by the frontend via `convertFileSrc` and handed to the
+/// active renderer plugin as the `{mathjax}` render-context value — no renderer
+/// knowledge lives in the app core.)
+///
 /// Relative path of the bundled MathJax under the app resource directory.
 /// `bundle.resources` lists `resources/mathjax/tex-full-svg-a11y.min.js`; a plain relative
 /// path preserves its full structure under the resource dir, so the runtime
@@ -88,12 +83,9 @@ fn render_sync(
     base_url: String,
     mathjax_url: String,
 ) -> Result<RenderResult> {
-    let cfg = config::load()?;
-    let base_dir = PathBuf::from(base_dir);
-    if !base_dir.is_dir() {
+    if !PathBuf::from(&base_dir).is_dir() {
         return Err(Error::InvalidArgument(format!(
-            "base_dir {} is not a directory",
-            base_dir.display()
+            "base_dir {base_dir} is not a directory"
         )));
     }
     if mathjax_url.trim().is_empty() {
@@ -102,57 +94,15 @@ fn render_sync(
         ));
     }
 
-    let args: Vec<String> = vec![
-        "--from".into(),
-        cfg.pandoc.from_format.clone(),
-        "--to".into(),
-        "html5".into(),
-        "--standalone".into(),
-        // Local MathJax via the asset protocol — never a CDN (decision A). The
-        // SVG bundle keeps raw `\(...\)` TeX in the output AND sets the injected
-        // `<script src>` to the asset-protocol URL, so the srcdoc preview loads
-        // and runs it offline.
-        format!("{MATH_FLAG_PREFIX}{mathjax_url}"),
-        // Resolve relative resources (images, includes) against the open file's
-        // directory, both for pandoc itself and for the webview via <base>.
-        "--resource-path".into(),
-        base_dir.display().to_string(),
-        format!("--variable=header-includes:<base href=\"{base_url}\">"),
-    ]
-    .into_iter()
-    .chain(cfg.pandoc.extra_args.iter().cloned())
-    .collect();
-
-    let mut child = Command::new(&cfg.pandoc.path)
-        .args(&args)
-        .current_dir(&base_dir)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| Error::PandocSpawn(cfg.pandoc.path.clone(), e))?;
-
-    // Feed stdin from a separate thread so a large document cannot deadlock
-    // against pandoc filling its stdout pipe.
-    let mut stdin = child.stdin.take().expect("stdin was piped");
-    let writer = std::thread::spawn(move || stdin.write_all(source.as_bytes()));
-    let output = child
-        .wait_with_output()
-        .map_err(|e| Error::PandocSpawn(cfg.pandoc.path.clone(), e))?;
-    writer
-        .join()
-        .expect("stdin writer thread panicked")
-        .map_err(|e| Error::PandocSpawn(cfg.pandoc.path.clone(), e))?;
-
-    let log = format_log(&cfg.pandoc.path, &args, &output);
+    // The app core owns NO renderer knowledge: delegate buffer->HTML to the
+    // active renderer plugin (renderer-plugin-architecture.md). The render context
+    // (base_dir/base_url/mathjax) is supplied to the plugin; the plugin (pandoc,
+    // generic, …) builds and runs whatever it needs.
+    let outcome = crate::plugins::render_active(source, base_dir, base_url, mathjax_url)?;
     Ok(RenderResult {
-        ok: output.status.success(),
-        html: if output.status.success() {
-            String::from_utf8_lossy(&output.stdout).into_owned()
-        } else {
-            String::new()
-        },
-        log,
+        ok: outcome.ok,
+        html: outcome.html,
+        log: outcome.log,
     })
 }
 
@@ -206,7 +156,7 @@ fn export_sync(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
-        .map_err(|e| Error::PandocSpawn(program.clone(), e))?;
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
 
     Ok(ExportResult {
         ok: output.status.success(),

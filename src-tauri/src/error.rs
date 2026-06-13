@@ -17,8 +17,8 @@ pub enum Error {
         source: std::io::Error,
     },
 
-    #[error("pandoc executable {0:?} could not be spawned: {1}")]
-    PandocSpawn(String, std::io::Error),
+    #[error("could not spawn process {0:?}: {1}")]
+    ProcessSpawn(String, std::io::Error),
 
     #[error("path {0} already exists")]
     AlreadyExists(String),

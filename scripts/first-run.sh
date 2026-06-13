@@ -141,7 +141,19 @@ line_numbers = $LINE_NUMBERS
 # math syntax range.
 debounce_ms = $DEBOUNCE_MS
 
-[pandoc]
+# The app is renderer-agnostic: the preview is produced by a renderer plugin
+# discovered from the plugins directory below. The shipped pandoc renderer houses
+# all pandoc knowledge; the pandoc executable/format/args you set are its config.
+[plugins]
+# Directory plugins (renderers, tools) are discovered from.
+dir = "$CONFIG_DIR/plugins"
+
+[renderer]
+# Active renderer plugin id. The pandoc renderer is the shipped default; switch to
+# "generic-renderer" to run an arbitrary markdown->HTML script with no enforcement.
+active = "pandoc-renderer"
+
+[plugin.pandoc-renderer]
 # Pandoc executable: bare name resolved via PATH or an absolute path.
 path = "$PANDOC_PATH"
 # Input format passed to pandoc --from.

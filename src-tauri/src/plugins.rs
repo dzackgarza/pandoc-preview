@@ -17,11 +17,20 @@ use crate::error::{Error, Result};
 
 /// Placeholders substituted per-argument in a plugin's exec/doctor-check argv.
 /// `{plugin_dir}`/`{config_dir}` resolve for every invocation; `{file}`/`{artifact}`
-/// resolve only for a plugin run (the real source path and the target artifact).
+/// resolve only for a tools-plugin run; `{base_dir}`/`{base_url}`/`{mathjax}` resolve
+/// only for a renderer-plugin render (the render context the core supplies).
 const PH_PLUGIN_DIR: &str = "{plugin_dir}";
 const PH_CONFIG_DIR: &str = "{config_dir}";
 const PH_FILE: &str = "{file}";
 const PH_ARTIFACT: &str = "{artifact}";
+const PH_BASE_DIR: &str = "{base_dir}";
+const PH_BASE_URL: &str = "{base_url}";
+const PH_MATHJAX: &str = "{mathjax}";
+
+/// Environment variable carrying the active plugin's `[plugin.<id>]` config as
+/// JSON, so a renderer/check script can read its own config (e.g. the pandoc
+/// renderer's `from_format`). Set for renderer runs and doctor-check runs.
+const ENV_PLUGIN_CONFIG: &str = "PPE_PLUGIN_CONFIG";
 
 /// A plugin manifest (`plugin.toml`). The Milestone A plugin contract. Every
 /// field is required: `deny_unknown_fields` + no `#[serde(default)]` means a
@@ -182,46 +191,64 @@ pub fn validate_plugin_config(plugin: &Plugin, section: Option<&toml::Value>) ->
     }
 }
 
-/// Substitute the static placeholders (plus the optional run-only `{file}` /
-/// `{artifact}`) in one argv element.
-fn substitute(
-    arg: &str,
-    plugin_dir: &Path,
-    config_dir: &Path,
-    file: Option<&str>,
-    artifact: Option<&str>,
-) -> String {
-    let mut s = arg
-        .replace(PH_PLUGIN_DIR, &plugin_dir.display().to_string())
-        .replace(PH_CONFIG_DIR, &config_dir.display().to_string());
-    if let Some(f) = file {
-        s = s.replace(PH_FILE, f);
-    }
-    if let Some(a) = artifact {
-        s = s.replace(PH_ARTIFACT, a);
+/// Substitute placeholders in one argv element. `subs` is an ordered list of
+/// (placeholder, value) pairs; only the placeholders relevant to the caller are
+/// supplied.
+fn substitute(arg: &str, subs: &[(&str, &str)]) -> String {
+    let mut s = arg.to_string();
+    for (ph, val) in subs {
+        s = s.replace(ph, val);
     }
     s
 }
 
-/// Run one contributed doctor check: substitute its argv and spawn it; exit 0 is
-/// OK, anything else (including a spawn failure) is FAIL with the diagnostic.
-fn run_doctor_check(plugin: &Plugin, check: &DoctorCheck, config_dir: &Path) -> (bool, String) {
-    let argv: Vec<String> = check
-        .command
-        .iter()
-        .map(|a| substitute(a, &plugin.dir, config_dir, None, None))
-        .collect();
+/// Serialize a plugin's `[plugin.<id>]` config section to JSON for the
+/// `PPE_PLUGIN_CONFIG` env var. An absent section is the empty object.
+fn config_json(section: Option<&toml::Value>) -> String {
+    match section {
+        Some(v) => serde_json::to_value(v)
+            .map(|j| j.to_string())
+            .unwrap_or_else(|_| "{}".to_string()),
+        None => "{}".to_string(),
+    }
+}
+
+/// Run one contributed doctor check: substitute its argv and spawn it (with the
+/// plugin's config on `PPE_PLUGIN_CONFIG` so check scripts can read it). exit 0 is
+/// OK, anything else (including a spawn failure) is FAIL with the diagnostic. On
+/// success the detail is the command's first non-empty stdout line if any (so a
+/// check like `pandoc --version` surfaces the real version), else the description.
+fn run_doctor_check(
+    plugin: &Plugin,
+    check: &DoctorCheck,
+    config_dir: &Path,
+    plugin_config: &str,
+) -> (bool, String) {
+    let subs = [
+        (PH_PLUGIN_DIR, plugin.dir.display().to_string()),
+        (PH_CONFIG_DIR, config_dir.display().to_string()),
+    ];
+    let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
+    let argv: Vec<String> = check.command.iter().map(|a| substitute(a, &subs)).collect();
     let Some((program, args)) = argv.split_first() else {
         return (false, format!("{}: empty command", check.description));
     };
     match Command::new(program)
         .args(args)
+        .env(ENV_PLUGIN_CONFIG, plugin_config)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
     {
-        Ok(out) if out.status.success() => (true, check.description.clone()),
+        Ok(out) if out.status.success() => {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            let first = stdout.lines().find(|l| !l.trim().is_empty());
+            (
+                true,
+                first.map(|l| l.trim().to_string()).unwrap_or_else(|| check.description.clone()),
+            )
+        }
         Ok(out) => (
             false,
             format!("{}: command exited {}", check.description, out.status),
@@ -256,8 +283,9 @@ pub fn plugin_check_rows(
             detail: e.to_string(),
         }),
     }
+    let plugin_config = config_json(section);
     for check in &plugin.manifest.doctor_checks {
-        let (ok, detail) = run_doctor_check(plugin, check, config_dir);
+        let (ok, detail) = run_doctor_check(plugin, check, config_dir, &plugin_config);
         rows.push(PluginCheckRow {
             name: check.id.clone(),
             ok,
@@ -297,12 +325,19 @@ fn run_plugin_sync(
         .ok_or_else(|| Error::InvalidArgument(format!("{source_path} has no parent directory")))?
         .to_path_buf();
 
+    let subs = [
+        (PH_PLUGIN_DIR, plugin.dir.display().to_string()),
+        (PH_CONFIG_DIR, config_dir.display().to_string()),
+        (PH_FILE, source_path.clone()),
+        (PH_ARTIFACT, output_path.clone()),
+    ];
+    let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
     let argv: Vec<String> = plugin
         .manifest
         .exec
         .command
         .iter()
-        .map(|a| substitute(a, &plugin.dir, &config_dir, Some(&source_path), Some(&output_path)))
+        .map(|a| substitute(a, &subs))
         .collect();
     let (program, args) = argv
         .split_first()
@@ -315,7 +350,7 @@ fn run_plugin_sync(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| Error::PandocSpawn(program.clone(), e))?;
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
 
     // Feed the real buffer on stdin from a separate thread so a large buffer
     // cannot deadlock against the plugin filling its stdout pipe.
@@ -323,11 +358,11 @@ fn run_plugin_sync(
     let writer = std::thread::spawn(move || stdin.write_all(buffer.as_bytes()));
     let output = child
         .wait_with_output()
-        .map_err(|e| Error::PandocSpawn(program.clone(), e))?;
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
     writer
         .join()
         .expect("stdin writer thread panicked")
-        .map_err(|e| Error::PandocSpawn(program.clone(), e))?;
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
 
     let success = output.status.success();
     Ok(PluginResult {
@@ -355,4 +390,120 @@ pub async fn run_plugin(
     })
     .await
     .expect("run_plugin task panicked")
+}
+
+/// The outcome of a render through the active renderer plugin. `render.rs` maps
+/// this onto its public `RenderResult`.
+pub struct RenderOutcome {
+    pub ok: bool,
+    pub html: String,
+    pub log: String,
+}
+
+fn render_log(program: &str, args: &[String], output: &std::process::Output) -> String {
+    let mut log = format!(
+        "$ {} {}\n",
+        program,
+        args.iter()
+            .map(|a| format!("{a:?}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if !stderr.trim().is_empty() {
+        log.push_str(&stderr);
+        if !stderr.ends_with('\n') {
+            log.push('\n');
+        }
+    }
+    log.push_str(&format!("exit status: {}\n", output.status));
+    log
+}
+
+/// Render the editor buffer to preview HTML through the ACTIVE renderer plugin.
+/// The app core owns no renderer knowledge: it loads `[renderer].active`, finds
+/// that renderer plugin, supplies the render context as `{base_dir}`/`{base_url}`/
+/// `{mathjax}` placeholders and the plugin's own config on `PPE_PLUGIN_CONFIG`,
+/// feeds the buffer on stdin, and takes stdout as the standalone HTML. A missing
+/// `[renderer]` (no active renderer) or unknown renderer id is a loud error.
+pub fn render_active(
+    buffer: String,
+    base_dir: String,
+    base_url: String,
+    mathjax_url: String,
+) -> Result<RenderOutcome> {
+    let cfg = config::load()?;
+    let renderer_cfg = cfg.renderer.as_ref().ok_or_else(|| {
+        Error::InvalidArgument("no [renderer] is configured (no active renderer)".into())
+    })?;
+    let plugins_cfg = cfg.plugins.as_ref().ok_or_else(|| {
+        Error::InvalidArgument("a [renderer] is active but no [plugins] directory is configured".into())
+    })?;
+    let config_path = config::config_path()?;
+    let config_dir = config_path
+        .parent()
+        .expect("config path always has a parent")
+        .to_path_buf();
+
+    let plugins = discover(Path::new(&plugins_cfg.dir))?;
+    let plugin = plugins
+        .iter()
+        .find(|p| p.manifest.id == renderer_cfg.active)
+        .ok_or_else(|| {
+            Error::InvalidArgument(format!(
+                "active renderer {:?} not found in the plugins dir",
+                renderer_cfg.active
+            ))
+        })?;
+
+    let subs = [
+        (PH_PLUGIN_DIR, plugin.dir.display().to_string()),
+        (PH_CONFIG_DIR, config_dir.display().to_string()),
+        (PH_BASE_DIR, base_dir.clone()),
+        (PH_BASE_URL, base_url),
+        (PH_MATHJAX, mathjax_url),
+    ];
+    let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
+    let argv: Vec<String> = plugin
+        .manifest
+        .exec
+        .command
+        .iter()
+        .map(|a| substitute(a, &subs))
+        .collect();
+    let (program, args) = argv.split_first().ok_or_else(|| {
+        Error::InvalidArgument(format!("renderer {} has an empty command", renderer_cfg.active))
+    })?;
+
+    let plugin_config = config_json(cfg.plugin.get(&renderer_cfg.active));
+    let mut child = Command::new(program)
+        .args(args)
+        .current_dir(&base_dir)
+        .env(ENV_PLUGIN_CONFIG, plugin_config)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
+
+    let mut stdin = child.stdin.take().expect("stdin was piped");
+    let writer = std::thread::spawn(move || stdin.write_all(buffer.as_bytes()));
+    let output = child
+        .wait_with_output()
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
+    writer
+        .join()
+        .expect("stdin writer thread panicked")
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
+
+    let ok = output.status.success();
+    Ok(RenderOutcome {
+        ok,
+        html: if ok {
+            String::from_utf8_lossy(&output.stdout).into_owned()
+        } else {
+            String::new()
+        },
+        log: render_log(program, args, &output),
+    })
 }

@@ -13,16 +13,19 @@
     onCancel: () => void;
   } = $props();
 
-  // Editable working copy; the live config is only replaced on Save.
+  // Editable working copy; the live config is only replaced on Save. This is a
+  // deep copy of the WHOLE config, so renderer/plugin sections the UI does not
+  // edit (e.g. [plugin.pandoc-renderer]) are preserved verbatim on Save.
   let draft = $state<Config>(JSON.parse(JSON.stringify(config)));
-  let extraArgsText = $state(config.pandoc.extra_args.join("\n"));
-  let pane = $state<"general" | "editor" | "preview" | "pandoc">("general");
+  let pane = $state<"general" | "editor" | "preview">("general");
 
+  // Renderer/plugin configuration (pandoc path, format, filters, …) lives in each
+  // plugin's own config section and is edited via the config file / a future
+  // schema-driven plugin config page (renderer-plugin-architecture.md), not here.
   const panes = [
     ["general", "General"],
     ["editor", "Editor"],
     ["preview", "Preview"],
-    ["pandoc", "Pandoc"],
   ] as const;
 
   let error = $state<string | null>(null);
@@ -36,18 +39,6 @@
       error = "Debounce must be between 0 and 10000 ms.";
       return;
     }
-    if (!draft.pandoc.path.trim()) {
-      error = "Pandoc path must not be empty.";
-      return;
-    }
-    if (!draft.pandoc.from_format.trim()) {
-      error = "Pandoc input format must not be empty.";
-      return;
-    }
-    draft.pandoc.extra_args = extraArgsText
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
     onSave(JSON.parse(JSON.stringify(draft)));
   }
 
@@ -108,19 +99,6 @@
           <label class={labelCls}>
             Render debounce (ms)
             <input type="number" min="0" max="10000" step="50" bind:value={draft.preview.debounce_ms} class={inputCls} />
-          </label>
-        {:else if pane === "pandoc"}
-          <label class={labelCls}>
-            Pandoc executable
-            <input type="text" bind:value={draft.pandoc.path} class={inputCls} />
-          </label>
-          <label class={labelCls}>
-            Input format (--from)
-            <input type="text" bind:value={draft.pandoc.from_format} class={inputCls} />
-          </label>
-          <label class={labelCls}>
-            Extra arguments (one per line)
-            <textarea rows="5" bind:value={extraArgsText} class="{inputCls} font-mono"></textarea>
           </label>
         {/if}
       </div>

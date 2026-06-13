@@ -14,7 +14,6 @@
 //! the real environment or reports FAIL with the concrete diagnostic.
 
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 
 use crate::config::{self, Config};
 
@@ -23,8 +22,6 @@ use crate::config::{self, Config};
 pub const CHECK_CONFIG_EXISTS: &str = "config-exists";
 pub const CHECK_CONFIG_SCHEMA: &str = "config-schema";
 pub const CHECK_CONFIG_VALUES: &str = "config-values";
-pub const CHECK_PANDOC_EXECUTABLE: &str = "pandoc-executable";
-pub const CHECK_PANDOC_INVOCATION: &str = "pandoc-invocation";
 pub const CHECK_EXPORT_PLUGINS: &str = "export-plugins";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -180,7 +177,7 @@ fn check_config_values(cfg: &Config) -> CheckResult {
             name: CHECK_CONFIG_VALUES.into(),
             status: Status::Ok,
             detail: format!(
-                "font_size={}, debounce_ms={}, pandoc/from_format non-empty",
+                "font_size={}, debounce_ms={}",
                 cfg.editor.font_size, cfg.preview.debounce_ms
             ),
         },
@@ -192,117 +189,6 @@ fn check_config_values(cfg: &Config) -> CheckResult {
     }
 }
 
-/// Resolve pandoc, confirm it is an executable file, and run `pandoc --version`
-/// (must exit 0). Captures the real version banner on success. Returns the
-/// check and whether the binary is usable for the downstream invocation probe.
-fn check_pandoc_executable(cfg: &Config) -> (CheckResult, bool) {
-    let resolved = match resolve_program(&cfg.pandoc.path) {
-        Some(p) => p,
-        None => {
-            return (
-                CheckResult {
-                    name: CHECK_PANDOC_EXECUTABLE.into(),
-                    status: Status::Fail,
-                    detail: format!(
-                        "pandoc path {:?} does not resolve to a file",
-                        cfg.pandoc.path
-                    ),
-                },
-                false,
-            );
-        }
-    };
-    if !is_executable(&resolved) {
-        return (
-            CheckResult {
-                name: CHECK_PANDOC_EXECUTABLE.into(),
-                status: Status::Fail,
-                detail: format!("{} is not executable", resolved.display()),
-            },
-            false,
-        );
-    }
-    match Command::new(&cfg.pandoc.path)
-        .arg("--version")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-    {
-        Ok(out) if out.status.success() => {
-            let banner = String::from_utf8_lossy(&out.stdout);
-            let version_line = banner.lines().next().unwrap_or("").trim().to_string();
-            (
-                CheckResult {
-                    name: CHECK_PANDOC_EXECUTABLE.into(),
-                    status: Status::Ok,
-                    detail: version_line,
-                },
-                true,
-            )
-        }
-        Ok(out) => (
-            CheckResult {
-                name: CHECK_PANDOC_EXECUTABLE.into(),
-                status: Status::Fail,
-                detail: format!("`pandoc --version` exited {}", out.status),
-            },
-            false,
-        ),
-        Err(e) => (
-            CheckResult {
-                name: CHECK_PANDOC_EXECUTABLE.into(),
-                status: Status::Fail,
-                detail: format!("could not spawn {:?}: {e}", cfg.pandoc.path),
-            },
-            false,
-        ),
-    }
-}
-
-/// Probe render with the FULL configured arg set (`--from <from_format>` +
-/// extra_args, empty stdin) to prove the whole invocation contract, not just
-/// that the binary exists.
-fn check_pandoc_invocation(cfg: &Config) -> CheckResult {
-    let mut args: Vec<String> = vec![
-        "--from".into(),
-        cfg.pandoc.from_format.clone(),
-        "--to".into(),
-        "html5".into(),
-    ];
-    args.extend(cfg.pandoc.extra_args.iter().cloned());
-
-    match Command::new(&cfg.pandoc.path)
-        .args(&args)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-    {
-        Ok(out) if out.status.success() => CheckResult {
-            name: CHECK_PANDOC_INVOCATION.into(),
-            status: Status::Ok,
-            detail: format!(
-                "pandoc --from {} (+{} extra args) exited 0",
-                cfg.pandoc.from_format,
-                cfg.pandoc.extra_args.len()
-            ),
-        },
-        Ok(out) => {
-            let stderr = String::from_utf8_lossy(&out.stderr);
-            CheckResult {
-                name: CHECK_PANDOC_INVOCATION.into(),
-                status: Status::Fail,
-                detail: format!("invocation exited {}: {}", out.status, stderr.trim()),
-            }
-        }
-        Err(e) => CheckResult {
-            name: CHECK_PANDOC_INVOCATION.into(),
-            status: Status::Fail,
-            detail: format!("could not spawn {:?}: {e}", cfg.pandoc.path),
-        },
-    }
-}
 
 /// Every configured `[export.<id>]` plugin must be well-formed (the same
 /// invariants the save path enforces, via `config::validate_export_plugin`) and
@@ -379,8 +265,6 @@ pub fn run() -> Report {
             for name in [
                 CHECK_CONFIG_SCHEMA,
                 CHECK_CONFIG_VALUES,
-                CHECK_PANDOC_EXECUTABLE,
-                CHECK_PANDOC_INVOCATION,
                 CHECK_EXPORT_PLUGINS,
             ] {
                 checks.push(skip(name, "config path could not be determined"));
@@ -417,27 +301,10 @@ pub fn run() -> Report {
         }
     };
 
-    match &cfg {
-        Some(cfg) => {
-            let (exe, usable) = check_pandoc_executable(cfg);
-            checks.push(exe);
-            if usable {
-                checks.push(check_pandoc_invocation(cfg));
-            } else {
-                checks.push(skip(CHECK_PANDOC_INVOCATION, "pandoc binary is not usable"));
-            }
-        }
-        None => {
-            checks.push(skip(
-                CHECK_PANDOC_EXECUTABLE,
-                "config is invalid; cannot resolve pandoc",
-            ));
-            checks.push(skip(
-                CHECK_PANDOC_INVOCATION,
-                "config is invalid; cannot probe invocation",
-            ));
-        }
-    }
+    // The renderer-specific checks (pandoc-executable, pandoc-invocation) are no
+    // longer core: they are contributed by the active renderer plugin and appear
+    // below, aggregated with every other plugin's checks (doctor-contract.md
+    // ownership note). The core battery keeps only renderer-agnostic checks.
 
     // export-plugins needs the parsed, valid config to enumerate the entries.
     match &cfg {

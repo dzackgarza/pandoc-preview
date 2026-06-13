@@ -202,6 +202,33 @@ hardcodes pandoc → the generic marker is absent → RED for the right reason
 to the active renderer plugin; move pandoc out of core; migrate doctor checks;
 re-scope D1/D5; install shipped renderer plugins. Keep the full suite green.
 
+**Milestone B GREEN — DONE (2026-06-14). Full suite 28/28 green.** Implemented:
+`plugins::render_active` (the renderer-delegation entry point: render-context
+placeholders `{base_dir}`/`{base_url}`/`{mathjax}`, plugin config on
+`PPE_PLUGIN_CONFIG`, buffer→stdin→HTML); `render_preview` delegates to it (signature
+unchanged → frontend + P-series untouched). `[pandoc]` removed from core `Config`;
+the pandoc-executable/pandoc-invocation doctor checks removed from core. Two shipped
+renderer plugins (fixtures for now; D vendors them): `pandoc-renderer` (render.sh =
+the old core preview argv; contributes the pandoc-executable/pandoc-invocation
+checks — a check's detail captures its command stdout, so `pandoc --version`'s
+version still surfaces, keeping D1's version assertion) and `generic-renderer`
+(B1's escape-hatch). `Error::PandocSpawn`→`ProcessSpawn` (the core spawns generic
+programs now). Frontend: SettingsModal dropped the pandoc pane (plugin config is
+edited via the file / a future schema-driven page); Config TS type updated.
+Provisioning rewired: `emit_pandoc_renderer` is the default renderer setup; p20
+swaps in generic; first-run.sh writes the renderer-plugin config. **D1/D5 specs were
+NOT re-scoped** after all — the pandoc-renderer contributes identically-named checks
+with version capture, so D1/D5 pass unchanged (only their provisioning moved
+`[pandoc]`→`[plugin.pandoc-renderer]`). p10/p11 specs were updated to the new
+config/log shapes (first-run now writes `[plugin.pandoc-renderer]`; the compile log
+shows the renderer command). **B2** is enforced by `.agents/check-no-pandoc-in-core.sh`
+(wired into `just test`/`test-ci`), not a proof spec.
+Known B/D coupling: first-run.sh writes `[plugins].dir` but does not install the
+shipped renderers there — **Milestone D must vendor/install them** or a freshly
+first-run product config points at an empty plugins dir (tests pre-install via
+provisioning). **NEXT: Milestone C** (pandoc raw-command-canonical model inside the
+pandoc renderer plugin).
+
 ## Milestone C — Pandoc renderer plugin (raw-command-canonical)
 
 **Goal.** All pandoc knowledge lives in this plugin; the raw pandoc command

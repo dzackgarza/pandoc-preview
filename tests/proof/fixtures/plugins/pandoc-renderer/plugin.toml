@@ -1,0 +1,30 @@
+# The pandoc renderer (Milestone B) — houses ALL pandoc preview knowledge that
+# used to live in the app core (render.rs). It is a renderer plugin: render
+# context ({base_dir}/{base_url}/{mathjax}) on argv, the markdown buffer on stdin,
+# standalone HTML on stdout. Its own config ([plugin.pandoc-renderer]) carries the
+# pandoc path/from_format/extra_args (delivered on PPE_PLUGIN_CONFIG). It also
+# contributes the pandoc-executable / pandoc-invocation doctor checks that left the
+# core (doctor-contract.md ownership note).
+#
+# (Milestone C replaces the structured config with the raw-command-canonical model;
+# Milestone D vendors this into the XDG plugins dir. For B it lives as a fixture.)
+id = "pandoc-renderer"
+name = "Pandoc Renderer"
+description = "Renders markdown to preview HTML via pandoc; the shipped default renderer."
+category = "renderer"
+kind = "command"
+config_schema = "schema.json"
+
+[exec]
+# Render context on argv; the markdown buffer arrives on stdin; HTML on stdout.
+command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}"]
+
+[[doctor_checks]]
+id = "pandoc-executable"
+description = "configured pandoc resolves, is executable, and --version exits 0"
+command = ["{plugin_dir}/check-executable.sh"]
+
+[[doctor_checks]]
+id = "pandoc-invocation"
+description = "pandoc --from <from_format> --to html5 (+ extra args) exits 0"
+command = ["{plugin_dir}/check-invocation.sh"]

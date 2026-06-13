@@ -14,7 +14,6 @@ pub struct Config {
     pub general: General,
     pub editor: Editor,
     pub preview: Preview,
-    pub pandoc: Pandoc,
     /// Export targets are config-owned plugins: each `[export.<id>]` table is a
     /// complete compilation command. The pandoc HTML/PDF invocations are merely
     /// the shipped default plugins (scripts/first-run.sh). Required — a config
@@ -160,17 +159,6 @@ pub struct Preview {
     pub debounce_ms: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Pandoc {
-    /// Pandoc executable: bare name resolved via PATH or an absolute path.
-    pub path: String,
-    /// Input format passed to pandoc --from (e.g. "markdown", "markdown+emoji").
-    pub from_format: String,
-    /// Extra arguments appended verbatim to every pandoc invocation.
-    pub extra_args: Vec<String>,
-}
-
 /// Inclusive editor font-size range, in px.
 pub const FONT_SIZE_MIN: u32 = 8;
 pub const FONT_SIZE_MAX: u32 = 48;
@@ -194,16 +182,6 @@ pub fn validate(config: &Config) -> Result<()> {
         return Err(Error::InvalidArgument(format!(
             "preview.debounce_ms must be between {DEBOUNCE_MS_MIN} and {DEBOUNCE_MS_MAX}, got {dbg}"
         )));
-    }
-    if config.pandoc.path.trim().is_empty() {
-        return Err(Error::InvalidArgument(
-            "pandoc.path must not be empty".into(),
-        ));
-    }
-    if config.pandoc.from_format.trim().is_empty() {
-        return Err(Error::InvalidArgument(
-            "pandoc.from_format must not be empty".into(),
-        ));
     }
     if config.export.is_empty() {
         return Err(Error::InvalidArgument(

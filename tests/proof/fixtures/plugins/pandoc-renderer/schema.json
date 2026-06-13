@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pandoc-renderer config section",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path", "from_format", "extra_args"],
+  "properties": {
+    "path": { "type": "string", "minLength": 1 },
+    "from_format": { "type": "string", "minLength": 1 },
+    "extra_args": { "type": "array", "items": { "type": "string" } }
+  }
+}

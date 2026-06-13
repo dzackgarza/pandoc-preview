@@ -12,15 +12,16 @@ export interface Config {
   preview: {
     debounce_ms: number;
   };
-  pandoc: {
-    path: string;
-    from_format: string;
-    extra_args: string[];
-  };
   // Export targets are config-owned plugins: each entry is a complete
   // compilation command (export-plugins-contract.md). Keyed by plugin id;
   // insertion order (preserved from the TOML) is the menu order.
   export: Record<string, ExportPlugin>;
+  // Plugin firewall + active renderer (Milestone A/B). Optional; absent when the
+  // config declares no plugins/renderer. The UI does not edit these (they round-
+  // trip verbatim through save), so per-plugin config is left opaque.
+  plugins?: { dir: string };
+  renderer?: { active: string };
+  plugin?: Record<string, Record<string, unknown>>;
 }
 
 export interface ExportPlugin {
