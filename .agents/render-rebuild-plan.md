@@ -227,11 +227,23 @@ plugins folded into the plugin model, the Firenvim editor-experience decision
 
 - **2026-06-14:** Plan authored. Three forks ratified. Milestone A designed.
   A1–A3 proof obligations ratified by the user; A4 HELD. Test classes settled:
-  A1=`p19` (webview), A2=`d08`, A3=`d09` (doctor-class). **NEXT (in progress):**
-  write the RED specs + two fixture plugins (`witness-tool`, `ratio-tool`) under
-  `tests/proof/fixtures/plugins/<id>/`, extend `proof-run.sh`/`provision-proof.sh`
-  for `d08`/`d09`, add a `runPluginById` app.ts helper, confirm RED for the right
-  reason via `just proof p19… d08… d09…`, commit RED, then GREEN.
+  A1=`p19` (webview), A2=`d08`, A3=`d09` (doctor-class). RED for all three is
+  WRITTEN and VERIFIED for the right reason (commits: A2/A3 = c86403c; A1 = this
+  commit): d08 — no `plugin-config:<id>` rows (generic validator absent); d09 — no
+  `witness-tool-*` rows (battery hardcoded, no aggregation); p19 —
+  `window.__PPE_E2E__.runPlugin is undefined` (generic run-plugin surface absent),
+  reached after the app booted, the harness attached, and the demo rendered.
+  Fixture plugins + manifest contract + harness wiring landed. **NEXT: GREEN A1–A3**
+  — implement `plugins.rs` (discovery from a validated core-config plugins dir),
+  the generic `jsonschema` validator over each `[plugin.<id>]` section, `run_plugin`
+  + the `__PPE_E2E__.runPlugin` bridge returning `PluginResult`, and doctor
+  aggregation of plugin-contributed checks; then make each spec green and re-run
+  the full suite (P1–P18/D1–D7 must stay green). GREEN also wires `[plugins].dir` +
+  `[plugin.witness-tool]` into p19/d08/d09 provisioning and extends the core schema
+  to accept `[plugins]`/`[plugin.*]`.
+  Operational note: `just proof` (P-series) needs port 1420 free — a running
+  `just dev` holds it and silently makes every webview spec load the non-e2e
+  bundle (no `__PPE_E2E__`). Stop `just dev` before running P-series proofs.
 - Nothing in A–G implemented yet. Prerequisite green baseline: P1–P18, D1–D7
   (full suite 25/25 green as of commit 4007cb0).
 - Note (not this task): `src-tauri/Cargo.toml` carries an uncommitted, unrelated

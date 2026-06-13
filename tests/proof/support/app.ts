@@ -80,6 +80,45 @@ export async function exportState(page: EvaluatesScripts): Promise<string> {
   );
 }
 
+// ── Run a generic plugin by id (A1/p19) ───────────────────────────────────
+// The plugin firewall discovers plugins from the configured plugins dir and
+// runs one by id against the REAL open buffer, returning a structured
+// PluginResult. The harness hook fires the run (fire-and-forget, like exportTo)
+// and stashes the resolved PluginResult on window.__PPE_PLUGIN_RESULT__ — the
+// same pattern as __PPE_EXPORT__. The on-disk artifact is the decisive proof;
+// the structured result is asserted alongside it. RED today: __PPE_E2E__.runPlugin
+// does not exist, so this evaluate throws — the generic run-plugin surface is absent.
+export async function runPluginById(
+  page: EvaluatesScripts,
+  pluginId: string,
+  target: string,
+): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.runPlugin(${JSON.stringify(pluginId)}, ${JSON.stringify(target)}); return null; })()`,
+  );
+}
+
+export interface PluginResult {
+  success: boolean;
+  artifact: string | null;
+  exit_code: number | null;
+  stdout: string;
+  stderr: string;
+}
+
+// Read the last plugin run's structured result (window.__PPE_PLUGIN_RESULT__),
+// or null until the run has resolved. Polled by the spec after runPluginById.
+export async function pluginResult(page: EvaluatesScripts): Promise<PluginResult | null> {
+  const raw = await page.evaluate(
+    `(() => { const r = window.__PPE_PLUGIN_RESULT__; return r === undefined || r === null ? null : JSON.stringify(r); })()`,
+  );
+  if (raw === null) return null;
+  if (typeof raw !== 'string') {
+    throw new Error(`pluginResult returned non-string: ${JSON.stringify(raw)}`);
+  }
+  return JSON.parse(raw) as PluginResult;
+}
+
 export async function editorText(page: EvaluatesScripts): Promise<string> {
   return asString(
     await page.evaluate(`window.__PPE_E2E__.getEditorText()`),
