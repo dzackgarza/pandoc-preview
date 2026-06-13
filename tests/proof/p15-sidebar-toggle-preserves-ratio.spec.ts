@@ -48,7 +48,7 @@ test('Hiding the file-tree sidebar preserves the editor:preview ratio', async ({
   // Hide the sidebar via the menu event bus and wait for it to leave the DOM.
   await toggleSidebarViaMenu(tauriPage);
   await tauriPage.waitForFunction(
-    `!document.querySelector('.grow.overflow-auto.p-1')`,
+    `(() => { const e = document.querySelector('[data-pane="sidebar"]'); return !e || e.offsetParent === null || e.getBoundingClientRect().width === 0; })()`,
     5_000,
   );
   expect(await sidebarPresent(tauriPage)).toBe(false);
@@ -62,7 +62,7 @@ test('Hiding the file-tree sidebar preserves the editor:preview ratio', async ({
   // Show it again and re-assert the ratio returns to the original split.
   await toggleSidebarViaMenu(tauriPage);
   await tauriPage.waitForFunction(
-    `!!document.querySelector('.grow.overflow-auto.p-1')`,
+    `(() => { const e = document.querySelector('[data-pane="sidebar"]'); return !!e && e.offsetParent !== null && e.getBoundingClientRect().width > 0; })()`,
     5_000,
   );
   expect(await sidebarPresent(tauriPage)).toBe(true);

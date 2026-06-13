@@ -21,7 +21,8 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-clipboard-manager": "^2",
     "@tauri-apps/plugin-dialog": "^2",
-    "codemirror": "^6"
+    "codemirror": "^6",
+    "dockview-core": "6.6.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",

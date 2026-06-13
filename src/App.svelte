@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { convertFileSrc } from "@tauri-apps/api/core";
   import { resolveResource } from "@tauri-apps/api/path";
@@ -9,6 +9,8 @@
   import * as api from "./lib/api";
   import type { Config, FileNode, RenderStatus } from "./lib/types";
   import { toastError, toastInfo, toastSuccess } from "./lib/toast.svelte";
+  import { createSplitLayout, type SplitLayout } from "./lib/dockview";
+  import { portal } from "./lib/portal";
 
   import EditorPane from "./lib/components/EditorPane.svelte";
   import FileTree from "./lib/components/FileTree.svelte";
@@ -28,7 +30,6 @@
   let dirty = $state(false);
 
   let sidebarVisible = $state(true);
-  let splitRatio = $state(0.5);
   let settingsOpen = $state(false);
   let prompt = $state<{
     title: string;
@@ -53,6 +54,13 @@
   let cursorCol = $state(1);
 
   let editor: EditorPane;
+
+  // dockview split layout (editor | preview). Built on mount once the
+  // container element exists; the sidebar is a sibling OUTSIDE this splitview.
+  let splitContainer = $state<HTMLDivElement | undefined>(undefined);
+  let split = $state<SplitLayout | undefined>(undefined);
+  let editorPaneEl = $state<HTMLElement | null>(null);
+  let previewPaneEl = $state<HTMLElement | null>(null);
 
   const fileName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
   const dirOf = (path: string) => path.slice(0, path.lastIndexOf("/"));
@@ -107,6 +115,20 @@
         configFontSize: () => config?.editor.font_size ?? null,
       };
     }
+
+    // Build the editor|preview splitview now that the container is in the DOM.
+    // The portal action mounts the editor/preview wrappers into the pane
+    // elements; dockview owns the sash and proportional relayout.
+    if (!splitContainer) {
+      throw new Error("split container element not mounted");
+    }
+    split = createSplitLayout(splitContainer);
+    editorPaneEl = split.editorPane;
+    previewPaneEl = split.previewPane;
+  });
+
+  onDestroy(() => {
+    split?.dispose();
   });
 
   $effect(() => {
@@ -443,50 +465,16 @@
     }
   }
 
-  // ---- split drag ----------------------------------------------------------
+  // ---- layout --------------------------------------------------------------
   //
-  // The split is computed against the editor+preview region ONLY (the sidebar
-  // is a sibling OUTSIDE splitRegion), so the divider lands at the pointer
-  // regardless of the sidebar width (P13). Both panes are sized as a percentage
-  // of that region, so switching the right-pane tab (P14) and toggling the
-  // sidebar (P15) cannot shift the split. The separator captures the pointer so
-  // pointermove keeps tracking even when the cursor crosses the preview iframe,
-  // and the iframe's pointer-events are disabled for the drag's duration.
-
-  let splitRegion: HTMLDivElement;
-  let dragging = $state(false);
-
-  function startSplitDrag(e: PointerEvent) {
-    e.preventDefault();
-    const separator = e.currentTarget as HTMLElement;
-    // Pointer capture keeps pointermove/pointerup targeted at the separator even
-    // when the cursor moves over the preview iframe. setPointerCapture can throw
-    // if there is no active pointer for the id (e.g. a synthetic event); guard it
-    // so the drag still proceeds via the window listeners below.
-    try {
-      separator.setPointerCapture(e.pointerId);
-    } catch {
-      // No active pointer to capture (synthetic event): window listeners suffice.
-    }
-    dragging = true;
-
-    const move = (ev: PointerEvent) => {
-      const rect = splitRegion.getBoundingClientRect();
-      splitRatio = Math.min(0.8, Math.max(0.2, (ev.clientX - rect.left) / rect.width));
-    };
-    const up = (ev: PointerEvent) => {
-      dragging = false;
-      try {
-        separator.releasePointerCapture(ev.pointerId);
-      } catch {
-        // Nothing captured; nothing to release.
-      }
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-  }
+  // The editor|preview split is owned by dockview-core's SplitviewComponent
+  // (see lib/dockview.ts): the sash lands at the pointer (P13), proportional
+  // layout keeps the editor:preview ratio across the sidebar toggle (P15), and
+  // switching the right-pane tab cannot move either pane (P14). The sidebar is a
+  // sibling OUTSIDE the splitview, toggled by a normal conditional below — its
+  // show/hide resizes the splitview container, which dockview's ResizeObserver
+  // relayouts proportionally. dockview natively disables iframe pointer-events
+  // during a sash drag, so the preview iframe cannot swallow the drag stream.
 </script>
 
 {#if config}
@@ -499,8 +487,15 @@
     />
 
     <div class="flex min-h-0 grow">
+      <!-- The file-tree sidebar is a flex sibling OUTSIDE the splitview. Its
+           show/hide changes the splitview container's width; dockview's
+           ResizeObserver relayouts the editor|preview split proportionally, so
+           the editor:preview ratio is preserved across the toggle (P15). -->
       {#if sidebarVisible}
-        <div class="w-60 shrink-0 border-r border-zinc-200 dark:border-zinc-700">
+        <div
+          data-pane="sidebar"
+          class="w-60 shrink-0 border-r border-zinc-200 dark:border-zinc-700"
+        >
           <FileTree
             {tree}
             {projectRoot}
@@ -515,13 +510,19 @@
         </div>
       {/if}
 
-      <!-- The editor+preview split region. The sidebar is OUTSIDE this region,
-           so the split ratio is computed against editor+preview only: the
-           divider lands at the pointer (P13) and toggling the sidebar cannot
-           shift the editor:preview ratio (P15). Both panes are percentage-sized,
-           so switching the right-pane tab cannot move them either (P14). -->
-      <div bind:this={splitRegion} class="flex min-w-0 grow">
-        <div class="min-w-0 shrink-0" style="width: {splitRatio * 100}%">
+      <!-- The dockview SplitviewComponent mounts here; it renders the editor and
+           preview panels plus the draggable sash. The editor/preview wrappers
+           below are portaled into the panel elements (data-pane="editor"/"preview")
+           so Svelte keeps full ownership of the components. -->
+      <div bind:this={splitContainer} class="relative min-w-0 grow"></div>
+
+      <!-- Off-layout holder for the portaled wrappers. The portal action moves
+           each wrapper node into its dockview pane on mount; until then they sit
+           here, hidden, so they never take flex space in this row. Once moved,
+           the wrapper is no longer a child of this holder and renders normally. -->
+      <div style="display: none">
+        <!-- Editor wrapper — relocated into the dockview editor panel. -->
+        <div class="h-full w-full" use:portal={editorPaneEl}>
           {#if currentFile === null}
             <div
               class="flex h-full items-center justify-center bg-white text-sm text-zinc-400 dark:bg-[#282c34]"
@@ -542,15 +543,9 @@
           </div>
         </div>
 
-        <div
-          class="w-1 shrink-0 cursor-col-resize bg-zinc-200 hover:bg-sky-400 dark:bg-zinc-700 dark:hover:bg-sky-500"
-          role="separator"
-          aria-orientation="vertical"
-          onpointerdown={startSplitDrag}
-        ></div>
-
-        <div class="min-w-0 grow">
-          <PreviewPane {html} {log} {status} {dragging} bind:activeTab />
+        <!-- Preview wrapper — relocated into the dockview preview panel. -->
+        <div class="h-full w-full" use:portal={previewPaneEl}>
+          <PreviewPane {html} {log} {status} bind:activeTab />
         </div>
       </div>
     </div>
