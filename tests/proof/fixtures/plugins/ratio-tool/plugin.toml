@@ -1,0 +1,16 @@
+# Second generic-plugin fixture (Milestone A, A2/d08). Its ONLY purpose is to
+# carry a config schema DIFFERENT from witness-tool's, so the d08 spec can prove
+# the generic validator validates each plugin's [plugin.<id>] section against
+# THAT plugin's declared schema — discriminating a single hard-coded validator
+# that could not simultaneously accept witness-tool's `greeting` config and
+# reject ratio-tool's out-of-range `ratio`.
+id = "ratio-tool"
+name = "Ratio Tool"
+description = "Schema-discriminator fixture with a numeric-range config section."
+category = "tools"
+kind = "command"
+
+[exec]
+command = ["{plugin_dir}/run.sh", "{file}", "{artifact}"]
+
+config_schema = "schema.json"

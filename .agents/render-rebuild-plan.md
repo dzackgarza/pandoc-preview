@@ -88,27 +88,39 @@ keep working unchanged (P7/P8/P12 green); they migrate into the plugin model in
 a later milestone (don't create two plugin notions long-term, but don't migrate
 in A).
 
-**Proposed proof obligations (RATIFY before writing specs; labels provisional):**
-- **A1 (doctor-class, ~d08)** — Trivial plugin executes and surfaces a structured
+**Ratified proof obligations (2026-06-14: A1–A3 ratified as written; A4 HELD).**
+Test classes were settled after reading the harness: A1's claim is P12's exact
+shape (drive a plugin by id through the webview E2E bridge, assert structured
+result + on-disk artifact), so A1 is a **P-series** spec (`p19`), not doctor-class.
+A2/A3 extend the already-green `--doctor` battery, so they are doctor-class
+(`d08`/`d09`). The `proof-run.sh` classifier glob and `provision-proof.sh`
+doctor-case are extended to cover `d08`/`d09` (test scaffold, not production code).
+- **A1 (`p19`, webview)** — Trivial plugin executes and surfaces a structured
   result. A committed fixture plugin (manifest + script writing a witness derived
   from the REAL buffer/file to its declared artifact) is discovered and invoked
   by id; the app returns `{success, artifact, exit_code, stdout/stderr}` and the
   artifact exists at the declared path with content proving the real context was
   passed. (Mirrors P12's "configured argv ran against the real source.")
-- **A2 (doctor-class, ~d09)** — Generic schema validation rejects bad plugin
+  RED reason: the `window.__PPE_E2E__.runPlugin` surface does not exist.
+- **A2 (`d08`, doctor-class)** — Generic schema validation rejects bad plugin
   config and accepts good, with zero core knowledge. A section violating the
   plugin's declared JSON Schema is rejected by the same generic validator the
   core uses (named error: plugin id + schema path); a conforming section passes.
   A second fixture plugin with a *different* schema, validated by the same code
-  path, discriminates a hard-coded validator.
-- **A3 (doctor-class, ~d10)** — Plugin-contributed doctor check joins the battery.
+  path, discriminates a hard-coded validator. RED reason: no plugin-schema check
+  exists in the battery.
+- **A3 (`d09`, doctor-class)** — Plugin-contributed doctor check joins the battery.
   A fixture plugin's declared check appears in the doctor report in the existing
   `[OK]/[FAIL]/[SKIP]` format alongside core checks: OK when its condition holds,
-  FAIL (named) when it doesn't.
-- **A4 (doctor-class, ~d11)** — Core config validated through the generic path. A
-  core-schema violation (e.g. `font_size` out of range) is caught by the generic
-  validator — the same code path as plugin validation — not the bespoke
-  hand-coded `validate()`. Discriminates today's hand-rolled validation.
+  FAIL (named) when it doesn't. RED reason: the doctor battery is hardcoded; no
+  plugin check is aggregated. (doctor-contract.md ownership note ratifies the
+  "core checks + aggregated plugin checks" framework.)
+- **A4 — HELD (2026-06-14).** Core config keeps its hand-coded `validate()` for
+  now; A's generic validator is proven on plugin sections only. The transitional
+  seam is accepted for whenever A4 lands: core schema would cover
+  general/editor/preview/pandoc via JSON Schema, while export's `{input}`/`{output}`
+  placeholder rule keeps its bespoke check until exports become a plugin (D1/D4/P9
+  stay green). Resume A4 only after A1–A3 are green.
 
 **Implementation risk to flag at design time.** The export-plugin placeholder
 rule (`{input}`/`{output}` must appear in some argv element) is NOT expressible
@@ -213,10 +225,15 @@ plugins folded into the plugin model, the Firenvim editor-experience decision
 
 ## Status / resume here
 
-- **2026-06-14:** Plan authored. Three forks ratified. Milestone A designed
-  (above). **NEXT:** ratify A1–A4 proof obligations with the user, then write the
-  RED specs (doctor-class `d08`–`d11`-style under `tests/proof/`, fixture plugins
-  under `tests/proof/fixtures/plugins/`), confirm RED for the right reason,
-  commit RED, then GREEN.
+- **2026-06-14:** Plan authored. Three forks ratified. Milestone A designed.
+  A1–A3 proof obligations ratified by the user; A4 HELD. Test classes settled:
+  A1=`p19` (webview), A2=`d08`, A3=`d09` (doctor-class). **NEXT (in progress):**
+  write the RED specs + two fixture plugins (`witness-tool`, `ratio-tool`) under
+  `tests/proof/fixtures/plugins/<id>/`, extend `proof-run.sh`/`provision-proof.sh`
+  for `d08`/`d09`, add a `runPluginById` app.ts helper, confirm RED for the right
+  reason via `just proof p19… d08… d09…`, commit RED, then GREEN.
 - Nothing in A–G implemented yet. Prerequisite green baseline: P1–P18, D1–D7
   (full suite 25/25 green as of commit 4007cb0).
+- Note (not this task): `src-tauri/Cargo.toml` carries an uncommitted, unrelated
+  comment degradation from a prior session (`--mathjax= {mathjax}`); leave
+  untouched, do not stage with the RED commit.

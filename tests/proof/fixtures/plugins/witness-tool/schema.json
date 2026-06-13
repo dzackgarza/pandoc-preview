@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "witness-tool config section",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["greeting"],
+  "properties": {
+    "greeting": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

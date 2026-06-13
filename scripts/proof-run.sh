@@ -103,7 +103,7 @@ HAVE_DOCTOR=0
 HAVE_APP=0
 for spec in "${SPECS[@]}"; do
     case "$spec" in
-    d0[1-7]-*.spec.ts) HAVE_DOCTOR=1 ;;
+    d0[1-9]-*.spec.ts) HAVE_DOCTOR=1 ;;
     *) HAVE_APP=1 ;;
     esac
 done
@@ -235,7 +235,7 @@ for spec in "${SPECS[@]}"; do
     # the per-spec status is recorded and aggregated into the artifact.
     spec_status=0
     case "$spec" in
-    d0[1-7]-*.spec.ts)
+    d0[1-9]-*.spec.ts)
         run_doctor_spec "$spec" "$spec_dir" "$abs_spec_dir" || spec_status=$?
         ;;
     *)

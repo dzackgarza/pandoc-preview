@@ -59,6 +59,17 @@ command = [
 EOF
 }
 
+# Generic-plugin fixtures (Milestone A). The plugins dir is a core-config value
+# (render-rebuild-plan.md), not a constant: each spec copies the committed
+# fixtures into a hermetic plugins dir and wires [plugins].dir below.
+PLUGINS_SRC="$REPO_ROOT/tests/proof/fixtures/plugins"
+install_plugin_fixtures() {
+    local dest="$1"
+    mkdir -p "$dest"
+    cp -r "$PLUGINS_SRC/witness-tool" "$dest/"
+    cp -r "$PLUGINS_SRC/ratio-tool" "$dest/"
+}
+
 # The P12 custom plugin: an arbitrary user-defined [export.witness] entry whose
 # command is the committed witness-export.sh, not pandoc. Proves the export
 # surface runs the configured argv verbatim against the real source.
@@ -82,7 +93,7 @@ EOF
 # broken environments are the doctor's product surface — and no witness
 # project. Provisioning writes the doctor-shaped config, then a lean manifest.
 case "$SPEC" in
-d0[1-7]-*.spec.ts)
+d0[1-9]-*.spec.ts)
     CONFIG_DIR="$ABS_SPEC_DIR/xdg-config/pandoc-preview"
     CONFIG_PATH="$CONFIG_DIR/config.toml"
 
@@ -160,6 +171,44 @@ EOF
         chmod 0644 "$NONEXEC" # readable, NOT executable
         write_valid_config "$NONEXEC"
         ;;
+    d08-*) # A2: generic plugin-config schema validation. Valid core config plus
+        # two discovered fixture plugins with DIFFERENT schemas — witness-tool's
+        # section conforms, ratio-tool's `ratio = 5` violates its schema (max 1).
+        write_valid_config "$PANDOC_BIN"
+        PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
+        install_plugin_fixtures "$PLUGINS_DIR"
+        cat >> "$CONFIG_PATH" <<EOF
+
+[plugins]
+dir = "$PLUGINS_DIR"
+
+[plugin.witness-tool]
+greeting = "hi"
+
+[plugin.ratio-tool]
+ratio = 5
+EOF
+        ;;
+    d09-*) # A3: plugin-contributed doctor checks join the battery. Valid core
+        # config plus the witness-tool fixture; both plugin sections conform.
+        # The witness-tool.marker file is deliberately NOT created, so the
+        # contributed witness-tool-marker check FAILs on its real condition while
+        # witness-tool-runnable passes.
+        write_valid_config "$PANDOC_BIN"
+        PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
+        install_plugin_fixtures "$PLUGINS_DIR"
+        cat >> "$CONFIG_PATH" <<EOF
+
+[plugins]
+dir = "$PLUGINS_DIR"
+
+[plugin.witness-tool]
+greeting = "hi"
+
+[plugin.ratio-tool]
+ratio = 0.5
+EOF
+        ;;
     esac
 
     jq -n \
@@ -236,6 +285,15 @@ fi
 case "$SPEC" in
 p12-export-custom-pipeline.spec.ts)
     emit_witness_export_table "$CONFIG_PATH"
+    ;;
+p19-plugin-run-by-id.spec.ts)
+    # A1: the generic plugin firewall discovers fixtures from the plugins dir and
+    # runs one by id. Install the witness-tool fixture. The config is left
+    # bootable (no [plugins] key the current schema would reject) so the spec
+    # fails precisely at the absent run-plugin surface. GREEN wires [plugins].dir
+    # + [plugin.witness-tool] here and adds discovery + the run_plugin command +
+    # the __PPE_E2E__.runPlugin bridge.
+    install_plugin_fixtures "$ABS_SPEC_DIR/plugins"
     ;;
 esac
 
