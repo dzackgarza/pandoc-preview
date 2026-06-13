@@ -17,8 +17,5 @@ export const deletePath = (path: string) => invoke<void>("delete_path", { path }
 
 export const renderPreview = (source: string, baseDir: string, baseUrl: string) =>
   invoke<RenderResult>("render_preview", { source, baseDir, baseUrl });
-export const exportDocument = (
-  sourcePath: string,
-  outputPath: string,
-  format: "html" | "pdf",
-) => invoke<ExportResult>("export_document", { sourcePath, outputPath, format });
+export const exportDocument = (pluginId: string, sourcePath: string, outputPath: string) =>
+  invoke<ExportResult>("export_document", { pluginId, sourcePath, outputPath });

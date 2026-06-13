@@ -25,7 +25,7 @@ pub const CHECK_CONFIG_SCHEMA: &str = "config-schema";
 pub const CHECK_CONFIG_VALUES: &str = "config-values";
 pub const CHECK_PANDOC_EXECUTABLE: &str = "pandoc-executable";
 pub const CHECK_PANDOC_INVOCATION: &str = "pandoc-invocation";
-pub const CHECK_PDF_ENGINE: &str = "pdf-engine";
+pub const CHECK_EXPORT_PLUGINS: &str = "export-plugins";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {
@@ -301,19 +301,53 @@ fn check_pandoc_invocation(cfg: &Config) -> CheckResult {
     }
 }
 
-/// lualatex must be present: PDF export is an owned surface.
-fn check_pdf_engine() -> CheckResult {
-    match resolve_program("lualatex") {
-        Some(p) if is_executable(&p) => CheckResult {
-            name: CHECK_PDF_ENGINE,
-            status: Status::Ok,
-            detail: format!("lualatex at {}", p.display()),
-        },
-        _ => CheckResult {
-            name: CHECK_PDF_ENGINE,
+/// Every configured `[export.<id>]` plugin must be well-formed (the same
+/// invariants the save path enforces, via `config::validate_export_plugin`) and
+/// its argv[0] must resolve to an executable file. No full probe run is
+/// performed — that would compile real documents; this honest limit is part of
+/// the contract (doctor-contract.md, export-plugins-contract.md). Supersedes the
+/// old `pdf-engine` check, which asserted lualatex on PATH while the export
+/// command never passed `--pdf-engine` and ran pandoc's implicit pdflatex.
+fn check_export_plugins(cfg: &Config) -> CheckResult {
+    if cfg.export.is_empty() {
+        return CheckResult {
+            name: CHECK_EXPORT_PLUGINS,
             status: Status::Fail,
-            detail: "lualatex not found on PATH (required for PDF export)".into(),
-        },
+            detail: "no [export.<id>] plugins configured".into(),
+        };
+    }
+    for (id, plugin) in &cfg.export {
+        if let Err(e) = config::validate_export_plugin(id, plugin) {
+            return CheckResult {
+                name: CHECK_EXPORT_PLUGINS,
+                status: Status::Fail,
+                detail: e.to_string(),
+            };
+        }
+        // argv[0] is the program; validate_export_plugin guarantees it exists.
+        let program = &plugin.command[0];
+        match resolve_program(program) {
+            Some(p) if is_executable(&p) => {}
+            Some(p) => {
+                return CheckResult {
+                    name: CHECK_EXPORT_PLUGINS,
+                    status: Status::Fail,
+                    detail: format!("export.{id}: {} is not executable", p.display()),
+                };
+            }
+            None => {
+                return CheckResult {
+                    name: CHECK_EXPORT_PLUGINS,
+                    status: Status::Fail,
+                    detail: format!("export.{id}: program {program:?} does not resolve to a file"),
+                };
+            }
+        }
+    }
+    CheckResult {
+        name: CHECK_EXPORT_PLUGINS,
+        status: Status::Ok,
+        detail: format!("{} export plugin(s) well-formed", cfg.export.len()),
     }
 }
 
@@ -344,10 +378,10 @@ pub fn run() -> Report {
                 CHECK_CONFIG_VALUES,
                 CHECK_PANDOC_EXECUTABLE,
                 CHECK_PANDOC_INVOCATION,
+                CHECK_EXPORT_PLUGINS,
             ] {
                 checks.push(skip(name, "config path could not be determined"));
             }
-            checks.push(check_pdf_engine());
             return Report { checks };
         }
     };
@@ -380,12 +414,12 @@ pub fn run() -> Report {
         }
     };
 
-    match cfg {
+    match &cfg {
         Some(cfg) => {
-            let (exe, usable) = check_pandoc_executable(&cfg);
+            let (exe, usable) = check_pandoc_executable(cfg);
             checks.push(exe);
             if usable {
-                checks.push(check_pandoc_invocation(&cfg));
+                checks.push(check_pandoc_invocation(cfg));
             } else {
                 checks.push(skip(CHECK_PANDOC_INVOCATION, "pandoc binary is not usable"));
             }
@@ -402,8 +436,14 @@ pub fn run() -> Report {
         }
     }
 
-    // pdf-engine is independent of the config and always runs.
-    checks.push(check_pdf_engine());
+    // export-plugins needs the parsed, valid config to enumerate the entries.
+    match &cfg {
+        Some(cfg) => checks.push(check_export_plugins(cfg)),
+        None => checks.push(skip(
+            CHECK_EXPORT_PLUGINS,
+            "config is invalid; cannot enumerate export plugins",
+        )),
+    }
 
     Report { checks }
 }

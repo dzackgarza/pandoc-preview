@@ -2,9 +2,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use crate::config;
+use crate::config::{self, PLACEHOLDER_INPUT, PLACEHOLDER_OUTPUT};
 use crate::error::{Error, Result};
 
 /// Math is always MathJax: KaTeX cannot cover the full range of math syntax
@@ -24,13 +24,6 @@ pub struct RenderResult {
 pub struct ExportResult {
     pub ok: bool,
     pub log: String,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ExportFormat {
-    Html,
-    Pdf,
 }
 
 fn format_log(program: &str, args: &[String], output: &std::process::Output) -> String {
@@ -113,50 +106,56 @@ fn render_sync(source: String, base_dir: String, base_url: String) -> Result<Ren
     })
 }
 
+/// Run a configured export plugin. The export surface is plugin-shaped: the
+/// ENTIRE compilation command is the `[export.<id>]` config entry. This resolves
+/// the entry by id (an unknown id is a loud error), substitutes the
+/// `{input}`/`{output}` placeholders per-argument, and spawns the configured
+/// argv with cwd = the source file's parent directory. There are NO hard-coded
+/// pandoc flags or formats here; the exit code is the contract and stderr lands
+/// in the compile log.
 fn export_sync(
+    plugin_id: String,
     source_path: String,
     output_path: String,
-    format: ExportFormat,
 ) -> Result<ExportResult> {
     let cfg = config::load()?;
+    let plugin = cfg.export.get(&plugin_id).ok_or_else(|| {
+        Error::InvalidArgument(format!("no configured export plugin with id {plugin_id:?}"))
+    })?;
+
     let source = PathBuf::from(&source_path);
     let dir = source
         .parent()
         .ok_or_else(|| Error::InvalidArgument(format!("{source_path} has no parent directory")))?
         .to_path_buf();
 
-    let mut args: Vec<String> = vec![
-        "--from".into(),
-        cfg.pandoc.from_format.clone(),
-        "--standalone".into(),
-    ];
-    match format {
-        ExportFormat::Html => {
-            // Self-contained single file: inline images, CSS, and math assets.
-            args.push("--embed-resources".into());
-            args.push(MATH_FLAG.into());
-        }
-        ExportFormat::Pdf => {
-            args.push(MATH_FLAG.into());
-        }
-    }
-    args.extend(cfg.pandoc.extra_args.iter().cloned());
-    args.push("--output".into());
-    args.push(output_path);
-    args.push(source_path);
+    // Substring substitution per argument: {input} -> source, {output} -> target.
+    let resolved: Vec<String> = plugin
+        .command
+        .iter()
+        .map(|arg| {
+            arg.replace(PLACEHOLDER_INPUT, &source_path)
+                .replace(PLACEHOLDER_OUTPUT, &output_path)
+        })
+        .collect();
 
-    let output = Command::new(&cfg.pandoc.path)
-        .args(&args)
+    // validate_export_plugin guarantees command.len() >= 1, so argv[0] exists.
+    let (program, args) = resolved
+        .split_first()
+        .expect("export command is non-empty (validated)");
+
+    let output = Command::new(program)
+        .args(args)
         .current_dir(&dir)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
-        .map_err(|e| Error::PandocSpawn(cfg.pandoc.path.clone(), e))?;
+        .map_err(|e| Error::PandocSpawn(program.clone(), e))?;
 
     Ok(ExportResult {
         ok: output.status.success(),
-        log: format_log(&cfg.pandoc.path, &args, &output),
+        log: format_log(program, args, &output),
     })
 }
 
@@ -173,11 +172,11 @@ pub async fn render_preview(
 
 #[tauri::command]
 pub async fn export_document(
+    plugin_id: String,
     source_path: String,
     output_path: String,
-    format: ExportFormat,
 ) -> Result<ExportResult> {
-    tauri::async_runtime::spawn_blocking(move || export_sync(source_path, output_path, format))
+    tauri::async_runtime::spawn_blocking(move || export_sync(plugin_id, source_path, output_path))
         .await
         .expect("export task panicked")
 }

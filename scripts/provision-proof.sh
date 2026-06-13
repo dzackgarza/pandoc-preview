@@ -29,11 +29,12 @@ WITNESS_PLUGIN="$REPO_ROOT/tests/proof/fixtures/plugins/witness-export.sh"
 # ── Export plugin tables (export-plugins-contract.md) ──────────────────
 # The two shipped default plugins, written EXACTLY as the contract specifies:
 # [export.html] with --embed-resources --mathjax, [export.pdf] with
-# --pdf-engine=lualatex. Appended to the config for the specs whose obligation
-# is the plugin-shaped export surface (p07/p08/p12) and the doctor export-plugins
-# check (d01). No other spec receives these tables: the current Config has
-# deny_unknown_fields and no `export` field, so adding them to a green spec's
-# config would change its boot behaviour.
+# --pdf-engine=lualatex. Now that [export] is REQUIRED by the schema, EVERY
+# valid provisioned config carries these tables (the canonical witness config
+# and write_valid_config both call this); without them config-schema fails and
+# the app never boots. p07/p08 exercise the defaults directly, d01's
+# export-plugins check validates them, and p12 adds a custom witness plugin on
+# top.
 emit_default_export_tables() {
     local out="$1"
     cat >> "$out" <<EOF
@@ -105,6 +106,9 @@ path = "$pandoc_path"
 from_format = "markdown"
 extra_args = []
 EOF
+        # [export] is REQUIRED by the schema: every valid config carries the two
+        # shipped default plugin tables (export-plugins-contract.md).
+        emit_default_export_tables "$CONFIG_PATH"
     }
 
     # The exact observed stale key regression (schema removed 'math').
@@ -131,11 +135,10 @@ EOF
     }
 
     case "$SPEC" in
-    d01-*) # valid env: every check OK, incl. the export-plugins check, so the
-        # config carries the two shipped default [export.*] plugin tables that
-        # check validates (export-plugins-contract.md, doctor-contract.md D1).
+    d01-*) # valid env: every check OK, incl. the export-plugins check, which
+        # validates the two shipped default [export.*] plugin tables that
+        # write_valid_config now writes (export-plugins-contract.md, D1).
         write_valid_config "$PANDOC_BIN"
-        emit_default_export_tables "$CONFIG_PATH"
         ;;
     d02-*) # no config: leave the config dir absent (gum first-run creates it)
         : ;;
@@ -214,23 +217,50 @@ path = "$PANDOC_BIN"
 from_format = "markdown"
 extra_args = []
 EOF
+    # [export] is REQUIRED by the schema (export-plugins-contract.md): every
+    # valid config carries the two shipped default plugin tables. Without them
+    # the config would fail config-schema and the app would never boot.
+    emit_default_export_tables "$CONFIG_PATH"
 fi
 
-# ── Export-plugin config variant (p07/p08/p12 only) ────────────────────
-# These three specs assert on the plugin-shaped export surface
-# (export-plugins-contract.md), so their config carries the [export.*] tables.
-# p07/p08 exercise the two shipped defaults; p12 adds the custom witness plugin.
-# No other P-spec gets these tables (the current schema's deny_unknown_fields
-# would change their boot behaviour).
+# ── Custom export plugin (p12 only) ────────────────────────────────────
+# P12 asserts the export surface runs an ARBITRARY configured argv against the
+# real source, so its config additionally carries a user-defined [export.witness]
+# plugin whose command is the committed witness-export.sh (not pandoc).
 case "$SPEC" in
-p07-export-html.spec.ts | p08-export-pdf.spec.ts)
-    emit_default_export_tables "$CONFIG_PATH"
-    ;;
 p12-export-custom-pipeline.spec.ts)
-    emit_default_export_tables "$CONFIG_PATH"
     emit_witness_export_table "$CONFIG_PATH"
     ;;
 esac
+
+# ── lualatex font-cache warmup (p08 only) ──────────────────────────────
+# Each run's HOME is a fresh empty dir, so the FIRST lualatex invocation
+# rebuilds the luaotfload font database (written under
+# $HOME/.config/texlive/<year>/texmf-var/luatex-cache), which takes far longer
+# than the spec's artifact poll window. Warm it here by running the exact
+# shipped [export.pdf] plugin command once under the spec's hermetic env.
+# This is environment provisioning (same class as pre-building the app
+# binary), NOT the proof: the spec still drives the app's own export and
+# asserts on the artifact that export produces. Fails loudly if the command
+# cannot produce a PDF — a broken lualatex is a broken proof environment.
+if [ "$SPEC" = "p08-export-pdf.spec.ts" ]; then
+    WARMUP_PDF="$ABS_SPEC_DIR/lualatex-warmup.pdf"
+    # cwd = the source file's parent, mirroring the app's export contract.
+    (
+        cd "$PROJECT_DIR"
+        env HOME="$ABS_SPEC_DIR/home" \
+            XDG_CONFIG_HOME="$ABS_SPEC_DIR/xdg-config" \
+            XDG_CACHE_HOME="$ABS_SPEC_DIR/xdg-cache" \
+            XDG_STATE_HOME="$ABS_SPEC_DIR/xdg-state" \
+            pandoc --from markdown --standalone --pdf-engine=lualatex \
+            "$DEMO_FILE" --output "$WARMUP_PDF"
+    )
+    if [ ! -s "$WARMUP_PDF" ]; then
+        echo "FATAL: lualatex warmup produced no PDF at $WARMUP_PDF" >&2
+        exit 1
+    fi
+    rm -f "$WARMUP_PDF"
+fi
 
 jq -n \
     --arg runId "$RUN_ID" \

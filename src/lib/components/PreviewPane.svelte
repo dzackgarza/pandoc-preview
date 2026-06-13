@@ -5,11 +5,16 @@
     html,
     log,
     status,
+    dragging = false,
     activeTab = $bindable(),
   }: {
     html: string;
     log: string;
     status: RenderStatus;
+    // True while the editor/preview divider is being dragged: the iframe's
+    // pointer-events are disabled so the cursor crossing it cannot swallow the
+    // drag's pointermove stream.
+    dragging?: boolean;
     activeTab: "preview" | "log";
   } = $props();
 </script>
@@ -47,6 +52,7 @@
     <iframe
       title="Rendered preview"
       class="h-full w-full grow border-0 bg-white"
+      style={dragging ? "pointer-events: none" : ""}
       sandbox="allow-same-origin allow-scripts"
       srcdoc={html}
     ></iframe>

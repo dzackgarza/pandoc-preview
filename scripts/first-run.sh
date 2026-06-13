@@ -141,6 +141,30 @@ path = "$PANDOC_PATH"
 from_format = "$FROM_FORMAT"
 # Extra arguments appended verbatim to every pandoc invocation.
 extra_args = [$EXTRA_ARGS_TOML]
+
+# Export targets are config-owned plugins: each [export.<id>] table is a
+# complete compilation command. {input}/{output} are substituted per-argument;
+# the process runs with cwd = the source file's parent. These two are the
+# shipped defaults — add, edit, or replace them with any pipeline you need
+# (custom filters, templates, latexmk, your own build script).
+
+[export.html]
+label = "HTML (self-contained)"
+extension = "html"
+command = [
+  "pandoc", "--from", "markdown", "--standalone",
+  "--embed-resources", "--mathjax",
+  "{input}", "--output", "{output}",
+]
+
+[export.pdf]
+label = "PDF"
+extension = "pdf"
+command = [
+  "pandoc", "--from", "markdown", "--standalone",
+  "--pdf-engine=lualatex",
+  "{input}", "--output", "{output}",
+]
 EOF
 
 gum style --bold --foreground 2 "Config written to $CONFIG_FILE"

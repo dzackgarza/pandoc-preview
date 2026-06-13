@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
@@ -14,6 +15,71 @@ pub struct Config {
     pub editor: Editor,
     pub preview: Preview,
     pub pandoc: Pandoc,
+    /// Export targets are config-owned plugins: each `[export.<id>]` table is a
+    /// complete compilation command. The pandoc HTML/PDF invocations are merely
+    /// the shipped default plugins (scripts/first-run.sh). Required — a config
+    /// without any `[export]` table is a hard startup error, never defaulted.
+    /// IndexMap preserves declaration order so the Export menu lists entries in
+    /// config order.
+    pub export: IndexMap<String, ExportPlugin>,
+}
+
+/// One export plugin: the entire compilation command for an export target.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExportPlugin {
+    /// Human-readable menu label, non-empty.
+    pub label: String,
+    /// Output file extension (no dot), non-empty. Used for the save dialog.
+    pub extension: String,
+    /// The exact argv to spawn. Never a shell string. `{input}` and `{output}`
+    /// placeholders are substituted per-argument (substring substitution); both
+    /// must appear in at least one argument. Length >= 1.
+    pub command: Vec<String>,
+}
+
+/// The two placeholders every export command must reference.
+pub const PLACEHOLDER_INPUT: &str = "{input}";
+pub const PLACEHOLDER_OUTPUT: &str = "{output}";
+
+/// Validate a single export plugin's invariants. The single source of truth for
+/// the entry shape: both `validate` (config-values / save path) and the doctor's
+/// `export-plugins` check call this; the rules are never duplicated.
+pub fn validate_export_plugin(id: &str, plugin: &ExportPlugin) -> Result<()> {
+    if plugin.label.trim().is_empty() {
+        return Err(Error::InvalidArgument(format!(
+            "export.{id}.label must not be empty"
+        )));
+    }
+    if plugin.extension.trim().is_empty() {
+        return Err(Error::InvalidArgument(format!(
+            "export.{id}.extension must not be empty"
+        )));
+    }
+    if plugin.command.is_empty() {
+        return Err(Error::InvalidArgument(format!(
+            "export.{id}.command must have at least one argument"
+        )));
+    }
+    if !plugin
+        .command
+        .iter()
+        .any(|arg| arg.contains(PLACEHOLDER_INPUT))
+    {
+        return Err(Error::InvalidArgument(format!(
+            "export.{id}.command must reference the {PLACEHOLDER_INPUT} placeholder"
+        )));
+    }
+    if !plugin
+        .command
+        .iter()
+        .any(|arg| arg.contains(PLACEHOLDER_OUTPUT))
+    {
+        return Err(Error::InvalidArgument(format!(
+            "export.{id}.command must reference the {PLACEHOLDER_OUTPUT} placeholder"
+        )));
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,6 +158,14 @@ pub fn validate(config: &Config) -> Result<()> {
         return Err(Error::InvalidArgument(
             "pandoc.from_format must not be empty".into(),
         ));
+    }
+    if config.export.is_empty() {
+        return Err(Error::InvalidArgument(
+            "at least one [export.<id>] plugin must be configured".into(),
+        ));
+    }
+    for (id, plugin) in &config.export {
+        validate_export_plugin(id, plugin)?;
     }
     Ok(())
 }

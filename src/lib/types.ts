@@ -17,6 +17,16 @@ export interface Config {
     from_format: string;
     extra_args: string[];
   };
+  // Export targets are config-owned plugins: each entry is a complete
+  // compilation command (export-plugins-contract.md). Keyed by plugin id;
+  // insertion order (preserved from the TOML) is the menu order.
+  export: Record<string, ExportPlugin>;
+}
+
+export interface ExportPlugin {
+  label: string;
+  extension: string;
+  command: string[];
 }
 
 export interface FileNode {

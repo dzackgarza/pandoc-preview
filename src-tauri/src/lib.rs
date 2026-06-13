@@ -13,8 +13,8 @@ use tauri::{AppHandle, Emitter, Runtime};
 #[cfg(feature = "e2e-testing")]
 pub const PLAYWRIGHT_SOCKET: &str = "/tmp/pandoc-preview-playwright.sock";
 
-fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
-    let file = SubmenuBuilder::new(app, "File")
+fn build_menu<R: Runtime>(app: &AppHandle<R>, config: &config::Config) -> tauri::Result<Menu<R>> {
+    let mut file = SubmenuBuilder::new(app, "File")
         .item(
             &MenuItemBuilder::with_id("new_file", "New File…")
                 .accelerator("CmdOrCtrl+N")
@@ -36,9 +36,19 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
                 .accelerator("CmdOrCtrl+Shift+S")
                 .build(app)?,
         )
-        .separator()
-        .item(&MenuItemBuilder::with_id("export_html", "Export HTML…").build(app)?)
-        .item(&MenuItemBuilder::with_id("export_pdf", "Export PDF…").build(app)?)
+        .separator();
+
+    // One Export menu item per configured [export.<id>] plugin, in config order.
+    // The menu item id carries the plugin id ("export:<id>"); the webview handler
+    // drives the SAME export command path as the E2E hook.
+    for (id, plugin) in &config.export {
+        file = file.item(
+            &MenuItemBuilder::with_id(format!("export:{id}"), format!("Export {}…", plugin.label))
+                .build(app)?,
+        );
+    }
+
+    let file = file
         .separator()
         .item(&PredefinedMenuItem::quit(app, None)?)
         .build()?;
@@ -170,7 +180,10 @@ pub fn run() {
                 )?;
             }
 
-            let menu = build_menu(app.handle())?;
+            // The startup gate already validated the config; load it to build the
+            // Export menu from the configured [export.<id>] plugins.
+            let cfg = config::load().expect("config validated by startup gate but failed to load");
+            let menu = build_menu(app.handle(), &cfg)?;
             app.set_menu(menu)?;
             app.on_menu_event(|app, event| {
                 // Forward every custom menu item to the webview by id.
