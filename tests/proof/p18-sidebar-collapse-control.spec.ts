@@ -2,44 +2,69 @@ import { test, expect } from './fixtures';
 import { loadRunManifest } from './support/run-manifest';
 import { recordObservation } from './support/observations';
 import { openAndSelectDemo, waitForPreview } from './support/app';
-import { sidebarPresent } from './support/layout';
+import { sidebarPresent, waitForSplitSettled } from './support/layout';
 
-// P18 — The sidebar has a visible collapse control. There is a toolbar button
-// (title beginning "Toggle Sidebar") that collapses and expands the file-tree
-// sidebar — the sidebar must be collapsible from the UI, not only via the
-// native View menu / F9. Clicking the control hides the sidebar; clicking it
-// again restores it.
+// P18 — VSCode-style activity bar + collapsible side bar. The left of the window
+// is an always-visible activity bar (a vertical strip of view controls, built to
+// hold more views later) plus a collapsible side bar that shows the ACTIVE
+// view's content. Now there is one view, Explorer (the file tree). Its activity-
+// bar control carries data-view="explorer"; the side bar carries
+// data-pane="sidebar" and a header naming the active view.
 //
-// Discriminator: the current app has NO such control (the sidebar toggles only
-// through the menu event bus), so the click target does not exist and the
-// sidebar never collapses from a UI affordance — this spec is RED until the
-// control is added and wired to the same sidebar-visibility state. The
-// assertion is the OBSERVED collapse/expand, not the mere presence of a button.
+// Observable behaviour proven here:
+//   - the Explorer activity-bar control exists.
+//   - the side bar starts open, showing the Explorer view (its header names it).
+//   - clicking the active view's control COLLAPSES the side bar — but the
+//     activity bar persists (the control is still there to reopen it), exactly
+//     like VSCode. Clicking it again reopens the side bar.
+//
+// Discriminator: the current app has a single ☰ toggle button in the formatting
+// toolbar and no activity bar — no data-view control, no view header, and the
+// toggle disappears with the toolbar contents rather than persisting as an
+// activity bar. So this spec is RED until the activity-bar + side-bar structure
+// exists. The assertions are the OBSERVED collapse/persist behaviour and the
+// view header, not the mere presence of a control.
 
-test('a toolbar control collapses and expands the file-tree sidebar', async ({ tauriPage }) => {
+test('the activity bar persists and its Explorer control collapses/expands the side bar', async ({
+  tauriPage,
+}) => {
   const manifest = loadRunManifest();
 
   await openAndSelectDemo(tauriPage, manifest.project);
   await waitForPreview(tauriPage, `return d.querySelector('h1') !== null;`);
 
-  // Sidebar starts visible.
-  expect(await sidebarPresent(tauriPage)).toBe(true);
+  // The Explorer activity-bar control exists (and is the extensible view strip).
+  expect(await tauriPage.count('[data-view="explorer"]')).toBe(1);
 
-  // The visible collapse control exists and collapses the sidebar.
-  await tauriPage.click('button[title^="Toggle Sidebar"]');
+  // The side bar starts open, showing the Explorer view — its header names it.
+  expect(await sidebarPresent(tauriPage)).toBe(true);
+  const headerText = await tauriPage.evaluate(
+    `(document.querySelector('[data-pane="sidebar"]')?.textContent ?? '')`,
+  );
+  expect(typeof headerText).toBe('string');
+  expect((headerText as string).toLowerCase().includes('explorer')).toBe(true);
+
+  // Clicking the active view's control collapses the side bar.
+  await tauriPage.click('[data-view="explorer"]');
   await tauriPage.waitForFunction(
     `(() => { const e = document.querySelector('[data-pane="sidebar"]'); return !e || e.offsetParent === null || e.getBoundingClientRect().width === 0; })()`,
     5_000,
   );
+  await waitForSplitSettled(tauriPage);
   expect(await sidebarPresent(tauriPage)).toBe(false);
 
-  // Clicking it again expands the sidebar back.
-  await tauriPage.click('button[title^="Toggle Sidebar"]');
+  // ...but the ACTIVITY BAR persists when collapsed (VSCode behaviour): the
+  // Explorer control is still present to reopen the side bar.
+  expect(await tauriPage.count('[data-view="explorer"]')).toBe(1);
+
+  // Clicking it again reopens the side bar.
+  await tauriPage.click('[data-view="explorer"]');
   await tauriPage.waitForFunction(
     `(() => { const e = document.querySelector('[data-pane="sidebar"]'); return !!e && e.offsetParent !== null && e.getBoundingClientRect().width > 0; })()`,
     5_000,
   );
+  await waitForSplitSettled(tauriPage);
   expect(await sidebarPresent(tauriPage)).toBe(true);
 
-  recordObservation({ spec: manifest.spec, name: 'collapse-control', value: 'toggles-sidebar' });
+  recordObservation({ spec: manifest.spec, name: 'activity-bar', value: 'explorer-collapses-sidebar' });
 });
