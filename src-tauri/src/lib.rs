@@ -2,6 +2,7 @@ mod config;
 mod doctor;
 mod error;
 mod fsops;
+mod plugins;
 mod render;
 
 use tauri::menu::{AboutMetadata, Menu, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
@@ -162,6 +163,7 @@ pub fn run() {
             fsops::delete_path,
             render::render_preview,
             render::export_document,
+            plugins::run_plugin,
         ])
         .setup(|app| {
             // Grant the playwright plugin's pw_result IPC permission, but only

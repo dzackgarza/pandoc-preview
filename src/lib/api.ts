@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Config, ExportResult, FileNode, RenderResult } from "./types";
+import type { Config, ExportResult, FileNode, PluginResult, RenderResult } from "./types";
 
 export const getConfig = () => invoke<Config>("get_config");
 export const saveConfig = (config: Config) => invoke<void>("save_config", { config });
@@ -23,3 +23,11 @@ export const renderPreview = (
 ) => invoke<RenderResult>("render_preview", { source, baseDir, baseUrl, mathjaxUrl });
 export const exportDocument = (pluginId: string, sourcePath: string, outputPath: string) =>
   invoke<ExportResult>("export_document", { pluginId, sourcePath, outputPath });
+
+/** Run a discovered plugin by id against the real open buffer (Milestone A). */
+export const runPlugin = (
+  pluginId: string,
+  sourcePath: string,
+  outputPath: string,
+  buffer: string,
+) => invoke<PluginResult>("run_plugin", { pluginId, sourcePath, outputPath, buffer });

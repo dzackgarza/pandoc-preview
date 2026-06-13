@@ -13,16 +13,16 @@ name = "Witness Tool"
 description = "Emits a witness derived from the real buffer (heading + sha256)."
 category = "tools"
 kind = "command"
+# JSON Schema (draft 2020-12) for this plugin's [plugin.witness-tool] config
+# section. Referenced, not inlined. Top-level scalar keys must precede any table
+# header in TOML, so this sits above [exec].
+config_schema = "schema.json"
 
 [exec]
 # argv with per-element placeholder substitution: {plugin_dir} = this plugin's
 # directory, {file} = the real on-disk source path of the open buffer,
 # {artifact} = the app-provided output path. The real buffer is also on stdin.
 command = ["{plugin_dir}/run.sh", "{file}", "{artifact}"]
-
-# JSON Schema (draft 2020-12) for this plugin's [plugin.witness-tool] config
-# section. Referenced, not inlined.
-config_schema = "schema.json"
 
 # Doctor checks this plugin contributes to the one battery (A3). Each declares a
 # stable id, a human description, and a command whose exit status is the check:

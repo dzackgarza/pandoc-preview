@@ -7,7 +7,7 @@
   import { ask, open, save as saveDialog } from "@tauri-apps/plugin-dialog";
 
   import * as api from "./lib/api";
-  import type { Config, FileNode, RenderStatus } from "./lib/types";
+  import type { Config, FileNode, PluginResult, RenderStatus } from "./lib/types";
   import { toastError, toastInfo, toastSuccess } from "./lib/toast.svelte";
   import { createSplitLayout, type SplitLayout } from "./lib/dockview";
   import { portal } from "./lib/portal";
@@ -121,6 +121,23 @@
             (e: unknown) => {
               (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ =
                 "error: " + String(e);
+            },
+          );
+        },
+        runPlugin: (pluginId: string, target: string) => {
+          (window as unknown as { __PPE_PLUGIN_RESULT__: unknown }).__PPE_PLUGIN_RESULT__ = null;
+          runPluginToPath(pluginId, target).then(
+            (res: PluginResult) => {
+              (window as unknown as { __PPE_PLUGIN_RESULT__: unknown }).__PPE_PLUGIN_RESULT__ = res;
+            },
+            (e: unknown) => {
+              (window as unknown as { __PPE_PLUGIN_RESULT__: unknown }).__PPE_PLUGIN_RESULT__ = {
+                success: false,
+                artifact: null,
+                exit_code: null,
+                stdout: "",
+                stderr: "error: " + String(e),
+              } satisfies PluginResult;
             },
           );
         },
@@ -378,6 +395,18 @@
     } catch (e) {
       toastError(String(e));
     }
+  }
+
+  /** Run the discovered plugin `pluginId` against the open buffer, writing to
+   * `target`; returns the structured PluginResult. The generic counterpart of
+   * exportToPath: the backend discovers the plugin, substitutes {file}/{artifact},
+   * and spawns its command with the real buffer on stdin. */
+  async function runPluginToPath(pluginId: string, target: string): Promise<PluginResult> {
+    if (!currentFile) {
+      throw new Error("No file open to run a plugin against.");
+    }
+    if (dirty) await saveCurrent();
+    return api.runPlugin(pluginId, currentFile, target, editor.getContent());
   }
 
   async function exportDoc(pluginId: string) {

@@ -233,17 +233,26 @@ plugins folded into the plugin model, the Firenvim editor-experience decision
   `witness-tool-*` rows (battery hardcoded, no aggregation); p19 —
   `window.__PPE_E2E__.runPlugin is undefined` (generic run-plugin surface absent),
   reached after the app booted, the harness attached, and the demo rendered.
-  Fixture plugins + manifest contract + harness wiring landed. **NEXT: GREEN A1–A3**
-  — implement `plugins.rs` (discovery from a validated core-config plugins dir),
-  the generic `jsonschema` validator over each `[plugin.<id>]` section, `run_plugin`
-  + the `__PPE_E2E__.runPlugin` bridge returning `PluginResult`, and doctor
-  aggregation of plugin-contributed checks; then make each spec green and re-run
-  the full suite (P1–P18/D1–D7 must stay green). GREEN also wires `[plugins].dir` +
-  `[plugin.witness-tool]` into p19/d08/d09 provisioning and extends the core schema
-  to accept `[plugins]`/`[plugin.*]`.
+  Fixture plugins + manifest contract + harness wiring landed.
+- **Milestone A GREEN (this commit): A1–A3 implemented; full suite 27/27 green.**
+  `plugins.rs` discovers plugins from the optional `[plugins].dir`, validates each
+  `[plugin.<id>]` section against the plugin's declared JSON Schema via the
+  `jsonschema` crate (ONE generic path), runs a plugin by id against the real
+  buffer (`run_plugin` + the `__PPE_E2E__.runPlugin` bridge returning `PluginResult`),
+  and the doctor aggregates `plugin-config:<id>` + each plugin's contributed
+  `[[doctor_checks]]` into the one battery. Core config gained an OPTIONAL
+  `[plugins]` table + `[plugin.<id>]` sections (additive capability; empty/absent
+  is never re-serialized, so plugin-less configs roundtrip unchanged — A4 still
+  HELD, core `validate()` stays hand-coded). `kind` is validated (fail-loud on
+  unsupported). **NEXT: Milestone B** (renderer-as-plugin + generic renderer).
+  Decisions worth noting: `[plugins]` is optional in Milestone A because plugins
+  are additive here; it becomes required (with a config migration) when B/C make
+  renderers plugins. `jsonschema = 0.40` (`validator_for`/`validate`/`instance_path()`).
   Operational note: `just proof` (P-series) needs port 1420 free — a running
   `just dev` holds it and silently makes every webview spec load the non-e2e
-  bundle (no `__PPE_E2E__`). Stop `just dev` before running P-series proofs.
+  bundle (no `__PPE_E2E__`). Also: in a from-cold full run, d01 can flake on the 8s
+  spawnDoctor timeout because two ~50s cargo builds precede it; re-run with cached
+  binaries for a clean pass (binary is correct — verified standalone).
 - Nothing in A–G implemented yet. Prerequisite green baseline: P1–P18, D1–D7
   (full suite 25/25 green as of commit 4007cb0).
 - Note (not this task): `src-tauri/Cargo.toml` carries an uncommitted, unrelated

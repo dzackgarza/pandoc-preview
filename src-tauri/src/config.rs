@@ -22,6 +22,29 @@ pub struct Config {
     /// IndexMap preserves declaration order so the Export menu lists entries in
     /// config order.
     pub export: IndexMap<String, ExportPlugin>,
+    /// Plugin firewall (Milestone A). Optional capability: when the `[plugins]`
+    /// table is present, `dir` is the directory the app discovers plugins from;
+    /// when absent, the app has no plugins (a complete, valid state). Optional,
+    /// NOT defaulted — there is no implicit plugins directory. An absent table is
+    /// never re-serialized (a plugin-less config stays plugin-less on save).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plugins: Option<Plugins>,
+    /// Per-plugin config sections, one `[plugin.<id>]` table per plugin. Each is
+    /// validated against the plugin's declared JSON Schema by the generic
+    /// validator (`plugins::validate_plugin_config`), never by the core. Empty
+    /// when no plugin declares config; an empty map is never re-serialized.
+    #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
+    pub plugin: IndexMap<String, toml::Value>,
+}
+
+/// The `[plugins]` table: where plugins are discovered. Present only when the
+/// user has configured a plugins directory.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Plugins {
+    /// Directory plugins are discovered from. Each plugin is a subdirectory with
+    /// a `plugin.toml` manifest. Required when `[plugins]` is present.
+    pub dir: String,
 }
 
 /// One export plugin: the entire compilation command for an export target.
@@ -173,6 +196,16 @@ pub fn validate(config: &Config) -> Result<()> {
     }
     for (id, plugin) in &config.export {
         validate_export_plugin(id, plugin)?;
+    }
+    // When a plugins directory is configured, its path must be non-empty. The
+    // per-plugin `[plugin.<id>]` schema validation lives in the generic plugin
+    // validator (the doctor's plugin-config checks), not here.
+    if let Some(plugins) = &config.plugins {
+        if plugins.dir.trim().is_empty() {
+            return Err(Error::InvalidArgument(
+                "plugins.dir must not be empty".into(),
+            ));
+        }
     }
     Ok(())
 }

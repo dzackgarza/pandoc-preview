@@ -49,7 +49,10 @@ impl Status {
 
 #[derive(Debug, Clone)]
 pub struct CheckResult {
-    pub name: &'static str,
+    /// Check name. Core checks use the stable `CHECK_*` constants; plugin checks
+    /// contribute dynamic names (`plugin-config:<id>` and their declared check
+    /// ids), so this is an owned String.
+    pub name: String,
     pub status: Status,
     pub detail: String,
 }
@@ -121,13 +124,13 @@ fn is_executable(path: &Path) -> bool {
 fn check_config_exists(path: &Path) -> CheckResult {
     if path.is_file() {
         CheckResult {
-            name: CHECK_CONFIG_EXISTS,
+            name: CHECK_CONFIG_EXISTS.into(),
             status: Status::Ok,
             detail: format!("config present at {}", path.display()),
         }
     } else {
         CheckResult {
-            name: CHECK_CONFIG_EXISTS,
+            name: CHECK_CONFIG_EXISTS.into(),
             status: Status::Fail,
             detail: format!("no config file at {}", path.display()),
         }
@@ -143,7 +146,7 @@ fn check_config_schema(path: &Path) -> (CheckResult, Option<Config>) {
         Err(e) => {
             return (
                 CheckResult {
-                    name: CHECK_CONFIG_SCHEMA,
+                    name: CHECK_CONFIG_SCHEMA.into(),
                     status: Status::Fail,
                     detail: format!("could not read {}: {e}", path.display()),
                 },
@@ -154,7 +157,7 @@ fn check_config_schema(path: &Path) -> (CheckResult, Option<Config>) {
     match toml::from_str::<Config>(&raw) {
         Ok(cfg) => (
             CheckResult {
-                name: CHECK_CONFIG_SCHEMA,
+                name: CHECK_CONFIG_SCHEMA.into(),
                 status: Status::Ok,
                 detail: "config parses under the current schema".into(),
             },
@@ -162,7 +165,7 @@ fn check_config_schema(path: &Path) -> (CheckResult, Option<Config>) {
         ),
         Err(e) => (
             CheckResult {
-                name: CHECK_CONFIG_SCHEMA,
+                name: CHECK_CONFIG_SCHEMA.into(),
                 status: Status::Fail,
                 detail: format!("schema rejected {}: {e}", path.display()),
             },
@@ -174,7 +177,7 @@ fn check_config_schema(path: &Path) -> (CheckResult, Option<Config>) {
 fn check_config_values(cfg: &Config) -> CheckResult {
     match config::validate(cfg) {
         Ok(()) => CheckResult {
-            name: CHECK_CONFIG_VALUES,
+            name: CHECK_CONFIG_VALUES.into(),
             status: Status::Ok,
             detail: format!(
                 "font_size={}, debounce_ms={}, pandoc/from_format non-empty",
@@ -182,7 +185,7 @@ fn check_config_values(cfg: &Config) -> CheckResult {
             ),
         },
         Err(e) => CheckResult {
-            name: CHECK_CONFIG_VALUES,
+            name: CHECK_CONFIG_VALUES.into(),
             status: Status::Fail,
             detail: e.to_string(),
         },
@@ -198,7 +201,7 @@ fn check_pandoc_executable(cfg: &Config) -> (CheckResult, bool) {
         None => {
             return (
                 CheckResult {
-                    name: CHECK_PANDOC_EXECUTABLE,
+                    name: CHECK_PANDOC_EXECUTABLE.into(),
                     status: Status::Fail,
                     detail: format!(
                         "pandoc path {:?} does not resolve to a file",
@@ -212,7 +215,7 @@ fn check_pandoc_executable(cfg: &Config) -> (CheckResult, bool) {
     if !is_executable(&resolved) {
         return (
             CheckResult {
-                name: CHECK_PANDOC_EXECUTABLE,
+                name: CHECK_PANDOC_EXECUTABLE.into(),
                 status: Status::Fail,
                 detail: format!("{} is not executable", resolved.display()),
             },
@@ -231,7 +234,7 @@ fn check_pandoc_executable(cfg: &Config) -> (CheckResult, bool) {
             let version_line = banner.lines().next().unwrap_or("").trim().to_string();
             (
                 CheckResult {
-                    name: CHECK_PANDOC_EXECUTABLE,
+                    name: CHECK_PANDOC_EXECUTABLE.into(),
                     status: Status::Ok,
                     detail: version_line,
                 },
@@ -240,7 +243,7 @@ fn check_pandoc_executable(cfg: &Config) -> (CheckResult, bool) {
         }
         Ok(out) => (
             CheckResult {
-                name: CHECK_PANDOC_EXECUTABLE,
+                name: CHECK_PANDOC_EXECUTABLE.into(),
                 status: Status::Fail,
                 detail: format!("`pandoc --version` exited {}", out.status),
             },
@@ -248,7 +251,7 @@ fn check_pandoc_executable(cfg: &Config) -> (CheckResult, bool) {
         ),
         Err(e) => (
             CheckResult {
-                name: CHECK_PANDOC_EXECUTABLE,
+                name: CHECK_PANDOC_EXECUTABLE.into(),
                 status: Status::Fail,
                 detail: format!("could not spawn {:?}: {e}", cfg.pandoc.path),
             },
@@ -277,7 +280,7 @@ fn check_pandoc_invocation(cfg: &Config) -> CheckResult {
         .output()
     {
         Ok(out) if out.status.success() => CheckResult {
-            name: CHECK_PANDOC_INVOCATION,
+            name: CHECK_PANDOC_INVOCATION.into(),
             status: Status::Ok,
             detail: format!(
                 "pandoc --from {} (+{} extra args) exited 0",
@@ -288,13 +291,13 @@ fn check_pandoc_invocation(cfg: &Config) -> CheckResult {
         Ok(out) => {
             let stderr = String::from_utf8_lossy(&out.stderr);
             CheckResult {
-                name: CHECK_PANDOC_INVOCATION,
+                name: CHECK_PANDOC_INVOCATION.into(),
                 status: Status::Fail,
                 detail: format!("invocation exited {}: {}", out.status, stderr.trim()),
             }
         }
         Err(e) => CheckResult {
-            name: CHECK_PANDOC_INVOCATION,
+            name: CHECK_PANDOC_INVOCATION.into(),
             status: Status::Fail,
             detail: format!("could not spawn {:?}: {e}", cfg.pandoc.path),
         },
@@ -311,7 +314,7 @@ fn check_pandoc_invocation(cfg: &Config) -> CheckResult {
 fn check_export_plugins(cfg: &Config) -> CheckResult {
     if cfg.export.is_empty() {
         return CheckResult {
-            name: CHECK_EXPORT_PLUGINS,
+            name: CHECK_EXPORT_PLUGINS.into(),
             status: Status::Fail,
             detail: "no [export.<id>] plugins configured".into(),
         };
@@ -319,7 +322,7 @@ fn check_export_plugins(cfg: &Config) -> CheckResult {
     for (id, plugin) in &cfg.export {
         if let Err(e) = config::validate_export_plugin(id, plugin) {
             return CheckResult {
-                name: CHECK_EXPORT_PLUGINS,
+                name: CHECK_EXPORT_PLUGINS.into(),
                 status: Status::Fail,
                 detail: e.to_string(),
             };
@@ -330,14 +333,14 @@ fn check_export_plugins(cfg: &Config) -> CheckResult {
             Some(p) if is_executable(&p) => {}
             Some(p) => {
                 return CheckResult {
-                    name: CHECK_EXPORT_PLUGINS,
+                    name: CHECK_EXPORT_PLUGINS.into(),
                     status: Status::Fail,
                     detail: format!("export.{id}: {} is not executable", p.display()),
                 };
             }
             None => {
                 return CheckResult {
-                    name: CHECK_EXPORT_PLUGINS,
+                    name: CHECK_EXPORT_PLUGINS.into(),
                     status: Status::Fail,
                     detail: format!("export.{id}: program {program:?} does not resolve to a file"),
                 };
@@ -345,7 +348,7 @@ fn check_export_plugins(cfg: &Config) -> CheckResult {
         }
     }
     CheckResult {
-        name: CHECK_EXPORT_PLUGINS,
+        name: CHECK_EXPORT_PLUGINS.into(),
         status: Status::Ok,
         detail: format!("{} export plugin(s) well-formed", cfg.export.len()),
     }
@@ -353,7 +356,7 @@ fn check_export_plugins(cfg: &Config) -> CheckResult {
 
 fn skip(name: &'static str, reason: &str) -> CheckResult {
     CheckResult {
-        name,
+        name: name.into(),
         status: Status::Skip,
         detail: reason.into(),
     }
@@ -369,7 +372,7 @@ pub fn run() -> Report {
             // No XDG config dir at all: every check is undeterminable. Fail the
             // config-exists check loudly and skip the rest.
             checks.push(CheckResult {
-                name: CHECK_CONFIG_EXISTS,
+                name: CHECK_CONFIG_EXISTS.into(),
                 status: Status::Fail,
                 detail: e.to_string(),
             });
@@ -443,6 +446,36 @@ pub fn run() -> Report {
             CHECK_EXPORT_PLUGINS,
             "config is invalid; cannot enumerate export plugins",
         )),
+    }
+
+    // Plugin firewall (Milestone A): when the config is valid and declares a
+    // [plugins] dir, discover plugins and aggregate each plugin's config-schema
+    // check (`plugin-config:<id>`) plus its contributed doctor checks into the
+    // one battery, in plugin (sorted) order. The core holds no plugin specifics —
+    // every row is produced by the plugins themselves (doctor-contract.md).
+    if let Some(cfg) = &cfg {
+        if let Some(plugins_cfg) = &cfg.plugins {
+            let config_dir = path.parent().expect("config path always has a parent");
+            match crate::plugins::discover(Path::new(&plugins_cfg.dir)) {
+                Ok(found) => {
+                    for plugin in &found {
+                        let section = cfg.plugin.get(&plugin.manifest.id);
+                        for row in crate::plugins::plugin_check_rows(plugin, section, config_dir) {
+                            checks.push(CheckResult {
+                                name: row.name,
+                                status: if row.ok { Status::Ok } else { Status::Fail },
+                                detail: row.detail,
+                            });
+                        }
+                    }
+                }
+                Err(e) => checks.push(CheckResult {
+                    name: "plugins".into(),
+                    status: Status::Fail,
+                    detail: format!("plugin discovery failed: {e}"),
+                }),
+            }
+        }
     }
 
     Report { checks }

@@ -9,8 +9,7 @@ name = "Ratio Tool"
 description = "Schema-discriminator fixture with a numeric-range config section."
 category = "tools"
 kind = "command"
+config_schema = "schema.json"
 
 [exec]
 command = ["{plugin_dir}/run.sh", "{file}", "{artifact}"]
-
-config_schema = "schema.json"

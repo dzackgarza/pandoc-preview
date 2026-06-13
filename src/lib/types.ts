@@ -47,4 +47,14 @@ export interface ExportResult {
   log: string;
 }
 
+/** Structured result of running a generic plugin by id (Milestone A). Mirrors
+ * the Rust `plugins::PluginResult`. */
+export interface PluginResult {
+  success: boolean;
+  artifact: string | null;
+  exit_code: number | null;
+  stdout: string;
+  stderr: string;
+}
+
 export type RenderStatus = "idle" | "rendering" | "ok" | "error";
