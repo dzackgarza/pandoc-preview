@@ -79,13 +79,35 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
   }
   const shippedArgv = command as string[];
 
-  // ── Resolve {input}/{output} exactly as render.rs::export_sync does ─────
+  // ── Resolve {input}/{output}/{mathjax} exactly as render.rs::export_sync ─
   // Per-argument substring substitution of the placeholders against the real
   // witness demo.md and a chosen output path under the run dir.
+  //
+  // {mathjax} is the app-injected, install-portable placeholder for the bundled
+  // MathJax (decision A): the app substitutes it with file://<resource_dir>/
+  // mathjax/tex-svg-full.js. This independent-process spec mirrors that by
+  // resolving the SAME vendored bundle at its fixed repo path
+  // (src-tauri/resources/mathjax/tex-svg-full.js), computed relative to this
+  // spec file so it is independent of cwd. CONTRACT for the implementer: the
+  // bundle MUST live at that path and the shipped [export.html] uses
+  // `--mathjax={mathjax}`. While the shipped default still carries bare
+  // `--mathjax` (no {mathjax} token), this replace is a no-op and the spec
+  // stays RED at the "could not fetch" assertion below.
+  // Proof debt: the app's OWN {mathjax}->resource_dir resolution is not
+  // exercised here (this process does its own substitution); it rides on the
+  // {input}/{output} substitution mechanism (P12) + resource_dir being a Tauri
+  // primitive. A dedicated proof of the app's export-side resolution is debt.
+  const mathjaxBundleUrl = new URL(
+    '../../src-tauri/resources/mathjax/tex-svg-full.js',
+    import.meta.url,
+  ).href;
   const inputPath = manifest.demoFile;
   const outputPath = join(manifest.runDir, 'export-offline-witness.html');
   const resolved = shippedArgv.map((arg) =>
-    arg.replace('{input}', inputPath).replace('{output}', outputPath),
+    arg
+      .replace('{input}', inputPath)
+      .replace('{output}', outputPath)
+      .replace('{mathjax}', mathjaxBundleUrl),
   );
   const [program, ...args] = resolved;
 
