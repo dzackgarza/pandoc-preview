@@ -82,7 +82,7 @@ EOF
 # broken environments are the doctor's product surface — and no witness
 # project. Provisioning writes the doctor-shaped config, then a lean manifest.
 case "$SPEC" in
-d0[1-5]-*.spec.ts)
+d0[1-7]-*.spec.ts)
     CONFIG_DIR="$ABS_SPEC_DIR/xdg-config/pandoc-preview"
     CONFIG_PATH="$CONFIG_DIR/config.toml"
 
@@ -146,6 +146,12 @@ EOF
         write_stale_key_config
         ;;
     d04-*) # invalid config: stale key -> config-schema fails the startup gate
+        write_stale_key_config
+        ;;
+    d06-*) # existing stale/invalid config: `just setup` must reconfigure it
+        write_stale_key_config
+        ;;
+    d07-*) # existing config-class-invalid config: `just dev` must recover it
         write_stale_key_config
         ;;
     d05-*) # valid config, but pandoc.path -> a real NON-executable file
