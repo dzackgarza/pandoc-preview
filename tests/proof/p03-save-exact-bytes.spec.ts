@@ -6,9 +6,10 @@ import { openAndSelectDemo, appendAtEnd, editorText, waitForPreview } from './su
 
 const SENTENCE = 'The discriminant equals −163.';
 
-// P3 — Save persists exact bytes. Make the P2 edit, click the real Save
-// toolbar button, then read the file from disk in this independent process
-// and assert byte-for-byte equality with the editor buffer (unicode intact).
+// P3 — Save persists exact bytes. Make the P2 edit, trigger Save through the
+// File menu surface (Save is a File > Save item + Ctrl+S accelerator, NOT a
+// toolbar button), then read the file from disk in this independent process and
+// assert byte-for-byte equality with the editor buffer (unicode intact).
 
 test('Save writes the editor buffer to disk byte-for-byte', async ({ tauriPage }) => {
   const manifest = loadRunManifest();
@@ -22,8 +23,14 @@ test('Save writes the editor buffer to disk byte-for-byte', async ({ tauriPage }
   // The edit must actually be in the buffer, unicode preserved.
   expect(buffer.includes(SENTENCE)).toBe(true);
 
-  // Click the real toolbar Save button (enabled only when dirty).
-  await tauriPage.click('button[title="Save (Ctrl+S)"]');
+  // Trigger Save through the File menu event bus — the exact surface the native
+  // File > Save item and its Ctrl+S accelerator deliver to the webview
+  // (app.on_menu_event emits "menu" with the id; the webview listens via
+  // listen("menu", ...)). P9/P15 drive their menu items the same way. Save is
+  // deliberately NOT a toolbar button; the menu/shortcut is its only trigger.
+  await tauriPage.evaluate(
+    `(() => { window.__TAURI__.event.emit('menu', 'save'); return null; })()`,
+  );
 
   // Independent-process disk read must equal the buffer exactly.
   await tauriPage.waitForFunction(

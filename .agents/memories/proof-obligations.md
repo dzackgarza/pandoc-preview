@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P17)
+# Proof Obligations (P1–P18)
 
 User-approved external proof obligations for Pandoc Preview. Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config. No internal behaviours, no forced error modes. An assertion is admissible only if it would fail on a plausibly broken app (unwired pandoc, frozen preview, UI-only fake state, junk output).
 
@@ -16,7 +16,7 @@ A per-run temp project containing `demo.md` with:
 
 - **P1 — Source→preview fidelity.** Open project, click `demo.md`. Preview iframe document contains `h1` with text exactly "Geometry of Numbers — Café", an `em` with text "naïve", an `ol` whose last item is "Minkowski bound".
 - **P2 — Live re-render.** Type `The discriminant equals −163.` at buffer end. Sentence absent from preview before the edit; present verbatim after the configured debounce elapses.
-- **P3 — Save persists exact bytes.** After the P2 edit, Save. Independent process reads the file from disk: byte-for-byte equal to the editor buffer, unicode intact.
+- **P3 — Save persists exact bytes.** After the P2 edit, Save via the File menu surface (File > Save / Ctrl+S — Save is NOT a toolbar button). Independent process reads the file from disk: byte-for-byte equal to the editor buffer, unicode intact.
 - **P4 — Math rendering (MathJax, always).** Math is hard-coded to MathJax — KaTeX cannot cover pandoc's full math syntax range, so no engine option exists anywhere (config, settings UI, first-run script). Preview contains `span.math mjx-container` whose assistive MathML flattens to exactly `ζ(2)=π2/6`; the literal `$\zeta(2)` does not appear as text.
 - **P5 — Relative resource resolution.** Preview `img[alt="scatter"]` has `naturalWidth == 64 && naturalHeight == 48` (real pixels decoded through the asset-protocol `<base href>` chain).
 - **P6 — File manager mutates the real directory.** (a) Sidebar lists exactly the non-hidden entries of the opened folder, directories first. (b) Creating `chapter2.md` via the UI yields a real empty file on disk and the editor opens it. (c) Renaming to `chapter-two.md` makes the old path absent and the new present on disk.
@@ -31,6 +31,7 @@ A per-run temp project containing `demo.md` with:
 - **P15 — Sidebar toggle preserves the editor:preview ratio.** Hiding/showing the file tree keeps the relative split of the two panes.
 - **P16 — Preview math renders with no network (local MathJax).** With the webview's network blocked (no route to any CDN), open `demo.md`; the preview still satisfies P4 (`span.math mjx-container`, assistive MathML flattening to `ζ(2)=π2/6`). Discriminates a CDN-sourced MathJax — the current bare `--mathjax` preview leaves raw `$\zeta(2)` text offline. The MathJax `<script src>` resolves to the bundled app asset via the asset protocol, not `https://`. ([[mathjax-offline-local-source-decision]], decision A 2026-06-13.)
 - **P17 — Exported HTML renders math offline (self-contained, no remote MathJax).** Export HTML via the shipped `[export.html]` plugin while offline: export exits 0 with no "Could not fetch" warning, the artifact contains NO `https://`/`cdn.jsdelivr` reference, and opening it in a network-blocked webview typesets the math (P4-shape `mjx-container`). Proves the shipped default inlines a local MathJax bundle (`--mathjax=<local>` + `--embed-resources`), not a CDN link. Strengthens P7 (which only asserted `data:` image URIs). ([[mathjax-offline-local-source-decision]].)
+- **P18 — Sidebar collapse control.** A visible toolbar control (title beginning "Toggle Sidebar") collapses the file-tree sidebar and expands it again — the sidebar is collapsible from the UI, not only via the native View menu / F9. Clicking it hides `[data-pane="sidebar"]`; clicking again restores it. (Added 2026-06-13: the user requires a collapsible sidebar; Save was simultaneously removed from the toolbar — see P3 — leaving the toolbar for formatting + this toggle.)
 
 ## Verification vehicle
 
