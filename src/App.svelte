@@ -13,6 +13,7 @@
   import { portal } from "./lib/portal";
 
   import EditorPane from "./lib/components/EditorPane.svelte";
+  import ActivityBar from "./lib/components/ActivityBar.svelte";
   import FileTree from "./lib/components/FileTree.svelte";
   import PreviewPane from "./lib/components/PreviewPane.svelte";
   import PromptModal from "./lib/components/PromptModal.svelte";
@@ -29,7 +30,23 @@
   let currentFile = $state<string | null>(null);
   let dirty = $state(false);
 
-  let sidebarVisible = $state(true);
+  // VSCode-style activity bar + collapsible side bar. `activeView` is the active
+  // view id, or null when the side bar is collapsed. The always-visible activity
+  // bar and the View > Toggle Sidebar menu / F9 both drive it. Add a
+  // SIDEBAR_VIEWS entry to add a tab.
+  type SidebarView = { id: string; title: string; icon: string };
+  const EXPLORER_ICON =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M2.5 3.5h4l1.5 1.5h5.5v8h-11z"/></svg>';
+  const SIDEBAR_VIEWS: SidebarView[] = [
+    { id: "explorer", title: "Explorer", icon: EXPLORER_ICON },
+  ];
+  let activeView = $state<string | null>("explorer");
+
+  function selectView(id: string) {
+    // Clicking the active view's control collapses the side bar (VSCode); any
+    // other view opens/switches to it.
+    activeView = activeView === id ? null : id;
+  }
   let settingsOpen = $state(false);
   let prompt = $state<{
     title: string;
@@ -437,7 +454,8 @@
         void editor.command(id);
         break;
       case "toggle_sidebar":
-        sidebarVisible = !sidebarVisible;
+        // Collapse if a view is open; otherwise reopen the Explorer view.
+        activeView = activeView ? null : "explorer";
         break;
       case "show_preview":
         activeTab = "preview";
@@ -479,34 +497,42 @@
 
 {#if config}
   <div class="flex h-full flex-col">
-    <Toolbar
-      onAction={toolbarAction}
-      onToggleSidebar={() => (sidebarVisible = !sidebarVisible)}
-      {sidebarVisible}
-      fileOpen={currentFile !== null}
-    />
+    <Toolbar onAction={toolbarAction} fileOpen={currentFile !== null} />
 
     <div class="flex min-h-0 grow">
-      <!-- The file-tree sidebar is a flex sibling OUTSIDE the splitview. Its
-           show/hide changes the splitview container's width; dockview's
-           ResizeObserver relayouts the editor|preview split proportionally, so
-           the editor:preview ratio is preserved across the toggle (P15). -->
-      {#if sidebarVisible}
+      <!-- VSCode-style activity bar: always visible, holds the view controls. -->
+      <ActivityBar views={SIDEBAR_VIEWS} {activeView} onSelect={selectView} />
+
+      <!-- The collapsible side bar shows the active view. It is a flex sibling
+           OUTSIDE the splitview, so its show/hide changes the splitview
+           container's width and dockview's ResizeObserver relayouts the
+           editor|preview split proportionally — the ratio is preserved across
+           the collapse (P15). -->
+      {#if activeView}
         <div
           data-pane="sidebar"
-          class="w-60 shrink-0 border-r border-zinc-200 dark:border-zinc-700"
+          class="flex w-60 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700"
         >
-          <FileTree
-            {tree}
-            {projectRoot}
-            {currentFile}
-            onOpen={(p) => void openFile(p)}
-            onNewFile={promptNewFile}
-            onNewFolder={promptNewFolder}
-            onRename={promptRename}
-            onDelete={(n) => void deleteNode(n)}
-            onOpenFolder={() => void openFolder()}
-          />
+          <div
+            class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+          >
+            {SIDEBAR_VIEWS.find((v) => v.id === activeView)?.title}
+          </div>
+          <div class="min-h-0 grow overflow-auto">
+            {#if activeView === "explorer"}
+              <FileTree
+                {tree}
+                {projectRoot}
+                {currentFile}
+                onOpen={(p) => void openFile(p)}
+                onNewFile={promptNewFile}
+                onNewFolder={promptNewFolder}
+                onRename={promptRename}
+                onDelete={(n) => void deleteNode(n)}
+                onOpenFolder={() => void openFolder()}
+              />
+            {/if}
+          </div>
         </div>
       {/if}
 
