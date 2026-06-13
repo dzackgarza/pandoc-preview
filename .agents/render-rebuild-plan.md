@@ -231,18 +231,54 @@ pandoc renderer plugin).
 
 ## Milestone C — Pandoc renderer plugin (raw-command-canonical)
 
+**RESCOPED 2026-06-14 (user ruling).** The earlier design — semantically
+deconstruct the pandoc command into a typed Rust model (`lexopt`), round-trip
+property-test it, and drive an in-app checkbox config editor — was rejected as
+architectural drift. Decoupling the renderer is *already done* (Milestone B: a
+renderer is an opaque shell command, md on stdin → HTML on stdout); the typed
+command model existed only to power an in-app config editor, which is not the
+render pipeline. **New model:** plugins own their configuration *entirely*. Every
+plugin manifest declares a required `[configure] command`; the app exposes a
+"Configure <name>" action that merely **spawns that command** (detached, no TTY
+handling, no terminal knowledge in core — the plugin's command brings its own UI,
+e.g. pandoc launches a kitty popup running a gum script). This is the VS Code
+extension model: the app is config-agnostic; the only renderer-special thing is
+that one plugin declares itself the active renderer and supplies the md→HTML
+command. The repealed clauses are recorded in
+[[pandoc-command-model-and-raw-string-contract]] (clause b) and
+[[required-filter-set]] ("discover filters by parsing").
+
 **Goal.** All pandoc knowledge lives in this plugin; the raw pandoc command
-string is the canonical stored config.
-**Work.** Delete structured `pandoc.path`/`from_format`/`extra_args`; store the
-raw command string. Semantic deconstruction via `lexopt`-class parsing (known
-subset: `--lua-filter`/`-L`, `--template`, `-f`/`-t` + extensions, enforced
-flags; ordered opaque pass-through bag), round-trip property-tested over real
-commands (incl. `~/.pandoc` `compile-pandoc`). Config page: flag checkboxes,
-required flags/filters permanently-checked + un-uncheckable + hover-explained
-(gum-drivable). Plugin contributes pandoc-executable / required-filter /
-template-exists doctor checks.
-**Proof.** Round-trip property test; required-flag checkbox state; the P1-class
-preview obligations now flow through the plugin.
+string is the canonical stored config; the plugin owns its own config editing.
+
+**Work.**
+- Generic firewall extension: required `[configure] command` in every plugin
+  manifest (absent → load-time fail-loud). `configure_plugin(id)` Tauri command +
+  E2E bridge spawns it detached; per-plugin "Configure <name>" action in the UI.
+  The app never models the config's shape for editing — only validates it on load
+  against the plugin's JSON Schema (A2/d08 mechanism, unchanged).
+- Delete structured `pandoc.path`/`from_format`/`extra_args`; `[plugin.pandoc-renderer]`
+  becomes a single raw `command` string (canonical). `render.sh` shlex-tokenizes
+  and execs it with markdown on stdin; volatile render-context (`--mathjax`,
+  `--resource-path`, base href) layered as B already does. No `lexopt`, no typed
+  model, no round-trip test, no in-app checkbox editor.
+- pandoc ships a bundled gum `configure` script (set the command, pick
+  filters/templates, keep required ones locked) launched inside a kitty popup;
+  PTY-drivable directly like `first-run.sh`.
+- Plugin contributes `pandoc-executable` (retained) + `required-filter` +
+  `template-exists` doctor checks — disk/exec checks, NOT command parsing.
+
+**Proof obligations (proposed; ratify before RED).**
+- **C1** — generic configure mechanism: a fixture plugin's `[configure]` command is
+  spawned by the app (witness artifact proves it ran); a manifest missing the
+  field fails loudly at load.
+- **C2** — `[plugin.pandoc-renderer]` is the raw `command` string; preview flows
+  from it (P1/P4 green); `p10`/`p11`/`d01`/`d05` retargeted off the structured
+  shape (RED first).
+- **C3** — pandoc's gum `configure` script, PTY-driven, writes a valid config whose
+  command contains the required filters.
+- **C4** — doctor `required-filter` / `template-exists` fail loud on a missing
+  file, OK when present.
 
 ## Milestone D — Vendor + symlink install
 
@@ -344,3 +380,10 @@ plugins folded into the plugin model, the Firenvim editor-experience decision
 - Note (not this task): `src-tauri/Cargo.toml` carries an uncommitted, unrelated
   comment degradation from a prior session (`--mathjax= {mathjax}`); leave
   untouched, do not stage with the RED commit.
+- **2026-06-14: Milestone A + B GREEN (commits aa26bd4…02d5d6f); suite 28/28.**
+  Milestone C **RESCOPED** by user ruling: plugin-owned configuration via a
+  spawned `[configure] command` (kitty+gum for pandoc); the typed-command-model /
+  `lexopt` / round-trip / in-app-checkbox-editor design is REPEALED (see the
+  Milestone C section + memory updates to
+  [[pandoc-command-model-and-raw-string-contract]] and [[required-filter-set]]).
+  C1–C4 proposed; **NEXT: ratify C1–C4, then RED.**
