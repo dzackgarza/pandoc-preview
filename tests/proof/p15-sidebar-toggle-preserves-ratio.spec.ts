@@ -7,6 +7,7 @@ import {
   previewPaneRect,
   sidebarPresent,
   toggleSidebarViaMenu,
+  waitForSplitSettled,
 } from './support/layout';
 
 // P15 — Sidebar toggle preserves the editor:preview ratio. Hiding/showing the
@@ -43,6 +44,7 @@ test('Hiding the file-tree sidebar preserves the editor:preview ratio', async ({
     return editor / (editor + preview);
   };
 
+  await waitForSplitSettled(tauriPage);
   const ratioBefore = await ratioOf();
 
   // Hide the sidebar via the menu event bus and wait for it to leave the DOM.
@@ -53,6 +55,8 @@ test('Hiding the file-tree sidebar preserves the editor:preview ratio', async ({
   );
   expect(await sidebarPresent(tauriPage)).toBe(false);
 
+  // Wait for dockview's async relayout to settle before measuring (P15 flake).
+  await waitForSplitSettled(tauriPage);
   const ratioHidden = await ratioOf();
 
   // The relative split of the two panes is preserved when the sidebar hides.
@@ -67,6 +71,7 @@ test('Hiding the file-tree sidebar preserves the editor:preview ratio', async ({
   );
   expect(await sidebarPresent(tauriPage)).toBe(true);
 
+  await waitForSplitSettled(tauriPage);
   const ratioShownAgain = await ratioOf();
   expect(Math.abs(ratioShownAgain - ratioBefore)).toBeLessThanOrEqual(0.02);
 

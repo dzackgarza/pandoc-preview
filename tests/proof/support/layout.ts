@@ -198,6 +198,33 @@ export async function sidebarPresent(page: EvaluatesScripts): Promise<boolean> {
   return present;
 }
 
+// Wait until the dockview splitview has finished relayouting. Toggling the
+// sidebar (a flex sibling outside the splitview) changes the splitview
+// container's width; dockview relayouts editor|preview via its ResizeObserver
+// ASYNCHRONOUSLY, a frame or two after the sidebar's DOM change. Measuring the
+// editor:preview ratio before that settles reads a mid-transition frame (P15's
+// flake). This polls the editor pane's integer width and returns once it is
+// identical across two consecutive samples — the settled, observable end state.
+export async function waitForSplitSettled(page: EvaluatesScripts): Promise<void> {
+  if (!('waitForFunction' in page)) {
+    throw new Error('waitForSplitSettled requires a page with waitForFunction');
+  }
+  await page.evaluate(`(() => { window.__ppeSplitW = null; return null; })()`);
+  await (page as unknown as {
+    waitForFunction: (expr: string, timeout: number) => Promise<unknown>;
+  }).waitForFunction(
+    `(() => {
+      const el = document.querySelector('[data-pane="editor"]');
+      if (!el) return false;
+      const w = Math.round(el.getBoundingClientRect().width);
+      const prev = window.__ppeSplitW;
+      window.__ppeSplitW = w;
+      return prev !== null && prev === w;
+    })()`,
+    5_000,
+  );
+}
+
 // Drive the View > Toggle Sidebar menu item through the same Tauri event bus the
 // native menu uses (app.on_menu_event emits "menu" with the item id; the webview
 // listens via listen("menu", ...)). P9 drives the Settings menu item the same
