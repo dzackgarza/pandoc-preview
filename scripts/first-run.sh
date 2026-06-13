@@ -153,7 +153,7 @@ label = "HTML (self-contained)"
 extension = "html"
 command = [
   "pandoc", "--from", "markdown", "--standalone",
-  "--embed-resources", "--mathjax",
+  "--embed-resources", "--mathjax={mathjax}",
   "{input}", "--output", "{output}",
 ]
 

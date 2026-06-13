@@ -1,0 +1,53 @@
+tex-full-svg-a11y.min.js — vendored MathJax bundle (decision A)
+================================================================
+
+WHAT
+  A single self-contained MathJax 4.1.2 "custom combined component": TeX input +
+  SVG output + ALL 41 TeX extensions + the full a11y set (assistive-mml, sre,
+  semantic-enrich, speech, explorer, complexity), all PRELOADED (no runtime lazy
+  loading). SVG output embeds glyph path data, so no font files are fetched.
+
+WHY THIS FORM
+  The app must render math with NO CDN and fully offline, for both the live
+  preview (asset-protocol URL) and the self-contained HTML export
+  (`--mathjax=file://<this> --embed-resources`, which inlines it into one file).
+  A single preloaded component is the only shape that is self-contained AND emits
+  assistive MathML offline: loading a11y as a second <script> does not register
+  it, and loading the bundle from a data: URL breaks MathJax's base-path
+  detection. See .agents/memories/mathjax-offline-local-source-decision.md.
+
+VERSION
+  MathJax 4.1.2 (npm `@mathjax/src@4.1.2`). Size: 2004835 bytes.
+
+REPRODUCIBLE BUILD
+  mkdir -p /tmp/mjbuild && cd /tmp/mjbuild && npm init -y
+  npm i @mathjax/src@4
+  npm i -D webpack@^5 webpack-cli@^7 terser-webpack-plugin@^5
+  cd node_modules/@mathjax/src/components/mjs
+  mkdir tex-full-svg-a11y
+  cat > tex-full-svg-a11y/config.json <<'EOF'
+  { "webpack": { "name": "tex-full-svg-a11y", "dist": "." } }
+  EOF
+  # tex-full-svg-a11y/tex-full-svg-a11y.js imports: startup/init, loader,
+  #   core, input/tex + EVERY input/tex/extensions/<name>/<name>.js (all 41),
+  #   output/svg (loadFont(startup,true)), ui/menu, a11y/util,
+  #   a11y/assistive-mml, a11y/complexity, input/mml; then
+  #   Loader.preLoaded(...all of the above incl 'a11y/sre','a11y/semantic-enrich',
+  #   'a11y/speech','a11y/explorer' and every '[tex]/<name>'); and sets
+  #   MathJax.config.tex.packages = [...all 41 names...].
+  node ../bin/makeAll --mjs --no-subdirs tex-full-svg-a11y
+  # output: tex-full-svg-a11y/tex-full-svg-a11y.min.js  (== this file)
+
+VERIFIED (offline, chromium setOffline(true) + route-abort of non-file/data/blob)
+  - `\(\zeta(2)=\pi^2/6\)` -> 1 mjx-container, no merror,
+    assistive MathML "ζ⁡(2)=π2/6" (U+2061 normalized -> "ζ(2)=π2/6").
+  - 0 remote requests. Multi-extension (color, bbox, cancel, mhchem) also clean.
+  - pandoc inlines it: `pandoc in.md -s --mathjax=file://<this> --embed-resources -o out.html`.
+
+KNOWN LIMITATION (follow-up, non-blocking)
+  The SRE speech/explorer path eagerly tries to spawn a Web Worker from
+  `file:///sre/speech-worker.js`, which 404s. It logs ONE harmless pageerror and
+  does NOT block rendering, assistive MathML, or cause any remote request.
+  Interactive spoken-math/exploration therefore needs a follow-up (ship sre/ as a
+  co-located resource for the preview + configure the worker path; single-file
+  export cannot host a worker). Static accessibility (assistive MathML) works now.

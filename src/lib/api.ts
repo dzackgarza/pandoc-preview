@@ -15,7 +15,11 @@ export const renamePath = (from: string, to: string) =>
   invoke<void>("rename_path", { from, to });
 export const deletePath = (path: string) => invoke<void>("delete_path", { path });
 
-export const renderPreview = (source: string, baseDir: string, baseUrl: string) =>
-  invoke<RenderResult>("render_preview", { source, baseDir, baseUrl });
+export const renderPreview = (
+  source: string,
+  baseDir: string,
+  baseUrl: string,
+  mathjaxUrl: string,
+) => invoke<RenderResult>("render_preview", { source, baseDir, baseUrl, mathjaxUrl });
 export const exportDocument = (pluginId: string, sourcePath: string, outputPath: string) =>
   invoke<ExportResult>("export_document", { pluginId, sourcePath, outputPath });

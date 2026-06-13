@@ -23,6 +23,9 @@ toml = { version = "0.8", features = ["preserve_order"] }
 indexmap = { version = "2", features = ["serde"] }
 dirs = "5"
 thiserror = "2"
+# Build a correct `file://` URL for the bundled MathJax passed to pandoc's
+# `--mathjax={mathjax}` (decision A). Already in the lock graph transitively.
+url = "2"
 
 # E2E proof harness: the in-app Playwright socket bridge. Gated behind the
 # `e2e-testing` cargo feature so a normal user build never embeds it. The

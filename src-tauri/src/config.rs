@@ -41,6 +41,13 @@ pub struct ExportPlugin {
 /// The two placeholders every export command must reference.
 pub const PLACEHOLDER_INPUT: &str = "{input}";
 pub const PLACEHOLDER_OUTPUT: &str = "{output}";
+/// Optional, app-injected placeholder for the bundled MathJax bundle. The app
+/// substitutes it with `file://<resource_dir>/mathjax/tex-full-svg-a11y.min.js` so the
+/// shipped `[export.html]` plugin inlines a LOCAL MathJax copy under
+/// `--embed-resources` instead of fetching a CDN (decision A,
+/// mathjax-offline-local-source-decision.md). NOT required — a command without
+/// it is valid; only `{input}`/`{output}` are mandatory.
+pub const PLACEHOLDER_MATHJAX: &str = "{mathjax}";
 
 /// Validate a single export plugin's invariants. The single source of truth for
 /// the entry shape: both `validate` (config-values / save path) and the doctor's

@@ -11,6 +11,52 @@ app — never a CDN** — for BOTH the live preview and the shipped HTML export.
 offline/airplane case is a normal use case (a user writing on a laptop with no network),
 not a wild edge case.
 
+## Update (2026-06-13): MathJax **4.1.2**, full plugin set
+
+User correction: do NOT ship an old MathJax. Earlier this doc/specs assumed 3.2.2
+(reflexively matching pandoc's `mathjax@3` CDN default) — wrong. Use the current stable
+**4.1.2**, and ship the **FULL** capability set ("every plugin under the sun by default;
+size is irrelevant; pare down later if needed"). This means vendoring the full MathJax
+distribution (all components + fonts + a11y/assistive-mml + explorer + all TeX
+extensions), not a single minimal bundle.
+
+Verified against the real 4.1.2 dist (npm `mathjax@4.1.2`, all offline tests via chromium
+`setOffline(true)` + route-abort of non-`file:`/`data:`/`blob:`):
+
+- **Preview = SOLVED.** Full a11y renders offline with **zero remote requests** when the
+  dist is on disk and loaded via the MathJax loader:
+  `window.MathJax={loader:{load:['a11y/assistive-mml']},options:{enableAssistiveMml:true}}`
+  + `<script src="<dist>/tex-svg.js">`. The loader resolves sibling components
+  (a11y, fonts) from the co-located dist via local URLs. So the asset-served preview gets
+  full capability offline. render.rs must inject that config (via `--include-in-header`
+  or a template — pandoc's `--mathjax` alone injects no config) alongside
+  `--mathjax=<asset-url>/tex-svg.js`, with the config script ORDERED before the loader.
+- **v4 layout:** components are at the dist ROOT (no `es5/`). The SVG bundle with default
+  font is `tex-svg.js` (~1.85 MB); a11y components live in `a11y/` (assistive-mml.js,
+  explorer.js, complexity.js, semantic-enrich.js, speech.js, sre.js).
+- **v4 semantic MathML inserts U+2061** (FUNCTION APPLICATION) into assistive MathML
+  (`ζ⁡(2)=π2/6`). The P4/P16/P17 oracle now strips invisible math operators
+  U+2061–U+2064 before comparing (content-preserving; non-breaking on v3).
+- **Single-file export — RESOLVED, feasible.** The a11y component needs the MathJax
+  loader; loading it as a plain 2nd inline `<script>` does NOT register it, and loading
+  the main bundle from a `data:` URL breaks MathJax's base-path detection. The working
+  shape is MathJax's *custom combined component* build (`@mathjax/src@4` webpack): one
+  ES module that imports TeX + SVG + all 41 TeX extensions + the full a11y set and calls
+  `Loader.preLoaded(...)` so nothing lazy-loads. Result: a single ~2 MB `.js`
+  (`tex-full-svg-a11y.min.js`), pandoc-inlinable via `--mathjax=file://<it>
+  --embed-resources`. Independently verified offline: renders, assistive MathML correct,
+  ZERO remote requests. Vendored at `src-tauri/resources/mathjax/tex-full-svg-a11y.min.js`
+  with the build recipe in its PROVENANCE. Both preview (asset URL) and export (file://)
+  reference this one file; assistive-mml defaults on, so no extra config script is
+  needed. KNOWN non-blocking limitation: the SRE speech/explorer Web Worker
+  (`file:///sre/speech-worker.js`) 404s offline — one harmless pageerror, no remote
+  request, does not block rendering or assistive MathML; interactive spoken/explorable
+  a11y is a follow-up (ship `sre/` + configure the worker path).
+
+The rest of this doc below is the original v3-era reasoning; the mechanism (file:// for
+export, asset protocol for preview, no server) still holds — only the bundle (full v4
+dist) and the export packaging (pending de-risk) change.
+
 ## Why (verified facts, pandoc 3.6, online + offline via `unshare -rn`)
 
 - **Preview today is CDN-bound and broken offline.** `render.rs:12` is

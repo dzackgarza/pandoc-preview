@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
   import { convertFileSrc } from "@tauri-apps/api/core";
+  import { resolveResource } from "@tauri-apps/api/path";
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { ask, open, save as saveDialog } from "@tauri-apps/plugin-dialog";
 
@@ -38,6 +39,13 @@
   let html = $state("");
   let log = $state("");
   let status = $state<RenderStatus>("idle");
+
+  // Asset-protocol URL of the bundled, version-pinned MathJax (decision A,
+  // mathjax-offline-local-source-decision.md). The preview's MathJax loads from
+  // this LOCAL asset — never a CDN — so math typesets with no network. Resolved
+  // once on mount from the app resource dir; convertFileSrc turns the absolute
+  // path into the asset-protocol URL the webview can load.
+  let mathjaxUrl = $state("");
   let activeTab = $state<"preview" | "log">("preview");
 
   let wordCount = $state(0);
@@ -56,6 +64,11 @@
     // screen: a misconfigured environment never reaches the webview.
     configPath = await api.getConfigPath();
     config = await api.getConfig();
+    // Resolve the bundled local MathJax to its asset-protocol URL (decision A).
+    // resolveResource gives the absolute path under the app resource dir;
+    // convertFileSrc turns it into the asset-protocol URL the srcdoc preview
+    // loads its MathJax <script> from — local, never a CDN.
+    mathjaxUrl = convertFileSrc(await resolveResource("resources/mathjax/tex-full-svg-a11y.min.js"));
     await listen<string>("menu", (event) => handleMenu(event.payload));
 
     // E2E proof harness. Present only when the proof orchestrator sets
@@ -128,7 +141,12 @@
     status = "rendering";
     const baseDir = dirOf(currentFile);
     try {
-      const res = await api.renderPreview(content, baseDir, convertFileSrc(baseDir) + "/");
+      const res = await api.renderPreview(
+        content,
+        baseDir,
+        convertFileSrc(baseDir) + "/",
+        mathjaxUrl,
+      );
       if (seq !== renderSeq) return;
       log = res.log;
       if (res.ok) {

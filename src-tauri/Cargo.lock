@@ -2236,6 +2236,7 @@ dependencies = [
  "tauri-plugin-playwright",
  "thiserror 2.0.18",
  "toml 0.8.2",
+ "url",
 ]
 
 [[package]]
