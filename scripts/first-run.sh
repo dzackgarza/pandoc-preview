@@ -32,9 +32,16 @@ case "${1:-}" in
         ;;
 esac
 
+# An existing config is re-runnable: `just setup` (no --force) offers a gum
+# confirm to overwrite and reconfigure, so a stale config (e.g. one predating a
+# schema change) can be redone in place. --force skips the confirm — that is
+# the path the recovery gate (lib-recovery.sh) uses after its own confirm, and
+# the one drive-first-run.py's fresh/P10 path uses. Declining aborts loudly.
 if [ -f "$CONFIG_FILE" ] && [ "$FORCE" -ne 1 ]; then
-    echo "FATAL: $CONFIG_FILE already exists. Re-run with --force to overwrite." >&2
-    exit 1
+    if ! gum confirm "Config already exists at $CONFIG_FILE. Overwrite and reconfigure?"; then
+        echo "FATAL: reconfiguration declined; existing config left unchanged." >&2
+        exit 1
+    fi
 fi
 
 gum style --border rounded --padding "1 2" --margin "1 0" --bold \

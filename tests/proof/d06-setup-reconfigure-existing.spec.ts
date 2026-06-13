@@ -40,8 +40,12 @@ test('just setup over an existing config reconfigures it to a valid config', () 
   const r = driveSetupReconfigure(xdgConfigHome, home);
 
   // The setup surface must NOT dead-end on the existing config, and must reach
-  // the reconfigure handoff.
-  expect(r.stdout.includes('already exists')).toBe(false);
+  // the reconfigure handoff. The dead-end's precise signature is the old
+  // FATAL's actionless instruction — "Re-run with --force" — which `just setup`
+  // gave no way to satisfy. The fix removes it (the gum confirm replaces it);
+  // it must not appear. (Asserting the broader phrase "already exists" would be
+  // non-discriminating: the new overwrite confirm legitimately contains it.)
+  expect(r.stdout.includes('Re-run with --force')).toBe(false);
   expect(r.stdout.includes('SETUP_RECONFIGURE_OK')).toBe(true);
   expect(r.status).toBe(0);
 

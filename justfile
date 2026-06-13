@@ -24,9 +24,10 @@ deps:
     bun install
     cargo fetch --manifest-path src-tauri/Cargo.toml
 
-# Run the app in dev mode (vite + tauri).
+# Run the app in dev mode (vite + tauri). Routes config-class doctor failures
+# into gum first-run recovery before starting tauri dev (scripts/dev.sh).
 dev:
-    bunx tauri dev
+    scripts/dev.sh
 
 # Launch the app through the doctor gate: runs the check battery, routes
 # config-class failures into gum first-run, then execs the built binary.
