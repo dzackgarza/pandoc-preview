@@ -1,0 +1,21 @@
+# The generic renderer (Milestone B) — the no-enforcement escape hatch from
+# renderer-plugin-architecture.md: a renderer plugin whose command takes markdown
+# on stdin and produces standalone HTML on stdout, with NO pandoc knowledge. It is
+# the acceptance test of the renderer abstraction: configured as the active
+# renderer, it must render the witness with ZERO app-core changes.
+#
+# (Milestone D vendors the shipped renderers into the XDG plugins dir; for B this
+# lives as a proof fixture installed into the hermetic plugins dir.)
+id = "generic-renderer"
+name = "Generic Renderer"
+description = "Escape-hatch renderer: markdown on stdin, HTML on stdout, not pandoc."
+category = "renderer"
+kind = "command"
+# The generic renderer has no app-exposed config beyond its own script; its config
+# section is an empty object (no required keys).
+config_schema = "schema.json"
+
+[exec]
+# Render context placeholders ({base_dir}/{base_url}/{mathjax}) are available but
+# this escape-hatch renderer ignores them: markdown on stdin -> HTML on stdout.
+command = ["{plugin_dir}/render.sh"]

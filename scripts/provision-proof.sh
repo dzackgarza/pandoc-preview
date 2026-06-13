@@ -314,6 +314,23 @@ dir = "$PLUGINS_DIR"
 greeting = "hi"
 EOF
     ;;
+p20-generic-renderer.spec.ts)
+    # B1: the generic renderer (a non-pandoc script, md stdin -> HTML stdout) is
+    # the ACTIVE renderer. Install it and select it. It has no required config, so
+    # no [plugin.generic-renderer] section is needed. RED today: render_preview
+    # ignores [renderer] and hardcodes pandoc, so the generic renderer's marker is
+    # absent. GREEN: render_preview delegates to the active renderer plugin.
+    PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
+    install_plugin_fixtures "$PLUGINS_DIR" generic-renderer
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugins]
+dir = "$PLUGINS_DIR"
+
+[renderer]
+active = "generic-renderer"
+EOF
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────

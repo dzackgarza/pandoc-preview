@@ -35,6 +35,22 @@ pub struct Config {
     /// when no plugin declares config; an empty map is never re-serialized.
     #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
     pub plugin: IndexMap<String, toml::Value>,
+    /// Active renderer (Milestone B): selects, by plugin id, the renderer plugin
+    /// that turns the editor buffer into preview HTML. The app core owns no
+    /// renderer knowledge; it delegates to this plugin. Optional table, but the
+    /// preview path requires it (no runtime default — absent is a loud error when
+    /// a render is attempted).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub renderer: Option<Renderer>,
+}
+
+/// The `[renderer]` table: which renderer plugin is active.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Renderer {
+    /// Plugin id of the active renderer (a `category = "renderer"` plugin in the
+    /// configured plugins dir). Required when `[renderer]` is present.
+    pub active: String,
 }
 
 /// The `[plugins]` table: where plugins are discovered. Present only when the
@@ -204,6 +220,13 @@ pub fn validate(config: &Config) -> Result<()> {
         if plugins.dir.trim().is_empty() {
             return Err(Error::InvalidArgument(
                 "plugins.dir must not be empty".into(),
+            ));
+        }
+    }
+    if let Some(renderer) = &config.renderer {
+        if renderer.active.trim().is_empty() {
+            return Err(Error::InvalidArgument(
+                "renderer.active must not be empty".into(),
             ));
         }
     }

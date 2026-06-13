@@ -133,15 +133,74 @@ as-is transitionally.
 
 ---
 
-## Milestone B — Renderer-as-plugin + generic renderer
+## Milestone B — Renderer-as-plugin + generic renderer  [RATIFIED 2026-06-14]
 
-**Goal.** Core becomes renderer-agnostic; the generic renderer ships as a plugin.
-**Work.** Define the renderer-plugin interface (buffer → preview HTML) atop A;
-remove pandoc knowledge from `render.rs`; ship the generic renderer (raw script,
-md stdin → HTML stdout, raw-string-only config, zero validation).
-**Proof (acceptance test of the abstraction):** a `markdown-it` generic renderer
-renders the witness with NO app changes; a grep-gate proves no pandoc strings in
-the app core.
+**Goal.** The app core owns NO renderer knowledge. `render_preview` keeps its
+exact signature (frontend + all P-series untouched) but DELEGATES buffer→HTML to
+the active renderer plugin. Two renderers ship as plugins: pandoc (today's preview
+argv, structured config retained transitionally) and generic (md stdin → HTML
+stdout, raw-string config). The pandoc command-model (raw-string-canonical +
+semantic deconstruction) is deferred to C (ratified split).
+
+**Renderer-plugin interface (atop A's firewall).**
+- Renderer plugins are `category = "renderer"`, `kind = "command"`.
+- Active renderer selected by a core config value `[renderer] active = "<id>"`
+  (a core value like `[plugins].dir`; no runtime default — absent is a loud error
+  once preview runs). Optional-table parsing pattern like `[plugins]`, but the
+  preview path requires it; every preview-capable config declares it.
+- To render: core runs the active renderer plugin's command with the buffer on
+  stdin and render context substituted per-argument — `{base_dir}`, `{base_url}`,
+  `{mathjax}` (new render-context placeholders beyond A's `{plugin_dir}`/
+  `{config_dir}`/`{file}`/`{artifact}`). The plugin's own `[plugin.<id>]` config is
+  delivered to the plugin process (env `PPE_PLUGIN_CONFIG` as JSON) so a renderer
+  script can read e.g. pandoc `from_format`/`extra_args`. Stdout = standalone HTML,
+  loaded into the preview iframe exactly as today; nonzero exit → RenderResult.ok
+  = false (compile log), same as now.
+- The generic renderer ignores context/config except its own raw script string.
+
+**Ownership moves OUT of core (this is what B2 enforces).**
+- `[pandoc]` (path/from_format/extra_args) leaves core `Config`; it becomes the
+  pandoc renderer plugin's `[plugin.<id>]` config section (structured, transitional;
+  C makes it the raw string).
+- `render.rs`'s pandoc argv leaves core → into the pandoc renderer plugin (a
+  shipped script/command).
+- The doctor's `pandoc-executable` / `pandoc-invocation` checks leave core →
+  contributed by the pandoc renderer plugin (doctor-contract.md ownership note
+  already ratifies this). **Consequence: D1 and D5 are re-scoped** — the pandoc
+  checks now appear as the renderer plugin's contributed checks, not core rows.
+  This is anticipated by the contract; D1/D5 specs get updated as part of B GREEN
+  (RED first: the re-scoped assertions fail against today's hardcoded battery).
+- Export still spawns pandoc, but only via `[export.<id>]` config argv (config,
+  not core code) and the generic `export-plugins` doctor check (no pandoc strings)
+  — so export is unaffected by B2.
+
+**Shipped renderer plugins.** Two committed repo artifacts (canonical source;
+Milestone D vendors/symlinks them into the XDG plugins dir): `pandoc-renderer`
+(builds today's preview argv) and `generic-renderer` (the markdown-it-class
+escape hatch). Provisioning installs them into the hermetic plugins dir for the
+relevant specs.
+
+**Proof obligations (RATIFIED).**
+- **B1 (behavioral, `p20`)** — The generic renderer renders the witness with ZERO
+  app-core changes. With `[renderer].active` = the committed generic renderer and
+  it installed in the plugins dir, the live preview shows the witness rendered by
+  THAT renderer, proven by a marker only it emits (distinct from pandoc output).
+  The acceptance test of the whole abstraction (renderer-plugin-architecture.md).
+- **B2 (architecture hygiene, NOT a proof-suite test).** The "no pandoc-specific
+  strings in the app core" invariant is enforced by an agent-facing grep gate in
+  `.agents/` (per the global rule banning source-content meta-assertions in the
+  behavioral proof suite; the invariant is still enforced, just outside
+  `tests/proof`). B1 carries the behavioral subsumption: a leak into core would
+  break the generic renderer's no-core-changes property.
+- **Regression gate:** P1–P18 and D1–D9 stay green. The pandoc preview now flows
+  through the pandoc renderer plugin; D1/D5 are re-scoped (above) as part of B.
+
+**RED/GREEN sequencing.** B1 RED: add the `[renderer]` config field (parsing
+plumbing) so the app boots with `active = generic`, but `render_preview` still
+hardcodes pandoc → the generic marker is absent → RED for the right reason
+(active-renderer selection has no effect yet). GREEN: `render_preview` delegates
+to the active renderer plugin; move pandoc out of core; migrate doctor checks;
+re-scope D1/D5; install shipped renderer plugins. Keep the full suite green.
 
 ## Milestone C — Pandoc renderer plugin (raw-command-canonical)
 
