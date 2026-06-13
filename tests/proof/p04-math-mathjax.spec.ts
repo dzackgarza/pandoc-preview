@@ -27,14 +27,17 @@ test('mathjax typesets the formula inside pandoc math spans with exact MathML co
 
   // The assistive MathML flattens \zeta(2) = \pi^2/6 to the exact character
   // sequence ζ(2)=π2/6 (the superscript loses position in textContent).
-  // Strip all whitespace before comparing; this still fails on wrong TeX, an
-  // unwired engine, or junk — it only neutralizes MathML pretty-printing.
+  // Strip whitespace AND invisible math operators (U+2061 FUNCTION APPLICATION
+  // .. U+2064 INVISIBLE PLUS) before comparing: MathJax's semantic MathML
+  // inserts U+2061 between ζ and (2). They render nothing, so removing them is
+  // content-preserving and keeps the oracle stable across MathJax builds; the
+  // comparison still fails on wrong TeX, an unwired engine, or junk.
   const mmlRaw = await previewQuery(
     tauriPage,
     `return d.querySelector('span.math mjx-container mjx-assistive-mml')?.textContent ?? null;`,
   );
   expect(typeof mmlRaw).toBe('string');
-  const mml = (mmlRaw as string).replace(/\s+/g, '');
+  const mml = (mmlRaw as string).replace(/[\s\u2061-\u2064]/g, '');
   expect(mml).toBe('ζ(2)=π2/6');
 
   // The raw dollar-delimited source must not appear as visible text.

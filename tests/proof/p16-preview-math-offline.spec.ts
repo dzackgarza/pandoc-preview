@@ -112,7 +112,10 @@ test('preview typesets math from a local (non-remote) MathJax source', async ({
     `return d.querySelector('span.math mjx-container mjx-assistive-mml')?.textContent ?? null;`,
   );
   expect(typeof mmlRaw).toBe('string');
-  const mml = (mmlRaw as string).replace(/\s+/g, '');
+  // Strip whitespace AND invisible math operators (U+2061 FUNCTION APPLICATION
+  // .. U+2064 INVISIBLE PLUS): MathJax's semantic MathML inserts U+2061 between
+  // ζ and (2). They render nothing, so removing them is content-preserving.
+  const mml = (mmlRaw as string).replace(/[\s\u2061-\u2064]/g, '');
   expect(mml).toBe('ζ(2)=π2/6');
 
   // The raw dollar-delimited source must not survive as visible text — the

@@ -85,9 +85,9 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
   //
   // {mathjax} is the app-injected, install-portable placeholder for the bundled
   // MathJax (decision A): the app substitutes it with file://<resource_dir>/
-  // mathjax/tex-svg-full.js. This independent-process spec mirrors that by
+  // mathjax/tex-full-svg-a11y.min.js. This independent-process spec mirrors that by
   // resolving the SAME vendored bundle at its fixed repo path
-  // (src-tauri/resources/mathjax/tex-svg-full.js), computed relative to this
+  // (src-tauri/resources/mathjax/tex-full-svg-a11y.min.js), computed relative to this
   // spec file so it is independent of cwd. CONTRACT for the implementer: the
   // bundle MUST live at that path and the shipped [export.html] uses
   // `--mathjax={mathjax}`. While the shipped default still carries bare
@@ -98,7 +98,7 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
   // {input}/{output} substitution mechanism (P12) + resource_dir being a Tauri
   // primitive. A dedicated proof of the app's export-side resolution is debt.
   const mathjaxBundleUrl = new URL(
-    '../../src-tauri/resources/mathjax/tex-svg-full.js',
+    '../../src-tauri/resources/mathjax/tex-full-svg-a11y.min.js',
     import.meta.url,
   ).href;
   const inputPath = manifest.demoFile;
@@ -191,7 +191,7 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
     // woff fonts at runtime from the MathJax path, so a tex-chtml bundle would
     // still produce mjx-container + assistive MathML (those are built by the JS)
     // while silently fetching fonts — visually broken offline. A self-contained
-    // SVG bundle (tex-svg-full.js) fetches nothing. We abort any non-local
+    // SVG bundle (tex-full-svg-a11y.min.js) fetches nothing. We abort any non-local
     // request AND assert zero such attempts occurred.
     const remoteAttempts: string[] = [];
     await page.route('**/*', (route) => {
@@ -218,7 +218,7 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
         document.querySelector('span.math mjx-container mjx-assistive-mml')?.textContent ?? null,
     );
     expect(typeof mmlRaw).toBe('string');
-    expect((mmlRaw as string).replace(/\s+/g, '')).toBe('ζ(2)=π2/6');
+    expect((mmlRaw as string).replace(/[\s\u2061-\u2064]/g, '')).toBe('ζ(2)=π2/6');
   } finally {
     await browser.close();
   }
