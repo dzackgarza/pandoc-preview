@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P15)
+# Proof Obligations (P1–P17)
 
 User-approved external proof obligations for Pandoc Preview. Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config. No internal behaviours, no forced error modes. An assertion is admissible only if it would fail on a plausibly broken app (unwired pandoc, frozen preview, UI-only fake state, junk output).
 
@@ -29,6 +29,8 @@ A per-run temp project containing `demo.md` with:
 - **P13 — Splitter tracks the pointer.** Dragging the editor/preview divider moves it to the pointer position (within a few px), including when the drag path crosses the preview iframe, and it never sticks or jumps. (Observed bug 2026-06-13: hand-rolled drag in App.svelte — no pointer capture, so the iframe swallows pointermove; ratio computed against the whole main row including the sidebar, so the divider does not land at the pointer.)
 - **P14 — Tab switch preserves the split.** Switching Preview ↔ Compile Log changes neither pane's width. (Observed bug 2026-06-13: clicking the Compile Log tab makes pane sizes jump.)
 - **P15 — Sidebar toggle preserves the editor:preview ratio.** Hiding/showing the file tree keeps the relative split of the two panes.
+- **P16 — Preview math renders with no network (local MathJax).** With the webview's network blocked (no route to any CDN), open `demo.md`; the preview still satisfies P4 (`span.math mjx-container`, assistive MathML flattening to `ζ(2)=π2/6`). Discriminates a CDN-sourced MathJax — the current bare `--mathjax` preview leaves raw `$\zeta(2)` text offline. The MathJax `<script src>` resolves to the bundled app asset via the asset protocol, not `https://`. ([[mathjax-offline-local-source-decision]], decision A 2026-06-13.)
+- **P17 — Exported HTML renders math offline (self-contained, no remote MathJax).** Export HTML via the shipped `[export.html]` plugin while offline: export exits 0 with no "Could not fetch" warning, the artifact contains NO `https://`/`cdn.jsdelivr` reference, and opening it in a network-blocked webview typesets the math (P4-shape `mjx-container`). Proves the shipped default inlines a local MathJax bundle (`--mathjax=<local>` + `--embed-resources`), not a CDN link. Strengthens P7 (which only asserted `data:` image URIs). ([[mathjax-offline-local-source-decision]].)
 
 ## Verification vehicle
 

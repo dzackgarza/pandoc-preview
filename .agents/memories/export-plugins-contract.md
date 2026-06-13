@@ -52,9 +52,14 @@ command = [
   discriminated the engine (passed only because pdflatex was installed).
 - Shipped HTML default plugin fail-open: with `--embed-resources --mathjax` and an
   unreachable CDN, pandoc warns and exits 0 producing a broken artifact (math never
-  renders). Verified via `unshare -rn`. OPEN DECISION: whether the shipped default
-  adds `--fail-if-warnings` (would also trip on e.g. missing-title warnings) or
-  accepts the fail-open as pandoc-owned behavior. Not resolved by the user yet.
+  renders). Verified via `unshare -rn`. RESOLVED (2026-06-13, decision A): the shipped
+  `[export.html]` switches from bare `--mathjax` (CDN) to `--mathjax=<local-bundle>`
+  pointing at a version-pinned MathJax shipped with the app, so `--embed-resources`
+  inlines a LOCAL file and never reaches the network — the fail-open scenario no longer
+  arises. `--fail-if-warnings` is NOT the fix (it would trip on benign missing-title
+  warnings). See [[mathjax-offline-local-source-decision]] (P16/P17). The install-portable
+  path likely arrives via a new app-substituted `{mathjax}` placeholder; if added,
+  placeholder validation must accept it alongside `{input}`/`{output}`.
 
 ## Doctor impact
 
@@ -63,4 +68,5 @@ configured entry, validate shape (placeholders, label, extension) and that argv[
 resolves to an executable. A full probe run is NOT performed (it would compile real
 documents); this honest limit is part of the contract. See [[doctor-contract]].
 
-Proof obligations: see [[proof-obligations]] (P7/P8 revised, P12 added).
+Proof obligations: see [[proof-obligations]] (P7/P8 revised, P12 added; P16/P17 add the
+offline/local-MathJax requirement per [[mathjax-offline-local-source-decision]]).
