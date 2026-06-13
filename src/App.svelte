@@ -481,8 +481,8 @@
   <div class="flex h-full flex-col">
     <Toolbar
       onAction={toolbarAction}
-      onSave={saveCurrent}
-      {dirty}
+      onToggleSidebar={() => (sidebarVisible = !sidebarVisible)}
+      {sidebarVisible}
       fileOpen={currentFile !== null}
     />
 

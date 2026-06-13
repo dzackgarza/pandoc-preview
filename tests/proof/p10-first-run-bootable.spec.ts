@@ -27,8 +27,10 @@ test('first-run.sh config parses to the selected values and boots the editor', a
   expect(preview.debounce_ms).toBe(350);
   expect((cfg.pandoc as Record<string, unknown>).from_format).toBe('markdown');
 
-  // (2) The app booted into the editor UI, not the config-error screen.
-  await tauriPage.waitForSelector('button[title="Save (Ctrl+S)"]', 15_000);
+  // (2) The app booted into the editor UI, not the config-error screen. The
+  // toolbar's sidebar-toggle control is always present once the editor UI
+  // renders (Save is now a menu item, not a toolbar button — see P3).
+  await tauriPage.waitForSelector('button[title^="Toggle Sidebar"]', 15_000);
   const configErrorPresent = await tauriPage.evaluate(
     `document.body.textContent.includes('Configuration required')`,
   );
