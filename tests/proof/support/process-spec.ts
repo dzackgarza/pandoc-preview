@@ -85,7 +85,13 @@ function doctorBin(): string {
 export function spawnDoctor(
   manifest: DoctorManifest,
   args: string[],
-  timeoutMs = 8000,
+  // The bound exists to catch a HUNG consumer (the original red: a GUI that
+  // launches and never exits) — a hung process exits on no timeout, so the exact
+  // value only needs headroom over a healthy run. 8s was too tight from-cold: in a
+  // full run the two preceding cargo builds load the machine and a healthy doctor
+  // (sub-second cached) could miss the bound and flake. 20s keeps the hung-process
+  // signal while removing the load flake.
+  timeoutMs = 20000,
 ): Promise<ProcessResult> {
   const child = spawn(doctorBin(), args, {
     // New session/process group so a kill on -pid reaps any window the
