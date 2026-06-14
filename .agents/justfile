@@ -7,3 +7,10 @@
 [private]
 arch-no-pandoc-in-core:
     @bash {{justfile_directory()}}/check-no-pandoc-in-core.sh
+
+# The proof harness's e2e vite bring-up must reject a foreign dev server squatting
+# the dev port (scripts/lib/vite-bringup.sh) instead of driving a webview with no
+# __PPE_E2E__ harness. Guards against the obscured "harness attach timeout" class.
+[private]
+check-proof-vite-port-guard:
+    @bash {{justfile_directory()}}/check-proof-vite-port-guard.sh

@@ -13,6 +13,9 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# shellcheck source=scripts/lib/vite-bringup.sh
+source "$REPO_ROOT/scripts/lib/vite-bringup.sh"
+
 SOCKET=/tmp/pandoc-preview-playwright.sock
 LOCK=/tmp/pandoc-preview-proof.lock
 PIDFILE=/tmp/pandoc-preview-proof.pgids
@@ -132,19 +135,10 @@ fi
 VITE_PGID=""
 if [ "$HAVE_APP" -eq 1 ]; then
     ( cd src-tauri && cargo build --features e2e-testing )
-    setsid env VITE_PPE_E2E=1 bun run dev > "$RUNS_ROOT/vite.log" 2>&1 &
-    VITE_PGID=$!
+    export DEV_URL VITE_LOG="$RUNS_ROOT/vite.log"
+    VITE_PGID="$(start_e2e_vite)"
     TRACKED_PGIDS+=("$VITE_PGID")
     echo "$VITE_PGID" >> "$PIDFILE"
-    for _ in $(seq 1 60); do
-        curl -sf "$DEV_URL" > /dev/null 2>&1 && break
-        sleep 0.5
-    done
-    if ! curl -sf "$DEV_URL" > /dev/null 2>&1; then
-        echo "FATAL: vite never became ready at $DEV_URL" >&2
-        cat "$RUNS_ROOT/vite.log" >&2
-        exit 1
-    fi
 fi
 
 # ── Doctor spec runner: no app launch, no socket. The spec spawns the
