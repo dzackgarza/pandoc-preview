@@ -294,16 +294,27 @@ verifies the symlink set + `dzg-unified` texmf (external, never vendored).
 **Proof.** Fresh install places symlinks; doctor green; missing required filter
 = fatal; user override (real file replacing a symlink) is honored.
 
-## Milestone E — Macro pipeline (split model)
+## Milestone E — Macro pipeline (static config; mostly DONE in E1)
 
-**Goal.** Preview macros via MathJax injection; export macros via LaTeX preamble.
-**Work.** Drive `generate-mathjax-config.py` → inject into
-`pandoc_preview_template.html` between the `<!--MATHJAX_MACROS_START/END-->`
-markers; re-render when macros change; app embeds no macro list. Export path
-carries macros through `dzg-unified` in `research_draft.tex`.
-**Proof.** P4/P16-class — witness math typesets with the user's macros, offline,
-through the vendored preview template; tier3 TeX-only macros render in PDF only
-(by design).
+**RESCOPED 2026-06-15 (user ruling).** A MathJax config is STATIC — `window.MathJax
+= <config>`. The `generate-mathjax-config.py → inject-into-template` step is a
+BUILD-TIME concern of the `~/.pandoc` asset repo (it bakes the tier-1/2 macros into
+the config); it is NOT a runtime/per-render thing the app drives. The app's only job
+is to SHIP the static baked config and load it — which is exactly what **E1 already
+did**: the vendored `pandoc_preview_template.html` carries the macros baked in (the
+analog of a webpack-bundled config), and they render offline (p24: `\RR`→R). So the
+earlier "app drives regeneration / re-render when macros change" framing is REPEALED.
+**Goal.** Preview macros via the static baked MathJax config (DONE, E1). Export
+macros via the LaTeX preamble (`dzg-unified`) — that is the EXPORT path, handled by
+the export-suite milestone, not preview.
+**Remaining.** (a) tier3 TeX-only macros render in PDF only, diverging from preview —
+inherent (tier3 is not in the MathJax config), needs only a doc note, not code.
+(b) Optional: factor the macros out of the inlined template into a separate static
+config asset the template loads, so changing macros doesn't require re-baking the
+template (the user's `require("./mathjax_config.js")` pattern). Functionally
+equivalent to the baked template for a standalone embed-resources preview; do only if
+desired. Updating macros otherwise = regenerate offline in `~/.pandoc` + re-vendor.
+**Proof.** P4/P16-class already satisfied via E1 (p24, p16).
 
 ## Milestone F — Math document features
 
