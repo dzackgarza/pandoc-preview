@@ -1,0 +1,35 @@
+{
+  "run_id": "20260613T170324Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p19-plugin-run-by-id.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p19-plugin-run-by-id.spec.ts",
+            "title": "A generic plugin runs by id against the real buffer and returns a structured result",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 845,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.runPlugin is not a function. (In 'window.__PPE_E2E__.runPlugin(\"witness-tool\", \"/tmp/pandoc-preview-proof-runs/20260613T170324Z/p19-plugin-run-by-id/witness-tool-output.txt\")', 'window.__PPE_E2E__.runPlugin' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

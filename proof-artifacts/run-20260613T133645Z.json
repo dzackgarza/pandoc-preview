@@ -1,0 +1,92 @@
+{
+  "run_id": "20260613T133645Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p18-sidebar-collapse-control.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p18-sidebar-collapse-control.spec.ts",
+            "title": "the activity bar persists and its Explorer control collapses/expands the side bar",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1117,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p18-sidebar-collapse-control.spec.ts",
+          "name": "activity-bar",
+          "value": "explorer-collapses-sidebar"
+        }
+      ]
+    },
+    {
+      "spec": "p10-first-run-bootable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p10-first-run-bootable.spec.ts",
+            "title": "first-run.sh config parses to the selected values and boots the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 62,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p10-first-run-bootable.spec.ts",
+          "name": "first-run-font-size",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p15-sidebar-toggle-preserves-ratio.spec.ts",
+            "title": "Hiding the file-tree sidebar preserves the editor:preview ratio",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 992,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-visible",
+          "value": 0.5
+        },
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-hidden",
+          "value": 0.5
+        }
+      ]
+    }
+  ]
+}

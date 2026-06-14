@@ -1,0 +1,59 @@
+{
+  "run_id": "20260613T123910Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p03-save-exact-bytes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p03-save-exact-bytes.spec.ts",
+            "title": "Save writes the editor buffer to disk byte-for-byte",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1606,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p03-save-exact-bytes.spec.ts",
+          "name": "on-disk-bytes",
+          "value": 325
+        }
+      ]
+    },
+    {
+      "spec": "p18-sidebar-collapse-control.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p18-sidebar-collapse-control.spec.ts",
+            "title": "a toolbar control collapses and expands the file-tree sidebar",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 6595,
+            "errors": [
+              "Error: TauriPage command 'click' failed: timeout (5000ms) waiting for button[title^=\"Toggle Sidebar\"]"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

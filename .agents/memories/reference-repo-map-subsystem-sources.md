@@ -28,4 +28,6 @@ title:
 
 **Verify:** any new shell subsystem PR can name its reference source from this table; no subsystem is invented from scratch when a row covers it.
 
+**Obsidian plugin ecosystem = reference implementations (VERY central, user 2026-06-13):** "MANY features one might want in such an app are already available in open-source Obsidian plugins." Before designing any editor/preview feature, search the Obsidian plugin registry for an existing implementation and mine it as the reference. Named examples: CriticMarkup rendering + accept/reject controls (complete plugin exists); image lightboxes; hover-preview of image links. This generalizes the table above: Obsidian plugins are a standing reference shelf, not a one-off source.
+
 **Detailed archaeology notes (audited clones, citations spot-verified):** [Reference: Inkwell Shell Patterns](reference-inkwell-shell-patterns) · [Reference: Tree, Tabs, File Ops (Glyph, marka.md)](reference-tree-tabs-file-ops-glyph-marka-md) · [Reference: Autosave and Git Recovery (SoloMD, mx)](reference-autosave-and-git-recovery-solomd-mx) · [Reference: Render Lifecycle (Tideflow, mdTeX)](reference-render-lifecycle-tideflow-mdtex). QC reality across all seven repos: only Glyph has a real pipeline; Tideflow has typecheck+cargo-check; the rest ship release workflows only.

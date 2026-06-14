@@ -1,0 +1,35 @@
+{
+  "run_id": "20260614T142131Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d13-pandoc-configurator.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d13-pandoc-configurator.spec.ts",
+            "title": "the pandoc gum configurator writes a valid command with the required filters locked in",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 45,
+            "errors": [
+              "TypeError: Cannot read properties of undefined (reading 'includes')"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

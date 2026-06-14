@@ -1,0 +1,44 @@
+{
+  "run_id": "20260613T124303Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p15-sidebar-toggle-preserves-ratio.spec.ts",
+            "title": "Hiding the file-tree sidebar preserves the editor:preview ratio",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2784,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-visible",
+          "value": 0.5
+        },
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-hidden",
+          "value": 0.5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "run_id": "20260614T161622Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p24-template-macro.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p24-template-macro.spec.ts",
+            "title": "a tier-1 macro typesets via the template macros (no MathJax error)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1535,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p24-template-macro.spec.ts",
+          "name": "mathjax-errors",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

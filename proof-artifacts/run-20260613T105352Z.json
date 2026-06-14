@@ -1,0 +1,63 @@
+{
+  "run_id": "20260613T105352Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p16-preview-math-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p16-preview-math-offline.spec.ts",
+            "title": "preview typesets math from a local (non-remote) MathJax source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 18408,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p16-preview-math-offline.spec.ts",
+          "name": "mathjax-script-src",
+          "value": "asset://localhost/%2Fhome%2Fdzack%2Fgitclones%2Fpandoc-preview-greenfield2%2Fsrc-tauri%2Ftarget%2Fdebug%2Fresources%2Fmathjax%2Ftex-svg-full.js"
+        }
+      ]
+    },
+    {
+      "spec": "p17-export-html-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p17-export-html-offline.spec.ts",
+            "title": "shipped [export.html] inlines local MathJax and renders math offline",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 6749,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p17-export-html-offline.spec.ts",
+          "name": "offline-export-bytes",
+          "value": 2279656
+        }
+      ]
+    }
+  ]
+}

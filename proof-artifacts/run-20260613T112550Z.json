@@ -1,0 +1,111 @@
+{
+  "run_id": "20260613T112550Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p04-math-mathjax.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p04-math-mathjax.spec.ts",
+            "title": "mathjax typesets the formula inside pandoc math spans with exact MathML content",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 681,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p04-math-mathjax.spec.ts",
+          "name": "assistive-mml",
+          "value": "ζ(2)=π2/6"
+        }
+      ]
+    },
+    {
+      "spec": "p07-export-html.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p07-export-html.spec.ts",
+            "title": "Export HTML writes a self-contained artifact carrying the P1 witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1010,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p07-export-html.spec.ts",
+          "name": "export-bytes",
+          "value": 2009378
+        }
+      ]
+    },
+    {
+      "spec": "p16-preview-math-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p16-preview-math-offline.spec.ts",
+            "title": "preview typesets math from a local (non-remote) MathJax source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 681,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p16-preview-math-offline.spec.ts",
+          "name": "mathjax-script-src",
+          "value": "asset://localhost/%2Fhome%2Fdzack%2Fgitclones%2Fpandoc-preview-greenfield2%2Fsrc-tauri%2Ftarget%2Fdebug%2Fresources%2Fmathjax%2Ftex-full-svg-a11y.min.js"
+        }
+      ]
+    },
+    {
+      "spec": "p17-export-html-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p17-export-html-offline.spec.ts",
+            "title": "shipped [export.html] inlines local MathJax and renders math offline",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 569,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p17-export-html-offline.spec.ts",
+          "name": "offline-export-bytes",
+          "value": 2009378
+        }
+      ]
+    }
+  ]
+}

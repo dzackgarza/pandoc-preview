@@ -1,0 +1,760 @@
+{
+  "run_id": "20260614T102205Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3321,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.6"
+        }
+      ]
+    },
+    {
+      "spec": "d02-launcher-no-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d02-launcher-no-config.spec.ts",
+            "title": "launcher with no config routes through gum first-run and boots the app",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 32160,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d02-launcher-no-config.spec.ts",
+          "name": "launcher-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d03-launcher-stale-key-regression.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d03-launcher-stale-key-regression.spec.ts",
+            "title": "launcher with the stale math key reconfigures, removes it, and boots",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 36812,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d03-launcher-stale-key-regression.spec.ts",
+          "name": "launcher-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d04-bare-binary-invalid-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d04-bare-binary-invalid-config.spec.ts",
+            "title": "bare binary with invalid config hard-fails on stderr naming config-schema, no window",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 30,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d04-bare-binary-invalid-config.spec.ts",
+          "name": "gate-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d05-doctor-pandoc-nonexecutable.spec.ts",
+            "title": "--doctor with a non-executable pandoc path fails pandoc-executable and exits 1",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 59,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d06-setup-reconfigure-existing.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d06-setup-reconfigure-existing.spec.ts",
+            "title": "just setup over an existing config reconfigures it to a valid config",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 30182,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d07-dev-routes-config-recovery.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d07-dev-routes-config-recovery.spec.ts",
+            "title": "just dev with an invalid config reconfigures it before starting tauri dev",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 36845,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d07-dev-routes-config-recovery.spec.ts",
+          "name": "dev-recovery-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d08-plugin-config-schema.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d08-plugin-config-schema.spec.ts",
+            "title": "the generic validator rejects a bad plugin section and accepts a good one, per declared schema",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 360,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d08-plugin-config-schema.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d09-plugin-doctor-check.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d09-plugin-doctor-check.spec.ts",
+            "title": "a discovered plugin contributes doctor checks that join the battery and reflect real conditions",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 397,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d09-plugin-doctor-check.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 725,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "p02-live-rerender.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p02-live-rerender.spec.ts",
+            "title": "typing at the buffer end re-renders the preview with the new sentence",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1174,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p02-live-rerender.spec.ts",
+          "name": "sentence",
+          "value": "The discriminant equals −163."
+        }
+      ]
+    },
+    {
+      "spec": "p03-save-exact-bytes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p03-save-exact-bytes.spec.ts",
+            "title": "Save writes the editor buffer to disk byte-for-byte",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 728,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p03-save-exact-bytes.spec.ts",
+          "name": "on-disk-bytes",
+          "value": 325
+        }
+      ]
+    },
+    {
+      "spec": "p04-math-mathjax.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p04-math-mathjax.spec.ts",
+            "title": "mathjax typesets the formula inside pandoc math spans with exact MathML content",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 703,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p04-math-mathjax.spec.ts",
+          "name": "assistive-mml",
+          "value": "ζ(2)=π2/6"
+        }
+      ]
+    },
+    {
+      "spec": "p05-relative-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p05-relative-resource.spec.ts",
+            "title": "the scatter image decodes to exactly 64x48 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 805,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 64
+        },
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 48
+        }
+      ]
+    },
+    {
+      "spec": "p06-file-manager.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p06-file-manager.spec.ts",
+            "title": "sidebar mirrors the directory and UI create/rename mutate real files",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 300,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p06-file-manager.spec.ts",
+          "name": "renamed-path",
+          "value": "/home/dzack/.cache/ppe-proof-tmp/pandoc-preview-proof-runs/20260614T102205Z/p06-file-manager/project/chapter-two.md"
+        }
+      ]
+    },
+    {
+      "spec": "p07-export-html.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p07-export-html.spec.ts",
+            "title": "Export HTML writes a self-contained artifact carrying the P1 witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 783,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p07-export-html.spec.ts",
+          "name": "export-bytes",
+          "value": 2009378
+        }
+      ]
+    },
+    {
+      "spec": "p08-export-pdf.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p08-export-pdf.spec.ts",
+            "title": "Export PDF runs the configured lualatex plugin and carries the witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3517,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-producer",
+          "value": "Producer:        LuaTeX-1.24.0"
+        }
+      ]
+    },
+    {
+      "spec": "p09-settings-roundtrip.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p09-settings-roundtrip.spec.ts",
+            "title": "Settings changes persist to config.toml and re-style the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 496,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p09-settings-roundtrip.spec.ts",
+          "name": "config-font-size",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "spec": "p10-first-run-bootable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p10-first-run-bootable.spec.ts",
+            "title": "first-run.sh config parses to the selected values and boots the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 85,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p10-first-run-bootable.spec.ts",
+          "name": "first-run-font-size",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "spec": "p11-compile-log.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p11-compile-log.spec.ts",
+            "title": "the compile log shows the real --from markdown command and a zero exit",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 727,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p11-compile-log.spec.ts",
+          "name": "exit-status-line",
+          "value": "exit status: exit status: 0"
+        }
+      ]
+    },
+    {
+      "spec": "p12-export-custom-pipeline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p12-export-custom-pipeline.spec.ts",
+            "title": "A custom [export.witness] plugin runs verbatim against the real source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 987,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p12-export-custom-pipeline.spec.ts",
+          "name": "witness-sha256",
+          "value": "d2bc1678c7f9ffe46150ea03b80f4e6089b86eb09da879b5e4e36d167d57e3a9"
+        }
+      ]
+    },
+    {
+      "spec": "p13-splitter-tracks-pointer.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p13-splitter-tracks-pointer.spec.ts",
+            "title": "Dragging the divider lands it at the pointer position",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 714,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p13-splitter-tracks-pointer.spec.ts",
+          "name": "divider-target-x",
+          "value": 713
+        },
+        {
+          "spec": "p13-splitter-tracks-pointer.spec.ts",
+          "name": "divider-landed-x",
+          "value": 713
+        }
+      ]
+    },
+    {
+      "spec": "p14-tab-switch-preserves-split.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p14-tab-switch-preserves-split.spec.ts",
+            "title": "Switching Preview <-> Compile Log does not move either pane",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 807,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p14-tab-switch-preserves-split.spec.ts",
+          "name": "editor-width-preview",
+          "value": 319
+        },
+        {
+          "spec": "p14-tab-switch-preserves-split.spec.ts",
+          "name": "editor-width-log",
+          "value": 319
+        }
+      ]
+    },
+    {
+      "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p15-sidebar-toggle-preserves-ratio.spec.ts",
+            "title": "Hiding the file-tree sidebar preserves the editor:preview ratio",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1257,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-visible",
+          "value": 0.5
+        },
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-hidden",
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "spec": "p16-preview-math-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p16-preview-math-offline.spec.ts",
+            "title": "preview typesets math from a local (non-remote) MathJax source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 726,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p16-preview-math-offline.spec.ts",
+          "name": "mathjax-script-src",
+          "value": "asset://localhost/%2Fhome%2Fdzack%2Fgitclones%2Fpandoc-preview-greenfield2%2Fsrc-tauri%2Ftarget%2Fdebug%2Fresources%2Fmathjax%2Ftex-full-svg-a11y.min.js"
+        }
+      ]
+    },
+    {
+      "spec": "p17-export-html-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p17-export-html-offline.spec.ts",
+            "title": "shipped [export.html] inlines local MathJax and renders math offline",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 558,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p17-export-html-offline.spec.ts",
+          "name": "offline-export-bytes",
+          "value": 2009378
+        }
+      ]
+    },
+    {
+      "spec": "p18-sidebar-collapse-control.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p18-sidebar-collapse-control.spec.ts",
+            "title": "the activity bar persists and its Explorer control collapses/expands the side bar",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1157,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p18-sidebar-collapse-control.spec.ts",
+          "name": "activity-bar",
+          "value": "explorer-collapses-sidebar"
+        }
+      ]
+    },
+    {
+      "spec": "p19-plugin-run-by-id.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p19-plugin-run-by-id.spec.ts",
+            "title": "A generic plugin runs by id against the real buffer and returns a structured result",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 986,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p19-plugin-run-by-id.spec.ts",
+          "name": "plugin-witness-sha256",
+          "value": "d2bc1678c7f9ffe46150ea03b80f4e6089b86eb09da879b5e4e36d167d57e3a9"
+        }
+      ]
+    },
+    {
+      "spec": "p20-generic-renderer.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p20-generic-renderer.spec.ts",
+            "title": "the active generic renderer plugin renders the preview, not the hardcoded pandoc path",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 180,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p20-generic-renderer.spec.ts",
+          "name": "rendered-by",
+          "value": "generic-renderer"
+        }
+      ]
+    },
+    {
+      "spec": "p22-configure-plugin-spawn.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p22-configure-plugin-spawn.spec.ts",
+            "title": "A plugin is configured by id: the app spawns its [configure] command",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1012,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

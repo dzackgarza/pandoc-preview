@@ -1,0 +1,33 @@
+{
+  "run_id": "20260614T124945Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d10-install-asset-symlinks.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d10-install-asset-symlinks.spec.ts",
+            "title": "install-assets symlinks the vendored required filters into ~/.pandoc/filters",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 31,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

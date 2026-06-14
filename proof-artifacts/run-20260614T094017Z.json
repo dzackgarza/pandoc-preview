@@ -1,0 +1,35 @@
+{
+  "run_id": "20260614T094017Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p22-configure-plugin-spawn.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p22-configure-plugin-spawn.spec.ts",
+            "title": "A plugin is configured by id: the app spawns its [configure] command",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 808,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.configurePlugin is not a function. (In 'window.__PPE_E2E__.configurePlugin(\"witness-tool\")', 'window.__PPE_E2E__.configurePlugin' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "run_id": "20260614T161918Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p24-template-macro.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p24-template-macro.spec.ts",
+            "title": "a tier-1 macro typesets via the template macros (no MathJax error)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 16753,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p24-template-macro.spec.ts",
+          "name": "macro-mml",
+          "value": "R"
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 881,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "p04-math-mathjax.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p04-math-mathjax.spec.ts",
+            "title": "mathjax typesets the formula inside pandoc math spans with exact MathML content",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1093,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p04-math-mathjax.spec.ts",
+          "name": "assistive-mml",
+          "value": "ζ(2)=π2/6"
+        }
+      ]
+    },
+    {
+      "spec": "p05-relative-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p05-relative-resource.spec.ts",
+            "title": "the scatter image decodes to exactly 64x48 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 953,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 64
+        },
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 48
+        }
+      ]
+    },
+    {
+      "spec": "p16-preview-math-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p16-preview-math-offline.spec.ts",
+            "title": "preview typesets math from a local (non-remote) MathJax source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1101,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p16-preview-math-offline.spec.ts",
+          "name": "mathjax-script-src",
+          "value": "asset://localhost/%2Fhome%2Fdzack%2Fgitclones%2Fpandoc-preview-greenfield2%2Fsrc-tauri%2Ftarget%2Fdebug%2Fresources%2Fmathjax%2Ftex-full-svg-a11y.min.js"
+        }
+      ]
+    },
+    {
+      "spec": "d10-install-asset-symlinks.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d10-install-asset-symlinks.spec.ts",
+            "title": "install-assets symlinks the vendored required filters into ~/.pandoc/filters",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 37,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d12-install-preserves-override.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d12-install-preserves-override.spec.ts",
+            "title": "install-assets preserves a real-file user override and (re)links the rest",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 46,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d13-pandoc-configurator.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d13-pandoc-configurator.spec.ts",
+            "title": "the pandoc gum configurator writes a valid command with the required filters locked in",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 7093,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

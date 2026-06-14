@@ -1,0 +1,33 @@
+{
+  "run_id": "20260614T133011Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d12-install-preserves-override.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d12-install-preserves-override.spec.ts",
+            "title": "install-assets preserves a real-file user override and (re)links the rest",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 41,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
