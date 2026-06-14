@@ -415,3 +415,31 @@ workspace (Tier 3) are tracked in [[feature-catalogue-and-implementation-status]
   Milestone C section + memory updates to
   [[pandoc-command-model-and-raw-string-contract]] and [[required-filter-set]]).
   C1–C4 proposed; **NEXT: ratify C1–C4, then RED.**
+- **2026-06-14 (later): MILESTONE C COMPLETE + Milestone D preview-filter slice.**
+  Full suite 35 specs green (d01 has a known from-cold 8s spawnDoctor flake, now
+  mitigated by a 20s bound; passes cached). Done, each RED→GREEN:
+  - **C1** generic configure mechanism (`[configure]` manifest field; app spawns it
+    detached; p22). **C2** pandoc config = raw command string, structured fields
+    deleted (p10 retargeted). **C3** pandoc kitty+gum configurator that locks the
+    required filters (d13; configure-wizard.sh + tomlkit helper + kitty launcher).
+    **C4/D3** `required-filter` doctor check (d11; + run_doctor_check now surfaces a
+    failing check's diagnostic). Image-embed fix (preview `--embed-resources`, p05)
+    + harness hardening (tmpfs prune, wide PTY) landed alongside.
+  - **D1** vendor the required filters + symlink install (d10). **D2** command
+    references the filters; a filter transforms the preview (p23 callout). **D4**
+    install preserves a real-file user override (d12).
+  - Plugin philosophy ratified + documented: total externality, the pandoc *suite*,
+    plugin-owned config UI ([[renderer-plugin-architecture]]).
+- **DEFERRED / re-scoped:**
+  - **tikzcd → Milestone F**: errors at load without standalone-tikz.tex +
+    FIGURES_DIR/PANDOC_DIR env (the tikz pipeline). Vendored/installed + doctor-
+    verified, but not yet in the command.
+  - **Rest of Milestone D** (preview template + css partials, export filters
+    include/select_images, macro toolchain, `template-exists` + dzg-unified texmf
+    doctor checks): folds into E (macros) / F (tikz/math) / the export-suite milestone.
+  - **Symlink-edit footgun**: managed symlinks point at the writable repo vendor, so
+    editing a filter THROUGH its symlink edits the canonical source; the contract is
+    "replace the symlink with a real file." Needs a docs note.
+- **NEXT:** Milestone E (macro pipeline) or F (math features incl. tikzcd
+  activation), and the export-suite migration. The bulk of D's templates/macros
+  land naturally inside E/F.
