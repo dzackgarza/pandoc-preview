@@ -121,7 +121,7 @@ EOF
 # broken environments are the doctor's product surface — and no witness
 # project. Provisioning writes the doctor-shaped config, then a lean manifest.
 case "$SPEC" in
-d0[1-9]-*.spec.ts)
+d[0-9][0-9]-*.spec.ts)
     CONFIG_DIR="$ABS_SPEC_DIR/xdg-config/pandoc-preview"
     CONFIG_PATH="$CONFIG_DIR/config.toml"
     PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
