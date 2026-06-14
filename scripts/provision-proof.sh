@@ -103,6 +103,12 @@ emit_pandoc_renderer() {
     env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
     local fdir="$ABS_SPEC_DIR/home/.pandoc/filters"
     local tpl="$ABS_SPEC_DIR/home/.pandoc/templates/pandoc_preview_template.html"
+    # The bibliography citeproc resolves against. install-assets just symlinked the
+    # vendored starter here; replace that symlink with the fixture, which carries
+    # the keys the citation proof (p27) cites. --remove-destination replaces the
+    # symlink instead of writing through it into the vendored starter.
+    local bib="$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+    cp --remove-destination "$REPO_ROOT/tests/proof/fixtures/references.bib" "$bib"
     cat >> "$config_path" <<EOF
 
 [plugins]
@@ -112,7 +118,7 @@ dir = "$plugins_dir"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-command = "$pandoc_path --from markdown --to html5 --standalone --embed-resources --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
+command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --bibliography=$bib --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
 EOF
 }
 

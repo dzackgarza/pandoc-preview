@@ -40,3 +40,6 @@ link_dir() {
 
 link_dir "$VENDOR/filters" "$HOME/.pandoc/filters"
 link_dir "$VENDOR/templates" "$HOME/.pandoc/templates"
+# The default preview bibliography citeproc resolves against. A user override (a
+# real ~/.pandoc/bib/references.bib) is preserved, never clobbered.
+link_dir "$VENDOR/bib" "$HOME/.pandoc/bib"

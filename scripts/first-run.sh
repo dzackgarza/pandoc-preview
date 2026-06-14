@@ -105,10 +105,15 @@ done <<<"$EXTRA_ARGS_RAW"
 
 FILTERS_DIR="$HOME/.pandoc/filters"
 PREVIEW_TEMPLATE="$HOME/.pandoc/templates/pandoc_preview_template.html"
+BIBLIOGRAPHY="$HOME/.pandoc/bib/references.bib"
+# Obsidian fidelity: lists may follow a paragraph with no blank line in a vault;
+# the extension makes pandoc parse them as lists (Obsidian does). Citeproc resolves
+# [@key] citations against the installed bibliography (override it with your own).
+FROM_FORMAT_EXT="$FROM_FORMAT+lists_without_preceding_blankline"
 # tikzcd.lua is intentionally NOT referenced yet: it errors at load without its
 # standalone-tikz.tex template + PANDOC_DIR/FIGURES_DIR env, which is the Milestone
 # F tikz pipeline. It is still vendored/installed; it joins the command in F.
-PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT --to html5 --standalone --embed-resources --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --bibliography=$BIBLIOGRAPHY --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
 # Escape for a TOML basic string ("..."): backslash first, then double-quote.
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}

@@ -36,9 +36,11 @@ test('a callout renders its title as visible text, not just a tooltip attribute'
     `return d.querySelector('div.callout[data-callout="warning"]') !== null;`,
   );
 
+  // Scope to THIS witness's callout: demo.md already contains a [!NOTE] callout,
+  // so an unscoped .callout-title query would return that one's title instead.
   const visibleTitle = await previewQuery(
     tauriPage,
-    `return d.querySelector('div.callout .callout-title')?.textContent?.trim() ?? null;`,
+    `return d.querySelector('div.callout[data-callout="warning"] .callout-title')?.textContent?.trim() ?? null;`,
   );
   expect(visibleTitle).toBe(TITLE);
 
