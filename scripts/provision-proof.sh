@@ -308,6 +308,41 @@ EOF
             exit 1
         fi
         ;;
+    d15-*) # Valid config (every config-class + export check passes) whose
+        # [plugins].dir points at a directory that does NOT exist -> the ONLY
+        # failing doctor check is `plugins`. This is the state the pre-fix
+        # first-run.sh left behind. `just dev` must route it into reconfiguration
+        # (which now creates the dir + installs the renderer), not dead-end as an
+        # unrecoverable "non-config" failure. We install NO plugin here.
+        mkdir -p "$CONFIG_DIR"
+        cat > "$CONFIG_PATH" <<EOF
+[general]
+theme = "dark"
+
+[editor]
+font_size = 14
+line_wrapping = false
+line_numbers = true
+
+[preview]
+debounce_ms = 200
+EOF
+        emit_default_export_tables "$CONFIG_PATH"
+        # The filters/template must be installed so the command first-run.sh writes
+        # during recovery is runnable (every recovery spec does this).
+        env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
+        cat >> "$CONFIG_PATH" <<EOF
+
+[plugins]
+dir = "$CONFIG_DIR/plugins"
+
+[renderer]
+active = "pandoc-renderer"
+
+[plugin.pandoc-renderer]
+command = "$PANDOC_BIN --from markdown --to html5 --standalone --embed-resources"
+EOF
+        ;;
     esac
 
     jq -n \
