@@ -244,6 +244,13 @@ greeting = "hi"
 ratio = 0.5
 EOF
         ;;
+    d11-*) # C4/D3: required-filter check. Valid env (write_valid_config installs the
+        # filters via emit_pandoc_renderer), then remove a required filter that is
+        # NOT command-referenced (tikzcd, deferred to F) so required-filter is the
+        # SOLE failing check — the command still runs, only the required set is short.
+        write_valid_config "$PANDOC_BIN"
+        rm -f "$ABS_SPEC_DIR/home/.pandoc/filters/tikzcd.lua"
+        ;;
     esac
 
     jq -n \
