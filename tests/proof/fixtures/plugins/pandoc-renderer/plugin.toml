@@ -19,12 +19,11 @@ config_schema = "schema.json"
 # Render context on argv; the markdown buffer arrives on stdin; HTML on stdout.
 command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}"]
 
-# Required since C1 (every plugin declares a configure command). C3 replaces this
-# placeholder with the real pandoc configurator: a kitty popup running a gum script
-# that edits the raw pandoc command (locking required filters/template). Until then
-# it is a no-op; no spec spawns it.
+# The pandoc configurator (C3): the app spawns this (detached) as the "Configure"
+# action; it opens a kitty popup running a gum wizard that edits the raw pandoc
+# command and locks the required filters in. The app knows nothing of kitty/gum.
 [configure]
-command = ["true"]
+command = ["{plugin_dir}/configure.sh", "{config_dir}"]
 
 [[doctor_checks]]
 id = "pandoc-executable"
