@@ -7,7 +7,10 @@
 # volatile render context. It also contributes the pandoc-executable /
 # pandoc-invocation doctor checks that left the core (doctor-contract.md).
 #
-# (Milestone D vendors this into the XDG plugins dir. For now it lives as a fixture.)
+# Vendored shipped asset: the canonical copy lives in
+# src-tauri/resources/vendor/plugins/pandoc-renderer. scripts/first-run.sh installs
+# it into the configured XDG plugins dir (a managed symlink), so a freshly
+# configured system is doctor-clean with the renderer already discoverable.
 id = "pandoc-renderer"
 name = "Pandoc Renderer"
 description = "Renders markdown to preview HTML via pandoc; the shipped default renderer."
