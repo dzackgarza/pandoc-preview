@@ -25,12 +25,26 @@ test('first-run.sh config parses to the selected values and boots the editor', a
   expect(editor.line_numbers).toBe(true);
   const preview = cfg.preview as Record<string, unknown>;
   expect(preview.debounce_ms).toBe(350);
-  // first-run.sh now produces the renderer-plugin config (Milestone B): the app is
-  // renderer-agnostic, so pandoc settings live in the pandoc renderer plugin's own
-  // section and the active renderer is selected by id.
+  // first-run.sh produces the renderer-plugin config: the app is renderer-agnostic,
+  // so pandoc settings live in the pandoc renderer plugin's own section and the
+  // active renderer is selected by id.
   expect((cfg.renderer as Record<string, unknown>).active).toBe('pandoc-renderer');
+  // Milestone C: the pandoc renderer's config IS the raw pandoc command string —
+  // the single canonical source of truth. There are NO structured
+  // path/from_format/extra_args fields anymore; the plugin owns the command's
+  // meaning and the core stores it verbatim.
   const pandocRenderer = (cfg.plugin as Record<string, Record<string, unknown>>)['pandoc-renderer'];
-  expect(pandocRenderer.from_format).toBe('markdown');
+  expect(typeof pandocRenderer.command).toBe('string');
+  const command = pandocRenderer.command as string;
+  expect(command).toContain('pandoc');
+  expect(command).toContain('--from markdown');
+  // The image-embedding contract (preview resolves no files) is carried in the
+  // canonical command itself.
+  expect(command).toContain('--embed-resources');
+  // Structured fields are gone — the raw string is the only source of truth.
+  expect(pandocRenderer.from_format).toBeUndefined();
+  expect(pandocRenderer.path).toBeUndefined();
+  expect(pandocRenderer.extra_args).toBeUndefined();
 
   // (2) The app booted into the editor UI, not the config-error screen. The
   // activity bar's Explorer control is always present once the editor UI renders
