@@ -63,17 +63,29 @@ EOF
 # (render-rebuild-plan.md), not a constant: each spec copies the committed
 # fixtures into a hermetic plugins dir and wires [plugins].dir below.
 PLUGINS_SRC="$REPO_ROOT/tests/proof/fixtures/plugins"
-# install_plugin_fixtures <dest-dir> <plugin-id>...  — copy the named committed
-# fixture plugins into a hermetic plugins dir. A plugin is discovered only if a
-# valid [plugin.<id>] config section is also provided (its schema may require
-# keys), so each spec installs exactly the plugins it configures.
+# The shipped pandoc renderer is NOT a test fixture: it is vendored app-owned
+# code (the single source of truth scripts/first-run.sh installs for real). Specs
+# that synthesize a config directly (rather than running first-run.sh) copy it
+# from the SAME vendor source, so there is exactly one pandoc-renderer.
+VENDOR_PLUGINS="$REPO_ROOT/src-tauri/resources/vendor/plugins"
+# install_plugin_fixtures <dest-dir> <plugin-id>...  — copy the named plugin into a
+# hermetic plugins dir. Test-only plugins (witness-tool, ratio-tool,
+# generic-renderer) come from the committed fixtures; the shipped pandoc renderer
+# comes from the vendor dir (OSOT). A plugin is discovered only if a valid
+# [plugin.<id>] config section is also provided (its schema may require keys), so
+# each spec installs exactly the plugins it configures.
 install_plugin_fixtures() {
     local dest="$1"
     shift
     mkdir -p "$dest"
-    local id
+    local id src
     for id in "$@"; do
-        cp -r "$PLUGINS_SRC/$id" "$dest/"
+        if [ "$id" = "pandoc-renderer" ]; then
+            src="$VENDOR_PLUGINS/$id"
+        else
+            src="$PLUGINS_SRC/$id"
+        fi
+        cp -r "$src" "$dest/"
     done
 }
 
@@ -184,27 +196,26 @@ EOF
         # write_valid_config now writes (export-plugins-contract.md, D1).
         write_valid_config "$PANDOC_BIN"
         ;;
-    d02-*) # no config: leave the config dir absent (gum first-run creates it).
-        # first-run.sh writes [plugins].dir = <config_dir>/plugins; pre-install the
-        # shipped pandoc renderer there so the recovered app boots (renderer-agnostic
-        # core delegates the preview to it).
-        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
+    d02-*) # no config: leave the config dir absent. The spec drives the launcher,
+        # which routes into the real first-run.sh; first-run.sh itself creates the
+        # plugins dir and installs the shipped renderer (it is NOT injected here —
+        # that injection used to mask the bug d14 now guards).
         ;;
-    d03-*) # config carrying the exact observed stale key; recovers via first-run
+    d03-*) # config carrying the exact observed stale key; recovers via the real
+        # first-run.sh (which installs the renderer itself — no injection here).
         write_stale_key_config
-        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
         ;;
     d04-*) # invalid config: stale key -> config-schema fails the startup gate
         # (bare binary; no recovery, no boot, so no renderer needed).
         write_stale_key_config
         ;;
-    d06-*) # existing stale/invalid config: `just setup` must reconfigure it
+    d06-*) # existing stale/invalid config: `just setup` must reconfigure it via the
+        # real first-run.sh (which installs the renderer itself — no injection here).
         write_stale_key_config
-        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
         ;;
-    d07-*) # existing config-class-invalid config: `just dev` must recover it
+    d07-*) # existing config-class-invalid config: `just dev` must recover it via the
+        # real first-run.sh (which installs the renderer itself — no injection here).
         write_stale_key_config
-        install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
         ;;
     d05-*) # valid config, but pandoc.path -> a real NON-executable file
         NONEXEC="$ABS_SPEC_DIR/not-pandoc"
@@ -330,11 +341,12 @@ mkdir -p "$CONFIG_DIR"
 
 PLUGINS_DIR="$ABS_SPEC_DIR/plugins"
 if [ "$SPEC" = "p10-first-run-bootable.spec.ts" ]; then
-    # P10 boots from a config produced by the REAL first-run.sh, driven
-    # through a real PTY answering the gum prompts. No canonical config is
-    # written here; the script must produce it. first-run.sh writes
-    # [plugins].dir = <config_dir>/plugins; pre-install the shipped pandoc renderer
-    # there so the booted app's renderer-agnostic core can delegate the preview.
+    # P10 boots from a config produced by the REAL first-run.sh, driven through a
+    # real PTY answering the gum prompts. No canonical config is written here; the
+    # script must produce it — INCLUDING the plugins dir and the shipped renderer it
+    # installs there. Nothing is injected afterward (the old injection masked the
+    # bug d14 now guards): the booted app's renderer-agnostic core delegates the
+    # preview to whatever first-run.sh genuinely left behind.
     "$REPO_ROOT/scripts/drive-first-run.py" \
         "$REPO_ROOT/scripts/first-run.sh" \
         "$ABS_SPEC_DIR/xdg-config" \
@@ -343,7 +355,6 @@ if [ "$SPEC" = "p10-first-run-bootable.spec.ts" ]; then
         echo "FATAL: first-run.sh did not write $CONFIG_PATH" >&2
         exit 1
     fi
-    install_plugin_fixtures "$CONFIG_DIR/plugins" pandoc-renderer
 else
     # Canonical witness config: theme=dark, font_size=14 (P9 base),
     # debounce_ms=200 (P2).

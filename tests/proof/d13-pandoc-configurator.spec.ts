@@ -17,11 +17,14 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, '..', '..');
 const driver = join(repoRoot, 'scripts', 'drive-configure.py');
+// The configurator is the SHIPPED pandoc renderer's own wizard — vendored
+// app-owned code (the single source of truth first-run.sh installs), not a test
+// fixture. Drive the canonical vendored copy directly.
 const wizard = join(
   repoRoot,
-  'tests',
-  'proof',
-  'fixtures',
+  'src-tauri',
+  'resources',
+  'vendor',
   'plugins',
   'pandoc-renderer',
   'configure-wizard.sh',

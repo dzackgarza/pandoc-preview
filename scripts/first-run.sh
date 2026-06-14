@@ -200,4 +200,26 @@ EOF
 # silenced so it cannot interfere with the PTY driver's prompt matching.
 "$(dirname "${BASH_SOURCE[0]}")/install-assets.sh" > /dev/null
 
+# Install the shipped renderer plugin into the configured plugins dir. The config
+# above points [plugins].dir at "$CONFIG_DIR/plugins"; the app is renderer-agnostic
+# and discovers the active renderer from there, so the plugins dir must exist and
+# carry the pandoc renderer or the very next gate (the doctor's plugins check) fails
+# on a freshly configured system. The renderer is app-owned code vendored as the
+# single source of truth; symlink its directory so updates stay atomic, preserving a
+# real-directory user override (a real dir where the managed symlink would go).
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RENDERER_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/pandoc-renderer"
+if [ ! -d "$RENDERER_VENDOR" ]; then
+    echo "FATAL: vendored renderer plugin missing: $RENDERER_VENDOR" >&2
+    exit 1
+fi
+PLUGINS_DIR="$CONFIG_DIR/plugins"
+mkdir -p "$PLUGINS_DIR"
+RENDERER_DEST="$PLUGINS_DIR/pandoc-renderer"
+if [ -e "$RENDERER_DEST" ] && [ ! -L "$RENDERER_DEST" ]; then
+    echo "preserve (user override): $RENDERER_DEST" >&2
+else
+    ln -sfn "$RENDERER_VENDOR" "$RENDERER_DEST"
+fi
+
 gum style --bold --foreground 2 "Config written to $CONFIG_FILE"
