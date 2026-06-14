@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { Config } from "../types";
 
   let {
@@ -16,7 +17,7 @@
   // Editable working copy; the live config is only replaced on Save. This is a
   // deep copy of the WHOLE config, so renderer/plugin sections the UI does not
   // edit (e.g. [plugin.pandoc-renderer]) are preserved verbatim on Save.
-  let draft = $state<Config>(JSON.parse(JSON.stringify(config)));
+  let draft = $state<Config>(untrack(() => JSON.parse(JSON.stringify(config))));
   let pane = $state<"general" | "editor" | "preview">("general");
 
   // Renderer/plugin configuration (pandoc path, format, filters, …) lives in each

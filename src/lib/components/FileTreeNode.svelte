@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import FileTreeNode from "./FileTreeNode.svelte";
   import type { FileNode } from "../types";
 
@@ -16,7 +17,9 @@
     onContextMenu: (e: MouseEvent, node: FileNode) => void;
   } = $props();
 
-  let expanded = $state(depth === 0);
+  // Root nodes start expanded. `depth` is structurally constant per node, so the
+  // initial-value capture is intentional (untrack documents that, not a stale read).
+  let expanded = $state(untrack(() => depth === 0));
 </script>
 
 <button

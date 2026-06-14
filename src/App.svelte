@@ -70,7 +70,10 @@
   let cursorLine = $state(1);
   let cursorCol = $state(1);
 
-  let editor: EditorPane;
+  // bind:this reference to the editor component, used only imperatively
+  // (getContent/setContent/commands in handlers). Svelte 5 requires bind:this
+  // targets to be $state; it is assigned once on mount and never reactively read.
+  let editor = $state<EditorPane>()!;
 
   // dockview split layout (editor | preview). Built on mount once the
   // container element exists; the sidebar is a sibling OUTSIDE this splitview.

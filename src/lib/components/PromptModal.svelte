@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { untrack } from "svelte";
+
   // Minimal text-input modal: the dialog plugin has no text prompt, so file
   // and folder names are collected here.
   let {
@@ -13,7 +15,9 @@
     onCancel: () => void;
   } = $props();
 
-  let value = $state(initial);
+  // Seed the editable field with the supplied default; the modal is created fresh
+  // per prompt, so capturing the initial value once is intentional.
+  let value = $state(untrack(() => initial));
   let input: HTMLInputElement;
 
   $effect(() => {
