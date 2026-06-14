@@ -51,15 +51,13 @@ build:
 typecheck:
     bun run check
 
-# Global QC contract: test-commit is the pre-commit hook chain (no
-# CodeQL); test is the full pre-push chain.
-test-commit:
-    just -f ~/ai/quality-control/justfile-rust test-commit
-
+# Global QC contract (owned by ~/ai-review-ci): both git hooks run `just test`;
+# `test-ci` is the CI variant. Each runs the project's domain check
+# (arch-no-pandoc-in-core) before delegating to the global rust QC chain.
 test:
     just -f .agents/justfile arch-no-pandoc-in-core
-    just -f ~/ai/quality-control/justfile-rust test
+    just -d . -f ~/ai-review-ci/justfiles/rust.just test
 
 test-ci:
     just -f .agents/justfile arch-no-pandoc-in-core
-    just -f ~/ai/quality-control/justfile-rust test-ci
+    just -d . -f ~/ai-review-ci/justfiles/rust.just test-ci
