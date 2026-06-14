@@ -56,6 +56,12 @@ done
 
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 RUNS_ROOT="${TMPDIR:-/tmp}/pandoc-preview-proof-runs/$RUN_ID"
+# Discard scratch from previous runs before creating this one's. The singleton
+# flock above guarantees no other run is active, so every existing per-run dir is
+# dead scratch; left uncleaned they accumulate (each full run is ~100-300MB) and,
+# on a tmpfs $TMPDIR, exhaust the user quota — which then breaks provisioning and
+# forces long-path workarounds. This bounds disk use to a single run's scratch.
+rm -rf "${TMPDIR:-/tmp}/pandoc-preview-proof-runs"
 mkdir -p "$RUNS_ROOT" "$REPO_ROOT/proof-artifacts"
 
 # ── Specs ──────────────────────────────────────────────────────────

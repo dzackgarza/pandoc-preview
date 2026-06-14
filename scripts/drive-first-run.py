@@ -53,7 +53,12 @@ child = pexpect.spawn(
     env=env,
     encoding="utf-8",
     timeout=30,
-    dimensions=(40, 120),
+    # Wide PTY so gum never truncates a prompt below the text the expect()
+    # patterns match on. The overwrite-confirm prompt embeds the full config
+    # path ("Config already exists at <path>. Overwrite and reconfigure?"); a
+    # long hermetic path on a narrow terminal clipped it before "Overwrite",
+    # silently breaking the regex match. 400 columns covers any realistic path.
+    dimensions=(40, 400),
 )
 child.logfile_read = sys.stdout
 
