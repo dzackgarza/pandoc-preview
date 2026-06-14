@@ -353,6 +353,21 @@ p19-plugin-run-by-id.spec.ts)
 greeting = "hi"
 EOF
     ;;
+p22-configure-plugin-spawn.spec.ts)
+    # C1: plugins own their configuration. The canonical config above set up the
+    # pandoc renderer + [plugins].dir (so the preview works); here we ADD the
+    # witness-tool plugin (whose manifest declares a [configure] command) into
+    # that same dir and its config section, so the spec can drive configurePlugin
+    # by id. The marker is created so witness-tool's contributed doctor checks
+    # pass and the app boots.
+    install_plugin_fixtures "$PLUGINS_DIR" witness-tool
+    touch "$CONFIG_DIR/witness-tool.marker"
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.witness-tool]
+greeting = "hi"
+EOF
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────

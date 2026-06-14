@@ -98,6 +98,24 @@ export async function runPluginById(
   );
 }
 
+// ── Configure a plugin by id (C1/p22) ─────────────────────────────────────
+// Plugins own their configuration entirely (render-rebuild-plan.md, Milestone C):
+// the manifest declares a [configure] command and the app's "Configure <name>"
+// action merely SPAWNS it (detached, no TTY handling, no in-app config editor) so
+// the plugin can bring its own config UI (e.g. pandoc opens a kitty popup running
+// gum). The harness hook fires the spawn (fire-and-forget, like runPlugin); the
+// proof is the observable effect of the spawned command on disk. RED today:
+// __PPE_E2E__.configurePlugin does not exist — there is no [configure] manifest
+// field, no configure_plugin command, and no bridge — so this evaluate throws.
+export async function configurePluginById(
+  page: EvaluatesScripts,
+  pluginId: string,
+): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.configurePlugin(${JSON.stringify(pluginId)}); return null; })()`,
+  );
+}
+
 export interface PluginResult {
   success: boolean;
   artifact: string | null;
