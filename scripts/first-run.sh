@@ -103,7 +103,11 @@ while IFS= read -r line; do
     EXTRA_ARGS_CMD+=" $line"
 done <<<"$EXTRA_ARGS_RAW"
 
-PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT --to html5 --standalone --embed-resources$EXTRA_ARGS_CMD"
+FILTERS_DIR="$HOME/.pandoc/filters"
+# tikzcd.lua is intentionally NOT referenced yet: it errors at load without its
+# standalone-tikz.tex template + PANDOC_DIR/FIGURES_DIR env, which is the Milestone
+# F tikz pipeline. It is still vendored/installed; it joins the command in F.
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT --to html5 --standalone --embed-resources --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
 # Escape for a TOML basic string ("..."): backslash first, then double-quote.
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}
@@ -189,5 +193,10 @@ command = [
   "{input}", "--output", "{output}",
 ]
 EOF
+
+# Install the shipped pandoc filters the command references (Milestone D):
+# symlink the vendored canonical copies into $HOME/.pandoc/filters. Output is
+# silenced so it cannot interfere with the PTY driver's prompt matching.
+"$(dirname "${BASH_SOURCE[0]}")/install-assets.sh" > /dev/null
 
 gum style --bold --foreground 2 "Config written to $CONFIG_FILE"
