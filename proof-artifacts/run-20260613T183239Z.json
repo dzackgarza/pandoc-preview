@@ -462,9 +462,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 122,
-            "errors": [
-              "TypeError: Cannot read properties of undefined (reading 'from_format')"
-            ]
+            "errors": ["TypeError: Cannot read properties of undefined (reading 'from_format')"]
           }
         ]
       },

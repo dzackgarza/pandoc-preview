@@ -43,9 +43,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 30132,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: timeout (30s)"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: timeout (30s)"]
           }
         ]
       },

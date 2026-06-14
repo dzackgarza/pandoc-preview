@@ -1,19 +1,13 @@
 # Pandoc Preview
 
-Overleaf-style markdown editor: CodeMirror 6 editor on the left, live
-pandoc-rendered HTML preview on the right, with a project file tree, a tabbed
-preview/compile-log pane, native menus, toasts, and a Zotero-style settings
-dialog backed by an XDG TOML config.
+Overleaf-style markdown editor: CodeMirror 6 editor on the left, live pandoc-rendered HTML preview on the right, with a project file tree, a tabbed preview/compile-log pane, native menus, toasts, and a Zotero-style settings dialog backed by an XDG TOML config.
 
 Built with Tauri 2 (Rust backend) and Svelte 5 + Vite + Tailwind (frontend).
-All rendering is real pandoc: the backend spawns the configured `pandoc`
-binary and surfaces its full command line, stderr, and exit status in the
-Compile Log tab.
+All rendering is real pandoc: the backend spawns the configured `pandoc` binary and surfaces its full command line, stderr, and exit status in the Compile Log tab.
 
 ## Requirements
 
-- `pandoc` (preview/export backend; PDF export additionally needs a pandoc
-  PDF engine such as lualatex)
+- `pandoc` (preview/export backend; PDF export additionally needs a pandoc PDF engine such as lualatex)
 - `gum` (first-run setup script)
 - `bun`, `cargo`, `just`
 - Linux webview deps for Tauri (webkit2gtk-4.1)
@@ -27,17 +21,12 @@ just dev     # run the app
 just build   # release bundles (deb, rpm, appimage)
 ```
 
-The app refuses to start without a complete config at
-`${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`; `just setup`
-(`scripts/first-run.sh`) is the only thing that creates it. Re-run with
-`scripts/first-run.sh --force` to overwrite. Settings changed in-app
-(Tools → Settings…) are written back to the same file.
+The app refuses to start without a complete config at `${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`; `just setup` (`scripts/first-run.sh`) is the only thing that creates it.
+Re-run with `scripts/first-run.sh --force` to overwrite.
+Settings changed in-app (Tools → Settings…) are written back to the same file.
 
 ## Layout
 
-- `src/` — Svelte frontend (editor, file tree, preview tabs, settings,
-  toasts, status bar)
-- `src-tauri/src/` — Rust backend: `config.rs` (XDG TOML), `fsops.rs`
-  (file tree + file CRUD), `render.rs` (pandoc preview/export), `lib.rs`
-  (app builder + native menus)
+- `src/` — Svelte frontend (editor, file tree, preview tabs, settings, toasts, status bar)
+- `src-tauri/src/` — Rust backend: `config.rs` (XDG TOML), `fsops.rs` (file tree + file CRUD), `render.rs` (pandoc preview/export), `lib.rs` (app builder + native menus)
 - `scripts/first-run.sh` — gum-based initial config walkthrough

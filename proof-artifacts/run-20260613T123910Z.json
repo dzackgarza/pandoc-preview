@@ -47,9 +47,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 6595,
-            "errors": [
-              "Error: TauriPage command 'click' failed: timeout (5000ms) waiting for button[title^=\"Toggle Sidebar\"]"
-            ]
+            "errors": ["Error: TauriPage command 'click' failed: timeout (5000ms) waiting for button[title^=\"Toggle Sidebar\"]"]
           }
         ]
       },

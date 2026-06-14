@@ -2,25 +2,35 @@
 
 # Contract Invariants and Ownership Boundaries
 
-**When this applies:** writing or reviewing any runtime code in this project. Distilled from the user-authored seed contract (REQUIREMENTS.md, DESIGN_COMMITMENTS.md, wiki Product-Contract / Ownership-Boundaries — `docs/vendor/` in the first iteration). These are premises, not suggestions; do not relitigate.
+**When this applies:** writing or reviewing any runtime code in this project.
+Distilled from the user-authored seed contract (REQUIREMENTS.md, DESIGN_COMMITMENTS.md, wiki Product-Contract / Ownership-Boundaries — `docs/vendor/` in the first iteration).
+These are premises, not suggestions; do not relitigate.
 
 **Document and state:**
 
 - Editor text is the canonical document; preview, diagnostics, filesystem, Git state are derived.
-- No document without identity: a no-file launch creates a real temp `.md` in the recovery store before edits can occur. The recovery file IS the unsaved-buffer model — never build a parallel in-memory one.
+- No document without identity: a no-file launch creates a real temp `.md` in the recovery store before edits can occur.
+  The recovery file IS the unsaved-buffer model — never build a parallel in-memory one.
 - Save As / New: targets may be absolute or workspace-relative; saving outside the workspace re-roots Explorer/dialog state to the new directory.
 
 **Renderer:**
 
-- **Renderer configuration AND validation are owned by the active renderer plugin, not the app core (2026-06-13).** The app core is renderer-agnostic: it holds no renderer-specific config keys, no pandoc-special-casing, and runs no renderer-specific validation. The pandoc renderer plugin owns the raw `render_command` string as its single source of truth, its semantic deconstruction, its flag/filter controls, and the validation of all of that; the generic renderer plugin owns only its raw script. The app core's job is to invoke the active renderer and consume its result ([Renderer Plugin Architecture](renderer-plugin-architecture), [Pandoc Command Model and Raw String Contract](pandoc-command-model-and-raw-string-contract)).
+- **Renderer configuration AND validation are owned by the active renderer plugin, not the app core (2026-06-13).** The app core is renderer-agnostic: it holds no renderer-specific config keys, no pandoc-special-casing, and runs no renderer-specific validation.
+  The pandoc renderer plugin owns the raw `render_command` string as its single source of truth, its semantic deconstruction, its flag/filter controls, and the validation of all of that; the generic renderer plugin owns only its raw script.
+  The app core's job is to invoke the active renderer and consume its result ([Renderer Plugin Architecture](renderer-plugin-architecture), [Pandoc Command Model and Raw String Contract](pandoc-command-model-and-raw-string-contract)).
 - stdin=canonical markdown, stdout=preview HTML, stderr=diagnostics, nonzero exit=failure; duration is diagnostics only, never part of the success contract.
 - Render failure never fabricates preview HTML. A prior successful preview may persist only if explicitly marked stale (this stale-preview semantic is contract-sanctioned, not slop).
 
-**Pandoc assets:** templates/filters centralized under `~/.pandoc/` (version-controlled dotfiles); existence is validated by the **pandoc renderer plugin** (which owns them and contributes its checks to the doctor battery — [Doctor Contract (D1–D5)](doctor-contract)), not by app-core logic; templates are data — code never embeds template content or builds templates by string manipulation. Theorem/callout semantics, semantic HTML, and hover-edit metadata are owned by templates/filters, never reimplemented app-side.
+**Pandoc assets:** templates/filters centralized under `~/.pandoc/` (version-controlled dotfiles); existence is validated by the **pandoc renderer plugin** (which owns them and contributes its checks to the doctor battery — [Doctor Contract (D1–D5)](doctor-contract)), not by app-core logic; templates are data — code never embeds template content or builds templates by string manipulation.
+Theorem/callout semantics, semantic HTML, and hover-edit metadata are owned by templates/filters, never reimplemented app-side.
 
-**Errors:** structured IPC results only. `Ok` means success; `Ok({ok:false})` banned; no error→falsey conversion, no suppressed stderr, no invisible catches. Missing config/template/filter/dependency = visible fatal diagnostic.
+**Errors:** structured IPC results only.
+`Ok` means success; `Ok({ok:false})` banned; no error→falsey conversion, no suppressed stderr, no invisible catches.
+Missing config/template/filter/dependency = visible fatal diagnostic.
 
-**Trust model:** one trusted workstation. No XSS prevention, no sanitization, no preview sandboxing, no dynamic-port security. The contract's stated threat is "future development that makes the app worse while appearing productive" — fallbacks, mocks, hidden defaults, success-shaped errors, feature flags, compat shims.
+**Trust model:** one trusted workstation.
+No XSS prevention, no sanitization, no preview sandboxing, no dynamic-port security.
+The contract's stated threat is "future development that makes the app worse while appearing productive" — fallbacks, mocks, hidden defaults, success-shaped errors, feature flags, compat shims.
 
 **Module ownership (one owner per concern; wiring files like App/main own no semantics):** `document-session` (identity, transitions, dirty state) · `recovery-repo` (XDG Git store; never degrades to non-Git writes) · `save-gate` (durable-path precondition; never runs downstream commands or guesses filenames) · `renderer-command` · `config-validation` (defines the core schema and validates/enforces config at boundaries ONLY — plugin configs validated *generically* against plugin-supplied declarative schemas, app holds no plugin-specifics; no runtime defaults and NO config generation of any kind — generation is offloaded to gum, and a static defaults file is shipped as an asset for diagnostics/reset, per [Shipped Config vs Runtime Defaults](shipped-config-vs-runtime-defaults); supersedes the seed's "example-config generation is a separate explicit command") · `pandoc-assets` · `plugin-runner` (post-save-gate only) · `figure-registry` (global dir only) · `diagram-tools` (allowlist; rejects banned tools by name) · `hover-edit-bridge`.
 

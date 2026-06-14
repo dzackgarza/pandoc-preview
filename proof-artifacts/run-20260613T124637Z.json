@@ -379,9 +379,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 15377,
-            "errors": [
-              "Error: TauriPage command 'wait_for_selector' failed: timeout waiting for button[title=\"Save (Ctrl+S)\"]"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_selector' failed: timeout waiting for button[title=\"Save (Ctrl+S)\"]"]
           }
         ]
       },

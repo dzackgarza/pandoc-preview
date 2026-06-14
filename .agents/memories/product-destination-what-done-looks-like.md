@@ -1,10 +1,17 @@
 # Product Destination: What Done Looks Like
 
-**When this applies:** scoping any milestone, judging MVP-ness, or deciding whether a feature belongs. This is the end-state guide distilled from the seed contract (`docs/vendor/` in the first iteration, user-authored, authoritative) plus the user's halt-time corrections. The current proof set is [Proof Obligations (P1–P11)](proof-obligations).
+**When this applies:** scoping any milestone, judging MVP-ness, or deciding whether a feature belongs.
+This is the end-state guide distilled from the seed contract (`docs/vendor/` in the first iteration, user-authored, authoritative) plus the user's halt-time corrections.
+The current proof set is [Proof Obligations (P1–P11)](proof-obligations).
 
-**The finished app is an ordinary-feeling Linux desktop editor** — and "ordinary" is load-bearing. The seed contract states: "the application is expected to have ordinary editor affordances such as opening, saving, keyboard shortcuts, a menu bar, recent files, and user-visible dialogs" — unspecified because assumed. The first iteration shipped none of them; their absence is what made it unusable. Concretely: native menus (Tauri Menu API), native file dialogs (Tauri dialog plugin), toasts for errors (not a status-bar error strip), a readable themed CodeMirror editor, 50/50 resizable panes, recent files, keyboard shortcuts. For power workflows the integration spirit goes further: quick-open and similar OS integrations belong behind the plugin firewall as drop-in scripts using familiar system tools (fzf/dmenu/kitty popups/AGS/gum) rather than app-owned features — see the firewall doctrine in [Plugins, Diagrams, Figures Requirements](plugins-diagrams-figures-requirements).
+**The finished app is an ordinary-feeling Linux desktop editor** — and "ordinary" is load-bearing.
+The seed contract states: "the application is expected to have ordinary editor affordances such as opening, saving, keyboard shortcuts, a menu bar, recent files, and user-visible dialogs" — unspecified because assumed.
+The first iteration shipped none of them; their absence is what made it unusable.
+Concretely: native menus (Tauri Menu API), native file dialogs (Tauri dialog plugin), toasts for errors (not a status-bar error strip), a readable themed CodeMirror editor, 50/50 resizable panes, recent files, keyboard shortcuts.
+For power workflows the integration spirit goes further: quick-open and similar OS integrations belong behind the plugin firewall as drop-in scripts using familiar system tools (fzf/dmenu/kitty popups/AGS/gum) rather than app-owned features — see the firewall doctrine in [Plugins, Diagrams, Figures Requirements](plugins-diagrams-figures-requirements).
 
-**Core working loop (the MVP bar, must exist before anything else):** open project/file → edit in CodeMirror (canonical text) → live preview through the user's real configured pandoc command with their real `~/.pandoc` template + filters (amsthm/theorem environments render) → MathJax typesets math → save. P1–P5 pin this loop with witness-fixture exactness.
+**Core working loop (the MVP bar, must exist before anything else):** open project/file → edit in CodeMirror (canonical text) → live preview through the user's real configured pandoc command with their real `~/.pandoc` template + filters (amsthm/theorem environments render) → MathJax typesets math → save.
+P1–P5 pin this loop with witness-fixture exactness.
 
 **Full destination, beyond the loop:**
 

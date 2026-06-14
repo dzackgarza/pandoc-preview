@@ -1,12 +1,17 @@
 # Feature Catalogue and Implementation Status
 
-**When this applies:** scoping milestones, picking the next feature, judging completion claims, or answering "what is left." This is the living checklist over the full feature contract; detail lives in the linked memories, status lives here.
+**When this applies:** scoping milestones, picking the next feature, judging completion claims, or answering "what is left."
+This is the living checklist over the full feature contract; detail lives in the linked memories, status lives here.
 
-**Checkbox rules (hard):** a box is checked only when the feature is implemented AND proven — its proof obligations green ([Proof Obligations (P1–P15)](proof-obligations)) plus a human-runnable check, with user ratification for anything user-facing. Agent self-report is not proof. Check items via `iwe update` with the full body (keep this H1). A checked box on a broken feature is the [Threat Model: Polished Fallback Machine](threat-model-polished-fallback-machine) failure — when in doubt, leave unchecked. New features get a line in the right tier; involved features get their own detail memory, linked from the line.
+**Checkbox rules (hard):** a box is checked only when the feature is implemented AND proven — its proof obligations green ([Proof Obligations (P1–P15)](proof-obligations)) plus a human-runnable check, with user ratification for anything user-facing.
+Agent self-report is not proof.
+Check items via `iwe update` with the full body (keep this H1). A checked box on a broken feature is the [Threat Model: Polished Fallback Machine](threat-model-polished-fallback-machine) failure — when in doubt, leave unchecked.
+New features get a line in the right tier; involved features get their own detail memory, linked from the line.
 
 **Status snapshot (2026-06-13):** greenfield2 has scaffolding (config.rs, doctor.rs, render.rs, fsops.rs, EditorPane, toasts) but nothing user-ratified; render.rs currently violates BOTH the [Renderer Plugin Architecture](renderer-plugin-architecture) (renderer knowledge lives in the app core, not a plugin) and the [Pandoc Command Model and Raw String Contract](pandoc-command-model-and-raw-string-contract) (structured fields), so the core loop must be rebuilt on the ratified renderer-plugin + raw-string contract before any box here can be checked.
 
-**Ordering:** tiers by user-declared importance. Sequencing rule still binds: every Tier-0 item is provable and human-verified before work starts on any later tier ([Product Destination: What Done Looks Like](product-destination-what-done-looks-like)).
+**Ordering:** tiers by user-declared importance.
+Sequencing rule still binds: every Tier-0 item is provable and human-verified before work starts on any later tier ([Product Destination: What Done Looks Like](product-destination-what-done-looks-like)).
 
 ## Tier 0 — Core working loop (the product itself; the MVP gate)
 
@@ -16,8 +21,11 @@
 - [ ] Render failures NON-FATAL: Overleaf-style log surface + clean recovery on next good render ([Failure Semantics and Product State Model](failure-semantics-and-product-state-model))
 - [ ] Save works (= real Git commit for tracked files)
 - [ ] Ordinary editor affordances: native menus, native file dialogs (Open/Save As), error toasts, recent files, keyboard shortcuts, find, resizable 50/50 panes with reset, window-title dirty indicator ([Product Destination: What Done Looks Like](product-destination-what-done-looks-like))
-- [ ] Math-research insertion bar — **NOT a standard formatting toolbar**. Making text bold or an H3 in markdown is trivial (vs LaTeX) and is not the point; the bar is geared to math writing. Quick-inserts: named amsthm environments (remark / lemma / theorem / proof / …), tikz and tikzcd scaffolding, launchers for the diagram plugins, insert-image-from-clipboard, `\cref` with a populated picker of available labels/references, Zotero-linked citations, a small n×m matrix builder, a table builder, a dropdown of user-defined quick-insert snippets, and code-block-type dropdowns. Entries light up as their dependencies land (diagram launchers → Tier 3/4; clipboard image → Tier 3 figures; cref label list → references; Zotero → Tier 4; snippets → Tier 5).
-- [ ] Extremely good **pandoc-aware syntax highlighting** in the editor — **SCOPED 2026-06-13** ([Reference: Pandoc-Aware Editor Syntax Highlighting (CodeMirror 6)](reference-pandoc-aware-editor-highlighting)): extend `@lezer/markdown` via the `MarkdownConfig` API (Zettlr's architecture — GPL, reimplement; one small parser per construct), math sub-highlighting via the stex stream trick. Implementation pending
+- [ ] Math-research insertion bar — **NOT a standard formatting toolbar**. Making text bold or an H3 in markdown is trivial (vs LaTeX) and is not the point; the bar is geared to math writing.
+  Quick-inserts: named amsthm environments (remark / lemma / theorem / proof / …), tikz and tikzcd scaffolding, launchers for the diagram plugins, insert-image-from-clipboard, `\cref` with a populated picker of available labels/references, Zotero-linked citations, a small n×m matrix builder, a table builder, a dropdown of user-defined quick-insert snippets, and code-block-type dropdowns.
+  Entries light up as their dependencies land (diagram launchers → Tier 3/4; clipboard image → Tier 3 figures; cref label list → references; Zotero → Tier 4; snippets → Tier 5).
+- [ ] Extremely good **pandoc-aware syntax highlighting** in the editor — **SCOPED 2026-06-13** ([Reference: Pandoc-Aware Editor Syntax Highlighting (CodeMirror 6)](reference-pandoc-aware-editor-highlighting)): extend `@lezer/markdown` via the `MarkdownConfig` API (Zettlr's architecture — GPL, reimplement; one small parser per construct), math sub-highlighting via the stex stream trick.
+  Implementation pending
 - [ ] Status cluster: cursor position, word/line count, file path, render state + duration, save state + saved-ago, backup timestamp (mined from ppe main + tauri branches)
 - [ ] Editor display options in config: theme (dark/light), font size, line wrapping, line numbers — live-applied
 - [ ] Fail-loud config validation + doctor ([Doctor Contract (D1–D5)](doctor-contract))
@@ -48,7 +56,8 @@
 - [ ] Render lifecycle robustness: stale-render cancellation on overlap, configurable debounce + render timeout, manual refresh-preview that bypasses debounce
 - [ ] Scroll sync — **SCOPED 2026-06-13** ([Reference: Source-Preview Scroll Sync](reference-source-preview-scroll-sync)): proportional + data-line snap (Stage 0, works with `-f markdown`) is the primitive bar; precise line-mapping needs a CommonMark reader for pandoc `sourcepos` and is **GATED on the preview-reader decision** (`commonmark_x` loses citations/raw-TeX — see [Decision Provenance: User-Owned vs Framework-Forced](decision-provenance-user-owned-vs-framework-forced)). Implementation pending
 - [ ] Renderer-agnostic piping: stupidly pipe the buffer — e.g. a revealjs command works with zero app changes
-- [ ] Exports as real command executions: self-contained HTML; PDF compilation completely controllable by an arbitrary user script/pipeline — latexmk-class drivers, inclusion filters (`include.lua`) for multi-section papers; the app never hardcodes a compile recipe, it runs the configured one and surfaces command/output/exit status. Each export type ships as a standalone, individually-managed plugin (Tier 4 richness bar) ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references))
+- [ ] Exports as real command executions: self-contained HTML; PDF compilation completely controllable by an arbitrary user script/pipeline — latexmk-class drivers, inclusion filters (`include.lua`) for multi-section papers; the app never hardcodes a compile recipe, it runs the configured one and surfaces command/output/exit status.
+  Each export type ships as a standalone, individually-managed plugin (Tier 4 richness bar) ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references))
 - [ ] References/bibliography via the intermediate md → tex → latexmk pipeline; Better BibTeX export may be hard-required ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references))
 
 ## Tier 3 — Workspace
@@ -58,7 +67,8 @@
 - [ ] Figure library over ONE configured global figures dir (never `./figures`); sample config ships defaulting it to `~/.pandoc/figures`; clipboard image paste (Wayland-compatible) lands there with symlinks ([Plugins, Diagrams, Figures Requirements](plugins-diagrams-figures-requirements))
 - [ ] Figures registry + sidebar library view: scan of the global dir with timestamps, search/filter, cross-document usage tracking, and re-open-in-source-tool (edit-in-place) launch
 - [ ] Diagram tool launches post-save-gate — quiver, qtikz, ipe (+ FreeTikZ/Tikzit/Inkscape-class; xournalpp dropped, drawio banned per [Decision Provenance: User-Owned vs Framework-Forced](decision-provenance-user-owned-vs-framework-forced)); each tool integration is its own individually-managed plugin (Tier 4 richness bar)
-- [ ] One-button quiver/FreeTikZ extraction → deterministic tikz-cd insertion at cursor (incl. quiver iframe hover-export); precedent shape: three-path diagram entry (desktop tool / proxied web tool with export overlay / clipboard image), per-tool starter templates, startup availability probing (ppe tauri branch)
+- [ ] One-button quiver/FreeTikZ extraction → deterministic tikz-cd insertion at cursor (incl.
+  quiver iframe hover-export); precedent shape: three-path diagram entry (desktop tool / proxied web tool with export overlay / clipboard image), per-tool starter templates, startup availability probing (ppe tauri branch)
 
 ## Tier 4 — Plugin system (the firewall)
 
@@ -81,6 +91,9 @@
 - [ ] Image lightboxes (existing Obsidian plugin)
 - [ ] Hover-preview of image links (existing Obsidian plugin)
 
-**Mining note (2026-06-13):** cross-checked against pandoc-preview-editor `main` (incl. its `Feature-Disposition-Matrix.md`) and `feature/tauri-first-architecture` (full clone `/tmp/ppe-full`; re-clone from github.com/dzackgarza/pandoc-preview-editor). Found there but deliberately NOT imported: TikZJax in-browser rendering (banned non-goal), the math-engine selector offering KaTeX/WebTeX/None (violates MathJax-always), xournalpp starter template (tool dropped). The matrix also scopes Firenvim as "optional, limited to textarea editing" — consistent with Tier 5's deferral.
+**Mining note (2026-06-13):** cross-checked against pandoc-preview-editor `main` (incl.
+its `Feature-Disposition-Matrix.md`) and `feature/tauri-first-architecture` (full clone `/tmp/ppe-full`; re-clone from github.com/dzackgarza/pandoc-preview-editor).
+Found there but deliberately NOT imported: TikZJax in-browser rendering (banned non-goal), the math-engine selector offering KaTeX/WebTeX/None (violates MathJax-always), xournalpp starter template (tool dropped).
+The matrix also scopes Firenvim as "optional, limited to textarea editing" — consistent with Tier 5's deferral.
 
 **Non-goals (never build, never re-add as features):** cross-platform, multi-user/collaboration, hosted deployment, security hardening/sanitization of preview, dynamic ports, generic Git client UI, full file manager, in-browser TikZ — full list in [Product Destination: What Done Looks Like](product-destination-what-done-looks-like).

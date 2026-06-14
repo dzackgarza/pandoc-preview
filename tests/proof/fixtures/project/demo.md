@@ -11,7 +11,7 @@ The lattice points are counted by the following steps:
 The Basel sum is $\zeta(2) = \pi^2/6$.
 
 > [!NOTE] Lattice note
->
+> 
 > Minkowski bounds the points.
 
 ![scatter](fig/plot.png)

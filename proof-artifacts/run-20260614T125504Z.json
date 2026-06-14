@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 2942,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: window 'main' not found after retries (available windows: [])"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: window 'main' not found after retries (available windows: [])"]
           }
         ]
       },

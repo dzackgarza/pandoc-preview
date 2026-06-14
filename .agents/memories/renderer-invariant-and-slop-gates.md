@@ -2,7 +2,8 @@
 
 **When this applies:** writing, reviewing, or gating any code touching the preview/rendering path, config, or file dialogs.
 
-**Invariant:** there is exactly one rendering pipeline — `canonical editor text → configured Pandoc command → HTML stdout → preview container → MathJax typeset → diagnostics from stderr/status`. No second renderer may exist, even disabled, even "temporarily". The decisive gate is not "tests pass" but "the wrong old paths are dead."
+**Invariant:** there is exactly one rendering pipeline — `canonical editor text → configured Pandoc command → HTML stdout → preview container → MathJax typeset → diagnostics from stderr/status`. No second renderer may exist, even disabled, even "temporarily".
+The decisive gate is not "tests pass" but "the wrong old paths are dead."
 
 **Static gates — fail QC if production preview imports/calls any of:**
 
@@ -25,6 +26,7 @@ Sole exception: Mermaid/diagram tooling may later exist as an external save-gate
 - Open/Save As use the Tauri dialog path-result boundary; saved file bytes equal canonical editor text
 - autosave creates a real Git commit; save-gated commands receive a real durable path
 
-**Why:** the classic failure shape is `try Pandoc → on failure show old markdown-it/KaTeX preview → green forever`. Every gate above kills one branch of that shape. See [Threat Model: Polished Fallback Machine](threat-model-polished-fallback-machine).
+**Why:** the classic failure shape is `try Pandoc → on failure show old markdown-it/KaTeX preview → green forever`. Every gate above kills one branch of that shape.
+See [Threat Model: Polished Fallback Machine](threat-model-polished-fallback-machine).
 
 **Verify:** grep gates wired into QC (agent justfile recipe), and a deliberate breakage test — corrupt the Pandoc command, observe the preview fail loudly.

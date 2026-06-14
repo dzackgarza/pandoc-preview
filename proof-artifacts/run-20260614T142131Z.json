@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 45,
-            "errors": [
-              "TypeError: Cannot read properties of undefined (reading 'includes')"
-            ]
+            "errors": ["TypeError: Cannot read properties of undefined (reading 'includes')"]
           }
         ]
       },
