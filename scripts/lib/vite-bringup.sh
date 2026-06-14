@@ -15,19 +15,35 @@
 # Failure: prints a FATAL line to stderr and returns nonzero.
 
 start_e2e_vite() {
+    # Pre-flight: the endpoint must be free. If something already answers, it is
+    # NOT ours — we cannot own a port a foreign process holds — so fail loudly
+    # instead of driving a webview that never exposes window.__PPE_E2E__.
+    if curl -sf "$DEV_URL" > /dev/null 2>&1; then
+        echo "FATAL: $DEV_URL is already served before vite started — a non-proof dev server is squatting the port. Stop it and retry." >&2
+        return 1
+    fi
+
     setsid env VITE_PPE_E2E=1 bun run dev > "$VITE_LOG" 2>&1 &
     local pgid=$!
 
     local i
     for i in $(seq 1 60); do
-        curl -sf "$DEV_URL" > /dev/null 2>&1 && break
+        if curl -sf "$DEV_URL" > /dev/null 2>&1; then
+            echo "$pgid"
+            return 0
+        fi
+        # Liveness: our vite must stay alive. A strictPort bind conflict kills it
+        # within the first second while a squatter keeps answering DEV_URL; curl
+        # alone cannot tell our server from the squatter, so prove ours is up.
+        if ! kill -0 "$pgid" 2> /dev/null; then
+            echo "FATAL: the e2e vite process exited during startup (likely $DEV_URL was taken by another process). vite log:" >&2
+            cat "$VITE_LOG" >&2
+            return 1
+        fi
         sleep 0.5
     done
-    if ! curl -sf "$DEV_URL" > /dev/null 2>&1; then
-        echo "FATAL: vite never became ready at $DEV_URL" >&2
-        cat "$VITE_LOG" >&2
-        return 1
-    fi
 
-    echo "$pgid"
+    echo "FATAL: vite never became ready at $DEV_URL" >&2
+    cat "$VITE_LOG" >&2
+    return 1
 }
