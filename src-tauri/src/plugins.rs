@@ -256,10 +256,20 @@ fn run_doctor_check(
                 first.map(|l| l.trim().to_string()).unwrap_or_else(|| check.description.clone()),
             )
         }
-        Ok(out) => (
-            false,
-            format!("{}: command exited {}", check.description, out.status),
-        ),
+        Ok(out) => {
+            // Surface the check's own diagnostic (its first non-empty stderr line)
+            // so the report says WHY it failed — e.g. which required filter is
+            // missing — not just an opaque exit code.
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            let diag = stderr.lines().find(|l| !l.trim().is_empty());
+            (
+                false,
+                match diag {
+                    Some(d) => format!("{}: {} (exit {})", check.description, d.trim(), out.status),
+                    None => format!("{}: command exited {}", check.description, out.status),
+                },
+            )
+        }
         Err(e) => (
             false,
             format!("{}: could not spawn {program:?}: {e}", check.description),

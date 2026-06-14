@@ -35,3 +35,8 @@ command = ["{plugin_dir}/check-executable.sh"]
 id = "pandoc-invocation"
 description = "the canonical pandoc command runs (empty stdin) and exits 0"
 command = ["{plugin_dir}/check-invocation.sh"]
+
+[[doctor_checks]]
+id = "required-filter"
+description = "all required HTML-preview filters are present in ~/.pandoc/filters"
+command = ["{plugin_dir}/check-required-filters.sh"]
