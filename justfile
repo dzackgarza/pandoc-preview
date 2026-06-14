@@ -9,6 +9,11 @@ default:
 setup:
     scripts/first-run.sh
 
+# Install the app's shipped pandoc assets (filters, …) into ~/.pandoc as symlinks
+# from the vendor dir. Idempotent; preserves real-file user overrides.
+install-assets:
+    scripts/install-assets.sh
+
 # Install JS deps and prefetch crates; hard-fail if required tools are missing.
 deps:
     #!/usr/bin/env bash
