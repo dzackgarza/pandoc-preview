@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Doctor check: probe a render with the FULL configured arg set
-# (--from <from_format> --to html5 + extra_args, empty stdin) to prove the whole
-# invocation contract, not just that the binary exists. Mirrors the old core
-# pandoc-invocation check.
+# Doctor check: probe a render with the FULL canonical command (empty stdin) to
+# prove the whole invocation contract, not just that the binary exists. Mirrors
+# the old core pandoc-invocation check. Milestone C: the command is the raw string
+# on PPE_PLUGIN_CONFIG ({"command": "..."}); run it verbatim (shlex-tokenized).
 set -euo pipefail
 
 cfg="${PPE_PLUGIN_CONFIG:-}"
 [ -n "$cfg" ] || cfg='{}'
-path="$(printf '%s' "$cfg" | jq -r '.path')"
-from_format="$(printf '%s' "$cfg" | jq -r '.from_format')"
-mapfile -t extra < <(printf '%s' "$cfg" | jq -r '.extra_args[]?')
+command_str="$(printf '%s' "$cfg" | jq -r '.command')"
+mapfile -t cmd < <(printf '%s' "$command_str" \
+    | python3 -c 'import shlex,sys; [print(t) for t in shlex.split(sys.stdin.read())]')
 
-"$path" --from "$from_format" --to html5 "${extra[@]}" < /dev/null > /dev/null
-printf 'pandoc --from %s (+%d extra args) exited 0\n' "$from_format" "${#extra[@]}"
+"${cmd[@]}" < /dev/null > /dev/null
+printf 'pandoc render command (%d tokens) exited 0\n' "${#cmd[@]}"

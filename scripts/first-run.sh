@@ -91,23 +91,28 @@ fi
 
 EXTRA_ARGS_RAW=$(gum write --header "Extra pandoc arguments, one per line (Esc to finish, leave empty for none)" || true)
 
-EXTRA_ARGS_TOML=""
+# Build the canonical pandoc command (Milestone C): the raw string the pandoc
+# renderer plugin runs verbatim. Document semantics live here (reader, writer,
+# --standalone, --embed-resources so images inline and the preview resolves no
+# files); the plugin layers volatile render context (mathjax/resource-path/base)
+# at render time. Extra args entered above are appended verbatim.
+EXTRA_ARGS_CMD=""
 while IFS= read -r line; do
     line=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     [ -z "$line" ] && continue
-    escaped=${line//\\/\\\\}
-    escaped=${escaped//\"/\\\"}
-    if [ -n "$EXTRA_ARGS_TOML" ]; then
-        EXTRA_ARGS_TOML+=", "
-    fi
-    EXTRA_ARGS_TOML+="\"$escaped\""
+    EXTRA_ARGS_CMD+=" $line"
 done <<<"$EXTRA_ARGS_RAW"
+
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT --to html5 --standalone --embed-resources$EXTRA_ARGS_CMD"
+# Escape for a TOML basic string ("..."): backslash first, then double-quote.
+PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
+PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}
 
 # --- confirm and write -------------------------------------------------------
 
 SUMMARY="theme=$THEME font_size=$FONT_SIZE line_wrapping=$LINE_WRAPPING line_numbers=$LINE_NUMBERS
 debounce_ms=$DEBOUNCE_MS
-pandoc=$PANDOC_PATH from=$FROM_FORMAT extra_args=[$EXTRA_ARGS_TOML]"
+pandoc command=$PANDOC_COMMAND"
 
 gum style --border rounded --padding "1 2" --margin "1 0" "$SUMMARY"
 
@@ -154,12 +159,11 @@ dir = "$CONFIG_DIR/plugins"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-# Pandoc executable: bare name resolved via PATH or an absolute path.
-path = "$PANDOC_PATH"
-# Input format passed to pandoc --from.
-from_format = "$FROM_FORMAT"
-# Extra arguments appended verbatim to every pandoc invocation.
-extra_args = [$EXTRA_ARGS_TOML]
+# The canonical pandoc command (raw string). The plugin runs it verbatim with the
+# markdown buffer on stdin -> preview HTML on stdout; volatile render context
+# (--mathjax/--resource-path/<base>) is layered by the plugin, not stored here.
+# Edit it directly or via the plugin's own Configure action.
+command = "$PANDOC_COMMAND_TOML"
 
 # Export targets are config-owned plugins: each [export.<id>] table is a
 # complete compilation command. {input}/{output} are substituted per-argument;

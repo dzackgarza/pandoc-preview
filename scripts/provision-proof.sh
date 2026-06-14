@@ -80,9 +80,8 @@ install_plugin_fixtures() {
 # Default renderer setup (Milestone B): install the shipped pandoc renderer plugin
 # and append [plugins]/[renderer]/[plugin.pandoc-renderer]. The app core is
 # renderer-agnostic; the preview is rendered by this plugin (the old core pandoc
-# argv now lives in pandoc-renderer/render.sh), so P1-P18 stay byte-identical. The
-# pandoc path/from_format/extra_args that used to be core [pandoc] config are now
-# this plugin's config section.
+# argv now lives in pandoc-renderer/render.sh). Milestone C: the plugin's config is
+# the raw pandoc command STRING (canonical), not structured path/from_format/args.
 emit_pandoc_renderer() {
     local config_path="$1" plugins_dir="$2" pandoc_path="$3"
     install_plugin_fixtures "$plugins_dir" pandoc-renderer
@@ -95,9 +94,7 @@ dir = "$plugins_dir"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-path = "$pandoc_path"
-from_format = "markdown"
-extra_args = []
+command = "$pandoc_path --from markdown --to html5 --standalone --embed-resources"
 EOF
 }
 
