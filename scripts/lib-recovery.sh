@@ -60,13 +60,16 @@ ensure_valid_config() {
         return 0
     fi
 
-    # Classify the failing checks: config-class failures route into
-    # reconfiguration; any other failure (pandoc-executable, pandoc-invocation,
-    # pdf-engine) is not fixable by reconfiguring.
+    # Classify the failing checks: failures reconfiguration can fix route into the
+    # gum first-run flow; an environment failure (pandoc-executable,
+    # pandoc-invocation, pdf-engine) cannot be fixed by reconfiguring. The
+    # `plugins` check (configured plugins dir missing / not a directory) IS
+    # reconfiguration-fixable: first-run.sh creates the plugins dir and installs
+    # the shipped renderer into it, so it routes alongside the config-class checks.
     local config_class_failed=0 other_failed=0
     while IFS= read -r line; do
         case "$line" in
-        "[FAIL] config-exists:"* | "[FAIL] config-schema:"* | "[FAIL] config-values:"*)
+        "[FAIL] config-exists:"* | "[FAIL] config-schema:"* | "[FAIL] config-values:"* | "[FAIL] plugins:"*)
             config_class_failed=1
             ;;
         "[FAIL] "*)
