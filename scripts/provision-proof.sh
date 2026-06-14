@@ -282,6 +282,21 @@ active = "pandoc-renderer"
 command = "$PANDOC_BIN --from markdown --to html5 --standalone --embed-resources"
 EOF
         ;;
+    d14-*) # The REAL first-run.sh output must pass the doctor on its own. Drive
+        # the real script through a PTY (no canonical config written here) and
+        # deliberately inject NOTHING afterward: unlike d02/d03/d06/d07/p10, we do
+        # NOT install_plugin_fixtures. What the doctor sees is exactly what
+        # first-run.sh produced — including whether it created the plugins dir and
+        # installed the shipped renderer the config points at.
+        "$REPO_ROOT/scripts/drive-first-run.py" \
+            "$REPO_ROOT/scripts/first-run.sh" \
+            "$ABS_SPEC_DIR/xdg-config" \
+            "$ABS_SPEC_DIR/home"
+        if [ ! -f "$CONFIG_PATH" ]; then
+            echo "FATAL: first-run.sh did not write $CONFIG_PATH" >&2
+            exit 1
+        fi
+        ;;
     esac
 
     jq -n \
