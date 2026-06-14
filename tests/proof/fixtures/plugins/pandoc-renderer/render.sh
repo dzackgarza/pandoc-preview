@@ -19,13 +19,19 @@ path="$(printf '%s' "$cfg" | jq -r '.path')"
 from_format="$(printf '%s' "$cfg" | jq -r '.from_format')"
 mapfile -t extra < <(printf '%s' "$cfg" | jq -r '.extra_args[]?')
 
-# Local MathJax via the asset-protocol URL passed in as render context — never a
-# CDN (decision A); --resource-path resolves relative images/includes against the
-# open file's directory; the <base> variable lets the srcdoc webview resolve them.
+# --embed-resources inlines the document's images (and other local assets) as
+# data: URIs at RENDER time, resolved via --resource-path against the open file's
+# directory. The webview therefore does ZERO file resolution — no asset-protocol
+# base-href chain to break on path/encoding quirks. MathJax stays an asset-protocol
+# <script> reference (pandoc cannot fetch asset:// so it leaves the tag intact), so
+# the ~1MB engine loads once at runtime rather than being inlined on every render.
+# The <base href> is retained as an inert backstop for any reference pandoc does
+# not embed; with images embedded it does no work for them.
 exec "$path" \
     --from "$from_format" \
     --to html5 \
     --standalone \
+    --embed-resources \
     "--mathjax=$mathjax" \
     --resource-path "$base_dir" \
     "--variable=header-includes:<base href=\"$base_url\">" \
