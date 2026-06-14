@@ -90,6 +90,7 @@ emit_pandoc_renderer() {
     # symlinks the vendored filters (incl. utilities.lua) into $HOME/.pandoc/filters.
     env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
     local fdir="$ABS_SPEC_DIR/home/.pandoc/filters"
+    local tpl="$ABS_SPEC_DIR/home/.pandoc/templates/pandoc_preview_template.html"
     cat >> "$config_path" <<EOF
 
 [plugins]
@@ -99,7 +100,7 @@ dir = "$plugins_dir"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-command = "$pandoc_path --from markdown --to html5 --standalone --embed-resources --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
+command = "$pandoc_path --from markdown --to html5 --standalone --embed-resources --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
 EOF
 }
 

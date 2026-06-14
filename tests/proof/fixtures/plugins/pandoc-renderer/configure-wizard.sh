@@ -43,7 +43,8 @@ while IFS= read -r line; do
     extra_args+=" $line"
 done <<<"$extra_raw"
 
-command="$exe --from $fmt --to html5 --standalone --embed-resources$filter_args$extra_args"
+template="$HOME/.pandoc/templates/pandoc_preview_template.html"
+command="$exe --from $fmt --to html5 --standalone --embed-resources --template=$template$filter_args$extra_args"
 "$toml" write "$config_path" "$command"
 
 gum style --bold --foreground 2 "Pandoc renderer command updated."

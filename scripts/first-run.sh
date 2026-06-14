@@ -104,10 +104,11 @@ while IFS= read -r line; do
 done <<<"$EXTRA_ARGS_RAW"
 
 FILTERS_DIR="$HOME/.pandoc/filters"
+PREVIEW_TEMPLATE="$HOME/.pandoc/templates/pandoc_preview_template.html"
 # tikzcd.lua is intentionally NOT referenced yet: it errors at load without its
 # standalone-tikz.tex template + PANDOC_DIR/FIGURES_DIR env, which is the Milestone
 # F tikz pipeline. It is still vendored/installed; it joins the command in F.
-PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT --to html5 --standalone --embed-resources --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT --to html5 --standalone --embed-resources --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
 # Escape for a TOML basic string ("..."): backslash first, then double-quote.
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}

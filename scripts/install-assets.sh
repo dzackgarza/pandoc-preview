@@ -6,31 +6,37 @@
 # REAL file where a symlink would go — is preserved, never clobbered. Fails loud
 # on any real error.
 #
-# Currently installs the required HTML-preview filters; templates/macro-toolchain
-# join here as later milestones vendor them.
+# Installs the required HTML-preview filters and the preview template; the macro
+# toolchain joins here as later milestones vendor it.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VENDOR_FILTERS="$REPO_ROOT/src-tauri/resources/vendor/filters"
-DEST_FILTERS="$HOME/.pandoc/filters"
+VENDOR="$REPO_ROOT/src-tauri/resources/vendor"
 
-if [ ! -d "$VENDOR_FILTERS" ]; then
-    echo "FATAL: vendor filters dir missing: $VENDOR_FILTERS" >&2
-    exit 1
-fi
-
-mkdir -p "$DEST_FILTERS"
-for src in "$VENDOR_FILTERS"/*.lua; do
-    name="$(basename "$src")"
-    target="$DEST_FILTERS/$name"
-    if [ -e "$target" ] && [ ! -L "$target" ]; then
-        # A real file (not a symlink) is a deliberate user override — preserve it.
-        echo "preserve (user override): $target"
-        continue
+# Symlink every file in a vendor subdir into a destination dir, preserving any
+# real-file user override (a real file where a symlink would go is left intact).
+# -f replaces a stale app-managed symlink atomically; -n replaces an existing
+# symlink rather than dereferencing it; absolute targets resolve regardless of cwd.
+link_dir() {
+    local vendor_subdir="$1" dest="$2"
+    if [ ! -d "$vendor_subdir" ]; then
+        echo "FATAL: vendor dir missing: $vendor_subdir" >&2
+        exit 1
     fi
-    # -f replaces a stale app-managed symlink atomically; -n so an existing
-    # symlink is replaced rather than dereferenced. Absolute target so it
-    # resolves regardless of cwd.
-    ln -sfn "$src" "$target"
-    echo "linked: $target -> $src"
-done
+    mkdir -p "$dest"
+    local src name target
+    for src in "$vendor_subdir"/*; do
+        [ -e "$src" ] || continue
+        name="$(basename "$src")"
+        target="$dest/$name"
+        if [ -e "$target" ] && [ ! -L "$target" ]; then
+            echo "preserve (user override): $target"
+            continue
+        fi
+        ln -sfn "$src" "$target"
+        echo "linked: $target -> $src"
+    done
+}
+
+link_dir "$VENDOR/filters" "$HOME/.pandoc/filters"
+link_dir "$VENDOR/templates" "$HOME/.pandoc/templates"
