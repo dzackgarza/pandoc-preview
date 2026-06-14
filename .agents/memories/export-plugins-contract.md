@@ -1,5 +1,21 @@
 # Export Plugins Contract
 
+**RATIFIED 2026-06-14 — export belongs to the pandoc plugin SUITE, not the app.** HTML
+and PDF export must be owned by the same plugin suite that owns rendering ([Renderer
+Plugin Architecture](renderer-plugin-architecture)), NOT by the app. The reason is
+**render↔export drift**: if the app owns the export pipelines while the plugin owns the
+preview render, the export flags inevitably diverge from the preview flags and require
+error-prone manual syncing; the user-visible surprise to avoid is an HTML/PDF export
+that looks noticeably different from what the preview rendered. (A *little* drift is
+fine — e.g. filters present only to offload app-owned work.) So "Export HTML"/"Export
+PDF" become sibling plugins in the vendored pandoc suite, alongside the renderer, each
+auto-populating a Plugins-menu entry that simply runs the plugin's script. **The
+`[export.<id>]` app-config-table model described below is the CURRENT TRANSITIONAL
+implementation** (it kept exports working through Milestones A–C); migrating exports
+into the pandoc suite is the dedicated milestone that retires these tables. Until then,
+treat the drift risk as live and keep the shipped export commands close to the
+renderer's command.
+
 User-mandated design (2026-06-13, correcting an earlier too-narrow proposal): the
 ENTIRE export compilation command is user configuration. Export targets are plugins;
 the pandoc HTML/PDF invocations are merely the default plugins shipped with the app.

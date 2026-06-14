@@ -327,13 +327,41 @@ dropdowns (dependency-free now); `\cref` picker / diagram launchers / Zotero
 light up as later tiers land.
 **Proof.** Env-insert and matrix-builder produce correct source at the cursor.
 
+## Plugin philosophy (clarified 2026-06-14 — applies to every milestone)
+
+Captured durably in [[renderer-plugin-architecture]]; restated here because it
+shapes sequencing:
+- **Total externality.** Plugins are COMPLETELY external; the app knows only the
+  contract (context in → script run → structured result; auto-populated menu &
+  config-launcher entries), never internals (pandoc/kitty/gum are invisible to the
+  app). The app does no command parsing and renders no plugin config UI.
+- **Menu/button auto-population.** A plugin contributes entries (e.g. "Export PDF"
+  in a Plugins menu) that do nothing but run the plugin's script with the provided
+  doc context. Settings auto-populates entries that merely *launch* each plugin's
+  own configuration-manager command (kitty+gum for the vendored pandoc suite).
+- **The vendored pandoc plugin is a SUITE**: renderer (preview hook) + HTML export
+  + PDF export as sibling plugins, co-owned so export flags do not drift from the
+  preview render. Config schema is validation-only (fail-loud on load), never UI.
+
+## Milestone (post-G) — Export folded into the pandoc suite  [RATIFIED 2026-06-14]
+
+**Goal.** Retire the app-owned `[export.<id>]` config tables; HTML/PDF export become
+sibling plugins in the vendored pandoc suite ([[export-plugins-contract]]), sharing
+the renderer's flags so a rendered preview and its HTML export stay visually faithful
+(the explicit anti-drift rationale). Each export plugin auto-populates a Plugins-menu
+entry and a config-launcher entry.
+**Work.** Move `export_sync`/`[export.<id>]` validation out of core; ship export
+plugins in the pandoc suite; the Export menu populates from suite plugins, not config
+tables; preserve P7/P8/P12/P17 behavior (RED first on the new ownership).
+**Proof.** Exports run via suite plugins; HTML export matches the preview's filter/
+flag set (modulo intentional offload-only differences); no pandoc strings in core.
+
 ## Beyond G (per feature catalogue)
 
 Diagram-tool plugins (quiver/qtikz/ipe), figure library over the global figures
-dir (`~/.pandoc/figures`), Zotero CAYW plugin (Better-BibTeX hard-gated), export
-plugins folded into the plugin model, the Firenvim editor-experience decision
-(Tier 5). Recovery/git-state (Tier 1) and workspace (Tier 3) are tracked in
-[[feature-catalogue-and-implementation-status]].
+dir (`~/.pandoc/figures`), Zotero CAYW plugin (Better-BibTeX hard-gated), the
+Firenvim editor-experience decision (Tier 5). Recovery/git-state (Tier 1) and
+workspace (Tier 3) are tracked in [[feature-catalogue-and-implementation-status]].
 
 ## Cross-cutting open decisions (not blocking A–E)
 
