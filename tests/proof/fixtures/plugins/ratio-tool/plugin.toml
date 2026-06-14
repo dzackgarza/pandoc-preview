@@ -13,3 +13,9 @@ config_schema = "schema.json"
 
 [exec]
 command = ["{plugin_dir}/run.sh", "{file}", "{artifact}"]
+
+# Required since C1 (every plugin declares a configure command). This is a pure
+# schema-discriminator fixture with no interactive configurator; a no-op configure
+# satisfies the contract. Never spawned by any spec.
+[configure]
+command = ["true"]

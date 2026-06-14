@@ -19,3 +19,9 @@ config_schema = "schema.json"
 # Render context placeholders ({base_dir}/{base_url}/{mathjax}) are available but
 # this escape-hatch renderer ignores them: markdown on stdin -> HTML on stdout.
 command = ["{plugin_dir}/render.sh"]
+
+# Required since C1 (every plugin declares a configure command). The generic
+# renderer's only config is its own script; no interactive configurator ships yet,
+# so this is a no-op placeholder. Never spawned by any spec.
+[configure]
+command = ["true"]

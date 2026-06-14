@@ -31,3 +31,11 @@ export const runPlugin = (
   outputPath: string,
   buffer: string,
 ) => invoke<PluginResult>("run_plugin", { pluginId, sourcePath, outputPath, buffer });
+
+/**
+ * Spawn a plugin's self-owned configure command (Milestone C). Plugins own their
+ * configuration entirely; this merely launches the plugin's [configure] command
+ * (detached — it brings its own UI, e.g. a kitty popup running gum).
+ */
+export const configurePlugin = (pluginId: string) =>
+  invoke<void>("configure_plugin", { pluginId });

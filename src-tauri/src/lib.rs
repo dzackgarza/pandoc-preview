@@ -164,6 +164,7 @@ pub fn run() {
             render::render_preview,
             render::export_document,
             plugins::run_plugin,
+            plugins::configure_plugin,
         ])
         .setup(|app| {
             // Grant the playwright plugin's pw_result IPC permission, but only

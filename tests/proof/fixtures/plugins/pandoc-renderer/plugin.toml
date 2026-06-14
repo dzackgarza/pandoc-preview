@@ -19,6 +19,13 @@ config_schema = "schema.json"
 # Render context on argv; the markdown buffer arrives on stdin; HTML on stdout.
 command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}"]
 
+# Required since C1 (every plugin declares a configure command). C3 replaces this
+# placeholder with the real pandoc configurator: a kitty popup running a gum script
+# that edits the raw pandoc command (locking required filters/template). Until then
+# it is a no-op; no spec spawns it.
+[configure]
+command = ["true"]
+
 [[doctor_checks]]
 id = "pandoc-executable"
 description = "configured pandoc resolves, is executable, and --version exits 0"

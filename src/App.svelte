@@ -141,6 +141,9 @@
             },
           );
         },
+        configurePlugin: (pluginId: string) => {
+          void api.configurePlugin(pluginId);
+        },
         getEditorText: () => editor.getContent(),
         appendAtEnd: (text: string) => {
           editor.appendAtEnd(text);

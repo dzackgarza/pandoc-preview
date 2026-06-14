@@ -48,6 +48,13 @@ pub struct PluginManifest {
     pub category: String,
     pub kind: String,
     pub exec: Exec,
+    /// The plugin's self-owned configuration command (`[configure]` table; user
+    /// ruling 2026-06-14). Plugins own configuration entirely: the app's
+    /// "Configure <name>" action merely SPAWNS this command (detached, no TTY
+    /// handling) so the plugin brings its own config UI. Required — a manifest
+    /// without `[configure]` fails to parse loudly at discovery, like every other
+    /// required field.
+    pub configure: Exec,
     /// Path (relative to the plugin dir) of the JSON Schema for this plugin's
     /// `[plugin.<id>]` config section.
     pub config_schema: String,
@@ -390,6 +397,73 @@ pub async fn run_plugin(
     })
     .await
     .expect("run_plugin task panicked")
+}
+
+/// Spawn a plugin's self-owned `[configure]` command (C1; user ruling
+/// 2026-06-14). Plugins own configuration entirely: the app resolves the plugin
+/// by id, substitutes `{plugin_dir}`/`{config_dir}`, delivers the plugin's own
+/// `[plugin.<id>]` section on `PPE_PLUGIN_CONFIG` (so the configure UI can read
+/// the current config), and SPAWNS the command DETACHED — it does not wait. The
+/// command brings its own UI (the pandoc renderer opens a kitty popup running
+/// gum). Fails loud only if the plugin is unknown or the command cannot spawn.
+fn configure_plugin_sync(plugin_id: String) -> Result<()> {
+    let cfg = config::load()?;
+    let plugins_cfg = cfg
+        .plugins
+        .as_ref()
+        .ok_or_else(|| Error::InvalidArgument("no [plugins] directory is configured".into()))?;
+    let config_path = config::config_path()?;
+    let config_dir = config_path
+        .parent()
+        .expect("config path always has a parent")
+        .to_path_buf();
+
+    let plugins = discover(Path::new(&plugins_cfg.dir))?;
+    let plugin = plugins
+        .iter()
+        .find(|p| p.manifest.id == plugin_id)
+        .ok_or_else(|| {
+            Error::InvalidArgument(format!("no plugin with id {plugin_id:?} in the plugins dir"))
+        })?;
+
+    let plugin_dir = plugin.dir.display().to_string();
+    let config_dir_s = config_dir.display().to_string();
+    let subs = [
+        (PH_PLUGIN_DIR, plugin_dir.as_str()),
+        (PH_CONFIG_DIR, config_dir_s.as_str()),
+    ];
+    let argv: Vec<String> = plugin
+        .manifest
+        .configure
+        .command
+        .iter()
+        .map(|a| substitute(a, &subs))
+        .collect();
+    let (program, args) = argv.split_first().ok_or_else(|| {
+        Error::InvalidArgument(format!("plugin {plugin_id} has an empty configure command"))
+    })?;
+
+    // The plugin's own [plugin.<id>] section, so its configure UI can read the
+    // current configuration (e.g. the pandoc command it is about to edit).
+    let section_json = config_json(cfg.plugin.get(&plugin_id));
+
+    // Spawn detached: the command owns its UI and the app never blocks on it.
+    Command::new(program)
+        .args(args)
+        .current_dir(&config_dir)
+        .env(ENV_PLUGIN_CONFIG, section_json)
+        .spawn()
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
+    Ok(())
+}
+
+/// Spawn the configure command of the plugin with the given id (C1). Returns once
+/// the command has been spawned; it runs independently (the app does not wait).
+#[tauri::command]
+pub async fn configure_plugin(plugin_id: String) -> Result<()> {
+    tauri::async_runtime::spawn_blocking(move || configure_plugin_sync(plugin_id))
+        .await
+        .expect("configure_plugin task panicked")
 }
 
 /// The outcome of a render through the active renderer plugin. `render.rs` maps
