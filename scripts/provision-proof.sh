@@ -251,6 +251,36 @@ EOF
         write_valid_config "$PANDOC_BIN"
         rm -f "$ABS_SPEC_DIR/home/.pandoc/filters/tikzcd.lua"
         ;;
+    d13-*) # C3: the gum configurator must LOCK the required filters in. Start from a
+        # valid env whose command LACKS the required filters; the wizard re-adds them.
+        mkdir -p "$CONFIG_DIR"
+        cat > "$CONFIG_PATH" <<EOF
+[general]
+theme = "dark"
+
+[editor]
+font_size = 14
+line_wrapping = false
+line_numbers = true
+
+[preview]
+debounce_ms = 200
+EOF
+        emit_default_export_tables "$CONFIG_PATH"
+        install_plugin_fixtures "$PLUGINS_DIR" pandoc-renderer
+        env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
+        cat >> "$CONFIG_PATH" <<EOF
+
+[plugins]
+dir = "$PLUGINS_DIR"
+
+[renderer]
+active = "pandoc-renderer"
+
+[plugin.pandoc-renderer]
+command = "$PANDOC_BIN --from markdown --to html5 --standalone --embed-resources"
+EOF
+        ;;
     esac
 
     jq -n \
