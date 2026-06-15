@@ -42,3 +42,8 @@ command = ["{plugin_dir}/check-invocation.sh"]
 id = "required-filter"
 description = "all required HTML-preview filters are present in ~/.pandoc/filters"
 command = ["{plugin_dir}/check-required-filters.sh"]
+
+[[doctor_checks]]
+id = "pandoc-resource-path"
+description = "the global figures resource dir (PANDOC_RESOURCE_PATH) is set and exists"
+command = ["{plugin_dir}/check-resource-path.sh"]

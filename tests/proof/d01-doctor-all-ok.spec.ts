@@ -37,6 +37,7 @@ test('--doctor reports every check OK with the real pandoc version and exits 0',
     'config-values',
     'pandoc-executable',
     'pandoc-invocation',
+    'pandoc-resource-path',
     'export-plugins',
   ]) {
     expect(report.includes(check)).toBe(true);

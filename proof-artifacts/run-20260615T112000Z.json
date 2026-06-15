@@ -1,0 +1,179 @@
+{
+  "run_id": "20260615T112000Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d16-startup-requires-resource-path.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d16-startup-requires-resource-path.spec.ts",
+            "title": "bare binary with PANDOC_RESOURCE_PATH unset refuses to boot naming pandoc-resource-path, no window",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 8408,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d16-startup-requires-resource-path.spec.ts",
+          "name": "gate-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 688,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.6"
+        }
+      ]
+    },
+    {
+      "spec": "d14-first-run-doctor-clean.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d14-first-run-doctor-clean.spec.ts",
+            "title": "the real first-run.sh leaves a system that passes --doctor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 592,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-doctor-exit",
+          "value": 0
+        },
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-plugins-count",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d11-doctor-required-filter.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d11-doctor-required-filter.spec.ts",
+            "title": "--doctor fails required-filter when a required filter is missing",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 589,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d11-doctor-required-filter.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p29-global-figures-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p29-global-figures-resource.spec.ts",
+            "title": "the global-figures image decodes to exactly 80x32 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1018,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p29-global-figures-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 80
+        },
+        {
+          "spec": "p29-global-figures-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 32
+        }
+      ]
+    },
+    {
+      "spec": "p05-relative-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p05-relative-resource.spec.ts",
+            "title": "the scatter image decodes to exactly 64x48 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1025,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 64
+        },
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 48
+        }
+      ]
+    }
+  ]
+}

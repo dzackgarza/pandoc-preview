@@ -43,3 +43,10 @@ link_dir "$VENDOR/templates" "$HOME/.pandoc/templates"
 # The default preview bibliography citeproc resolves against. A user override (a
 # real ~/.pandoc/bib/references.bib) is preserved, never clobbered.
 link_dir "$VENDOR/bib" "$HOME/.pandoc/bib"
+
+# The global figures directory the renderer searches via PANDOC_RESOURCE_PATH.
+# The app requires it to exist (the pandoc-resource-path doctor check fails the
+# startup gate otherwise); create it if absent. Figure CONTENT is user-owned and
+# never vendored, so this only ensures the directory is present, never clobbering
+# anything inside it.
+mkdir -p "$HOME/.pandoc/figures"
