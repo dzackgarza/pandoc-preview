@@ -25,6 +25,25 @@ The app refuses to start without a complete config at `${XDG_CONFIG_HOME:-~/.con
 Re-run with `scripts/first-run.sh --force` to overwrite.
 Settings changed in-app (Tools → Settings…) are written back to the same file.
 
+## Pandoc assets (pinned dependency)
+
+The pandoc assets (templates, filters, CSL, bibliography) are owned by
+[`pandoc-config`](https://github.com/dzackgarza/pandoc-config) and consumed here at
+a **commit-pinned** version via the git submodule at
+`src-tauri/resources/vendor/pandoc-config`. `just deps` runs
+`git submodule update --init`; `scripts/install-assets.sh` symlinks them into
+`~/.pandoc` (preserving any real-file override there). The pandoc-renderer plugin
+(`src-tauri/resources/vendor/plugins/`) and the MathJax bundle
+(`src-tauri/resources/mathjax/`) are app-owned and not part of the submodule.
+
+Bump the pin with:
+
+```sh
+git -C src-tauri/resources/vendor/pandoc-config fetch origin
+git -C src-tauri/resources/vendor/pandoc-config checkout <new-commit>
+git add src-tauri/resources/vendor/pandoc-config && git commit
+```
+
 ## Layout
 
 - `src/` — Svelte frontend (editor, file tree, preview tabs, settings, toasts, status bar)
