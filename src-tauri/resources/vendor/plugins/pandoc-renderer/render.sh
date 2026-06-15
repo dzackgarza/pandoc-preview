@@ -27,11 +27,16 @@ mapfile -t cmd < <(printf '%s' "$command_str" \
 # URL (never a CDN); the resource search path — the open file's directory (so
 # document-relative resources resolve) AND the global figures dir from
 # PANDOC_RESOURCE_PATH (so figures referenced relative to it, e.g.
-# rendered/fig_X.svg, resolve and embed); and a <base> for any reference the
-# command does not embed. None of this is stored in the canonical command.
-# PANDOC_RESOURCE_PATH is guaranteed present here: the startup doctor gate
-# (pandoc-resource-path check) refuses to boot the app without it, so no guard.
+# rendered/fig_X.svg, resolve and embed); a <base> for any reference the command
+# does not embed; and the page title — pandoc reads the buffer on stdin (no
+# filename), so without this the standalone writer warns "requires a nonempty
+# <title>" every render. pagetitle is the open file's containing folder name
+# (base_dir's basename) and is distinct from the document's own title metadata, so
+# a title the document declares is never clobbered. None of this is stored in the
+# canonical command. PANDOC_RESOURCE_PATH is guaranteed present here: the startup
+# doctor gate (pandoc-resource-path check) refuses to boot the app without it.
 exec "${cmd[@]}" \
     "--mathjax=$mathjax" \
     --resource-path "$base_dir:$PANDOC_RESOURCE_PATH" \
+    "--metadata=pagetitle:$(basename "$base_dir")" \
     "--variable=header-includes:<base href=\"$base_url\">"

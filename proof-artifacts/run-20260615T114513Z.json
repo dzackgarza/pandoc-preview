@@ -1,0 +1,121 @@
+{
+  "run_id": "20260615T114513Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p30-preview-pagetitle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p30-preview-pagetitle.spec.ts",
+            "title": "the preview document title is the containing folder name",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1156,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p30-preview-pagetitle.spec.ts",
+          "name": "preview-title",
+          "value": "project"
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 958,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "p05-relative-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p05-relative-resource.spec.ts",
+            "title": "the scatter image decodes to exactly 64x48 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 981,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 64
+        },
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 48
+        }
+      ]
+    },
+    {
+      "spec": "p25-callout-rendered.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p25-callout-rendered.spec.ts",
+            "title": "a callout renders its title as visible text, not just a tooltip attribute",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1468,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p25-callout-rendered.spec.ts",
+          "name": "callout-visible-title",
+          "value": "Determinant caveat"
+        }
+      ]
+    }
+  ]
+}
