@@ -47,6 +47,9 @@ if not os.path.isfile(launch_sh):
 env = dict(os.environ)
 env["XDG_CONFIG_HOME"] = xdg_config_home
 env["HOME"] = home
+# The global figures resource dir, as the GUI session exports it from ~/.pathrc.
+# The recovery doctor (run inside launch.sh) requires it (pandoc-resource-path check).
+env["PANDOC_RESOURCE_PATH"] = home + "/.pandoc/figures"
 env["TERM"] = "xterm-256color"
 
 child = pexpect.spawn(

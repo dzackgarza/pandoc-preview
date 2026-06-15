@@ -39,6 +39,9 @@ if mode not in ("fresh", "over-existing"):
 env = dict(os.environ)
 env["XDG_CONFIG_HOME"] = xdg_config_home
 env["HOME"] = home
+# The global figures resource dir, as the GUI session exports it from ~/.pathrc,
+# so any doctor run on the reconfigured config finds it (pandoc-resource-path check).
+env["PANDOC_RESOURCE_PATH"] = home + "/.pandoc/figures"
 # gum renders fancier with a known TERM; keep it simple and deterministic.
 env["TERM"] = "xterm-256color"
 
