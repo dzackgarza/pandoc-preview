@@ -26,6 +26,8 @@ deps:
         fi
     done
     [ "$missing" -eq 0 ] || exit 1
+    # The pandoc assets (templates/filters/csl/bib) are a commit-pinned submodule.
+    git submodule update --init src-tauri/resources/vendor/pandoc-config
     bun install
     cargo fetch --manifest-path src-tauri/Cargo.toml
 

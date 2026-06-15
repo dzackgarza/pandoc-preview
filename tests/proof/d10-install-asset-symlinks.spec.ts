@@ -5,18 +5,15 @@ import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// D1 (d10) — the asset installer SYMLINKS the vendored required filters into
-// ~/.pandoc/filters (render-rebuild-plan.md, Milestone D / Fork 3: symlink from a
-// vendor dir). The app keeps canonical copies of its shipped filters in a vendor
-// dir and symlinks them into ~/.pandoc/filters: the app is the source of truth,
-// updates are atomic, and the user overrides any component by replacing its
-// symlink with a real file (D4). This proves the install places SYMLINKS (not
-// copies) that resolve to the vendored canonical content, in a hermetic $HOME
-// (never the real ~/.pandoc).
-//
-// RED today: scripts/install-assets.sh does not exist (and there is no vendor
-// dir), so the install cannot run — spawnSync returns a nonzero status and no
-// symlinks appear.
+// D1 (d10) — the asset installer SYMLINKS the required filters into
+// ~/.pandoc/filters from the COMMIT-PINNED pandoc-config submodule. pandoc-config
+// owns the pandoc assets (templates/filters/csl/bib); the app consumes a pinned
+// version via the git submodule at src-tauri/resources/vendor/pandoc-config and
+// symlinks its filters into ~/.pandoc/filters, so a fresh machine is provisioned
+// from the pinned config, updates are atomic, and the user overrides any component
+// by replacing its symlink with a real file (D4). This proves the install places
+// SYMLINKS (not copies) that resolve to the pinned canonical content, in a
+// hermetic $HOME (never the real ~/.pandoc).
 
 const REQUIRED_FILTERS = [
   'tikzcd.lua',
@@ -28,7 +25,14 @@ const REQUIRED_FILTERS = [
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, '..', '..'); // tests/proof -> repo root
 const installScript = join(repoRoot, 'scripts', 'install-assets.sh');
-const vendorFilters = join(repoRoot, 'src-tauri', 'resources', 'vendor', 'filters');
+const pandocConfigFilters = join(
+  repoRoot,
+  'src-tauri',
+  'resources',
+  'vendor',
+  'pandoc-config',
+  'filters',
+);
 
 test('install-assets symlinks the vendored required filters into ~/.pandoc/filters', () => {
   const manifest = loadDoctorManifest();
@@ -44,10 +48,10 @@ test('install-assets symlinks the vendored required filters into ~/.pandoc/filte
   for (const f of REQUIRED_FILTERS) {
     const link = join(filtersDir, f);
     expect(existsSync(link)).toBe(true);
-    // It must be a SYMLINK (the app stays the source of truth), not a copy.
+    // It must be a SYMLINK (pandoc-config stays the source of truth), not a copy.
     expect(lstatSync(link).isSymbolicLink()).toBe(true);
-    // Reading through the link returns the vendored canonical content, verified
-    // byte-for-byte against the committed vendor copy.
-    expect(readFileSync(link, 'utf-8')).toBe(readFileSync(join(vendorFilters, f), 'utf-8'));
+    // Reading through the link returns the pinned canonical content, verified
+    // byte-for-byte against the pandoc-config submodule copy.
+    expect(readFileSync(link, 'utf-8')).toBe(readFileSync(join(pandocConfigFilters, f), 'utf-8'));
   }
 });

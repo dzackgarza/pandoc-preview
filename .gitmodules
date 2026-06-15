@@ -1,0 +1,3 @@
+[submodule "src-tauri/resources/vendor/pandoc-config"]
+	path = src-tauri/resources/vendor/pandoc-config
+	url = git@github.com:dzackgarza/pandoc-config.git

@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
-# install-assets.sh — install the app's shipped pandoc assets into ~/.pandoc as
-# SYMLINKS (Milestone D / Fork 3). The app keeps canonical copies in its vendor
-# dir (src-tauri/resources/vendor) and symlinks each into ~/.pandoc so the app
-# stays the single source of truth and updates are atomic. A user override — a
-# REAL file where a symlink would go — is preserved, never clobbered. Fails loud
-# on any real error.
+# install-assets.sh — install the pandoc assets into ~/.pandoc as SYMLINKS.
+# The pandoc assets (templates, filters, csl, bib) are owned by the pandoc-config
+# repo, consumed here at a COMMIT-PINNED version via the git submodule at
+# src-tauri/resources/vendor/pandoc-config. This script symlinks each into
+# ~/.pandoc so a fresh machine is provisioned from the pinned config; a user
+# override — a REAL file where a symlink would go — is preserved, never clobbered
+# (so a developer whose ~/.pandoc already IS pandoc-config keeps their live copy).
+# Fails loud on any real error.
 #
-# Installs the required HTML-preview filters and the preview template; the macro
-# toolchain joins here as later milestones vendor it.
+# The pandoc-renderer PLUGIN and the MathJax bundle are app-owned and live under
+# the vendor dir / app bundle — they are NOT installed here.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VENDOR="$REPO_ROOT/src-tauri/resources/vendor"
+# Commit-pinned pandoc-config submodule: the source of truth for pandoc assets.
+PANDOC_CONFIG="$REPO_ROOT/src-tauri/resources/vendor/pandoc-config"
+if [ ! -d "$PANDOC_CONFIG/templates" ]; then
+    echo "FATAL: pandoc-config submodule missing at $PANDOC_CONFIG" >&2
+    echo "       run: git submodule update --init src-tauri/resources/vendor/pandoc-config" >&2
+    exit 1
+fi
 
 # Symlink every file in a vendor subdir into a destination dir, preserving any
 # real-file user override (a real file where a symlink would go is left intact).
@@ -38,14 +46,14 @@ link_dir() {
     done
 }
 
-link_dir "$VENDOR/filters" "$HOME/.pandoc/filters"
-link_dir "$VENDOR/templates" "$HOME/.pandoc/templates"
+link_dir "$PANDOC_CONFIG/filters" "$HOME/.pandoc/filters"
+link_dir "$PANDOC_CONFIG/templates" "$HOME/.pandoc/templates"
 # The CSL citation style the preview command resolves citations against (the
-# shipped alphabetic, hyperlinked style). A user override is preserved.
-link_dir "$VENDOR/csl" "$HOME/.pandoc/csl"
-# The default preview bibliography citeproc resolves against. A user override (a
-# real ~/.pandoc/bib/references.bib) is preserved, never clobbered.
-link_dir "$VENDOR/bib" "$HOME/.pandoc/bib"
+# alphabetic, hyperlinked style). A user override is preserved.
+link_dir "$PANDOC_CONFIG/csl" "$HOME/.pandoc/csl"
+# The bibliography citeproc resolves against. A user override (a real
+# ~/.pandoc/bib/references.bib) is preserved, never clobbered.
+link_dir "$PANDOC_CONFIG/bib" "$HOME/.pandoc/bib"
 
 # The global figures directory the renderer searches via PANDOC_RESOURCE_PATH.
 # The app requires it to exist (the pandoc-resource-path doctor check fails the
