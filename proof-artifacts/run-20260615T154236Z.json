@@ -1,0 +1,116 @@
+{
+  "run_id": "20260615T154236Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1053,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "p02-live-rerender.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p02-live-rerender.spec.ts",
+            "title": "typing at the buffer end re-renders the preview with the new sentence",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1468,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p02-live-rerender.spec.ts",
+          "name": "sentence",
+          "value": "The discriminant equals −163."
+        }
+      ]
+    },
+    {
+      "spec": "p03-save-exact-bytes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p03-save-exact-bytes.spec.ts",
+            "title": "Save writes the editor buffer to disk byte-for-byte",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 849,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p03-save-exact-bytes.spec.ts",
+          "name": "on-disk-bytes",
+          "value": 383
+        }
+      ]
+    },
+    {
+      "spec": "p09-settings-roundtrip.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p09-settings-roundtrip.spec.ts",
+            "title": "Settings changes persist to config.toml and re-style the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 600,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p09-settings-roundtrip.spec.ts",
+          "name": "config-font-size",
+          "value": 18
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "run_id": "20260615T154218Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p32-editor-gutters-and-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p32-editor-gutters-and-highlighting.spec.ts",
+            "title": "Editor renders one line-number gutter, an inert-free toggle, fold gutter, and highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1407,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p32-editor-gutters-and-highlighting.spec.ts",
+          "name": "line-number-gutters",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,12 +1,49 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { EditorView, keymap, lineNumbers } from "@codemirror/view";
+  import {
+    EditorView,
+    keymap,
+    lineNumbers,
+    highlightActiveLineGutter,
+    highlightSpecialChars,
+    drawSelection,
+    dropCursor,
+    rectangularSelection,
+    crosshairCursor,
+    highlightActiveLine,
+  } from "@codemirror/view";
   import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
-  import { basicSetup } from "codemirror";
+  import {
+    foldGutter,
+    codeFolding,
+    foldKeymap,
+    indentOnInput,
+    bracketMatching,
+    syntaxHighlighting,
+    defaultHighlightStyle,
+  } from "@codemirror/language";
   import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
   import { languages } from "@codemirror/language-data";
-  import { undo, redo, selectAll } from "@codemirror/commands";
-  import { openSearchPanel } from "@codemirror/search";
+  import {
+    history,
+    historyKeymap,
+    defaultKeymap,
+    undo,
+    redo,
+    selectAll,
+  } from "@codemirror/commands";
+  import {
+    autocompletion,
+    completionKeymap,
+    closeBrackets,
+    closeBracketsKeymap,
+  } from "@codemirror/autocomplete";
+  import {
+    openSearchPanel,
+    searchKeymap,
+    highlightSelectionMatches,
+  } from "@codemirror/search";
+  import { lintKeymap } from "@codemirror/lint";
   import { oneDark } from "@codemirror/theme-one-dark";
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
   import type { Config } from "../types";
@@ -36,6 +73,41 @@
   const editorTheme = (theme: "dark" | "light") =>
     theme === "dark" ? oneDark : [];
 
+  // Explicit equivalent of codemirror's basicSetup MINUS lineNumbers(): line
+  // numbers are owned solely by gutterCompartment so the line_numbers setting
+  // can both add AND remove the gutter. basicSetup's lineNumbers lived outside
+  // any compartment, which made the toggle inert (the gutter could never be
+  // removed). Everything else mirrors basicSetup so undo history, code folding,
+  // bracket matching, autocomplete, and search keep working.
+  const editorBasics = () => [
+    highlightActiveLineGutter(),
+    highlightSpecialChars(),
+    history(),
+    foldGutter(),
+    codeFolding(),
+    drawSelection(),
+    dropCursor(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    bracketMatching(),
+    closeBrackets(),
+    autocompletion(),
+    rectangularSelection(),
+    crosshairCursor(),
+    highlightActiveLine(),
+    highlightSelectionMatches(),
+    keymap.of([
+      ...closeBracketsKeymap,
+      ...defaultKeymap,
+      ...searchKeymap,
+      ...historyKeymap,
+      ...foldKeymap,
+      ...completionKeymap,
+      ...lintKeymap,
+    ]),
+  ];
+
   function configured(c: Config) {
     return {
       theme: editorTheme(c.general.theme),
@@ -52,7 +124,9 @@
       state: EditorState.create({
         doc: "",
         extensions: [
-          basicSetup,
+          // Line-number gutter first so it renders left of the fold gutter.
+          gutterCompartment.of(init.gutter),
+          ...editorBasics(),
           markdown({ base: markdownLanguage, codeLanguages: languages }),
           keymap.of([
             { key: "Mod-b", run: () => (wrapSelection("**", "**"), true) },
@@ -61,7 +135,6 @@
           ]),
           themeCompartment.of(init.theme),
           wrapCompartment.of(init.wrap),
-          gutterCompartment.of(init.gutter),
           fontCompartment.of(init.font),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) onChange(u.state.doc.toString());
