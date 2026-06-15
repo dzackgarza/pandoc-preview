@@ -1,0 +1,39 @@
+{
+  "run_id": "20260615T161219Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p34-editor-find.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p34-editor-find.spec.ts",
+            "title": "Ctrl+F and the native Find menu both open the search panel; Escape closes it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 705,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p34-editor-find.spec.ts",
+          "name": "find-panel-routes",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}
