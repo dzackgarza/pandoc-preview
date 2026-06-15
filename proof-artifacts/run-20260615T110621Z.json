@@ -1,0 +1,73 @@
+{
+  "run_id": "20260615T110621Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p29-global-figures-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p29-global-figures-resource.spec.ts",
+            "title": "the global-figures image decodes to exactly 80x32 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1150,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p29-global-figures-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 80
+        },
+        {
+          "spec": "p29-global-figures-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 32
+        }
+      ]
+    },
+    {
+      "spec": "p05-relative-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p05-relative-resource.spec.ts",
+            "title": "the scatter image decodes to exactly 64x48 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 848,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 64
+        },
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 48
+        }
+      ]
+    }
+  ]
+}
