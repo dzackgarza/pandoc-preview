@@ -336,6 +336,249 @@ Search status for skips/mocks:
 | Domain model distortion | Medium: export plugins and discovered plugins share vocabulary but not contract; raw Pandoc command strings are canonical for a structured domain. |
 | Proof weakness | Medium: real-boundary proof is strong, but future-extension invariants are under-proved. |
 
+## Addendum: Feature-Catalogue Integration Forecast
+
+Addendum commit: `168fec00dc3b735289d884614b35842bea14b5ac`
+
+Addendum timestamp: `2026-06-15T18:20:42+08:00`
+
+Evidence boundary: the original audit evidence plus the feature catalogue now present at `.agents/memories/feature-catalogue-and-implementation-status.md`, the current source at `168fec00dc3b735289d884614b35842bea14b5ac`, and `.agents/render-rebuild-plan.md`. The feature catalogue was read after the original audit was committed, so it did not influence the original findings.
+
+Reader task: predict which surfaces the requested features will need and whether the current architecture localizes or amplifies those changes.
+This section is not an implementation plan.
+
+### Forecast: The Feature List Requires A Platform, Not More One-Off Features
+
+The catalogue's Tier 0 through Tier 8 list is broad enough that the app has to become an editor/workspace/rendering platform:
+
+- editor features: folding, delimiter matching, indentation guides, comments, snippets, spellcheck, pandoc-aware highlighting, outline/TOC, status cluster, math insertion bar;
+- rendering features: raw pandoc command fidelity, MathJax macros, filters/templates, theorem/callout/citation rendering, scroll sync, stale-render cancellation, slides mode, PDF preview;
+- workspace features: project tree filtering, `xdg-open`, Ctrl+P quick open via dmenu/fzf-style browser, figures sidebar, figure registry, TikZ mode, figure insertion gallery;
+- recovery features: autosave commits, tracked/untracked/no-repo state, save gates, external-modification refusal, session restore, close/file-switch guards;
+- plugin features: dynamically populated menus, per-plugin configuration, plugin-managed exports, plugin-managed diagram tools, OS integrations behind the firewall, Zotero CAYW citation insertion;
+- late externalization: preferences move out of the in-app GUI into a gum/kitty-style external manager.
+
+The current architecture can prove command execution and renderer substitution, but most requested features need richer contracts: editor mutation, cursor/selection access, workspace indexing, menu contribution, lifecycle hooks, config-refresh events, artifact ownership, background processes, and state transitions.
+Those contracts do not exist as first-class extension points.
+
+Predicted overall blast radius: high unless the plugin and app-state boundaries are deepened before feature work resumes.
+Without that, many features will be implemented by editing `src/App.svelte`, `src-tauri/src/plugins.rs`, `src-tauri/src/config.rs`, native menu construction, provisioning scripts, and the proof harness together.
+
+### Tier 0 Editor And Math-Writing Features
+
+Requested features include replacing the generic markdown toolbar with a math-research insertion bar, CodeMirror-native folding/snippets/autocomplete, spellcheck, pandoc-aware syntax highlighting, outline/TOC, status data, and live editor display settings.
+
+Current fit:
+
+- `Toolbar.svelte` is a fixed array of generic markdown buttons: `src/lib/components/Toolbar.svelte:10-24`.
+- `App.svelte` dispatches toolbar actions by hardcoded string table: `src/App.svelte:439-458`.
+- `App.svelte` owns editor state, current file, dirty flag, render scheduling, word/cursor counters, menu dispatch, and settings save in one component: `src/App.svelte:25-88`, `src/App.svelte:188-225`, `src/App.svelte:460-519`.
+- `SIDEBAR_VIEWS` contains only the Explorer view, so outline/figures/search sidebars have no registry beyond editing the central component: `src/App.svelte:37-43`.
+
+Predicted integration needs:
+
+- a CodeMirror extension composition surface for folding, snippets, spellcheck, highlighting, comments, delimiter matching, indentation guides, and completion sources;
+- a document/workspace index for labels, fenced divs, bibliography keys, outline entries, and cross-file `\cref` targets;
+- a command/action model that can mutate the editor at cursor/selection, open a popup, launch a plugin, or insert generated source;
+- sidebar/view registration that does not require editing `App.svelte` for every new view.
+
+Predicted blast radius if added directly: high.
+The math insertion bar alone would touch `Toolbar.svelte`, `EditorPane.svelte`, `App.svelte`, CodeMirror command APIs, workspace scanning, config/types, proof fixtures, and likely plugin execution for diagram/Zotero/clipboard actions.
+
+Architectural pressure: the current code has good concrete UI pieces, but it lacks an editor-action registry and a workspace-domain model.
+That makes feature work gravitate toward central dispatch tables and one-off editor methods.
+
+### Recovery And Save-Gate Features
+
+Requested features include save-as-real-git-commit, XDG recovery repo autosave commits, tracked/untracked/no-repo state, durable identity before path-consuming actions, external-modification conflict detection, session restore, and unsaved-change guards.
+
+Current fit:
+
+- `fsops.rs` exposes direct read/write/create/rename/delete commands over paths: `src-tauri/src/fsops.rs:58-106`.
+- `saveCurrent` writes editor content directly to `currentFile`: `src/App.svelte:283-292`.
+- `exportToPath` and `runPluginToPath` save dirty buffers opportunistically before invoking external work: `src/App.svelte:384-415`.
+- `resolveDirty` offers a save prompt but always returns `true` after the prompt path; it is not a durable state-machine owner: `src/App.svelte:257-266`.
+
+Predicted integration needs:
+
+- a document identity/state machine that distinguishes buffer identity, disk path, git tracking state, recovery snapshot state, and external fingerprint;
+- one save gate used by save, export, plugin runs, diagram launches, file switch, app close, and quick-open;
+- recovery and session state in an owned backend module, not ad hoc frontend booleans;
+- proof that every path-consuming action goes through the same gate.
+
+Predicted blast radius if added directly: very high.
+Recovery touches `fsops.rs`, `App.svelte`, plugin/export paths, file-tree operations, status bar, config/state directories, launcher recovery behavior, and most proof classes.
+
+Architectural pressure: current file IO is simple and direct.
+That is correct for the early app, but the requested recovery features require file operations to become mediated domain actions.
+If this lands as wrappers around existing path commands, future agents will have many bypasses to miss.
+
+### Render Pipeline, Exports, Slides, And PDF Preview
+
+Requested features include renderer-agnostic piping, pandoc plugin ownership, filter/template install, MathJax macro behavior, theorem/TikZ/citation features, scroll sync, stale-render cancellation, export plugins, slides mode, PDF preview, and Gummi-like PDF parity.
+
+Current fit:
+
+- `render_active` selects a plugin by id and pipes buffer to its command: `src-tauri/src/plugins.rs:507-593`.
+- Active renderer selection checks only id lookup, not category coherence: `src-tauri/src/plugins.rs:532-541`.
+- Export remains a separate `[export.<id>]` config model: `src-tauri/src/config.rs:17-23`, `src-tauri/src/lib.rs:42-50`, `src/App.svelte:380-435`.
+- Plugin config reaches scripts as JSON, but the plugin contract returns only success/artifact/exit/stdout/stderr for tools and stdout HTML for renderers: `src-tauri/src/plugins.rs:91-100`, `src-tauri/src/plugins.rs:481-485`.
+
+Predicted integration needs:
+
+- one plugin contract for renderers, exports, diagrams, slides, and tools, rather than split discovered-plugin and export-table models;
+- plugin category enforcement and category-specific capabilities;
+- structured render lifecycle data: start/cancel/complete, source mapping, diagnostics, produced artifacts, and preview-side messages;
+- plugin-owned artifact contracts for HTML/PDF/slides/figures instead of only stdout or one declared output path;
+- config refresh after plugin configure commands mutate TOML.
+
+Predicted blast radius if the split remains: high.
+Each render/export feature will duplicate facts across Rust config validation, native menus, frontend export dispatch, plugin manifests, shell scripts, first-run/provisioning, doctor checks, and tests.
+
+Architectural pressure: the current renderer-plugin path is a valuable foundation, but export and plugin actions still live in adjacent models.
+The feature list explicitly wants export types and diagram integrations to be standalone plugins.
+The current split makes that a migration prerequisite, not a late cleanup.
+
+### Workspace, Figures, Diagram Tools, And OS Integrations
+
+Requested features include `.gitignore`-aware tree behavior, filtering, unknown-file `xdg-open`, right-click actions, Ctrl+P quick-open through dmenu/fzf-style UI, a global figures directory, figure sidebar, TikZ mode, figure gallery, right-click-to-edit, and diagram tools as plugins.
+
+Current fit:
+
+- The backend recursively builds its own tree and skips dotfiles unconditionally: `src-tauri/src/fsops.rs:15-43`.
+- File-tree state, sidebar views, prompts, and file operations are coordinated in `App.svelte`: `src/App.svelte:228-378`.
+- The plugin firewall can run a command with `{file}` and `{artifact}`, but it does not own workspace indexing, item context menus, file-type handlers, background caches, or sidebars: `src-tauri/src/plugins.rs:315-410`.
+
+Predicted integration needs:
+
+- a workspace index that can answer file search, gitignore filtering, figure registry, label/reference extraction, and usage tracking;
+- an OS-action/plugin-action contribution model for context menus, quick-open, `xdg-open`, external diagram tools, and figure editing;
+- background process ownership for stale figure rendering, probably outside the UI process;
+- typed file-kind handling, so unknown files, markdown files, TikZ source files, PDFs, SVGs, and bibliography files do not become path-string conditionals in `App.svelte`.
+
+Predicted blast radius if added directly: very high.
+The feature set crosses backend file operations, frontend tree/sidebar UI, command dispatch, plugin API, external process handling, config, proof provisioning, and OS-specific scripts.
+
+Architectural pressure: the current file tree is a concrete implementation, not a workspace subsystem.
+That is enough for the present file explorer, but not enough for search, quick-open, figures, diagram ownership, and cross-document reference features.
+
+### Zotero And Citation Features
+
+Requested features include bib autocomplete, Zotero CAYW invocation from the editor, insertion of the returned citation at cursor, optional Better BibTeX hard requirement, external Zotero item/PDF follow actions, and citation rendering in preview/export.
+
+Current fit:
+
+- Plugins cannot mutate the editor or return a typed insertion command.
+  `run_plugin` returns a generic process result and optional artifact: `src-tauri/src/plugins.rs:91-100`, `src-tauri/src/plugins.rs:394-410`.
+- `runPluginToPath` is not user-facing in the normal UI and requires a target artifact path: `src/App.svelte:406-415`.
+- Editor mutation lives behind ad hoc `EditorPane` methods invoked from `toolbarAction`, not behind a public command bus: `src/App.svelte:439-458`.
+
+Predicted integration needs:
+
+- plugin action results that can request editor insertion/replacement at cursor, not only artifact creation;
+- a citation source contract for bibliography files and Zotero/Better BibTeX availability;
+- a UI action surface that can launch CAYW, receive text, insert it, and then trigger render without making Zotero a core app dependency;
+- doctor checks that fail loudly on missing/misconfigured Better BibTeX export if that becomes required.
+
+Predicted blast radius if added directly: high.
+A direct Zotero feature would touch editor command APIs, `App.svelte`, plugin execution, config validation, doctor, tests, and possibly render/export flags.
+
+Architectural pressure: Zotero is a clear test of whether "plugin-defined integration" is real.
+With the current contract, a Zotero plugin can be executed, but it cannot naturally contribute an editor command that inserts citation text into the current buffer.
+
+### Preferences Externalization
+
+Requested late-stage behavior moves Preferences out of the app GUI entirely, managed by a gum+kitty popup.
+
+Current fit:
+
+- `SettingsModal.svelte` still owns general/editor/preview settings in-app: `src/lib/components/SettingsModal.svelte:17-30`, `src/lib/components/SettingsModal.svelte:77-104`.
+- Plugin configure commands are already external and detached, but they do not refresh app state after completion: `src-tauri/src/plugins.rs:412-477`.
+- `saveSettings` updates the frontend `config` object and reschedules render only for in-app saves: `src/App.svelte:509-518`.
+
+Predicted integration needs:
+
+- a single config reload/refresh path after any external configuration command;
+- menu/config-launcher entries generated from app and plugin config owners;
+- removal or demotion of in-app settings without losing live-apply behavior for editor display settings;
+- proof that external config edits update menus, renderer choice, and preview state without restart where required.
+
+Predicted blast radius if added directly: medium-high.
+It touches SettingsModal, `App.svelte` config state, plugin configure, menu construction, first-run/config scripts, and tests.
+
+Architectural pressure: the app has begun externalizing plugin config, but app config still has a separate GUI model.
+The requested end state wants one philosophy: config is owned by external managers and validated by the app.
+
+### Plugin-System Changes Likely Needed Before Clean Feature Additions
+
+The catalogue makes the Tier 4 plugin system an early gate, not a late deliverable.
+The current command firewall needs more extension surface before it can absorb later features cleanly.
+
+Likely needed capability classes:
+
+- discovery exposed to the frontend: list installed plugins, categories, names, descriptions, actions, configure commands, output/artifact declarations, and status;
+- category enforcement: renderer plugins, export plugins, diagram plugins, workspace tools, editor actions, and config managers should be distinguishable contracts, not labels on the same command kind;
+- menu/action contribution: native menus, toolbar entries, sidebar/context-menu entries, command palette/quick-open actions, and settings/config-launcher entries generated from plugin declarations;
+- richer context: current file, project root, buffer, selection/cursor, config dir, plugin dir, workspace index location, figures dir, bibliography path, and requested output paths;
+- richer result envelope: insert text, replace selection, open artifact with `xdg-open`, refresh tree, refresh config, set render log, show toast, or report diagnostics;
+- lifecycle hooks: on file open, before save, after save, before render, after render, before export, after export, on config changed, and doctor/proof hooks;
+- isolated plugin proof surfaces: each plugin should be QC-able against its contract without driving the whole app, while the app still has end-to-end proofs that extension points are visible to users.
+
+Without these capabilities, feature work will likely accrete as hardcoded cases in `App.svelte` and `plugins.rs`. That would contradict the stated goal that exports, diagram tools, Zotero, and OS integrations live behind the plugin firewall.
+
+### App-Core Refactoring Pressure
+
+The largest predictable architecture change is not "more plugins" alone.
+The app core also needs smaller ownership boundaries so a feature can land where it belongs:
+
+- document/session state: current file, dirty state, durable identity, external fingerprint, recovery snapshot, save gate;
+- render lifecycle: debounce, cancellation, status/log, active renderer, source mapping, preview messages;
+- workspace model: tree, search index, file kinds, figures, labels, bibliography, recent/session restore;
+- command dispatcher: menu, toolbar, editor actions, plugin actions, keybindings, command palette;
+- configuration state: load/save/reload, external configure completion, validation, menu rebuild;
+- proof harness: user-facing extension-surface proofs separated from backend-only executor proofs.
+
+Current `App.svelte` owns too many of these concerns for the feature list's size.
+The problem is not that one file is long.
+The problem is that unrelated feature classes will need to edit the same state hub, increasing merge risk, regression risk, and agent confusion.
+
+### Dependency And OS Ownership Forecast
+
+Many requested features have mature owners outside this app:
+
+- CodeMirror extensions should own folding, autocomplete/snippets, delimiter matching, comment toggling, indentation guides, and much of syntax highlighting.
+- dmenu/fzf-style quick-open should be an OS-level/plugin action, not an in-app file-selector subsystem.
+- `xdg-open` should own unknown-file opening.
+- kitty+gum should own external config managers.
+- systemd or a small external worker should own background figure-cache refresh.
+- Zotero/Better BibTeX should own citation picking/export state; the app should invoke and insert.
+- pdf.js or another viewer should own PDF display if PDF preview enters the app.
+
+The current architecture sometimes follows this direction, especially for renderer commands and gum setup.
+The risk is inconsistency: if some integrations are external plugins while others become app-owned UI/code paths, future agents will lose the rule for where a feature belongs.
+
+### Feature-Risk Matrix
+
+| Feature class | Clean integration prerequisite | Likely blast radius today |
+| --- | --- | --- |
+| CodeMirror editor affordances | Editor extension registry and command bus | Medium-high: `EditorPane`, `Toolbar`, `App.svelte`, config, tests |
+| Math insertion bar | Editor action model plus workspace labels/bib index | High: editor APIs, toolbar/action UI, workspace scanner, plugins, tests |
+| Recovery/git state | Document identity/save-gate state machine | Very high: fsops, app state, plugin/export gates, status, tests |
+| Renderer/export/slides plugins | Unified plugin model with category contracts | High: config, plugins, render/export, menus, scripts, proof |
+| Figures/diagram tools | Workspace index, artifact registry, plugin context/actions | Very high: file tree, plugin API, render pipeline, background worker, UI |
+| Zotero CAYW | Plugin result can insert editor text at cursor | High: plugin API, editor command bus, config/doctor, render/export |
+| Preferences externalization | Config reload and external configure lifecycle | Medium-high: settings, config, plugin configure, menu rebuild |
+| PDF preview | Viewer dependency boundary and artifact lifecycle | Medium-high: export/render artifacts, preview pane, plugin result model |
+
+### Addendum Judgment
+
+The current architecture is directionally aligned with the requested product: renderer agnosticism, fail-loud config, real subprocess proof, and OS-level configuration are all visible.
+It is not yet conducive to clean addition of the full feature catalogue because its extension system is still narrower than the features require.
+
+The most important predicted blocker is not any single missing feature.
+It is that the future features need stable app-owned domains and plugin-owned capabilities, while the present app exposes a command runner plus a central frontend coordinator.
+Until that gap closes, each feature risks increasing the blast radius of the next feature.
+
 ## Notable Non-Findings
 
 - I did not find evidence that the codebase is broadly stuffed with mocks, fake proof paths, or skip-gated tests.

@@ -21,7 +21,10 @@ P1–P5 pin this loop with witness-fixture exactness.
 - Exports as real command executions: HTML (self-contained), PDF via lualatex (hard dependency).
 - Settings: structured Pandoc controls that parse/reconstruct the raw command string; a raw-command tab always authoritative; settings round-trip to XDG TOML.
 - First-run: gum walkthrough writes complete config, app boots to editor ([First-Run Config Bootstrap Pattern](first-run-config-bootstrap-pattern)).
-- Figure library over one configured global figures dir (never `./figures`); one-button FreeTikZ/quiver extraction → deterministic tikz-cd insertion at cursor; launch of supported diagram tools (Qtikz, Tikzit, Inkscape, ipe) post-save-gate; drawio/TikZjax permanently banned; xournalpp dropped. Second sidebar tab for figures (tikz). TikZ mode for editing `.tex` files in the figures directory (compile → SVG preview). Visual figure insertion gallery with rendering upkeep (cache + systemd recompilation of stale figures).
+- Figure library over one configured global figures dir (never `./figures`); one-button FreeTikZ/quiver extraction → deterministic tikz-cd insertion at cursor; launch of supported diagram tools (Qtikz, Tikzit, Inkscape, ipe) post-save-gate; drawio/TikZjax permanently banned; xournalpp dropped.
+  Second sidebar tab for figures (tikz).
+  TikZ mode for editing `.tex` files in the figures directory (compile → SVG preview).
+  Visual figure insertion gallery with rendering upkeep (cache + systemd recompilation of stale figures).
 - Primitive scroll sync between editor and preview (ultimately required; "primitive" is the bar — proportional + source-line snap class, not perfection).
 - A debugging pane: render-pipeline failures dump logs/stdout/stderr there; the pandoc-command module doubles as a playground for testing flags/filters/templates ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references)).
 - Drop-in script plugin system with a dynamically populated plugin menu ([Plugins, Diagrams, Figures Requirements](plugins-diagrams-figures-requirements)).
@@ -29,7 +32,11 @@ P1–P5 pin this loop with witness-fixture exactness.
 - Hover-to-edit: filter-tagged `.pandoc-preview-editable` elements postMessage source positions; app moves editor selection; app never scrapes rendered HTML for semantics.
 - Compile log surface showing the real subprocess command and exit status (P11).
 
-**Phase 2 (Firenvim demoted 2026-06-15):** Firenvim is demoted to very late, fully optional. CodeMirror 6 extensions natively provide folding, autocomplete/snippets, and most editor-productivity features previously gated on Firenvim. Autocomplete and snippets (quicktex-class 281-entry dict migrated as a CodeMirror completion source) are now Tier-0 concerns. Conceals are very optional since the live preview is already good. Firenvim embedding is only pursued if a vim-modal-editing experience is specifically desired; it no longer gates any other feature ([Lineage: Vim Live-TeXing Setup](lineage-vim-live-texing-setup), [Editor Experience Targets: Conceals, Folding, Expansion](editor-experience-targets-conceals-folding-expansion)).
+**Phase 2 (Firenvim demoted 2026-06-15):** Firenvim is demoted to very late, fully optional.
+CodeMirror 6 extensions natively provide folding, autocomplete/snippets, and most editor-productivity features previously gated on Firenvim.
+Autocomplete and snippets (quicktex-class 281-entry dict migrated as a CodeMirror completion source) are now Tier-0 concerns.
+Conceals are very optional since the live preview is already good.
+Firenvim embedding is only pursued if a vim-modal-editing experience is specifically desired; it no longer gates any other feature ([Lineage: Vim Live-TeXing Setup](lineage-vim-live-texing-setup), [Editor Experience Targets: Conceals, Folding, Expansion](editor-experience-targets-conceals-folding-expansion)).
 
 **Feature wishlist (post-MVP, user 2026-06-13 — source reference implementations from Obsidian plugins where they exist, per [Reference Repo Map: Subsystem Sources](reference-repo-map-subsystem-sources)):**
 
