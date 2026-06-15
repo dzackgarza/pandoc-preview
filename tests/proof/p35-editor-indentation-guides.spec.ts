@@ -30,6 +30,13 @@ test('Indented lines render indentation guides; non-indented lines do not', asyn
   const manifest = loadRunManifest();
 
   await openAndSelectDemo(tauriPage, manifest.project);
+  // Wait until demo.md's async file-read -> setContent has actually populated
+  // the buffer; appending before that lands races setContent, which would
+  // overwrite the appended lines.
+  await tauriPage.waitForFunction(
+    `(document.querySelector('.cm-editor .cm-content')?.textContent ?? '').includes('Geometry of Numbers')`,
+    15_000,
+  );
 
   // Append a zero-indent line and an eight-column-indented line through the
   // real editor update pipeline.

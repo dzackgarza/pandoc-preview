@@ -44,6 +44,7 @@
     highlightSelectionMatches,
   } from "@codemirror/search";
   import { lintKeymap } from "@codemirror/lint";
+  import { indentationMarkers } from "@replit/codemirror-indentation-markers";
   import { oneDark } from "@codemirror/theme-one-dark";
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
   import type { Config } from "../types";
@@ -85,6 +86,7 @@
     history(),
     foldGutter(),
     codeFolding(),
+    indentationMarkers(),
     drawSelection(),
     dropCursor(),
     EditorState.allowMultipleSelections.of(true),

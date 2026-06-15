@@ -1,0 +1,87 @@
+{
+  "run_id": "20260615T161755Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p33-editor-comment-toggle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p33-editor-comment-toggle.spec.ts",
+            "title": "Ctrl+/ block-comments the selected buffer and toggles back exactly",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1310,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p33-editor-comment-toggle.spec.ts",
+          "name": "comment-toggle-roundtrip",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p34-editor-find.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p34-editor-find.spec.ts",
+            "title": "Ctrl+F and the native Find menu both open the search panel; Escape closes it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 296,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p34-editor-find.spec.ts",
+          "name": "find-panel-routes",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p35-editor-indentation-guides.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p35-editor-indentation-guides.spec.ts",
+            "title": "Indented lines render indentation guides; non-indented lines do not",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 168,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p35-editor-indentation-guides.spec.ts",
+          "name": "indentation-guides",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}
