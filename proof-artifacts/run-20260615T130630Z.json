@@ -1,0 +1,68 @@
+{
+  "run_id": "20260615T130630Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p31-figure-width-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p31-figure-width-config.spec.ts",
+            "title": "the preview image max-width reflects the configured figure width (75%)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 960,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p31-figure-width-config.spec.ts",
+          "name": "img-max-width",
+          "value": "75%"
+        }
+      ]
+    },
+    {
+      "spec": "p27-citation-resolved.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p27-citation-resolved.spec.ts",
+            "title": "a [@cite] renders as a bracketed hyperlinked label under a References section",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1223,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p27-citation-resolved.spec.ts",
+          "name": "citation-href",
+          "value": "#ref-DM19"
+        },
+        {
+          "spec": "p27-citation-resolved.spec.ts",
+          "name": "citation-label",
+          "value": "[DoMu19]"
+        }
+      ]
+    }
+  ]
+}

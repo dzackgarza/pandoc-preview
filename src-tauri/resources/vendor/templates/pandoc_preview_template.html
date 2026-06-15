@@ -120,12 +120,15 @@ img {
 </style>
 $endif$
 
-<!-- config-driven figure styling: width from the [plugin.pandoc-renderer.style]
-     figure_width knob, layered by render.sh as the figure-width variable.
-     Unconditional: the themed block above is never active in the preview. -->
+<!-- config-driven figure styling. The app preview passes a figure-width variable
+     (from [plugin.pandoc-renderer.style].figure_width via render.sh); other
+     consumers of this template (e.g. the website build) pass none and get the 75%
+     default, so preview and website stay in visual fidelity. Unconditional: the
+     themed block above is never active. The comment avoids literal dollar-if so
+     pandoc does not read it as a template directive. -->
 <style type="text/css">
 img {
-  max-width: $figure-width$;
+  max-width: $if(figure-width)$$figure-width$$else$75%$endif$;
   height: auto;
 }
 </style>
