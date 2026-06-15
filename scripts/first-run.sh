@@ -175,6 +175,12 @@ active = "pandoc-renderer"
 # Edit it directly or via the plugin's own Configure action.
 command = "$PANDOC_COMMAND_TOML"
 
+# Stylistic knobs the renderer layers onto every preview (render.sh -> pandoc
+# --variable). figure_width caps figure/diagram width in the preview; edit it to
+# taste (e.g. "100%" for full width).
+[plugin.pandoc-renderer.style]
+figure_width = "75%"
+
 # Export targets are config-owned plugins: each [export.<id>] table is a
 # complete compilation command. {input}/{output} are substituted per-argument;
 # the process runs with cwd = the source file's parent. These two are the

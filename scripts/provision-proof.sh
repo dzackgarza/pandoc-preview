@@ -119,6 +119,9 @@ active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
 command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --bibliography=$bib --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
+
+[plugin.pandoc-renderer.style]
+figure_width = "75%"
 EOF
 }
 
@@ -300,6 +303,9 @@ active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
 command = "$PANDOC_BIN --from markdown --to html5 --standalone --embed-resources"
+
+[plugin.pandoc-renderer.style]
+figure_width = "75%"
 EOF
         ;;
     d14-*) # The REAL first-run.sh output must pass the doctor on its own. Drive
@@ -350,6 +356,9 @@ active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
 command = "$PANDOC_BIN --from markdown --to html5 --standalone --embed-resources"
+
+[plugin.pandoc-renderer.style]
+figure_width = "75%"
 EOF
         ;;
     esac

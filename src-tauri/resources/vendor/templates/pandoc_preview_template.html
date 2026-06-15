@@ -120,6 +120,16 @@ img {
 </style>
 $endif$
 
+<!-- config-driven figure styling: width from the [plugin.pandoc-renderer.style]
+     figure_width knob, layered by render.sh as the figure-width variable.
+     Unconditional: the themed block above is never active in the preview. -->
+<style type="text/css">
+img {
+  max-width: $figure-width$;
+  height: auto;
+}
+</style>
+
 
 <!-- pandoc-preview modular hooks -->
 <style>

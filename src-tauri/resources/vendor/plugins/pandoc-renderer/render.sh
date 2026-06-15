@@ -18,6 +18,12 @@ cfg="${PPE_PLUGIN_CONFIG:-}"
 [ -n "$cfg" ] || cfg='{}'
 command_str="$(printf '%s' "$cfg" | jq -r '.command')"
 
+# Config-exposed style knobs ([plugin.pandoc-renderer.style]). figure_width is
+# layered onto the render as a pandoc variable the template applies to images. The
+# schema marks it required, so a valid (booted) config always carries it — no
+# guard, same as .command above.
+figure_width="$(printf '%s' "$cfg" | jq -r '.style.figure_width')"
+
 # Tokenize the raw command with a shlex-class parser (quotes respected, NO shell
 # expansion) — run it, do not interpret it. The first token is the executable.
 mapfile -t cmd < <(printf '%s' "$command_str" \
@@ -32,11 +38,13 @@ mapfile -t cmd < <(printf '%s' "$command_str" \
 # filename), so without this the standalone writer warns "requires a nonempty
 # <title>" every render. pagetitle is the open file's containing folder name
 # (base_dir's basename) and is distinct from the document's own title metadata, so
-# a title the document declares is never clobbered. None of this is stored in the
+# a title the document declares is never clobbered; and the figure width style knob
+# (the template applies it to img max-width). None of this is stored in the
 # canonical command. PANDOC_RESOURCE_PATH is guaranteed present here: the startup
 # doctor gate (pandoc-resource-path check) refuses to boot the app without it.
 exec "${cmd[@]}" \
     "--mathjax=$mathjax" \
     --resource-path "$base_dir:$PANDOC_RESOURCE_PATH" \
     "--metadata=pagetitle:$(basename "$base_dir")" \
+    "--variable=figure-width:$figure_width" \
     "--variable=header-includes:<base href=\"$base_url\">"
