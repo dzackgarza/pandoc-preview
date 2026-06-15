@@ -1,0 +1,62 @@
+{
+  "run_id": "20260615T000107Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d13-pandoc-configurator.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d13-pandoc-configurator.spec.ts",
+            "title": "the pandoc gum configurator writes a valid command with the required filters locked in",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 6936,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d14-first-run-doctor-clean.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d14-first-run-doctor-clean.spec.ts",
+            "title": "the real first-run.sh leaves a system that passes --doctor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 696,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-doctor-exit",
+          "value": 0
+        },
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-plugins-count",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

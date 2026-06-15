@@ -1,0 +1,39 @@
+{
+  "run_id": "20260614T234933Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p25-callout-rendered.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p25-callout-rendered.spec.ts",
+            "title": "a callout renders its title as visible text, not just a tooltip attribute",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2171,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p25-callout-rendered.spec.ts",
+          "name": "callout-visible-title",
+          "value": "Determinant caveat"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "run_id": "20260614T234831Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p23-filter-in-pipeline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p23-filter-in-pipeline.spec.ts",
+            "title": "a vendored filter transforms the preview: the callout becomes a callout div",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 727,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p23-filter-in-pipeline.spec.ts",
+          "name": "callout-type",
+          "value": "note"
+        }
+      ]
+    },
+    {
+      "spec": "p25-callout-rendered.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p25-callout-rendered.spec.ts",
+            "title": "a callout renders its title as visible text, not just a tooltip attribute",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1330,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"Determinant caveat\"\u001b[39m\nReceived: \u001b[31m\"Lattice note\"\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p26-amsthm-label.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p26-amsthm-label.spec.ts",
+            "title": "a .remark environment renders a visible \"Remark.\" label",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1246,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p26-amsthm-label.spec.ts",
+          "name": "remark-label-content",
+          "value": "\"Remark.\""
+        }
+      ]
+    },
+    {
+      "spec": "p27-citation-resolved.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p27-citation-resolved.spec.ts",
+            "title": "a [@cite] is resolved into a rendered bibliography entry",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1272,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p27-citation-resolved.spec.ts",
+          "name": "refs-rendered",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "spec": "p28-obsidian-list-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p28-obsidian-list-fidelity.spec.ts",
+            "title": "an Obsidian compact list (no blank line) renders as a list",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1379,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p28-obsidian-list-fidelity.spec.ts",
+          "name": "list-item-rendered",
+          "value": "true"
+        }
+      ]
+    }
+  ]
+}

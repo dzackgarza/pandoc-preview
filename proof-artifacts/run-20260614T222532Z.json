@@ -1,0 +1,87 @@
+{
+  "run_id": "20260614T222532Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p25-callout-rendered.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p25-callout-rendered.spec.ts",
+            "title": "a callout renders its title as visible text, not just a tooltip attribute",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 21142,
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!(window.__PPE_E2E__ && window.__PPE_E2E__.openProject)"]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p26-amsthm-label.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p26-amsthm-label.spec.ts",
+            "title": "a .remark environment renders a visible \"Remark.\" label",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 20120,
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!(window.__PPE_E2E__ && window.__PPE_E2E__.openProject)"]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p27-citation-resolved.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p27-citation-resolved.spec.ts",
+            "title": "a [@cite] is resolved into a rendered bibliography entry",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 20132,
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!(window.__PPE_E2E__ && window.__PPE_E2E__.openProject)"]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p28-obsidian-list-fidelity.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p28-obsidian-list-fidelity.spec.ts",
+            "title": "an Obsidian compact list (no blank line) renders as a list",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 20138,
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!(window.__PPE_E2E__ && window.__PPE_E2E__.openProject)"]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

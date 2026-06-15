@@ -1,0 +1,213 @@
+{
+  "run_id": "20260614T200226Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1325,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.6"
+        }
+      ]
+    },
+    {
+      "spec": "d02-launcher-no-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d02-launcher-no-config.spec.ts",
+            "title": "launcher with no config routes through gum first-run and boots the app",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 31979,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d02-launcher-no-config.spec.ts",
+          "name": "launcher-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d03-launcher-stale-key-regression.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d03-launcher-stale-key-regression.spec.ts",
+            "title": "launcher with the stale math key reconfigures, removes it, and boots",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 37080,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d03-launcher-stale-key-regression.spec.ts",
+          "name": "launcher-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d06-setup-reconfigure-existing.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d06-setup-reconfigure-existing.spec.ts",
+            "title": "just setup over an existing config reconfigures it to a valid config",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 36474,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d06-setup-reconfigure-existing.spec.ts",
+          "name": "setup-reconfigure-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d07-dev-routes-config-recovery.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d07-dev-routes-config-recovery.spec.ts",
+            "title": "just dev with an invalid config reconfigures it before starting tauri dev",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 36915,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d07-dev-routes-config-recovery.spec.ts",
+          "name": "dev-recovery-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d11-doctor-required-filter.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d11-doctor-required-filter.spec.ts",
+            "title": "--doctor fails required-filter when a required filter is missing",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 429,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d11-doctor-required-filter.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d13-pandoc-configurator.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d13-pandoc-configurator.spec.ts",
+            "title": "the pandoc gum configurator writes a valid command with the required filters locked in",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 207,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d14-first-run-doctor-clean.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d14-first-run-doctor-clean.spec.ts",
+            "title": "the real first-run.sh leaves a system that passes --doctor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 684,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-doctor-exit",
+          "value": 0
+        },
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-plugins-count",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}
