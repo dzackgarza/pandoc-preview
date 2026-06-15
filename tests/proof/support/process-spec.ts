@@ -82,29 +82,47 @@ function doctorBin(): string {
 // exited, kill the whole process group (SIGKILL on the negative pgid) so a
 // lingering GUI window cannot survive. The returned killedByTimeout flag
 // records whether self-termination happened.
-export function spawnDoctor(
-  manifest: DoctorManifest,
-  args: string[],
+export interface SpawnDoctorOpts {
   // The bound exists to catch a HUNG consumer (the original red: a GUI that
   // launches and never exits) — a hung process exits on no timeout, so the exact
   // value only needs headroom over a healthy run. 8s was too tight from-cold: in a
   // full run the two preceding cargo builds load the machine and a healthy doctor
   // (sub-second cached) could miss the bound and flake. 20s keeps the hung-process
   // signal while removing the load flake.
-  timeoutMs = 20000,
+  timeoutMs?: number;
+  // The global figures resource dir handed to the binary as PANDOC_RESOURCE_PATH,
+  // mirroring the GUI session's ~/.pathrc export. Defaults to this spec's hermetic
+  // $HOME/.pandoc/figures. Pass `null` to launch with the var UNSET — the state
+  // that must make the startup gate refuse to boot (d16).
+  resourcePath?: string | null;
+}
+
+export function spawnDoctor(
+  manifest: DoctorManifest,
+  args: string[],
+  opts: SpawnDoctorOpts = {},
 ): Promise<ProcessResult> {
+  const timeoutMs = opts.timeoutMs ?? 20000;
+  const resourcePath =
+    opts.resourcePath === undefined ? `${manifest.runDir}/home/.pandoc/figures` : opts.resourcePath;
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    HOME: `${manifest.runDir}/home`,
+    XDG_CONFIG_HOME: `${manifest.runDir}/xdg-config`,
+    XDG_CACHE_HOME: `${manifest.runDir}/xdg-cache`,
+    XDG_STATE_HOME: `${manifest.runDir}/xdg-state`,
+  };
+  if (resourcePath === null) {
+    delete env.PANDOC_RESOURCE_PATH;
+  } else {
+    env.PANDOC_RESOURCE_PATH = resourcePath;
+  }
   const child = spawn(doctorBin(), args, {
     // New session/process group so a kill on -pid reaps any window the
     // binary spawned, exactly like scripts/proof-run.sh group-kills the app.
     detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],
-    env: {
-      ...process.env,
-      HOME: `${manifest.runDir}/home`,
-      XDG_CONFIG_HOME: `${manifest.runDir}/xdg-config`,
-      XDG_CACHE_HOME: `${manifest.runDir}/xdg-cache`,
-      XDG_STATE_HOME: `${manifest.runDir}/xdg-state`,
-    },
+    env,
   });
 
   let stdout = '';

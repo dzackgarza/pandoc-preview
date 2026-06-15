@@ -197,9 +197,12 @@ EOF
     }
 
     case "$SPEC" in
-    d01-*) # valid env: every check OK, incl. the export-plugins check, which
+    d01-* | d16-*) # valid env: every check OK, incl. the export-plugins check, which
         # validates the two shipped default [export.*] plugin tables that
-        # write_valid_config now writes (export-plugins-contract.md, D1).
+        # write_valid_config now writes (export-plugins-contract.md, D1). d16
+        # reuses the same valid env but is launched with PANDOC_RESOURCE_PATH unset
+        # (spawnDoctor resourcePath:null), so the ONLY failing check is the
+        # pandoc-resource-path startup check.
         write_valid_config "$PANDOC_BIN"
         ;;
     d02-*) # no config: leave the config dir absent. The spec drives the launcher,
