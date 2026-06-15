@@ -40,6 +40,9 @@ link_dir() {
 
 link_dir "$VENDOR/filters" "$HOME/.pandoc/filters"
 link_dir "$VENDOR/templates" "$HOME/.pandoc/templates"
+# The CSL citation style the preview command resolves citations against (the
+# shipped alphabetic, hyperlinked style). A user override is preserved.
+link_dir "$VENDOR/csl" "$HOME/.pandoc/csl"
 # The default preview bibliography citeproc resolves against. A user override (a
 # real ~/.pandoc/bib/references.bib) is preserved, never clobbered.
 link_dir "$VENDOR/bib" "$HOME/.pandoc/bib"

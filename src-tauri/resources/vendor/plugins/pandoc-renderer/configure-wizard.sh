@@ -36,6 +36,13 @@ for f in "${required[@]}"; do
     filter_args+=" --lua-filter=$filters_dir/$f.lua"
 done
 
+# Citation pipeline — LOCKED, like the filters: the preview renders preprint-style
+# citations (citeproc + the shipped alphabetic CSL, hyperlinked) with a separated
+# "References" bibliography. Always written so reconfiguring never silently drops it.
+bibliography="$HOME/.pandoc/bib/references.bib"
+csl="$HOME/.pandoc/csl/alpha-preview.csl"
+citation_args="--citeproc --bibliography=$bibliography --csl=$csl --metadata=link-citations:true --metadata=reference-section-title:References"
+
 extra_args=""
 while IFS= read -r line; do
     line="$(printf '%s' "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -44,7 +51,7 @@ while IFS= read -r line; do
 done <<<"$extra_raw"
 
 template="$HOME/.pandoc/templates/pandoc_preview_template.html"
-command="$exe --from $fmt --to html5 --standalone --embed-resources --template=$template$filter_args$extra_args"
+command="$exe --from $fmt --to html5 --standalone --embed-resources $citation_args --template=$template$filter_args$extra_args"
 "$toml" write "$config_path" "$command"
 
 gum style --bold --foreground 2 "Pandoc renderer command updated."

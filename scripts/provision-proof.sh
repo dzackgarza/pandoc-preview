@@ -109,6 +109,9 @@ emit_pandoc_renderer() {
     # symlink instead of writing through it into the vendored starter.
     local bib="$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
     cp --remove-destination "$REPO_ROOT/tests/proof/fixtures/references.bib" "$bib"
+    # The shipped alphabetic CSL (hyperlinked [Label] citations); install-assets
+    # symlinked the vendored csl dir into $HOME/.pandoc/csl.
+    local csl="$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
     cat >> "$config_path" <<EOF
 
 [plugins]
@@ -118,7 +121,7 @@ dir = "$plugins_dir"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --bibliography=$bib --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
+command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --bibliography=$bib --csl=$csl --metadata=link-citations:true --metadata=reference-section-title:References --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
 
 [plugin.pandoc-renderer.style]
 figure_width = "75%"

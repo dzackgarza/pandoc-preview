@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl/1.0" class="in-text" version="1.0" default-locale="en-US">
+  <info>
+    <title>Pandoc Preview Alphabetic</title>
+    <id>https://pandoc-preview/csl/alpha-preview</id>
+    <updated>2026-06-15T00:00:00+00:00</updated>
+    <summary>Alphabetic (amsalpha-like) labels using citeproc's auto-generated
+      citation-label, e.g. [Dol12], hyperlinked to the bibliography entry. Shipped
+      with pandoc-preview to make the preview read like a preprint draft.</summary>
+  </info>
+
+  <macro name="author">
+    <names variable="author">
+      <name and="text" initialize-with=". " delimiter=", " name-as-sort-order="first"/>
+      <substitute>
+        <names variable="editor"/>
+      </substitute>
+    </names>
+  </macro>
+
+  <macro name="title">
+    <choose>
+      <if type="article-journal chapter paper-conference" match="any">
+        <text variable="title"/>
+      </if>
+      <else>
+        <text variable="title" font-style="italic"/>
+      </else>
+    </choose>
+  </macro>
+
+  <macro name="container">
+    <choose>
+      <if type="article-journal" match="any">
+        <text variable="container-title" font-style="italic" prefix=", "/>
+        <text variable="volume" prefix=" "/>
+        <date variable="issued" prefix=" (" suffix=")"><date-part name="year"/></date>
+        <text variable="page" prefix=", "/>
+      </if>
+      <else>
+        <text variable="publisher" prefix=", "/>
+        <date variable="issued" prefix=", "><date-part name="year"/></date>
+      </else>
+    </choose>
+  </macro>
+
+  <citation collapse="citation-label">
+    <layout prefix="[" suffix="]" delimiter=", ">
+      <text variable="citation-label"/>
+    </layout>
+  </citation>
+
+  <bibliography hanging-indent="true" second-field-align="flush" entry-spacing="1">
+    <layout>
+      <text variable="citation-label" prefix="[" suffix="]"/>
+      <group delimiter=", ">
+        <text macro="author"/>
+        <text macro="title"/>
+      </group>
+      <text macro="container"/>
+      <text variable="DOI" prefix=". https://doi.org/"/>
+    </layout>
+  </bibliography>
+</style>

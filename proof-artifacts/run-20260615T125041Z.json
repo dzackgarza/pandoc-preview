@@ -1,0 +1,144 @@
+{
+  "run_id": "20260615T125041Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p27-citation-resolved.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p27-citation-resolved.spec.ts",
+            "title": "a [@cite] renders as a bracketed hyperlinked label under a References section",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1720,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p27-citation-resolved.spec.ts",
+          "name": "citation-href",
+          "value": "#ref-DM19"
+        },
+        {
+          "spec": "p27-citation-resolved.spec.ts",
+          "name": "citation-label",
+          "value": "[DoMu19]"
+        }
+      ]
+    },
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 719,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.6"
+        }
+      ]
+    },
+    {
+      "spec": "d13-pandoc-configurator.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/d13-pandoc-configurator.spec.ts",
+            "title": "the pandoc gum configurator writes a valid command with the required filters locked in",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 6715,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 818,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "p25-callout-rendered.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p25-callout-rendered.spec.ts",
+            "title": "a callout renders its title as visible text, not just a tooltip attribute",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1463,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p25-callout-rendered.spec.ts",
+          "name": "callout-visible-title",
+          "value": "Determinant caveat"
+        }
+      ]
+    }
+  ]
+}
