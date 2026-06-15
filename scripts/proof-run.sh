@@ -186,11 +186,17 @@ OVERALL=passed
 run_app_spec() {
     local spec="$1" spec_dir="$2" abs_spec_dir="$3"
     rm -f "$SOCKET"
+    # PANDOC_RESOURCE_PATH advertises the global figures directory to the pandoc
+    # renderer, exactly as ~/.pathrc exports it into the real GUI session. Point
+    # it at this spec's hermetic $HOME/.pandoc/figures so a figure referenced
+    # relative to the global figures dir resolves (P29). The dir need not exist
+    # for specs that ship no global figure — pandoc tolerates a missing entry.
     setsid env \
         HOME="$abs_spec_dir/home" \
         XDG_STATE_HOME="$abs_spec_dir/xdg-state" \
         XDG_CONFIG_HOME="$abs_spec_dir/xdg-config" \
         XDG_CACHE_HOME="$abs_spec_dir/xdg-cache" \
+        PANDOC_RESOURCE_PATH="$abs_spec_dir/home/.pandoc/figures" \
         "$APP_BIN" > "$spec_dir/app.log" 2>&1 &
     local app_pgid=$!
     TRACKED_PGIDS+=("$app_pgid")

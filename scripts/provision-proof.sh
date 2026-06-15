@@ -475,6 +475,19 @@ p22-configure-plugin-spawn.spec.ts)
 greeting = "hi"
 EOF
     ;;
+p29-global-figures-resource.spec.ts)
+    # P29: a figure that exists ONLY in the global figures dir
+    # ($HOME/.pandoc/figures), referenced relative to that dir (rendered/global.png).
+    # It is deliberately NOT placed under the project, so it can resolve only
+    # through the global figures dir on the resource path — which the renderer
+    # learns from PANDOC_RESOURCE_PATH (run_app_spec sets it to this hermetic
+    # figures dir, mirroring the GUI session's ~/.pathrc export). The committed
+    # fixture is a real 80x32 PNG (distinct from P5's 64x48) the spec decodes.
+    FIGS_DIR="$ABS_SPEC_DIR/home/.pandoc/figures/rendered"
+    mkdir -p "$FIGS_DIR"
+    cp "$REPO_ROOT/tests/proof/fixtures/global-figures/rendered/global.png" "$FIGS_DIR/"
+    printf '\n![globalfig](rendered/global.png)\n' >> "$DEMO_FILE"
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────
