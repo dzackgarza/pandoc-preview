@@ -453,6 +453,20 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p52-snippets.json" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p54-spellcheck.spec.ts)
+        # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
+        # hardcoded list. Provision a hermetic copy of the committed FIXTURE
+        # wordlist (the spec owns it; first entry `cohomology`, a real
+        # algebraic-geometry term standard English spellcheck flags) and point
+        # `[editor].spell_dictionary` at it, so a checker run WITHOUT this
+        # dictionary would wrongly flag `cohomology` — which the math-term
+        # assertion catches. The base English dictionary ships vendored in-bundle.
+        DICTS_DIR="$ABS_SPEC_DIR/home/.pandoc/dictionaries"
+        mkdir -p "$DICTS_DIR"
+        SPELL_DICT="$DICTS_DIR/p54-mathdict.txt"
+        cp "$REPO_ROOT/tests/proof/fixtures/dictionaries/p54-mathdict.txt" "$SPELL_DICT"
+        EDITOR_EXTRA="spell_dictionary = \"$SPELL_DICT\""
+        ;;
     esac
 
     # Canonical witness config: theme=dark, font_size=14 (P9 base),

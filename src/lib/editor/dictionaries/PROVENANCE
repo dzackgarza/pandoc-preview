@@ -1,0 +1,25 @@
+Vendored base English spelling dictionary (en.aff / en.dic)
+===========================================================
+
+WHAT
+  The hunspell English spelling dictionary the editor's spellchecker (nspell)
+  loads as its base vocabulary:
+    en.aff — the affix file (language, flags, affix rules).
+    en.dic — the word list with affix flags (~49k stems).
+
+SOURCE
+  Copied verbatim from the `dictionary-en` npm package (v4.0.0), which packages
+  wooorm/dictionaries' UTF-8 hunspell English dictionary:
+    node_modules/dictionary-en/index.aff -> en.aff
+    node_modules/dictionary-en/index.dic -> en.dic
+  License: (MIT AND BSD); see the upstream package's `license` file.
+
+WHY VENDORED (not imported from the package)
+  `dictionary-en`'s package.json `exports` map exposes only its main entry, so a
+  Vite `dictionary-en/index.dic?raw` subpath import fails to resolve; and its own
+  index.js reads the files via `node:fs`, which does not exist in the WebView
+  renderer. Vendoring the two files lets the editor import them as raw strings via
+  a relative `?raw` import, bundling the dictionary into the app build so the
+  checker is constructed entirely in the renderer with no filesystem read.
+
+  Reproduce: `bun add dictionary-en@4` then copy index.aff/index.dic here.

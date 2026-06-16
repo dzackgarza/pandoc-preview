@@ -24,3 +24,9 @@ body,
 .cm-host .cm-scroller {
   overflow: auto;
 }
+/* A misspelled word: the classic red wavy underline. The class is the P54 mark
+   contract (cm-spellError); the editor decorates rejected words with it. */
+.cm-host .cm-spellError {
+  text-decoration: underline wavy #e06c75;
+  text-decoration-skip-ink: none;
+}

@@ -24,6 +24,14 @@ export interface Config {
     // a file (ExistingFile in config.rs), so the editor receives only a real
     // path; the editor reads and parses it into composable completion snippets.
     snippet_dictionary?: ExistingFile;
+    // Config-owned path to a user custom spelling dictionary: a plain wordlist,
+    // one word per line (the user's vim `.add` math wordlist shape). Optional:
+    // absent when no custom dictionary is configured. When present, Rust's loader
+    // validates the path exists and is a file (ExistingFile in config.rs), so the
+    // editor receives only a real path; the editor reads it and adds every word
+    // to the spellchecker so those math terms are not flagged. The base English
+    // dictionary always ships as a vendored bundle asset.
+    spell_dictionary?: ExistingFile;
   };
   preview: {
     debounce_ms: number;

@@ -221,6 +221,15 @@ pub struct Editor {
     /// No implicit default path. An absent value is never re-serialized.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub snippet_dictionary: Option<ExistingFile>,
+    /// Config-owned path to a user custom spelling dictionary: a plain wordlist,
+    /// one word per line (the user's vim `.add` math wordlist shape). Optional
+    /// capability — when present, the path is validated to be an existing file
+    /// (ExistingFile), so the editor reads a real wordlist and adds every term to
+    /// the spellchecker so those math words are not flagged; when absent, only the
+    /// vendored English base dictionary is in effect. No implicit default path.
+    /// An absent value is never re-serialized.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub spell_dictionary: Option<ExistingFile>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

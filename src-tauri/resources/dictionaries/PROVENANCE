@@ -1,0 +1,49 @@
+Spellcheck dictionaries — base English (npm) + vendored user math wordlists
+===========================================================================
+
+BASE ENGLISH DICTIONARY (vendored in the frontend, bundled into the build)
+  The spellchecker's base dictionary is the hunspell English dictionary vendored
+  at src/lib/editor/dictionaries/en.aff and en.dic (provenance: the
+  `dictionary-en` npm package, wooorm/dictionaries; see that directory's
+  PROVENANCE). The editor imports them as raw strings via a relative Vite `?raw`
+  import, so the dictionary is bundled into the app build and the checker is
+  constructed entirely in the WebView (no filesystem read). The wordlists in THIS
+  directory are the optional config-owned CUSTOM additions, not the base.
+
+VENDORED USER MATH WORDLISTS (for real config use, NOT the proof)
+  mathdict.add  — the user's vim math spelling wordlist.
+  corpus.add    — the user's vim corpus wordlist.
+
+  These are plain wordlists, one word per line, the shape vim writes for a
+  `:set spellfile` `.add` file. The editor's custom-dictionary loader reads such
+  a wordlist and `.add()`s every line into the spellchecker, so those terms are
+  accepted and not flagged.
+
+SOURCE
+  Fetched from the user's dotfiles repo dzackgarza/dotfiles (branch master):
+    dictionaries/mathdict.utf-8.add  -> mathdict.add  (17120 words)
+    dictionaries/corpus.add          -> corpus.add    (2850 words)
+
+  The companion `.spl` files in that directory are vim's COMPILED binary spell
+  files; they are NOT vendored — only the plain-text `.add` wordlists are, since
+  the editor consumes plain wordlists.
+
+  Reproduce:
+    gh api repos/dzackgarza/dotfiles/contents/dictionaries/mathdict.utf-8.add \
+      --jq .content | base64 -d > mathdict.add
+    gh api repos/dzackgarza/dotfiles/contents/dictionaries/corpus.add \
+      --jq .content | base64 -d > corpus.add
+
+HOW CONFIG POINTS AT IT FOR REAL USE
+  The custom dictionary is config-owned (no hardcoded list in the app). To accept
+  these math terms, point the editor config at one of these wordlists:
+
+    [editor]
+    spell_dictionary = "<abs path to this mathdict.add>"
+
+  The path is validated to exist at config-load time (ExistingFile in config.rs);
+  the editor reads it and adds every term to the checker. Pointing the key at a
+  different wordlist accepts different terms — the config-owned property the P54
+  obligation pins. The P54 PROOF uses its own committed fixture
+  (tests/proof/fixtures/dictionaries/p54-mathdict.txt) for determinism, NOT these
+  real wordlists.

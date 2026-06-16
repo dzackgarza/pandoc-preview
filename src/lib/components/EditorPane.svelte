@@ -66,6 +66,11 @@
     snippetCompletionSource,
     runSnippet,
   } from "../editor/snippets";
+  import {
+    parseWordlist,
+    buildSpellChecker,
+    spellcheckExtension,
+  } from "../editor/spellcheck";
 
   let {
     config,
@@ -84,6 +89,11 @@
   const wrapCompartment = new Compartment();
   const gutterCompartment = new Compartment();
   const fontCompartment = new Compartment();
+  // Spellcheck is installed after mount, once the config-owned custom dictionary
+  // is read and the checker is built; this compartment carries the extension so
+  // it can be reconfigured in without rebuilding the editor (mirrors the snippet
+  // dictionary's post-mount registration).
+  const spellCompartment = new Compartment();
 
   // App-owned completion sources, COMPOSED with the LaTeX command source rather
   // than overriding it. latex() folds a single delegating source (below) into
@@ -195,6 +205,9 @@
           themeCompartment.of(init.theme),
           wrapCompartment.of(init.wrap),
           fontCompartment.of(init.font),
+          // Empty until the spellchecker is built (post-mount, once the
+          // config-owned custom dictionary is read); reconfigured in below.
+          spellCompartment.of([]),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) onChange(u.state.doc.toString());
             if (u.selectionSet || u.docChanged) {
@@ -216,6 +229,14 @@
     registerSnippetDictionary(config).catch((e) =>
       toastError(`Snippet dictionary failed to load: ${e}`),
     );
+
+    // Build the spellchecker (vendored English base dictionary + the config-owned
+    // custom math wordlist) and reconfigure it into the editor. A declared-but-
+    // unreadable custom dictionary fails loud (toast); an absent path means only
+    // the base English dictionary is in effect.
+    installSpellcheck(config).catch((e) =>
+      toastError(`Spellcheck failed to load: ${e}`),
+    );
   });
 
   /** Read, parse, and register the config-owned snippet dictionary. */
@@ -225,6 +246,21 @@
     const file = await readTextFile(path);
     const map = parseSnippetDictionary(file.content);
     appCompletionSources.push(snippetCompletionSource(map));
+  }
+
+  /** Build the spellchecker over the vendored English base dictionary plus the
+   *  config-owned custom math wordlist (read from disk; ExistingFile-validated by
+   *  Rust), then reconfigure the live editor's spell compartment with the marking
+   *  extension. Absent custom path → base English dictionary only. */
+  async function installSpellcheck(c: Config) {
+    const path = c.editor.spell_dictionary;
+    const customWords = path
+      ? parseWordlist((await readTextFile(path)).content)
+      : [];
+    const checker = buildSpellChecker(customWords);
+    view.dispatch({
+      effects: spellCompartment.reconfigure(spellcheckExtension(checker)),
+    });
   }
 
   onDestroy(() => view?.destroy());
