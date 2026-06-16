@@ -37,13 +37,28 @@
       </button>
     {/each}
     <div class="grow"></div>
-    <span class="px-2 text-xs text-zinc-400">
+    <span
+      class="flex items-center gap-1.5 px-2 text-xs"
+      data-testid="render-status"
+      data-status={status}
+    >
       {#if status === "rendering"}
-        rendering…
+        <span
+          class="h-3 w-3 animate-spin rounded-full border-[1.5px] border-sky-500 border-t-transparent"
+          aria-hidden="true"
+        ></span>
+        <span class="text-sky-600 dark:text-sky-400">Recompiling…</span>
+      {:else if status === "stale"}
+        <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+        <span class="text-amber-600 dark:text-amber-400">Out of date</span>
       {:else if status === "error"}
-        <span class="text-red-500">pandoc failed — see log</span>
+        <span class="h-2 w-2 rounded-full bg-red-500"></span>
+        <span class="text-red-500">Compile failed — see log</span>
       {:else if status === "ok"}
-        up to date
+        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+        <span class="text-zinc-400">Up to date</span>
+      {:else}
+        <span class="text-zinc-400">Not compiled</span>
       {/if}
     </span>
   </div>

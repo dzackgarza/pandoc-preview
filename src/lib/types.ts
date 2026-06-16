@@ -58,7 +58,13 @@ export interface PluginResult {
   stderr: string;
 }
 
-export type RenderStatus = "idle" | "rendering" | "ok" | "error";
+// idle:      no compilation has run yet
+// stale:     the source changed; the shown preview no longer matches it and a
+//            re-render is pending (debouncing) or in flight for older content
+// rendering: pandoc is actively recompiling the preview right now
+// ok:        the preview is up to date with the source
+// error:     the last compile failed (see the log)
+export type RenderStatus = "idle" | "stale" | "rendering" | "ok" | "error";
 
 /** A collapsed fold range (character offsets). Mirrors the Rust `Fold` in
  * config.rs; persisted per file in fold-state.json. */

@@ -74,6 +74,14 @@
   let html = $state("");
   let log = $state("");
   let status = $state<RenderStatus>("idle");
+  // Ordered record of every render-status transition (drives the preview
+  // indicator). Exposed to the E2E harness so the stale -> rendering -> ok
+  // sequence can be asserted deterministically rather than by racing transients.
+  let statusHistory = $state<RenderStatus[]>([]);
+  function setStatus(s: RenderStatus) {
+    status = s;
+    statusHistory.push(s);
+  }
 
   // Asset-protocol URL of the bundled, version-pinned MathJax (decision A,
   // mathjax-offline-local-source-decision.md). The preview's MathJax loads from
@@ -177,6 +185,8 @@
         cursorLine: () => cursorLine,
         currentFile: () => currentFile,
         configFontSize: () => config?.editor.font_size ?? null,
+        renderStatus: () => status,
+        statusHistory: () => [...statusHistory],
       };
     }
 
@@ -214,6 +224,9 @@
 
   function onEditorChange(content: string) {
     dirty = true;
+    // The source just changed: the shown preview is now stale until the
+    // debounced re-render completes.
+    setStatus("stale");
     wordCount = content.split(/\s+/).filter(Boolean).length;
     outline = editor.getOutline();
     scheduleRender(content);
@@ -283,7 +296,7 @@
   async function doRender(content: string) {
     if (!currentFile) return;
     const seq = ++renderSeq;
-    status = "rendering";
+    setStatus("rendering");
     const baseDir = dirOf(currentFile);
     try {
       const res = await api.renderPreview(
@@ -296,13 +309,13 @@
       log = res.log;
       if (res.ok) {
         html = res.html;
-        status = "ok";
+        setStatus("ok");
       } else {
-        status = "error";
+        setStatus("error");
       }
     } catch (e) {
       if (seq !== renderSeq) return;
-      status = "error";
+      setStatus("error");
       log = String(e);
       toastError(String(e));
     }
@@ -325,7 +338,7 @@
     dirty = false;
     html = "";
     log = "";
-    status = "idle";
+    setStatus("idle");
     await refreshTree();
     toastInfo(`Opened ${dir}`);
   }
@@ -455,7 +468,7 @@
         dirty = false;
         editor.setContent("");
         html = "";
-        status = "idle";
+        setStatus("idle");
       }
       await refreshTree();
       toastInfo(`Deleted ${node.name}`);
