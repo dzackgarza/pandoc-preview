@@ -335,3 +335,59 @@ export async function appendAtEnd(page: EvaluatesScripts, text: string): Promise
     `(() => { window.__PPE_E2E__.appendAtEnd(${JSON.stringify(text)}); return null; })()`,
   );
 }
+
+// ── Composable editor completion (P51) ─────────────────────────────────────
+// The CM6 autocomplete is a COMPOSABLE surface: it must host more than one
+// completion source at once. The current wiring installs autocompletion with
+// `override: [latexCompletionSource(...)]` (vendor/codemirror-lang-latex/src/
+// latex-language.ts), and `override` REPLACES the source list — it suppresses
+// every other source — which is the exact monopoly P51 forbids.
+//
+// To drive composition deterministically in-harness, the implementer must
+// expose two hooks (BLIND to how they are implemented; only the observable
+// matters):
+//
+//   __PPE_E2E__.registerTestCompletionSource() — registers a SENTINEL app
+//     completion source that COMPOSES with the LaTeX source. The sentinel is
+//     bound to a unique trigger token `@@ppe` and offers exactly one option
+//     whose label is the unique string `__PPE_SENTINEL__`. "Composes" means it
+//     is ADDED alongside the existing sources, never installed as an `override`
+//     that displaces them. Fire-and-forget; returns null.
+//
+//   __PPE_E2E__.typeInEditor(text) — inserts `text` at the cursor through the
+//     REAL editor update pipeline (same docChanged path as user typing, the
+//     pipeline the language/completion machinery observes) and then explicitly
+//     drives the editor's completion to open (CM6 startCompletion). This is the
+//     deterministic substitute for synthetic key events, which the bridge
+//     cannot send into CodeMirror's contentEditable. Fire-and-forget; returns
+//     null. The observable is the REAL `.cm-tooltip-autocomplete` popup DOM.
+export async function registerTestCompletionSource(page: EvaluatesScripts): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.registerTestCompletionSource(); return null; })()`,
+  );
+}
+
+export async function typeInEditor(page: EvaluatesScripts, text: string): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.typeInEditor(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
+// The set of completion-option labels currently shown in the live autocomplete
+// popup, read straight from the REAL rendered CM6 tooltip DOM
+// (`.cm-tooltip-autocomplete` → `.cm-completionLabel`). Returns [] when no
+// popup is open. This is the user-visible observable: an option is "offered"
+// iff its label text is present in the open tooltip.
+export async function completionLabels(page: EvaluatesScripts): Promise<string[]> {
+  const raw = await page.evaluate(`(() => {
+    const tip = document.querySelector('.cm-tooltip-autocomplete');
+    if (!tip) return JSON.stringify([]);
+    const labels = Array.from(tip.querySelectorAll('.cm-completionLabel'))
+      .map((el) => el.textContent ?? '');
+    return JSON.stringify(labels);
+  })()`);
+  if (typeof raw !== 'string') {
+    throw new Error(`completionLabels returned non-string: ${JSON.stringify(raw)}`);
+  }
+  return JSON.parse(raw) as string[];
+}
