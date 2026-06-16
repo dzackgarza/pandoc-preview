@@ -210,7 +210,7 @@
     // requestClose path the E2E hook drives; a clean buffer is left to close
     // normally. The user clicking the window's close button hits exactly this.
     await getCurrentWindow().onCloseRequested((event) => {
-      if (dirty && currentFile) {
+      if (dirty) {
         event.preventDefault();
         requestClose();
       } else {
@@ -457,7 +457,11 @@
   // this is a blocking capture that the caller awaits.
   async function flushRecovery(): Promise<void> {
     clearTimeout(recoveryTimer); // the immediate capture supersedes the debounce
-    if (!dirty || !currentFile) return; // nothing unsaved to capture
+    if (!dirty) return; // nothing unsaved to capture
+    // recoveryTarget() is the SoT for BOTH a titled buffer (its path session) and
+    // an identity-less buffer (UNTITLED_SESSION_ID/UNTITLED_LABEL). The flush
+    // therefore captures the live buffer regardless of file identity — an untitled
+    // dirty buffer is exactly the work most at risk on close, so it must flush too.
     const { session, label } = recoveryTarget();
     await api.recoveryAutosave(session, label, editor.getContent());
   }
@@ -624,7 +628,7 @@
   // the lose-nothing guarantee survives even a forced quit that never honors the
   // prompt.
   function requestClose(): void {
-    if (dirty && currentFile) {
+    if (dirty) {
       pendingClose = true; // raise the resolution prompt; block the close
       return;
     }
@@ -1275,10 +1279,11 @@
     />
   {/if}
 
-  {#if pendingClose && currentFile}
+  {#if pendingClose}
     <!-- P50 close guard: a dirty buffer blocks the window close until resolved.
          Save persists then closes; Discard closes (recovery already holds the
-         buffer — nothing is lost); Cancel keeps the app open. -->
+         buffer — nothing is lost); Cancel keeps the app open. An identity-less
+         (untitled) buffer is guarded too — its unsaved work is most at risk. -->
     <div
       data-close-guard
       class="fixed inset-0 z-40 flex items-start justify-center bg-black/40 pt-32"
@@ -1286,7 +1291,8 @@
     >
       <div class="w-96 rounded-lg bg-white p-4 shadow-xl dark:bg-zinc-800">
         <h2 class="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-          Save changes to {fileName(currentFile)} before closing?
+          Save changes to {currentFile ? fileName(currentFile) : UNTITLED_LABEL} before
+          closing?
         </h2>
         <div class="mt-3 flex justify-end gap-2">
           <button
