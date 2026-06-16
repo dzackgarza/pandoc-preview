@@ -6,55 +6,74 @@ import { loadRunManifest } from "./support/run-manifest";
 import { recordObservation } from "./support/observations";
 import {
   openAndSelectDemo,
-  appendAtEnd,
   editorText,
   waitForPreview,
   sleep,
 } from "./support/app";
 
-// A unicode-discriminating sentence. The non-ASCII run (é, ï, the em dash —,
-// the Greek ζ) must survive the recovery capture path byte-for-byte, so a
-// recovery store that lossily re-encodes the buffer fails the byte-equal
-// backstop assertion just as surely as one that never captured at all.
-const SENTENCE = "Café résumé — naïve ζ.";
+// A unicode-discriminating sentence, made UNIQUE per run so the discard-
+// durability backstop targets THIS edit specifically — not an earlier capture
+// of a stale buffer. The non-ASCII run (the Greek ζ, the é in café) must survive
+// the recovery capture path byte-for-byte, so a recovery store that lossily
+// re-encodes the buffer fails the byte-equal backstop just as surely as one that
+// never captured at all. The unique suffix makes the asserted bytes impossible
+// to satisfy with any pre-edit recovery commit.
+const UNIQUE = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+const SENTENCE = `Discard-durability ζ café ${UNIQUE}`;
 
 // ── P50 — Closing with a dirty buffer is guarded and loses nothing ──────────
 //
 // Obligation (proof-obligations.md, P50): "Closing the app (or switching files)
 // with a dirty buffer prompts the user to resolve; the app does not close until
 // the prompt is resolved; and because recovery already captured the buffer, no
-// content is lost even on discard." Two independent guarantees:
+// content is lost even on discard." THREE independent guarantees:
 //
 //   (1) The GUARD. With a dirty buffer, requesting close fires a resolution
 //       prompt and the app STAYS ALIVE — it does not close out from under the
 //       unsaved work. (The native window close is not directly driveable from
 //       the webview, so the harness drives the SAME close-guard path the
 //       window's onCloseRequested handler runs.)
-//   (2) The BACKSTOP. Independently of any prompt, the host-filesystem recovery
-//       store already holds the dirty content — the lose-nothing guarantee that
-//       survives even a forced quit that never honors the prompt.
+//   (2) The STAY-ALIVE. The bridge remains reachable after requestClose; the
+//       close did not proceed.
+//   (3) The DISCARD-DURABILITY BACKSTOP. The user RESOLVES the prompt by
+//       choosing Discard. The discard tears the window down — but because
+//       recovery already captured the dirty buffer to the HOST FILESYSTEM, the
+//       final edit survives on disk regardless. This is the literal
+//       "no content is lost even on discard" clause: an INDEPENDENT host
+//       process, reading the recovery git store AFTER the window is gone, must
+//       find the unique edit's bytes.
 //
 // THE CONTRACT THE IMPLEMENTER MUST SATISFY (stable observables, impl-blind):
 //   * __PPE_E2E__.requestClose() — a fire-and-forget trigger that runs the
 //     EXACT close-guard path the real window's onCloseRequested would run
 //     (the same guard a user clicking the window's close button hits). It must
-//     NOT bypass the guard; it must NOT actually tear the webview down (the app
-//     must stay alive so the spec can keep observing it).
+//     NOT bypass the guard; it must NOT actually tear the webview down on a
+//     dirty buffer (the app must stay alive so the spec can keep observing it).
 //   * __PPE_E2E__.pendingCloseGuard() — boolean, true iff a close-guard
-//     resolution prompt is currently pending/unresolved. (Equivalently a
-//     [data-close-guard] element in the DOM; this spec reads the bridge.)
-//   * The app stays ALIVE after requestClose: the __PPE_E2E__ bridge remains
-//     reachable and responsive (isDirty() still answers).
+//     resolution prompt is currently pending/unresolved.
+//   * __PPE_E2E__.resolveClose('discard') — fire-and-forget; resolves a pending
+//     close prompt by DISCARDING the dirty buffer. This runs the SAME discard
+//     path the prompt's "Discard" button runs, then tears the window down. The
+//     teardown drops the eval connection, so the spec issues it fire-and-forget
+//     and tolerates the connection error (the window is gone — that is the
+//     point). After discard the recovery store is read out-of-process.
+//   * The app stays ALIVE between requestClose and resolveClose: the bridge
+//     remains reachable (isDirty() still answers).
 //
 // THE OBSERVABLE END-STATE THIS PROVES:
-//   1. Open + select demo.md; append SENTENCE WITHOUT saving (buffer dirty).
-//   2. Request close via __PPE_E2E__.requestClose().
+//   1. Open + select demo.md; append the UNIQUE SENTENCE WITHOUT saving (buffer
+//      dirty). This schedules a debounced recovery capture (the autosave timer).
+//   2. IMMEDIATELY — well within the recovery debounce — request close via
+//      __PPE_E2E__.requestClose().
 //   3. (a) __PPE_E2E__.pendingCloseGuard() === true — a resolution prompt fired.
 //   4. (b) The app is still alive — __PPE_E2E__.isDirty() still responds true,
 //          i.e. the close did NOT proceed; the bridge was not torn down.
-//   5. (c) Independently, an INDEPENDENT host process reading the host-fs
+//   5. Resolve the prompt with __PPE_E2E__.resolveClose('discard') — the window
+//      tears down (eval connection drops; tolerated).
+//   6. (c) AFTER discard, an INDEPENDENT host process reading the host-fs
 //          recovery store ($XDG_DATA_HOME/pandoc-preview/recovery/...) finds a
-//          copy BYTE-EQUAL to the dirty buffer (SENTENCE + unicode intact).
+//          copy BYTE-EQUAL to the dirty buffer (UNIQUE SENTENCE + unicode
+//          intact). The final edit SURVIVED in recovery despite Discard.
 //
 // DISCRIMINATOR — what each assertion KILLS:
 //   - (a) a guard/prompt is PENDING after requestClose:
@@ -63,22 +82,31 @@ const SENTENCE = "Café résumé — naïve ζ.";
 //         stays false, and the unsaved work would vanish silently.
 //   - (b) the app is STILL ALIVE (bridge responds) after requestClose:
 //       * KILLS a close that fires a prompt but tears the webview down anyway
-//         (a cosmetic prompt that does not actually block the close) — the
-//         bridge would be unreachable / isDirty() would not answer.
-//   - (c) the host-fs recovery store holds a BYTE-EQUAL copy of the dirty buffer:
-//       * KILLS a prompt-only guard that still loses content on force-quit — a
-//         guard can block a graceful close yet leave NO recovery copy, so a hard
-//         kill loses the buffer. The backstop assertion forces the lose-nothing
-//         guarantee to exist on the host fs, independent of whether any prompt
-//         is ever honored.
+//         (a cosmetic prompt that does not actually block the close).
+//   - (c) the host-fs recovery store holds a BYTE-EQUAL copy of the dirty buffer
+//         AFTER the discard tore the window down:
+//       * KILLS a discard path that CANCELS the pending debounced recovery
+//         capture (clearTimeout on the autosave timer) and destroys the window
+//         before the bytes reach the host fs — the CURRENT BUG. Because the
+//         edit was made well within the recovery debounce, the autosave timer
+//         was still pending at Discard; if Discard cancels it, the unique
+//         sentence never lands on disk and an independent reader finds nothing.
+//       * KILLS a prompt-only guard that loses content on discard — a guard can
+//         block the graceful close yet leave NO recovery copy, so a discard (or
+//         a hard kill) loses the buffer. The backstop forces the lose-nothing
+//         guarantee to exist on the host fs, surviving the discard teardown.
 //
-// RED EXPECTATION today: neither __PPE_E2E__.requestClose nor
-// __PPE_E2E__.pendingCloseGuard exists (App.svelte wires no onCloseRequested
-// handler; resolveDirty is only reachable on file-switch, never exposed on the
-// bridge or wired to window close). So step 2's evaluate throws (requestClose is
-// undefined) — the close-guard surface is ABSENT. The failure is for the RIGHT
-// reason: the prologue (openAndSelectDemo, appendAtEnd, editorText) all succeed
-// first, proving the spec is wired correctly and the guard is what is missing.
+// RED EXPECTATION today: the discard path (closeWindow) clears the pending
+// recovery timer and destroys the window BEFORE the just-appended edit's
+// debounced autosave fires (the edit is well inside RECOVERY_DEBOUNCE_MS). The
+// unique sentence is therefore never committed to the host-fs recovery store, so
+// the independent post-discard reader finds no byte-equal blob — assertion (c)
+// fails. (If __PPE_E2E__.resolveClose is not yet exposed on the bridge, step 5's
+// evaluate throws — the discard-resolution surface is absent; that too is a
+// faithful RED, but the targeted assertion is (c): the lose-content-on-discard
+// bug.) The prologue (openAndSelectDemo, appendAtEnd, editorText) and the guard
+// assertions (a)/(b) all succeed first, proving the spec is wired correctly and
+// the durability-on-discard guarantee is what is missing.
 
 // Recursively collect every regular file under `root` (host-fs only; the
 // recovery store, by contract, is NOT in any browser sandbox). Returns [] if the
@@ -181,7 +209,7 @@ function gitBlobEqualsBuffer(root: string, buffer: Buffer): boolean {
   return false;
 }
 
-test("closing with a dirty buffer fires a prompt, stays alive, and the recovery backstop holds the buffer", async ({
+test("closing with a dirty buffer prompts, stays alive, and the final edit survives a Discard in the recovery store", async ({
   tauriPage,
 }) => {
   const manifest = loadRunManifest();
@@ -189,52 +217,100 @@ test("closing with a dirty buffer fires a prompt, stays alive, and the recovery 
   await openAndSelectDemo(tauriPage, manifest.project);
   await waitForPreview(tauriPage, `return d.querySelector('h1') !== null;`);
 
-  // Append the unicode sentence through the real editor update pipeline —
-  // WITHOUT saving. This is the dirty buffer the close guard must protect.
-  await appendAtEnd(tauriPage, `\n\n${SENTENCE}`);
+  // The exact bytes the discard-durability backstop (c) must equal. We compute
+  // them on the host: append the UNIQUE sentence to the pristine demo buffer the
+  // same way appendAtEnd does, so we know the post-append buffer without an
+  // extra cross-process read that would burn into the recovery debounce window.
+  const pristine = await editorText(tauriPage);
+  const dirtyBuffer = `${pristine}\n\n${SENTENCE}`;
+  const bufferBytes = Buffer.from(dirtyBuffer, "utf-8");
 
-  // Ground truth: the edit is in the live buffer, unicode preserved. This is
-  // the bytes the recovery backstop (c) must equal, and the dirty state the
-  // guard (a)/(b) must react to.
-  const buffer = await editorText(tauriPage);
-  expect(buffer.includes(SENTENCE)).toBe(true);
-  const bufferBytes = Buffer.from(buffer, "utf-8");
+  // Drive the dirty-edit → close-guard → guard-observation sequence in ONE
+  // synchronous browser-context evaluate that RETURNS cleanly (no teardown in
+  // this block, so the eval resolves with the observations). The append (re)arms
+  // the debounced recovery autosave timer (RECOVERY_DEBOUNCE_MS == 1500ms); the
+  // DISCARD is fired in the very next round-trip below — one transport hop, far
+  // inside 1500ms — so the autosave timer is STILL PENDING when discard runs.
+  // That is the precise window in which the bug loses content: a discard that
+  // cancels the pending timer and destroys the window before the unique edit
+  // reaches the host fs. Capturing (a)/(b)/(pre-c) here, before any teardown,
+  // means no destroy can race the guard observations.
+  const captured = (await tauriPage.evaluate(
+    `(() => {
+      const E = window.__PPE_E2E__;
+      // Append through the real editor pipeline — fires the same docChanged path
+      // user typing fires and (re)arms the debounced recovery autosave timer.
+      E.appendAtEnd(${JSON.stringify(`\n\n${SENTENCE}`)});
+      const editorHasSentence = E.getEditorText().includes(${JSON.stringify(SENTENCE)});
+      // Dirty before close — the precondition for the guard to fire.
+      const dirtyBefore = E.isDirty();
+      // Request close through the SAME guard path onCloseRequested runs.
+      E.requestClose();
+      // (a) a resolution prompt is pending; (b) the app is still alive (the
+      // bridge still answers isDirty truthfully) — both captured synchronously
+      // immediately after requestClose, before any teardown.
+      const guardPending = E.pendingCloseGuard();
+      const aliveDirty = E.isDirty();
+      // (pre-c) Is the DISCARD-resolution surface present? The discard path is a
+      // contract hook the implementer must expose on the bridge so a spec can
+      // resolve the prompt by discarding (the same path the prompt's "Discard"
+      // button runs). Captured here, synchronously, while the bridge is reachable.
+      const discardSurface = typeof E.resolveClose === "function";
+      return { editorHasSentence, dirtyBefore, guardPending, aliveDirty, discardSurface };
+    })()`,
+  )) as {
+    editorHasSentence: boolean;
+    dirtyBefore: boolean;
+    guardPending: boolean;
+    aliveDirty: boolean;
+    discardSurface: boolean;
+  };
 
-  // The buffer is dirty before we request close — the precondition for the
-  // guard to fire. (If this were false the guard would correctly NOT fire, so
-  // the spec must establish dirtiness first.)
-  const dirtyBefore = await tauriPage.evaluate(`window.__PPE_E2E__.isDirty()`);
-  expect(dirtyBefore).toBe(true);
-
-  // Request close through the SAME guard path the window's onCloseRequested
-  // would run. RED today: __PPE_E2E__.requestClose is undefined, so this throws
-  // — the close-guard surface is absent.
-  await tauriPage.evaluate(
-    `(() => { window.__PPE_E2E__.requestClose(); return null; })()`,
-  );
-
-  // (a) A resolution prompt is pending after the close request. KILLS a close
+  // The edit reached the live buffer, unicode preserved.
+  expect(captured.editorHasSentence).toBe(true);
+  // The buffer was dirty before close — precondition for the guard.
+  expect(captured.dirtyBefore).toBe(true);
+  // (a) A resolution prompt was pending after the close request. KILLS a close
   // that drops the buffer with no prompt (pendingCloseGuard stays false).
-  await tauriPage.waitForFunction(
-    `window.__PPE_E2E__.pendingCloseGuard() === true`,
-    10_000,
-  );
-  const guardPending = await tauriPage.evaluate(
-    `window.__PPE_E2E__.pendingCloseGuard()`,
-  );
-  expect(guardPending).toBe(true);
-
-  // (b) The app is still ALIVE: the bridge is reachable and isDirty() still
-  // answers truthfully — the close did NOT proceed out from under the unsaved
+  expect(captured.guardPending).toBe(true);
+  // (b) The app was still ALIVE after requestClose: the bridge answered
+  // isDirty() truthfully — the close did NOT proceed out from under the unsaved
   // work. KILLS a cosmetic prompt that fires but tears the webview down anyway.
-  const aliveDirty = await tauriPage.evaluate(`window.__PPE_E2E__.isDirty()`);
-  expect(aliveDirty).toBe(true);
+  expect(captured.aliveDirty).toBe(true);
 
-  // (c) The lose-nothing backstop, proven INDEPENDENTLY of the prompt: an
-  // independent host process reading the host-fs recovery store finds a copy
-  // byte-equal to the dirty buffer. Poll up to ~10s (recovery debounce is well
-  // under "several seconds"). KILLS a prompt-only guard that still loses content
-  // on force-quit — without this copy a hard kill would lose the buffer.
+  // (pre-c) The discard-resolution surface must exist for the lose-nothing-on-
+  // discard guarantee to be reachable at all. RED today: __PPE_E2E__.resolveClose
+  // is NOT exposed on the bridge (App.svelte wires resolveClose only to the
+  // prompt's buttons, never onto the E2E harness), so the discard path cannot be
+  // driven and the durability-on-discard backstop below is unreachable. This is
+  // the faithful RED: the discard-resolution surface is ABSENT. The durability
+  // assertion (c) is the TARGET this guards — once resolveClose is exposed, a
+  // discard that cancels the pending recovery capture will fail (c) instead.
+  expect(captured.discardSurface).toBe(true);
+
+  // Resolve the prompt by DISCARDING — milliseconds after the append (one
+  // round-trip, far inside the 1500ms recovery debounce), so the autosave timer
+  // armed by the append is STILL PENDING. resolveClose('discard') runs the SAME
+  // discard path the prompt's "Discard" button runs and then tears the window
+  // down. The teardown drops the eval connection, so this is fire-and-forget:
+  // tolerate the eval rejection (the window is gone — exactly the force-quit-on-
+  // discard the backstop must survive).
+  try {
+    await tauriPage.evaluate(
+      `(() => { window.__PPE_E2E__.resolveClose("discard"); return null; })()`,
+    );
+  } catch {
+    // The discard destroyed the window; the eval connection drop is expected.
+  }
+
+  // (c) The lose-nothing-on-discard backstop, proven INDEPENDENTLY and AFTER the
+  // discard: an independent host process reading the host-fs recovery store finds
+  // a copy byte-equal to the dirty buffer. Poll up to ~10s. RED once the discard
+  // surface exists but the bug remains: the discard path cancels the pending
+  // debounced recovery capture (clearTimeout on the autosave timer) and destroys
+  // the window before the unique edit ever reaches the host fs, so no byte-equal
+  // blob is written — the poll exhausts and this fails. KILLS a discard that
+  // cancels the recovery timer + destroys before the final edit is captured.
   let recovered = false;
   const deadline = Date.now() + 10_000;
   while (Date.now() < deadline) {
@@ -251,7 +327,7 @@ test("closing with a dirty buffer fires a prompt, stays alive, and the recovery 
 
   recordObservation({
     spec: manifest.spec,
-    name: "close-guard-dirty-buffer-bytes",
+    name: "discard-durable-buffer-bytes",
     value: bufferBytes.length,
   });
 });
