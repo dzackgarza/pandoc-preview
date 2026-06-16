@@ -36,13 +36,20 @@ test('the activity bar persists and its Explorer control collapses/expands the s
   // The Explorer activity-bar control exists (and is the extensible view strip).
   expect(await tauriPage.count('[data-view="explorer"]')).toBe(1);
 
-  // The side bar starts open, showing the Explorer view — its header names it.
+  // The side bar starts open, showing the Explorer VIEW'S CONTENT — the file
+  // tree, listing the open project's files. (Revised 2026-06-16, commit
+  // 1dbc698: the side bar no longer carries a separate "Explorer" label header;
+  // the file tree's own folder-name header now names the active view. The
+  // obligation is that the active view's content renders in the side bar.)
+  // Discriminator: a side bar that did not render the Explorer view would not
+  // list demo.md (the file opened from the project) — this fails on a broken or
+  // unwired file tree, not merely on a renamed label.
   expect(await sidebarPresent(tauriPage)).toBe(true);
-  const headerText = await tauriPage.evaluate(
+  const sidebarText = await tauriPage.evaluate(
     `(document.querySelector('[data-pane="sidebar"]')?.textContent ?? '')`,
   );
-  expect(typeof headerText).toBe('string');
-  expect((headerText as string).toLowerCase().includes('explorer')).toBe(true);
+  expect(typeof sidebarText).toBe('string');
+  expect((sidebarText as string).includes('demo.md')).toBe(true);
 
   // Clicking the active view's control collapses the side bar.
   await tauriPage.click('[data-view="explorer"]');

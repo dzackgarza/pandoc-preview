@@ -51,9 +51,10 @@ A per-run temp project containing `demo.md` with:
   Strengthens P7 (which only asserted `data:` image URIs).
   ([[mathjax-offline-local-source-decision]].)
 - **P18 — VSCode-style activity bar + collapsible side bar.** The left of the window is an always-visible activity bar (a vertical strip of view controls, built to hold more views later) plus a collapsible side bar showing the ACTIVE view.
-  One view now: Explorer (file tree), control `[data-view="explorer"]`; side bar `[data-pane="sidebar"]` with a header naming the view.
-  The Explorer control exists; the side bar starts open showing the Explorer header; clicking the active view's control collapses the side bar while the activity bar PERSISTS (the control stays, VSCode-style); clicking again reopens it.
+  One view now: Explorer (file tree), control `[data-view="explorer"]`; side bar `[data-pane="sidebar"]` showing that view's content.
+  The Explorer control exists; the side bar starts open showing the Explorer view (the file tree, listing the open project's files); clicking the active view's control collapses the side bar while the activity bar PERSISTS (the control stays, VSCode-style); clicking again reopens it.
   (Added 2026-06-13, revised same day from a single ☰ toolbar toggle to the VSCode activity-bar model so more view tabs can be added later.
+  Revised 2026-06-16 (commit 1dbc698): the side bar no longer carries a separate "Explorer" label header — that was redundant with the file tree's own folder-name header, which now sits at the top of the side bar and names the active view. The obligation is that the side bar shows the active view's content, not that it carries a distinct view-label header.
   Save is a File menu / Ctrl+S item, not a toolbar button — see P3.)
 
 ## Verification vehicle
