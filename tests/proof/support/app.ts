@@ -161,6 +161,48 @@ export async function syntaxAncestryAt(
   return JSON.parse(raw) as string[];
 }
 
+// The rendered DOM element + computed color for the first occurrence of `needle`
+// in the editor's content, plus the editor's base text color. A syntax-
+// highlighted token is wrapped by CodeMirror in a <span> carrying a highlight
+// class, so its computed color differs from the base; unhighlighted text is a
+// bare text node whose parent is the .cm-line (base color). This is how we prove
+// the user-visible payoff — actual color on screen — rather than mere parse-tree
+// structure (which can be correct while nothing is colored).
+export interface RenderedToken {
+  tag: string;
+  color: string;
+  base: string;
+  text: string;
+}
+
+export async function renderedToken(
+  page: EvaluatesScripts,
+  needle: string,
+): Promise<RenderedToken> {
+  const raw = await page.evaluate(`(() => {
+    const content = document.querySelector('.cm-editor .cm-content');
+    if (!content) return null;
+    const base = getComputedStyle(content).color;
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const i = node.nodeValue.indexOf(${JSON.stringify(needle)});
+      if (i >= 0) {
+        const el = node.parentElement;
+        return JSON.stringify({ tag: el.tagName, color: getComputedStyle(el).color, base, text: node.nodeValue });
+      }
+    }
+    return null;
+  })()`);
+  if (raw === null) {
+    throw new Error(`renderedToken: needle not found in cm-content: ${needle}`);
+  }
+  if (typeof raw !== 'string') {
+    throw new Error(`renderedToken returned non-string: ${JSON.stringify(raw)}`);
+  }
+  return JSON.parse(raw) as RenderedToken;
+}
+
 export async function currentFile(page: EvaluatesScripts): Promise<string> {
   return asString(
     await page.evaluate(`(window.__PPE_E2E__.currentFile() ?? '')`),
