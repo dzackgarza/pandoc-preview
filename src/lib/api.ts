@@ -17,6 +17,14 @@ export const readFoldState = () => invoke<FoldState>("read_fold_state");
 export const saveFoldState = (state: FoldState) =>
   invoke<void>("save_fold_state", { state });
 
+// Capture the live (possibly unsaved) buffer into the host-filesystem recovery
+// store (P45). The backend commits the buffer as a blob into a per-session git
+// repo under the XDG data dir; recovery is independent of Save, and the buffer
+// is NEVER written to browser storage. `sessionId` is a stable id for the open
+// document; `path` is recorded so the store identifies what each session held.
+export const recoveryAutosave = (sessionId: string, path: string, buffer: string) =>
+  invoke<void>("recovery_autosave", { sessionId, path, buffer });
+
 export const listTree = (root: string) => invoke<FileNode[]>("list_tree", { root });
 export const readTextFile = (path: string) => invoke<string>("read_text_file", { path });
 export const writeTextFile = (path: string, content: string) =>

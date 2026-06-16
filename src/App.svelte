@@ -244,6 +244,38 @@
     wordCount = content.split(/\s+/).filter(Boolean).length;
     outline = editor.getOutline();
     scheduleRender(content);
+    // Independently of the preview render, capture the (unsaved) buffer to the
+    // host-filesystem recovery store on its own short debounce (P45). This is
+    // NOT tied to Save and NOT tied to the render debounce.
+    scheduleRecovery(content);
+  }
+
+  // ---- recovery autosave (P45) --------------------------------------------
+  //
+  // A debounce timer SEPARATE from the preview render: a few seconds after the
+  // buffer last changed, the live (possibly unsaved) buffer is committed to the
+  // host-fs recovery store with no user action. Well under the recovery
+  // contract's "several seconds" so an unsaved edit is never lost.
+  const RECOVERY_DEBOUNCE_MS = 1500;
+  let recoveryTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Stable per-document session id: the open file's path collapsed to a single
+  // safe path component (the backend rejects separators / traversal). Distinct
+  // documents get distinct recovery repos; reopening the same file reuses its
+  // repo so its capture history is one append-only object database.
+  function recoverySessionId(path: string): string {
+    return path.replace(/[^A-Za-z0-9._-]/g, "_");
+  }
+
+  function scheduleRecovery(content: string) {
+    if (!currentFile) return;
+    const path = currentFile;
+    clearTimeout(recoveryTimer);
+    recoveryTimer = setTimeout(() => {
+      void api
+        .recoveryAutosave(recoverySessionId(path), path, content)
+        .catch((e) => toastError(String(e)));
+    }, RECOVERY_DEBOUNCE_MS);
   }
 
   // Drag the divider above the Outline panel to resize it (file tree takes the

@@ -3,6 +3,7 @@ mod doctor;
 mod error;
 mod fsops;
 mod plugins;
+mod recovery;
 mod render;
 
 use tauri::menu::{AboutMetadata, Menu, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
@@ -173,6 +174,7 @@ pub fn run() {
             render::export_document,
             plugins::run_plugin,
             plugins::configure_plugin,
+            recovery::recovery_autosave,
         ])
         .setup(|app| {
             // Grant the playwright plugin's pw_result IPC permission, but only
