@@ -309,6 +309,14 @@
           requestClose();
         },
         pendingCloseGuard: () => pendingClose,
+        // P50 discard-resolution surface. resolveClose runs the EXACT same path
+        // the close prompt's button runs (fire-and-forget). On 'discard' it
+        // flushes the dirty buffer to the host-fs recovery store and then tears
+        // the window down — the recovery backstop holds the final edit, so the
+        // discard loses nothing.
+        resolveClose: (choice: "save" | "discard" | "cancel") => {
+          void resolveClose(choice);
+        },
         // P47 save-gate surface. newUntitled enters an identity-less buffer (no
         // currentFile). resolveSavePath supplies the durable destination the
         // native dialog would yield, making the buffer durable through the SAME
@@ -417,18 +425,41 @@
     });
   }
 
+  // The recovery (session, label) the current buffer captures under. An
+  // identity-less buffer (P47) has no path yet but is still recovery-backed
+  // (F1/P45): it captures under a fixed untitled session so an unsaved new
+  // document is never lost. A durable buffer captures under its path session.
+  // The single source of truth for both the debounced autosave and the
+  // flush-on-close, so they always target the same store.
+  function recoveryTarget(): { session: string; label: string } {
+    return {
+      session: currentFile ? recoverySessionId(currentFile) : UNTITLED_SESSION_ID,
+      label: currentFile ?? UNTITLED_LABEL,
+    };
+  }
+
   function scheduleRecovery(content: string) {
-    // An identity-less buffer (P47) has no path yet but is still recovery-backed
-    // (F1/P45): capture it under a fixed untitled session so an unsaved new
-    // document is never lost. A durable buffer captures under its path session.
-    const session = currentFile ? recoverySessionId(currentFile) : UNTITLED_SESSION_ID;
-    const label = currentFile ?? UNTITLED_LABEL;
+    const { session, label } = recoveryTarget();
     clearTimeout(recoveryTimer);
     recoveryTimer = setTimeout(() => {
       void api
         .recoveryAutosave(session, label, content)
         .catch((e) => toastError(String(e)));
     }, RECOVERY_DEBOUNCE_MS);
+  }
+
+  // Flush the pending debounced recovery capture SYNCHRONOUSLY with respect to
+  // the close: cancel the debounce timer and commit the live buffer to the
+  // host-fs recovery store NOW, awaited. The close path runs this BEFORE tearing
+  // the window down so a Discard (or any close) inside the recovery debounce
+  // cannot drop the final edit — the bytes are on the host fs first. Unlike the
+  // debounced timer (which fires later, after teardown would have cancelled it),
+  // this is a blocking capture that the caller awaits.
+  async function flushRecovery(): Promise<void> {
+    clearTimeout(recoveryTimer); // the immediate capture supersedes the debounce
+    if (!dirty || !currentFile) return; // nothing unsaved to capture
+    const { session, label } = recoveryTarget();
+    await api.recoveryAutosave(session, label, editor.getContent());
   }
 
   // Drag the divider above the Outline panel to resize it (file tree takes the
@@ -597,13 +628,18 @@
       pendingClose = true; // raise the resolution prompt; block the close
       return;
     }
-    closeWindow();
+    void closeWindow();
   }
 
   // Actually tear the window down. The single real-close seam: reached only after
   // the guard has decided the buffer is clean or the user resolved the prompt.
-  function closeWindow(): void {
-    clearTimeout(recoveryTimer); // stop the pending recovery autosave on close
+  // FLUSH the pending recovery capture FIRST (awaited): the debounced autosave
+  // timer is still pending whenever the close lands inside RECOVERY_DEBOUNCE_MS,
+  // and destroying the window would cancel it (onDestroy clears the timer),
+  // losing the final edit. Committing the live buffer to the host-fs recovery
+  // store before destroy makes Discard (and every close) lose-nothing.
+  async function closeWindow(): Promise<void> {
+    await flushRecovery();
     void getCurrentWindow().destroy();
   }
 
@@ -624,7 +660,7 @@
       }
     }
     pendingClose = false;
-    closeWindow();
+    await closeWindow();
   }
 
   async function openFile(path: string) {
