@@ -43,7 +43,7 @@ test('Markdown constructs (heading, emphasis, strong) render highlighted', async
   // Append clean ASCII markdown through the real editor pipeline.
   await appendAtEnd(
     tauriPage,
-    "\n\n## Test Heading\n\nThis is *emphasized* and **strongbold** text.\n",
+    "\n\n## Test Heading\n\nThis is *emphasized* and _underitalic_ and **strongbold** text.\n",
   );
   await tauriPage.waitForFunction(
     `(document.querySelector('.cm-editor .cm-content')?.textContent ?? '').includes('Test Heading')`,
@@ -55,10 +55,15 @@ test('Markdown constructs (heading, emphasis, strong) render highlighted', async
   expect(isHighlighted(heading)).toBe(true);
   expect(await syntaxAncestryAt(tauriPage, "Test Heading")).toContain("ATXHeading2");
 
-  // Emphasis -> italic.
+  // Emphasis -> italic (both * and _ forms; _ exercises the fork's Underscore
+  // passthrough end-to-end).
   const em = await renderedToken(tauriPage, "emphasized");
   expect(isHighlighted(em)).toBe(true);
   expect(await syntaxAncestryAt(tauriPage, "emphasized")).toContain("Emphasis");
+
+  const underEm = await renderedToken(tauriPage, "underitalic");
+  expect(isHighlighted(underEm)).toBe(true);
+  expect(await syntaxAncestryAt(tauriPage, "underitalic")).toContain("Emphasis");
 
   // Strong -> bold.
   const strong = await renderedToken(tauriPage, "strongbold");
