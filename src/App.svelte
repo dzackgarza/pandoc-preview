@@ -18,6 +18,7 @@
   } from "./lib/types";
   import { CONFLICT_PREFIX } from "./lib/types";
   import type { OutlineItem } from "codemirror-lang-latex";
+  import { divFenceSnippet } from "codemirror-lang-latex/dist/pandoc-markdown";
   import { toastError, toastInfo, toastSuccess } from "./lib/toast.svelte";
   import { createSplitLayout, type SplitLayout } from "./lib/dockview";
   import { portal } from "./lib/portal";
@@ -30,7 +31,7 @@
   import SettingsModal from "./lib/components/SettingsModal.svelte";
   import StatusBar from "./lib/components/StatusBar.svelte";
   import Toasts from "./lib/components/Toasts.svelte";
-  import Toolbar from "./lib/components/Toolbar.svelte";
+  import InsertionBar from "./lib/components/InsertionBar.svelte";
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
   import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
 
@@ -293,6 +294,14 @@
         // the same command the Ctrl-e keybinding fires (fire-and-forget).
         expandEmmet: () => {
           editor.expandEmmet();
+        },
+        // P55: insert a named amsthm environment's fenced-div scaffold at the
+        // cursor through the SAME insertEnvironment handler the insertion bar's
+        // controls invoke (divFenceSnippet(env) → editor.insertSnippet →
+        // snippetCompletion). Fire-and-forget; the `$0` tabstop lands the cursor
+        // in the environment body.
+        insertEnvironment: (env: string) => {
+          insertEnvironment(env);
         },
         cursorOffset: () => editor.cursorOffset(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
@@ -1026,27 +1035,15 @@
     await exportToPath(pluginId, target);
   }
 
-  // ---- toolbar / menu dispatch --------------------------------------------
+  // ---- insertion bar / menu dispatch --------------------------------------
 
-  function toolbarAction(action: string) {
-    const ops: Record<string, () => void> = {
-      h1: () => editor.prefixLines("# "),
-      h2: () => editor.prefixLines("## "),
-      h3: () => editor.prefixLines("### "),
-      bold: () => editor.wrapSelection("**", "**"),
-      italic: () => editor.wrapSelection("*", "*"),
-      strike: () => editor.wrapSelection("~~", "~~"),
-      code: () => editor.wrapSelection("`", "`"),
-      codeblock: () => editor.insertCodeBlock(),
-      link: () => editor.insertLink(),
-      image: () => editor.insertImage(),
-      ul: () => editor.prefixLines("- "),
-      ol: () => editor.prefixLines("1. "),
-      quote: () => editor.prefixLines("> "),
-    };
-    const op = ops[action];
-    if (!op) throw new Error(`unknown toolbar action: ${action}`);
-    op();
+  /** Insert a named amsthm environment's fenced-div scaffold at the cursor.
+   * Expands divFenceSnippet(env) through the editor's snippetCompletion apply
+   * path so the `$0` tabstop lands the cursor in the environment body — the same
+   * path completion acceptance uses. The insertion bar's environment controls
+   * and the E2E bridge both route through here. */
+  function insertEnvironment(env: string) {
+    editor.insertSnippet(divFenceSnippet(env));
   }
 
   function handleMenu(id: string) {
@@ -1142,7 +1139,7 @@
 
 {#if config}
   <div class="flex h-full flex-col">
-    <Toolbar onAction={toolbarAction} fileOpen={currentFile !== null} />
+    <InsertionBar onInsertEnvironment={insertEnvironment} fileOpen={currentFile !== null} />
 
     <div class="flex min-h-0 grow">
       <!-- VSCode-style activity bar: always visible, holds the view controls. -->
