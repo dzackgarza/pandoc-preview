@@ -289,6 +289,11 @@
         acceptCompletion: () => {
           editor.acceptCompletion();
         },
+        // P53: fire Emmet's expandAbbreviation command against the live view,
+        // the same command the Ctrl-e keybinding fires (fire-and-forget).
+        expandEmmet: () => {
+          editor.expandEmmet();
+        },
         cursorOffset: () => editor.cursorOffset(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),

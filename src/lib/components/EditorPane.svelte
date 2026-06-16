@@ -29,6 +29,7 @@
   import type { SyntaxNode } from "@lezer/common";
   import { latex, latexLanguage, markdownOutline } from "codemirror-lang-latex";
   import type { OutlineItem } from "codemirror-lang-latex";
+  import { expandAbbreviation } from "@emmetio/codemirror6-plugin";
   import {
     history,
     historyKeymap,
@@ -185,6 +186,11 @@
             { key: "Mod-b", run: () => (wrapSelection("**", "**"), true) },
             { key: "Mod-i", run: () => (wrapSelection("*", "*"), true) },
             { key: "Mod-k", run: () => (insertLink(), true) },
+            // Emmet's standard expand binding: Ctrl-e runs the plugin's
+            // expandAbbreviation StateCommand on the abbreviation before the
+            // cursor (P53). Composed alongside the existing bindings, never
+            // replacing them; the same command expandEmmet() fires in-harness.
+            { key: "Ctrl-e", run: expandAbbreviation },
           ]),
           themeCompartment.of(init.theme),
           wrapCompartment.of(init.wrap),
@@ -309,6 +315,15 @@
    * CodeMirror's contentEditable, so this is the in-harness accept surface. */
   export function acceptCompletion() {
     cmAcceptCompletion(view);
+  }
+
+  /** E2E (P53): fire Emmet's expandAbbreviation StateCommand against the live
+   * view — the SAME command the `Ctrl-e` keybinding fires. The bridge cannot
+   * synthesize Ctrl-e into CodeMirror's contentEditable, so this is the
+   * in-harness entry point for the expand action; it adds no behaviour. */
+  export function expandEmmet() {
+    expandAbbreviation(view);
+    view.focus();
   }
 
   /** E2E (P52): the cursor's character offset in the buffer, read from the live
