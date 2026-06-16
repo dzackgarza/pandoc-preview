@@ -90,13 +90,14 @@ test('Editor renders one line-number gutter, an inert-free toggle, fold gutter, 
   )) as number;
   expect(foldGutters).toBeGreaterThanOrEqual(1);
 
-  // (3) Syntax highlighting active: highlighted markdown tokens are wrapped in
-  // styled spans inside the lines. Without highlighting the lines are raw text
-  // nodes with zero child spans.
-  const tokenSpans = (await tauriPage.evaluate(
-    `document.querySelectorAll('.cm-editor .cm-content .cm-line span').length`,
-  )) as number;
-  expect(tokenSpans).toBeGreaterThan(0);
+  // (3) Syntax highlighting active: highlighted tokens are wrapped in styled
+  // spans inside the lines. Without highlighting the lines are raw text nodes
+  // with zero child spans. Highlighting renders asynchronously after the
+  // viewport parse, so wait for it rather than sampling a single instant.
+  await tauriPage.waitForFunction(
+    `document.querySelectorAll('.cm-editor .cm-content .cm-line span').length > 0`,
+    15_000,
+  );
 
   // (2) Toggle "Show line numbers" off via the real Settings modal → zero gutters.
   await tauriPage.evaluate(

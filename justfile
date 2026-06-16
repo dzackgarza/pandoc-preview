@@ -34,8 +34,11 @@ deps:
 
 # Build the vendored CodeMirror LaTeX language fork (Lezer grammar -> dist) so
 # its dist/ exists for the file: dependency. Re-run after editing the grammar.
+# Clears vite's dep cache so the rebuilt dist is re-optimized (vite does not
+# invalidate file: deps on its own).
 vendor-build:
     cd vendor/codemirror-lang-latex && bun install && bun run build
+    rm -rf node_modules/.vite
 
 # Run the app in dev mode (vite + tauri). Routes config-class doctor failures
 # into gum first-run recovery before starting tauri dev (scripts/dev.sh).
