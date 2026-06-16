@@ -83,6 +83,30 @@ impl<'de> Deserialize<'de> for ExistingDir {
     }
 }
 
+/// A filesystem path that is required to exist and be a regular file. Like
+/// `ExistingDir`, the invariant is enforced at deserialize time: a config
+/// pointing `editor.snippet_dictionary` at a missing or non-file path is a hard
+/// load error, never a silently-accepted dangling path or a runtime default.
+/// Serializes transparently as its path string.
+#[derive(Debug, Clone, Serialize)]
+pub struct ExistingFile(PathBuf);
+
+impl<'de> Deserialize<'de> for ExistingFile {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let raw = String::deserialize(deserializer)?;
+        let path = PathBuf::from(&raw);
+        if !path.is_file() {
+            return Err(serde::de::Error::custom(format!(
+                "path is not an existing file: {raw}"
+            )));
+        }
+        Ok(ExistingFile(path))
+    }
+}
+
 /// The `[renderer]` table: which renderer plugin is active.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -190,6 +214,13 @@ pub struct Editor {
     pub line_wrapping: bool,
     /// Show line numbers in the gutter.
     pub line_numbers: bool,
+    /// Config-owned path to a user snippet dictionary: a JSON object mapping a
+    /// trigger token to a CM6 snippet body. Optional capability — when present,
+    /// the path is validated to be an existing file (ExistingFile), so the editor
+    /// reads a real dictionary; when absent, the editor offers no user snippets.
+    /// No implicit default path. An absent value is never re-serialized.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub snippet_dictionary: Option<ExistingFile>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

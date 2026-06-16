@@ -41,6 +41,7 @@
     completionKeymap,
     closeBracketsKeymap,
     startCompletion,
+    acceptCompletion as cmAcceptCompletion,
   } from "@codemirror/autocomplete";
   import type {
     CompletionSource,
@@ -58,6 +59,12 @@
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
   import type { Config } from "../types";
   import { toastError } from "../toast.svelte";
+  import { readTextFile } from "../api";
+  import {
+    parseSnippetDictionary,
+    snippetCompletionSource,
+    runSnippet,
+  } from "../editor/snippets";
 
   let {
     config,
@@ -193,7 +200,26 @@
         ],
       }),
     });
+
+    // Register the config-owned user snippet dictionary as a composable
+    // completion source (P52). The path is validated to exist by Rust; here we
+    // read and parse it into trigger→body snippets and ADD the source to the
+    // delegating registry — alongside the LaTeX source, never as an override.
+    // Absent path → no user snippets. A declared-but-unparseable dictionary
+    // fails loud (toast), never a silently-empty source.
+    registerSnippetDictionary(config).catch((e) =>
+      toastError(`Snippet dictionary failed to load: ${e}`),
+    );
   });
+
+  /** Read, parse, and register the config-owned snippet dictionary. */
+  async function registerSnippetDictionary(c: Config) {
+    const path = c.editor.snippet_dictionary;
+    if (!path) return;
+    const file = await readTextFile(path);
+    const map = parseSnippetDictionary(file.content);
+    appCompletionSources.push(snippetCompletionSource(map));
+  }
 
   onDestroy(() => view?.destroy());
 
@@ -274,6 +300,31 @@
     });
     view.focus();
     startCompletion(view);
+  }
+
+  /** E2E (P52): accept the currently-highlighted completion through CM6's REAL
+   * acceptCompletion command — the SAME path the Enter keybinding fires — so a
+   * snippet completion's apply runs (expanding the body and landing the cursor
+   * at the declared tabstop). The bridge cannot synthesize Enter into
+   * CodeMirror's contentEditable, so this is the in-harness accept surface. */
+  export function acceptCompletion() {
+    cmAcceptCompletion(view);
+  }
+
+  /** E2E (P52): the cursor's character offset in the buffer, read from the live
+   * CM6 selection. Used to prove a snippet's `$0` tabstop is where the cursor
+   * lands after expansion. */
+  export function cursorOffset(): number {
+    return view.state.selection.main.head;
+  }
+
+  /** Insert a snippet body at the cursor, expanding it through the SAME
+   * snippetCompletion apply path completion acceptance uses (Milestone G's
+   * insertion bar reuses this). The body's `$0` tabstop is honoured exactly as
+   * on accept. */
+  export function insertSnippet(body: string) {
+    runSnippet(view, body);
+    view.focus();
   }
 
   /** E2E introspection: the language-tree node names covering the first

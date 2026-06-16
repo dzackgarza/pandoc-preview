@@ -5,6 +5,11 @@
  *  path string; the brand records that its existence was enforced at load. */
 export type ExistingDir = string;
 
+/** An absolute path that Rust's config loader has validated to be an existing
+ *  file (the `ExistingFile` newtype in config.rs). Over the wire it is a path
+ *  string; the brand records that its existence was enforced at load. */
+export type ExistingFile = string;
+
 export interface Config {
   general: {
     theme: "dark" | "light";
@@ -13,6 +18,12 @@ export interface Config {
     font_size: number;
     line_wrapping: boolean;
     line_numbers: boolean;
+    // Config-owned path to a user snippet dictionary (a JSON object mapping a
+    // trigger token to a CM6 snippet body). Optional: absent when no dictionary
+    // is configured. When present, Rust's loader validates the path exists and is
+    // a file (ExistingFile in config.rs), so the editor receives only a real
+    // path; the editor reads and parses it into composable completion snippets.
+    snippet_dictionary?: ExistingFile;
   };
   preview: {
     debounce_ms: number;

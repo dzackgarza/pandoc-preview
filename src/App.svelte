@@ -283,6 +283,13 @@
         typeInEditor: (text: string) => {
           editor.typeInEditor(text);
         },
+        // P52: accept the highlighted completion through CM6's real
+        // acceptCompletion command, and read the cursor offset to prove the
+        // snippet's tabstop landing after expansion.
+        acceptCompletion: () => {
+          editor.acceptCompletion();
+        },
+        cursorOffset: () => editor.cursorOffset(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
         goToLine: (line: number) => editor.goToLine(line),

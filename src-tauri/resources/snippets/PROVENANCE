@@ -1,0 +1,47 @@
+quicktex.json — vendored user snippet dictionary (migrated from quicktex)
+=========================================================================
+
+WHAT
+  A snippet dictionary in the format the editor consumes: a flat JSON object
+  mapping a TRIGGER token to a CM6 snippet BODY, where `$0` marks the final
+  tabstop (the cursor's landing position after the snippet expands). 262 entries.
+
+SOURCE
+  Migrated from the user's real quicktex dictionary in dzackgarza/dotfiles:
+    .config-sync/nvim/after/ftplugin/pandoc/quicktex_dict.vim
+  That file declares two vim quicktex dicts — g:quicktex_prose (prose-zone
+  shortcuts) and g:quicktex_math (math-zone shortcuts) — 278 entry lines total.
+
+CONVERSION (vim quicktex -> snippet-map JSON)
+  - Each `\'trigger' : 'body',` entry becomes a "trigger": "body" pair.
+  - Section dividers (`'... ' : 'COMMENT'`) are dropped.
+  - quicktex jump markers map to CM6 tabstops: <+++> (primary landing) -> $0;
+    <++> (secondary placeholders) are dropped (CM6 bodies use one final tabstop).
+  - vim string escapes in bodies are resolved: \<CR> -> newline, \\ -> \, \"/\' ->
+    the quote char.
+  - Pure vim-keystroke macros (entries whose body is a `:call`/`\<ESC>`
+    navigation command, e.g. the space-trigger jump) are dropped — they are not
+    insertable text.
+
+  262 < 278 because COMMENT dividers and the keystroke macros are dropped, and a
+  handful of triggers (e.g. `st`, `m`) appear in BOTH the prose and math dicts;
+  this feature consumes a SINGLE flat dict, so the later (math) definition wins.
+  The user's vim setup disambiguated by editor zone (prose vs math); a flat dict
+  cannot, so the math meaning is the kept one for colliding triggers.
+
+  Reproduce: fetch the .vim from dotfiles and run scripts/convert-quicktex.py.
+
+HOW CONFIG POINTS AT IT FOR REAL USE
+  The dictionary is config-owned (no hardcoded list in the app). To use these
+  snippets, point the editor config at this file:
+
+    [editor]
+    snippet_dictionary = "<abs path to this quicktex.json>"
+
+  The path is validated to exist at config-load time (ExistingFile in
+  config.rs); the editor reads and parses it into composable completion snippets
+  that surface alongside the LaTeX command completions. Pointing the key at a
+  different dict offers different snippets — that is the config-owned property the
+  P52 obligation pins. The P52 PROOF uses its own committed fixture
+  (tests/proof/fixtures/snippets/p52-snippets.json) for determinism, NOT this
+  real dict.
