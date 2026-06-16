@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P52)
+# Proof Obligations (P1–P53)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -92,9 +92,9 @@ A per-run temp project containing `demo.md` with:
   Independently, the host-filesystem recovery store holds the dirty content — the lose-nothing backstop that survives even a forced quit.
   Admissible because it fails on a close that drops the dirty buffer with no prompt and no recovery copy (work vanishes silently), and a prompt-only guard that still loses content on force-quit (the prompt blocks a graceful close but the recovery backstop is missing, so a hard kill loses the buffer).
 
-### Tier 0 — Editor Completion (P51–P52)
+### Tier 0 — Editor Completion (P51–P53)
 
-P51–P52 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the editor's autocomplete is a composable surface that hosts multiple completion sources at once, and a user-defined snippet dictionary is one such source that expands snippet bodies (not literal triggers) at the cursor.
+P51–P53 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the editor's autocomplete is a composable surface that hosts multiple completion sources at once, a user-defined snippet dictionary is one such source that expands snippet bodies (not literal triggers) at the cursor, and Emmet abbreviations expand into real markup at the cursor.
 
 - **P51 — Composable editor completion.** The editor's autocomplete hosts MULTIPLE completion sources that COMPOSE — registering a new app completion source does not displace the completions that were already there.
   Register a new app completion source bound to a trigger, then drive the editor: typing that trigger opens the standard autocomplete tooltip and the newly-registered source's option appears in it, AND the pre-existing LaTeX completions still work in the same buffer — typing a backslash command (e.g. `\alpha`) offers the LaTeX completion, and typing the `:::` fenced-div trigger offers the fenced-div completion.
@@ -103,6 +103,10 @@ P51–P52 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the
 - **P52 — User-defined snippet dictionary expands.** A user-defined snippet dictionary, declared by a config-owned path (not a hardcoded list), surfaces as editor completions: typing a snippet's trigger opens the standard autocomplete tooltip offering a completion labeled by that trigger; accepting it expands the snippet BODY at the cursor — the inserted text is the snippet's expansion, not the literal trigger string, and the cursor lands at the snippet's declared tabstop.
   The dictionary path comes from config, so pointing config at a dictionary file makes those snippets the ones offered (a different dictionary offers different snippets).
   Admissible because it fails on a no-op source (the trigger is typed but never offered in the tooltip), a source that inserts the literal trigger text instead of the snippet body (accepting the completion leaves the trigger in the buffer rather than the expansion, and the cursor is not at the tabstop), and a dictionary that is ignored (config points at a dictionary whose triggers are typed but none of its snippets are ever offered).
+
+- **P53 — Emmet abbreviation expands.** Typing an Emmet abbreviation in the editor and firing the Emmet-expand action replaces the abbreviation with the expanded markup at the cursor.
+  Type an Emmet abbreviation that uniquely discriminates a real expansion (a multi-character/multi-element expansion Emmet produces, e.g. one that yields nested elements, repeated siblings, or attribute/class wrappers from a terse source) and invoke the Emmet-expand action: the abbreviation text is gone and the buffer at the cursor now holds the expanded markup it denotes, with the cursor landing inside the expansion.
+  Admissible because it fails when the Emmet extension/keymap is absent — the abbreviation stays literal in the buffer (the expand action is a no-op and the typed abbreviation is echoed verbatim rather than replaced by the markup it expands to).
 
 These map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
 
