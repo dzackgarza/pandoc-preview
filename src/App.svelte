@@ -50,6 +50,11 @@
   // refuse clobbering a file modified underneath the editor. Null when no file
   // with a captured fingerprint is open.
   let currentFingerprint = $state<Fingerprint | null>(null);
+  // Save-gate (P47): the number of times a path-consuming action has requested
+  // resolution of a durable destination for an identity-less buffer. An
+  // already-durable buffer never increments this — the gate is a no-op
+  // pass-through. Exposed to the E2E harness so the no-prompt clause is provable.
+  let resolveCountState = $state(0);
   // Repo-state machine (P46): the REAL git state of the open file, read from the
   // backend (libgit2) and refreshed on open/save and after init/track. The
   // indicator NEVER reflects an optimistic guess — every action re-queries disk.
@@ -204,8 +209,13 @@
         exportTo: (pluginId: string, target: string) => {
           (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ = "pending";
           exportToPath(pluginId, target).then(
-            () => {
-              (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ = "done";
+            (ran: boolean) => {
+              // "done" means the export ACTUALLY RAN (gate passed, command
+              // invoked). A gated export (identity-less buffer, P47) returns
+              // false and never reports done — the downstream command did not run.
+              (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ = ran
+                ? "done"
+                : "gated";
             },
             (e: unknown) => {
               (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ =
@@ -251,6 +261,18 @@
           void forceSave();
         },
         isDirty: () => dirty,
+        // P47 save-gate surface. newUntitled enters an identity-less buffer (no
+        // currentFile). resolveSavePath supplies the durable destination the
+        // native dialog would yield, making the buffer durable through the SAME
+        // makeDurable the gate uses. resolveCount proves an already-durable save
+        // did not re-prompt.
+        newUntitled: () => {
+          newUntitled();
+        },
+        resolveSavePath: (path: string) => {
+          void makeDurable(path);
+        },
+        resolveCount: () => resolveCountState,
         configFontSize: () => config?.editor.font_size ?? null,
         renderStatus: () => status,
         statusHistory: () => [...statusHistory],
@@ -312,6 +334,12 @@
   const RECOVERY_DEBOUNCE_MS = 1500;
   let recoveryTimer: ReturnType<typeof setTimeout> | undefined;
 
+  // Fixed recovery session for the identity-less buffer (P47): a new untitled
+  // document has no path, so it captures under this stable session id until it
+  // is resolved to a durable destination.
+  const UNTITLED_SESSION_ID = "untitled-buffer";
+  const UNTITLED_LABEL = "untitled";
+
   // Stable per-document session id: the open file's path collapsed to a single
   // safe path component (the backend rejects separators / traversal). Distinct
   // documents get distinct recovery repos; reopening the same file reuses its
@@ -321,12 +349,15 @@
   }
 
   function scheduleRecovery(content: string) {
-    if (!currentFile) return;
-    const path = currentFile;
+    // An identity-less buffer (P47) has no path yet but is still recovery-backed
+    // (F1/P45): capture it under a fixed untitled session so an unsaved new
+    // document is never lost. A durable buffer captures under its path session.
+    const session = currentFile ? recoverySessionId(currentFile) : UNTITLED_SESSION_ID;
+    const label = currentFile ?? UNTITLED_LABEL;
     clearTimeout(recoveryTimer);
     recoveryTimer = setTimeout(() => {
       void api
-        .recoveryAutosave(recoverySessionId(path), path, content)
+        .recoveryAutosave(session, label, content)
         .catch((e) => toastError(String(e)));
     }, RECOVERY_DEBOUNCE_MS);
   }
@@ -503,8 +534,79 @@
     }
   }
 
+  // ---- save-gate / identity-less buffer (P47) -----------------------------
+  //
+  // Enter an identity-less buffer: a fresh editable document with NO real file
+  // path. Path-consuming actions (save-in-place, export, plugin-run) on such a
+  // buffer must first resolve a durable destination through the gate below. The
+  // buffer is still recovery-backed (F1/P45) via UNTITLED_SESSION_ID.
+  function newUntitled() {
+    currentFile = null;
+    currentFingerprint = null;
+    dirty = false;
+    editor.setContent("");
+    outline = editor.getOutline();
+    wordCount = 0;
+    html = "";
+    log = "";
+    setStatus("idle");
+    repoState = null;
+  }
+
+  /** Make the identity-less buffer durable at `path`: write its bytes there,
+   * adopt it as the live editable file, and capture its fingerprint (P48
+   * baseline). The single point where an identity-less buffer becomes durable —
+   * reached both by the gate (after a destination is resolved) and by the E2E
+   * resolveSavePath hook that supplies the destination the native dialog would.
+   */
+  async function makeDurable(path: string): Promise<string> {
+    currentFingerprint = await api.writeTextFile(path, editor.getContent());
+    currentFile = path;
+    dirty = false;
+    await refreshTree();
+    await refreshRepoState();
+    return path;
+  }
+
+  /** Resolve the durable destination the native OS save dialog would return.
+   * The ONLY seam that differs between production and the harness: production
+   * drives the native dialog; the harness cannot drive it, so the destination is
+   * supplied out-of-band via resolveSavePath (mirroring openProject/exportTo).
+   * Returns null when no destination is available (cancel / undriveable). */
+  async function promptForDestination(): Promise<string | null> {
+    if (import.meta.env.VITE_PPE_E2E) {
+      // The native dialog is undriveable in-harness; the destination arrives via
+      // resolveSavePath, which makes the buffer durable directly. The gate thus
+      // has no destination to offer here — the action aborts until resolved.
+      return null;
+    }
+    return saveDialog({
+      title: "Save As",
+      filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
+    });
+  }
+
+  /** Save-gate: every path-consuming action funnels through here first. An
+   * already-durable buffer passes through with NO prompt (returns its path,
+   * increments nothing). An identity-less buffer requests a real destination;
+   * on resolution the buffer becomes durable and the resolved path is returned;
+   * on cancel/undriveable it returns null and the caller must NOT run. */
+  async function requireDurablePath(): Promise<string | null> {
+    if (currentFile) return currentFile;
+    resolveCountState += 1;
+    const path = await promptForDestination();
+    if (!path) return null;
+    return makeDurable(path);
+  }
+
   async function saveCurrent() {
-    if (!currentFile) return;
+    // P47: an identity-less buffer first resolves a durable destination; until
+    // then Save does not run. requireDurablePath -> makeDurable already wrote the
+    // buffer at the resolved path and adopted it, so Save is complete here.
+    if (!currentFile) {
+      await requireDurablePath();
+      return;
+    }
     // P48: a file opened/saved through this app always has a fingerprint. If it
     // is missing, the invariant is broken — fail loud rather than blind-write.
     if (!currentFingerprint) {
@@ -647,16 +749,18 @@
    * single export command path (the menu handler and the E2E hook both reach
    * this). The plugin's command is the whole compilation pipeline; the backend
    * substitutes {input}/{output} and spawns it. */
-  async function exportToPath(pluginId: string, target: string) {
-    if (!currentFile) {
-      toastError("No file open to export.");
-      return;
-    }
+  async function exportToPath(pluginId: string, target: string): Promise<boolean> {
+    // P47: export funnels through the save-gate. On an identity-less buffer the
+    // gate must resolve a durable destination first; until then the export does
+    // NOT run (no artifact, no downstream pandoc command) — return false so the
+    // caller does not report a completed export.
+    const source = await requireDurablePath();
+    if (!source) return false;
     if (dirty) await saveCurrent();
     const label = config?.export[pluginId]?.label ?? pluginId;
     toastInfo(`Exporting ${label}…`);
     try {
-      const res = await api.exportDocument(pluginId, currentFile, target);
+      const res = await api.exportDocument(pluginId, source, target);
       log = res.log;
       if (res.ok) {
         toastSuccess(`Exported ${target}`);
@@ -667,6 +771,8 @@
     } catch (e) {
       toastError(String(e));
     }
+    // The export ran (the gate passed and the downstream command was invoked).
+    return true;
   }
 
   /** Run the discovered plugin `pluginId` against the open buffer, writing to
@@ -674,18 +780,21 @@
    * exportToPath: the backend discovers the plugin, substitutes {file}/{artifact},
    * and spawns its command with the real buffer on stdin. */
   async function runPluginToPath(pluginId: string, target: string): Promise<PluginResult> {
-    if (!currentFile) {
-      throw new Error("No file open to run a plugin against.");
+    // P47: plugin-run funnels through the save-gate; an identity-less buffer
+    // resolves a durable destination first, else the plugin does NOT run.
+    const source = await requireDurablePath();
+    if (!source) {
+      throw new Error("No durable destination resolved — plugin not run.");
     }
     if (dirty) await saveCurrent();
-    return api.runPlugin(pluginId, currentFile, target, editor.getContent());
+    return api.runPlugin(pluginId, source, target, editor.getContent());
   }
 
   async function exportDoc(pluginId: string) {
-    if (!currentFile) {
-      toastError("No file open to export.");
-      return;
-    }
+    // P47: resolve a durable destination first (no-op for an already-durable
+    // buffer); an identity-less buffer cannot export until it has one.
+    const source = await requireDurablePath();
+    if (!source) return;
     const plugin = config?.export[pluginId];
     if (!plugin) {
       toastError(`Unknown export plugin: ${pluginId}`);
@@ -693,7 +802,7 @@
     }
     const target = await saveDialog({
       title: `Export ${plugin.label}`,
-      defaultPath: currentFile.replace(/\.[^/.]*$/, "") + "." + plugin.extension,
+      defaultPath: source.replace(/\.[^/.]*$/, "") + "." + plugin.extension,
       filters: [{ name: plugin.label, extensions: [plugin.extension] }],
     });
     if (!target) return;
