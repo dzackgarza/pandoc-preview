@@ -37,7 +37,16 @@
     redo,
     selectAll,
   } from "@codemirror/commands";
-  import { completionKeymap, closeBracketsKeymap } from "@codemirror/autocomplete";
+  import {
+    completionKeymap,
+    closeBracketsKeymap,
+    startCompletion,
+  } from "@codemirror/autocomplete";
+  import type {
+    CompletionSource,
+    CompletionContext,
+    CompletionResult,
+  } from "@codemirror/autocomplete";
   import {
     openSearchPanel,
     searchKeymap,
@@ -67,6 +76,29 @@
   const wrapCompartment = new Compartment();
   const gutterCompartment = new Compartment();
   const fontCompartment = new Compartment();
+
+  // App-owned completion sources, COMPOSED with the LaTeX command source rather
+  // than overriding it. latex() folds a single delegating source (below) into
+  // its autocomplete override; that delegate fans out to every source in this
+  // mutable registry, so app sources can be added after mount without rebuilding
+  // the editor. CM6 consults sources in order and merges their results, so a new
+  // source surfaces alongside the LaTeX completions instead of displacing them.
+  const appCompletionSources: CompletionSource[] = [];
+
+  const delegatingCompletionSource: CompletionSource = (
+    context: CompletionContext,
+  ): CompletionResult | null => {
+    for (const source of appCompletionSources) {
+      const result = source(context);
+      if (result instanceof Promise) {
+        throw new Error(
+          "EditorPane app completion sources must be synchronous",
+        );
+      }
+      if (result) return result;
+    }
+    return null;
+  };
 
   const fontTheme = (px: number) =>
     EditorView.theme({ "&": { fontSize: `${px}px` } });
@@ -131,7 +163,12 @@
           // math mode ($ $$ \( \[ environments), folds, auto-closes envs/
           // brackets, completes commands, and lints. Only checkMissingDocumentEnv
           // is disabled — it fires on every markdown file (no \begin{document}).
-          latex({ linter: { checkMissingDocumentEnv: false } }),
+          latex({
+            linter: { checkMissingDocumentEnv: false },
+            // The delegate composes app sources WITH the LaTeX source: both are
+            // consulted on every completion query (P51).
+            extraCompletionSources: [delegatingCompletionSource],
+          }),
           // The buffer is a markdown document, so Ctrl+/ comments with <!-- -->
           // rather than the latex grammar's default '%' line comment.
           latexLanguage.data.of({
@@ -200,6 +237,43 @@
       selection: EditorSelection.cursor(end + text.length),
     });
     view.focus();
+  }
+
+  /** E2E (P51): register a SENTINEL app completion source that COMPOSES with
+   * the LaTeX source. Bound to the unique trigger `@@ppe`, it offers exactly one
+   * option labelled `__PPE_SENTINEL__`. It is ADDED to the app-source registry
+   * the delegate fans out to — never installed as an override — so the LaTeX
+   * command completion still surfaces in the same buffer. */
+  export function registerTestCompletionSource() {
+    const sentinel: CompletionSource = (
+      context: CompletionContext,
+    ): CompletionResult | null => {
+      const match = context.matchBefore(/@@ppe/);
+      if (!match) return null;
+      // `from` is the cursor (end of the trigger), so CM6 filters the option
+      // against an EMPTY prefix and always shows it. Setting `from` to the
+      // trigger start would filter `__PPE_SENTINEL__` against `@@ppe` (no fuzzy
+      // match) and drop the option, leaving the tooltip empty.
+      return {
+        from: match.to,
+        options: [{ label: "__PPE_SENTINEL__" }],
+      };
+    };
+    appCompletionSources.push(sentinel);
+  }
+
+  /** E2E (P51): insert `text` at the cursor through the real CM update pipeline
+   * (the docChanged path the completion machinery observes), then explicitly
+   * open completion (CM6 startCompletion). The deterministic stand-in for
+   * synthetic key events, which the bridge cannot send into contentEditable. */
+  export function typeInEditor(text: string) {
+    const pos = view.state.selection.main.head;
+    view.dispatch({
+      changes: { from: pos, insert: text },
+      selection: EditorSelection.cursor(pos + text.length),
+    });
+    view.focus();
+    startCompletion(view);
   }
 
   /** E2E introspection: the language-tree node names covering the first

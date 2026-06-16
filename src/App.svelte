@@ -275,6 +275,14 @@
         appendAtEnd: (text: string) => {
           editor.appendAtEnd(text);
         },
+        // P51: register a sentinel app completion source that COMPOSES with the
+        // LaTeX source, then drive completion by inserting text at the cursor.
+        registerTestCompletionSource: () => {
+          editor.registerTestCompletionSource();
+        },
+        typeInEditor: (text: string) => {
+          editor.typeInEditor(text);
+        },
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
         goToLine: (line: number) => editor.goToLine(line),
