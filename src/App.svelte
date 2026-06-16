@@ -151,6 +151,7 @@
         appendAtEnd: (text: string) => {
           editor.appendAtEnd(text);
         },
+        syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         currentFile: () => currentFile,
         configFontSize: () => config?.editor.font_size ?? null,
       };

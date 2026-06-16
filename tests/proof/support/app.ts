@@ -144,6 +144,23 @@ export async function editorText(page: EvaluatesScripts): Promise<string> {
   );
 }
 
+// The language-tree node names covering the first occurrence of `needle`,
+// innermost first (e.g. ['tagName','Document','InlineMath','Paragraph',...]).
+// Reads the editor's real parsed tree via the harness; used to prove that math
+// regions are tokenized as embedded latex rather than plain paragraph text.
+export async function syntaxAncestryAt(
+  page: EvaluatesScripts,
+  needle: string,
+): Promise<string[]> {
+  const raw = await page.evaluate(
+    `JSON.stringify(window.__PPE_E2E__.syntaxAncestryAt(${JSON.stringify(needle)}))`,
+  );
+  if (typeof raw !== 'string') {
+    throw new Error(`syntaxAncestryAt returned non-string: ${JSON.stringify(raw)}`);
+  }
+  return JSON.parse(raw) as string[];
+}
+
 export async function currentFile(page: EvaluatesScripts): Promise<string> {
   return asString(
     await page.evaluate(`(window.__PPE_E2E__.currentFile() ?? '')`),

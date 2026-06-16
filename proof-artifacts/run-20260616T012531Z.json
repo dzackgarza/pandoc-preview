@@ -1,0 +1,35 @@
+{
+  "run_id": "20260616T012531Z",
+  "status": "failed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p36-editor-math-highlighting.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p36-editor-math-highlighting.spec.ts",
+            "title": "Math regions are tokenized as embedded LaTeX (InlineMath mounts a stex sub-tree)",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 2658,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected value: \u001b[32m\"InlineMath\"\u001b[39m\nReceived array: \u001b[31m[\"Paragraph\", \"Document\"]\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

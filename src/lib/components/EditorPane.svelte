@@ -21,7 +21,9 @@
     bracketMatching,
     syntaxHighlighting,
     defaultHighlightStyle,
+    syntaxTree,
   } from "@codemirror/language";
+  import type { SyntaxNode } from "@lezer/common";
   import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
   import { languages } from "@codemirror/language-data";
   import {
@@ -193,6 +195,22 @@
       selection: EditorSelection.cursor(end + text.length),
     });
     view.focus();
+  }
+
+  /** E2E introspection: the language-tree node names covering the first
+   * occurrence of `needle`, innermost first. Used by the proof harness to
+   * assert which grammar owns a span — e.g. that a $…$ region is an InlineMath
+   * node with a mounted latex sub-tree (a stex token) strictly inside it. Reads
+   * the real parsed tree, so it discriminates "math is tokenized as latex" from
+   * "math is plain paragraph text". */
+  export function syntaxAncestryAt(needle: string): string[] {
+    const text = view.state.doc.toString();
+    const idx = text.indexOf(needle);
+    if (idx < 0) throw new Error(`syntaxAncestryAt: substring not found: ${needle}`);
+    const node = syntaxTree(view.state).resolveInner(idx + 1, 1);
+    const names: string[] = [];
+    for (let x: SyntaxNode | null = node; x; x = x.parent) names.push(x.name);
+    return names;
   }
 
   /** Wrap the current selection (or insert a placeholder) with markdown markers. */
