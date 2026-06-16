@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P53)
+# Proof Obligations (P1–P54)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -92,9 +92,9 @@ A per-run temp project containing `demo.md` with:
   Independently, the host-filesystem recovery store holds the dirty content — the lose-nothing backstop that survives even a forced quit.
   Admissible because it fails on a close that drops the dirty buffer with no prompt and no recovery copy (work vanishes silently), and a prompt-only guard that still loses content on force-quit (the prompt blocks a graceful close but the recovery backstop is missing, so a hard kill loses the buffer).
 
-### Tier 0 — Editor Completion (P51–P53)
+### Tier 0 — Editor Completion (P51–P54)
 
-P51–P53 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the editor's autocomplete is a composable surface that hosts multiple completion sources at once, a user-defined snippet dictionary is one such source that expands snippet bodies (not literal triggers) at the cursor, and Emmet abbreviations expand into real markup at the cursor.
+P51–P54 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the editor's autocomplete is a composable surface that hosts multiple completion sources at once, a user-defined snippet dictionary is one such source that expands snippet bodies (not literal triggers) at the cursor, Emmet abbreviations expand into real markup at the cursor, and spellcheck marks misspelled words while honoring a custom math dictionary.
 
 - **P51 — Composable editor completion.** The editor's autocomplete hosts MULTIPLE completion sources that COMPOSE — registering a new app completion source does not displace the completions that were already there.
   Register a new app completion source bound to a trigger, then drive the editor: typing that trigger opens the standard autocomplete tooltip and the newly-registered source's option appears in it, AND the pre-existing LaTeX completions still work in the same buffer — typing a backslash command (e.g. `\alpha`) offers the LaTeX completion, and typing the `:::` fenced-div trigger offers the fenced-div completion.
@@ -107,6 +107,12 @@ P51–P53 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the
 - **P53 — Emmet abbreviation expands.** Typing an Emmet abbreviation in the editor and firing the Emmet-expand action replaces the abbreviation with the expanded markup at the cursor.
   Type an Emmet abbreviation that uniquely discriminates a real expansion (a multi-character/multi-element expansion Emmet produces, e.g. one that yields nested elements, repeated siblings, or attribute/class wrappers from a terse source) and invoke the Emmet-expand action: the abbreviation text is gone and the buffer at the cursor now holds the expanded markup it denotes, with the cursor landing inside the expansion.
   Admissible because it fails when the Emmet extension/keymap is absent — the abbreviation stays literal in the buffer (the expand action is a no-op and the typed abbreviation is echoed verbatim rather than replaced by the markup it expands to).
+
+- **P54 — Spellcheck marks misspelled words, honoring a custom math dictionary.** The editor marks misspelled words as spelling errors while respecting a user-owned custom math dictionary, so that mathematical terms are not flagged.
+  Type a clearly-misspelled token (random gibberish) into the buffer: it is visibly marked as a spelling error.
+  Type an ordinary correctly-spelled English word: it is NOT marked.
+  Type a mathematical term that ordinary English spellcheck would flag but which is present in the user's custom math dictionary: it is NOT marked, proving the custom dictionary is in effect.
+  Admissible because it fails when there is no spellcheck (nothing is marked, so the gibberish token is not flagged), on a checker that marks everything (the correctly-spelled English word and the dictionary math term are both wrongly flagged), on a checker that marks nothing (the gibberish token is never flagged), and on a checker WITHOUT the custom math dictionary (the math term is wrongly marked even though the dictionary lists it).
 
 These map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
 
