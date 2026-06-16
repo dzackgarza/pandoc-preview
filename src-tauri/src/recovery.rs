@@ -129,3 +129,41 @@ pub fn commit_buffer(session_id: &str, source_path: &str, buffer: &str) -> Resul
 pub fn recovery_autosave(session_id: String, path: String, buffer: String) -> Result<()> {
     commit_buffer(&session_id, &path, &buffer)
 }
+
+/// Read the buffer bytes the session's recovery store last captured: the blob
+/// under `buffer` in HEAD's tree (P49). `None` when the session has no recovery
+/// repo or no commit yet. This is the inverse of `commit_buffer` — it reads the
+/// object database directly (no working-tree checkout), so a recovery store an
+/// independent process wrote is recovered byte-for-byte. The bytes are returned
+/// as a `String`; the captured buffer is always UTF-8 (it was committed from a
+/// `&str` editor buffer), so a non-UTF-8 blob is a corrupt store and fails loud.
+pub fn read_head_buffer(session_id: &str) -> Result<Option<String>> {
+    let dir = session_repo_dir(session_id)?;
+    if !dir.is_dir() {
+        return Ok(None);
+    }
+    let repo = Repository::open(&dir).map_err(git_err)?;
+    let head = match repo.head() {
+        Ok(head) => head,
+        Err(_) => return Ok(None),
+    };
+    let tree = head.peel_to_tree().map_err(git_err)?;
+    let entry = tree.get_name(BUFFER_ENTRY).ok_or_else(|| {
+        Error::InvalidArgument(format!(
+            "recovery HEAD tree has no {BUFFER_ENTRY:?} entry in {dir:?}"
+        ))
+    })?;
+    let blob = repo.find_blob(entry.id()).map_err(git_err)?;
+    let text = String::from_utf8(blob.content().to_vec()).map_err(|e| {
+        Error::InvalidArgument(format!("recovery buffer blob is not valid UTF-8: {e}"))
+    })?;
+    Ok(Some(text))
+}
+
+/// IPC command exposing the session's last-captured recovery buffer to the
+/// frontend (P49). On launch the app reads this for the restored session and
+/// compares it against the on-disk file to decide whether to offer a restore.
+#[tauri::command]
+pub fn recovery_head_buffer(session_id: String) -> Result<Option<String>> {
+    read_head_buffer(&session_id)
+}

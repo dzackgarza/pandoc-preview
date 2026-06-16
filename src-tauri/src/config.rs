@@ -341,3 +341,66 @@ pub fn save_fold_state(state: HashMap<String, Vec<Fold>>) -> Result<()> {
     })?;
     std::fs::write(&path, raw).map_err(|e| Error::io(&path, e))
 }
+
+/// The last active session a prior run persisted (P49): the last open project +
+/// file + the recovery-store session id for that file. Lives on the HOST
+/// FILESYSTEM under `$XDG_STATE_HOME/pandoc-preview/session.json`, never browser
+/// storage, so on launch the app reopens the last file and can locate that
+/// session's recovery store to offer newer unsaved content.
+///
+/// The on-disk JSON is `{project, file, sessionId}` (camelCase): one source of
+/// truth for the file shape, shared with the frontend `SessionState` and the
+/// proof harness's provisioned session.json.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct SessionState {
+    /// Absolute path of the last open project root.
+    pub project: String,
+    /// Absolute path of the last open file.
+    pub file: String,
+    /// Recovery-store session id for `file` (the per-document repo directory
+    /// name under the recovery root). Lets launch read that session's HEAD
+    /// buffer blob to compare against the on-disk file.
+    pub session_id: String,
+}
+
+fn session_state_path() -> Result<PathBuf> {
+    // dirs::state_dir honors $XDG_STATE_HOME on Linux, matching the hermetic
+    // XDG_STATE_HOME the proof harness launches the app with.
+    let base = dirs::state_dir().ok_or_else(|| {
+        Error::InvalidArgument("no XDG state directory could be determined".into())
+    })?;
+    Ok(base.join("pandoc-preview").join("session.json"))
+}
+
+/// Read the last persisted session, or `None` on a clean first run (no file).
+/// IO/parse errors fail loud.
+#[tauri::command]
+pub fn read_session_state() -> Result<Option<SessionState>> {
+    let path = session_state_path()?;
+    if !path.is_file() {
+        return Ok(None);
+    }
+    let raw = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    let state = serde_json::from_str(&raw).map_err(|e| Error::ConfigInvalid {
+        path: path.display().to_string(),
+        message: e.to_string(),
+    })?;
+    Ok(Some(state))
+}
+
+/// Persist the active session so the next launch reopens it. Called on open and
+/// save, mirroring fold-state persistence.
+#[tauri::command]
+pub fn save_session_state(state: SessionState) -> Result<()> {
+    let path = session_state_path()?;
+    let parent = path
+        .parent()
+        .expect("session-state path always has a parent");
+    std::fs::create_dir_all(parent).map_err(|e| Error::io(parent, e))?;
+    let raw = serde_json::to_string_pretty(&state).map_err(|e| Error::ConfigInvalid {
+        path: path.display().to_string(),
+        message: e.to_string(),
+    })?;
+    std::fs::write(&path, raw).map_err(|e| Error::io(&path, e))
+}

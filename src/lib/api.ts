@@ -9,6 +9,7 @@ import type {
   PluginResult,
   RenderResult,
   RepoState,
+  SessionState,
 } from "./types";
 
 export const getConfig = () => invoke<Config>("get_config");
@@ -27,6 +28,21 @@ export const saveFoldState = (state: FoldState) =>
 // document; `path` is recorded so the store identifies what each session held.
 export const recoveryAutosave = (sessionId: string, path: string, buffer: string) =>
   invoke<void>("recovery_autosave", { sessionId, path, buffer });
+
+// Last-session state (P49), persisted on the host fs under
+// $XDG_STATE_HOME/pandoc-preview/session.json. Written on open/save so the next
+// launch reopens the last file; read on launch. Returns null on a clean first
+// run. The unsaved buffer itself lives in the recovery store, NOT here.
+export const readSessionState = () => invoke<SessionState | null>("read_session_state");
+export const saveSessionState = (state: SessionState) =>
+  invoke<void>("save_session_state", { state });
+
+// The session's last-captured recovery buffer: the bytes under the recovery
+// store's HEAD `buffer` blob for `sessionId` (P49). null when that session has
+// no recovery repo/commit. On launch the app compares this against the on-disk
+// file to decide whether to offer a restore.
+export const recoveryHeadBuffer = (sessionId: string) =>
+  invoke<string | null>("recovery_head_buffer", { sessionId });
 
 // Repo-state machine (P46). The real git state of the open file is read from
 // the on-disk repository via libgit2 in the backend; `repoInit`/`repoTrack`

@@ -60,6 +60,13 @@
   // indicator NEVER reflects an optimistic guess — every action re-queries disk.
   let repoState = $state<RepoState | null>(null);
 
+  // Session-restore offer (P49). On launch, if the restored session's recovery
+  // store holds a buffer AHEAD of the reopened on-disk file, this holds the
+  // pending offer { file, sessionId } plus the newer buffer bytes to load on
+  // accept; null when there is no newer content to offer. Sourced only from
+  // host-fs state read on launch, never from a UI guess.
+  let pendingRestore = $state<{ file: string; sessionId: string; buffer: string } | null>(null);
+
   // Re-read the open file's real git state from disk. Null when no file is open.
   async function refreshRepoState() {
     if (!currentFile) {
@@ -255,6 +262,17 @@
         getFoldedRanges: () => editor.getFoldedRanges(),
         cursorLine: () => cursorLine,
         currentFile: () => currentFile,
+        // P49: the session-restore offer. pendingRestore returns a JSON-
+        // serializable { file, sessionId } when launch found recovery content
+        // ahead of disk, else null. acceptRestore loads those recovery bytes
+        // into the live editor (fire-and-forget, like appendAtEnd).
+        pendingRestore: () =>
+          pendingRestore
+            ? { file: pendingRestore.file, sessionId: pendingRestore.sessionId }
+            : null,
+        acceptRestore: () => {
+          acceptRestore();
+        },
         // P48: the explicit force-overwrite resolution (fire-and-forget, same
         // shape as appendAtEnd) and the live dirty flag (same notion p03 reads).
         forceSave: () => {
@@ -291,6 +309,11 @@
     split = createSplitLayout(splitContainer);
     editorPaneEl = split.editorPane;
     previewPaneEl = split.previewPane;
+
+    // P49: reopen the last session's file from host-fs session state and, when
+    // its recovery store is ahead of disk, surface a restore offer. Done last,
+    // after the editor is mounted, so reopening can populate the live buffer.
+    await restoreLastSession();
   });
 
   onDestroy(() => {
@@ -346,6 +369,21 @@
   // repo so its capture history is one append-only object database.
   function recoverySessionId(path: string): string {
     return path.replace(/[^A-Za-z0-9._-]/g, "_");
+  }
+
+  // Persist the active session (P49) so the next launch reopens this file and
+  // can locate its recovery store. The recovery session id mirrors the one
+  // scheduleRecovery captures under (recoverySessionId of the path), so launch
+  // reads exactly the store this run's autosaves wrote. Only a durable file
+  // (real path + known project) is a restorable session; an identity-less
+  // buffer has no durable last-file to reopen.
+  async function persistSession() {
+    if (!currentFile || !projectRoot) return;
+    await api.saveSessionState({
+      project: projectRoot,
+      file: currentFile,
+      sessionId: recoverySessionId(currentFile),
+    });
   }
 
   function scheduleRecovery(content: string) {
@@ -529,9 +567,52 @@
       wordCount = content.split(/\s+/).filter(Boolean).length;
       void refreshRepoState();
       void doRender(content);
+      void persistSession(); // P49: record this as the last active session
     } catch (e) {
       toastError(String(e));
     }
+  }
+
+  // ---- session restore (P49) ----------------------------------------------
+  //
+  // On launch, reopen the last session's file from host-fs session state, then
+  // compare that session's recovery-store HEAD buffer against the reopened
+  // on-disk content. When the recovery buffer is AHEAD of disk (the prior
+  // session left unsaved edits), present a restore offer; accepting it loads
+  // the recovery bytes into the live editor. The durable state read here lives
+  // ONLY on the host fs (session.json + the recovery git repo), never browser
+  // storage — the Anti-Sandbox Rule.
+  async function restoreLastSession() {
+    const session = await api.readSessionState();
+    if (!session) return; // clean first run — nothing to restore
+    // Reopen the last file through the SAME path a sidebar click uses, so the
+    // editor buffer, fingerprint (P48), folds, repo state, and render are all
+    // established exactly as a normal open.
+    await openFile(session.file);
+    if (currentFile !== session.file) return; // open failed (toast surfaced it)
+    // The session's recovery store may hold a buffer the prior run captured
+    // after the last save. Offer a restore only when it is AHEAD of disk —
+    // i.e. differs from the just-reopened on-disk content.
+    const recovered = await api.recoveryHeadBuffer(session.sessionId);
+    if (recovered === null) return; // no recovery capture for this session
+    if (recovered === editor.getContent()) return; // recovery == disk, nothing newer
+    pendingRestore = {
+      file: session.file,
+      sessionId: session.sessionId,
+      buffer: recovered,
+    };
+  }
+
+  // Accept the pending restore: load the recovery buffer bytes into the live
+  // editor (the newer, unsaved-edit content), marking the buffer dirty since it
+  // now differs from disk. Clears the offer.
+  function acceptRestore() {
+    if (!pendingRestore) return;
+    editor.setContent(pendingRestore.buffer);
+    outline = editor.getOutline();
+    dirty = true;
+    if (currentFile) void doRender(pendingRestore.buffer);
+    pendingRestore = null;
   }
 
   // ---- save-gate / identity-less buffer (P47) -----------------------------
@@ -565,6 +646,7 @@
     dirty = false;
     await refreshTree();
     await refreshRepoState();
+    void persistSession(); // P49: a newly durable buffer is now the last session
     return path;
   }
 

@@ -89,6 +89,16 @@ export interface Fold {
 /** file path -> its collapsed fold ranges. */
 export type FoldState = Record<string, Fold[]>;
 
+/** The last active session a prior run persisted (P49), mirroring the Rust
+ *  `SessionState` in config.rs. Lives on the host fs under
+ *  $XDG_STATE_HOME/pandoc-preview/session.json; on launch the app reopens
+ *  `file` and locates `sessionId`'s recovery store to offer newer content. */
+export interface SessionState {
+  project: string;
+  file: string;
+  sessionId: string;
+}
+
 /** Real git state of the open file, mirroring the `RepoState` enum in
  *  src-tauri/src/repostate.rs. Maps 1:1 onto the `data-repo-state` indicator. */
 export type RepoState = "noRepo" | "untracked" | "tracked";
