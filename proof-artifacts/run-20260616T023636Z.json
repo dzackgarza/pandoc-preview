@@ -1,0 +1,39 @@
+{
+  "run_id": "20260616T023636Z",
+  "status": "passed",
+  "display": {
+    "wayland": "wayland-1",
+    "x11": ":0"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.6",
+    "lualatex": "This is LuaHBTeX, Version 1.24.0 (TeX Live 2026)",
+    "gum": "gum version 0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p36-editor-math-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/gitclones/pandoc-preview-greenfield2/tests/proof/p36-editor-math-highlighting.spec.ts",
+            "title": "Inline $…$ math renders with LaTeX syntax highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 5489,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p36-editor-math-highlighting.spec.ts",
+          "name": "inline-math-highlighted",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

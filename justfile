@@ -26,10 +26,16 @@ deps:
         fi
     done
     [ "$missing" -eq 0 ] || exit 1
-    # The pandoc assets (templates/filters/csl/bib) are a commit-pinned submodule.
-    git submodule update --init src-tauri/resources/vendor/pandoc-config
+    # Pinned submodules: pandoc assets, and the vendored CodeMirror LaTeX fork.
+    git submodule update --init src-tauri/resources/vendor/pandoc-config vendor/codemirror-lang-latex
+    just vendor-build
     bun install
     cargo fetch --manifest-path src-tauri/Cargo.toml
+
+# Build the vendored CodeMirror LaTeX language fork (Lezer grammar -> dist) so
+# its dist/ exists for the file: dependency. Re-run after editing the grammar.
+vendor-build:
+    cd vendor/codemirror-lang-latex && bun install && bun run build
 
 # Run the app in dev mode (vite + tauri). Routes config-class doctor failures
 # into gum first-run recovery before starting tauri dev (scripts/dev.sh).
