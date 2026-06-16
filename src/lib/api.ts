@@ -3,6 +3,8 @@ import type {
   Config,
   ExportResult,
   FileNode,
+  FileRead,
+  Fingerprint,
   FoldState,
   PluginResult,
   RenderResult,
@@ -37,9 +39,27 @@ export const repoInit = (dir: string) => invoke<void>("repo_init", { dir });
 export const repoTrack = (path: string) => invoke<void>("repo_track", { path });
 
 export const listTree = (root: string) => invoke<FileNode[]>("list_tree", { root });
-export const readTextFile = (path: string) => invoke<string>("read_text_file", { path });
+
+// Read a file's text together with the fingerprint of its on-disk state (P48).
+// The frontend stores the fingerprint at open so a later save can detect an
+// external modification.
+export const readTextFile = (path: string) => invoke<FileRead>("read_text_file", { path });
+
+// Write unconditionally and return the post-write fingerprint. Used for Save As
+// (new target, nothing to conflict with) and the explicit force-overwrite that
+// resolves a conflict (the user chose their buffer wins).
 export const writeTextFile = (path: string, content: string) =>
-  invoke<void>("write_text_file", { path, content });
+  invoke<Fingerprint>("write_text_file", { path, content });
+
+// Guarded write (P48): writes ONLY IF the file still matches `expected` (the
+// fingerprint captured at open / last save). If the file changed underneath,
+// the backend refuses with a conflict error (CONFLICT_PREFIX) and leaves the
+// external content intact. Returns the post-write fingerprint on success.
+export const writeTextFileChecked = (
+  path: string,
+  content: string,
+  expected: Fingerprint,
+) => invoke<Fingerprint>("write_text_file_checked", { path, content, expected });
 export const createFile = (path: string) => invoke<void>("create_file", { path });
 export const createDir = (path: string) => invoke<void>("create_dir", { path });
 export const renamePath = (from: string, to: string) =>

@@ -14,6 +14,7 @@
       class="pointer-events-auto max-w-md rounded-lg px-4 py-2 text-left text-sm shadow-lg {styles[
         toast.kind
       ]}"
+      data-toast-kind={toast.kind}
       title="Dismiss"
       onclick={() => dismiss(toast.id)}
     >

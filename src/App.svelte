@@ -10,11 +10,13 @@
   import type {
     Config,
     FileNode,
+    Fingerprint,
     FoldState,
     PluginResult,
     RenderStatus,
     RepoState,
   } from "./lib/types";
+  import { CONFLICT_PREFIX } from "./lib/types";
   import type { OutlineItem } from "codemirror-lang-latex";
   import { toastError, toastInfo, toastSuccess } from "./lib/toast.svelte";
   import { createSplitLayout, type SplitLayout } from "./lib/dockview";
@@ -43,6 +45,11 @@
   let stylesTree = $state<FileNode[]>([]);
   let figuresTree = $state<FileNode[]>([]);
   let dirty = $state(false);
+  // Fingerprint of the open file's on-disk state at open / last save (P48).
+  // The guarded save compares it against the current on-disk fingerprint to
+  // refuse clobbering a file modified underneath the editor. Null when no file
+  // with a captured fingerprint is open.
+  let currentFingerprint = $state<Fingerprint | null>(null);
   // Repo-state machine (P46): the REAL git state of the open file, read from the
   // backend (libgit2) and refreshed on open/save and after init/track. The
   // indicator NEVER reflects an optimistic guess — every action re-queries disk.
@@ -238,6 +245,12 @@
         getFoldedRanges: () => editor.getFoldedRanges(),
         cursorLine: () => cursorLine,
         currentFile: () => currentFile,
+        // P48: the explicit force-overwrite resolution (fire-and-forget, same
+        // shape as appendAtEnd) and the live dirty flag (same notion p03 reads).
+        forceSave: () => {
+          void forceSave();
+        },
+        isDirty: () => dirty,
         configFontSize: () => config?.editor.font_size ?? null,
         renderStatus: () => status,
         statusHistory: () => [...statusHistory],
@@ -443,6 +456,7 @@
   async function openProject(dir: string) {
     projectRoot = dir;
     currentFile = null;
+    currentFingerprint = null;
     dirty = false;
     html = "";
     log = "";
@@ -474,8 +488,9 @@
     if (!(await resolveDirty())) return;
     await persistCurrentFoldState(); // save the outgoing file's folds first
     try {
-      const content = await api.readTextFile(path);
+      const { content, fingerprint } = await api.readTextFile(path);
       currentFile = path;
+      currentFingerprint = fingerprint; // P48: baseline for conflict detection
       editor.setContent(content);
       editor.setFoldedRanges(foldState[path] ?? []); // restore this file's folds
       outline = editor.getOutline();
@@ -490,8 +505,46 @@
 
   async function saveCurrent() {
     if (!currentFile) return;
+    // P48: a file opened/saved through this app always has a fingerprint. If it
+    // is missing, the invariant is broken — fail loud rather than blind-write.
+    if (!currentFingerprint) {
+      throw new Error(`no fingerprint captured for open file ${currentFile}`);
+    }
     try {
-      await api.writeTextFile(currentFile, editor.getContent());
+      // Guarded write: refused with a conflict error if the file changed on disk
+      // since the captured fingerprint. On success, re-capture the post-write
+      // fingerprint so the next save matches (keeps p03's second save clean).
+      currentFingerprint = await api.writeTextFileChecked(
+        currentFile,
+        editor.getContent(),
+        currentFingerprint,
+      );
+      dirty = false;
+      await persistCurrentFoldState();
+      await refreshRepoState();
+      toastSuccess(`Saved ${fileName(currentFile)}`);
+    } catch (e) {
+      // A conflict refusal keeps the buffer DIRTY and surfaces the discriminating
+      // "modified" text (P48 clauses (b)/(c)); the external content is left
+      // intact (the backend did not write). A generic IO error surfaces too, but
+      // distinctly — only the conflict path is the intended loud refusal.
+      if (String(e).startsWith(CONFLICT_PREFIX)) {
+        toastError(
+          `${fileName(currentFile)} was modified externally — Save refused. Use Overwrite to force your version.`,
+        );
+      } else {
+        toastError(String(e));
+      }
+    }
+  }
+
+  // P48 resolution: the user decides their buffer wins. Write unconditionally
+  // (no fingerprint guard), re-capture the post-write fingerprint, and clear
+  // dirty — the conflict gate is a real, escapable gate, not a dead end.
+  async function forceSave() {
+    if (!currentFile) return;
+    try {
+      currentFingerprint = await api.writeTextFile(currentFile, editor.getContent());
       dirty = false;
       await persistCurrentFoldState();
       await refreshRepoState();
@@ -513,7 +566,9 @@
     });
     if (!target) return;
     try {
-      await api.writeTextFile(target, editor.getContent());
+      // New target — nothing to conflict with; capture the fingerprint so a
+      // later in-place Save of this file is guarded (P48).
+      currentFingerprint = await api.writeTextFile(target, editor.getContent());
       currentFile = target;
       dirty = false;
       await refreshTree();
@@ -575,6 +630,7 @@
       await api.deletePath(node.path);
       if (currentFile === node.path || currentFile?.startsWith(node.path + "/")) {
         currentFile = null;
+        currentFingerprint = null;
         dirty = false;
         editor.setContent("");
         html = "";

@@ -167,6 +167,7 @@ pub fn run() {
             fsops::list_tree,
             fsops::read_text_file,
             fsops::write_text_file,
+            fsops::write_text_file_checked,
             fsops::create_file,
             fsops::create_dir,
             fsops::rename_path,

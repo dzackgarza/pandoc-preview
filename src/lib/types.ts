@@ -92,3 +92,29 @@ export type FoldState = Record<string, Fold[]>;
 /** Real git state of the open file, mirroring the `RepoState` enum in
  *  src-tauri/src/repostate.rs. Maps 1:1 onto the `data-repo-state` indicator. */
 export type RepoState = "noRepo" | "untracked" | "tracked";
+
+/** Fingerprint of a file's on-disk state (content hash + mtime), mirroring the
+ *  Rust `Fingerprint` in src-tauri/src/fsops.rs. Captured at open and after each
+ *  successful write; a guarded save compares the stored fingerprint against the
+ *  current on-disk one to detect external modification (P48). */
+export interface Fingerprint {
+  hash: string;
+  // Decimal nanosecond mtime as a STRING: a ns mtime exceeds JS's safe-integer
+  // range, so it must cross the IPC boundary as a string to round-trip exactly
+  // (a number would round and false-conflict an unmodified file). Opaque to the
+  // frontend — captured at open/save and passed back to the guarded write verbatim.
+  mtime_ns: string;
+}
+
+/** A file's text plus the fingerprint captured at read time, mirroring the Rust
+ *  `FileRead` in src-tauri/src/fsops.rs. */
+export interface FileRead {
+  content: string;
+  fingerprint: Fingerprint;
+}
+
+/** Stable sentinel prefix on the serialized conflict-refusal error message
+ *  (`Error::Conflict` in src-tauri/src/error.rs, `CONFLICT_PREFIX`). The save
+ *  path matches this to tell a P48 conflict refusal apart from a generic IO
+ *  failure. ONE source of truth shared with the backend constant. */
+export const CONFLICT_PREFIX = "EXTERNAL_MODIFICATION_CONFLICT";

@@ -1,8 +1,68 @@
 use std::path::{Path, PathBuf};
+use std::time::UNIX_EPOCH;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
+
+/// A fingerprint of a file's on-disk state, captured when the file is read and
+/// after each successful write (P48). It pairs a content hash with the mtime in
+/// nanoseconds since the epoch: the hash detects content changes, the mtime
+/// detects a same-content rewrite. A guarded save compares the stored
+/// fingerprint against the current on-disk fingerprint; any difference means the
+/// file changed underneath the editor and the write is refused.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Fingerprint {
+    /// FNV-1a 64-bit hash of the file's bytes, hex-encoded.
+    pub hash: String,
+    /// Last-modified time in nanoseconds since the Unix epoch, as a decimal
+    /// STRING. A nanosecond mtime (~1.8e18) exceeds JS's safe-integer range, so
+    /// it must round-trip as a string to survive the IPC boundary exactly —
+    /// otherwise the frontend rounds it and a guarded save of an unmodified file
+    /// would false-conflict. Compared by exact string equality.
+    pub mtime_ns: String,
+}
+
+/// FNV-1a 64-bit hash of `bytes`, hex-encoded. A small, dependency-free content
+/// hash: P48 needs change-detection, not cryptographic strength.
+fn content_hash(bytes: &[u8]) -> String {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for &b in bytes {
+        hash ^= u64::from(b);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    format!("{hash:016x}")
+}
+
+/// The current on-disk fingerprint of `path` (content hash + mtime). Reads the
+/// bytes and the metadata mtime; fails loudly if either read fails.
+fn fingerprint_of(path: &Path) -> Result<Fingerprint> {
+    let bytes = std::fs::read(path).map_err(|e| Error::io(path, e))?;
+    let meta = std::fs::metadata(path).map_err(|e| Error::io(path, e))?;
+    let mtime_ns = meta
+        .modified()
+        .map_err(|e| Error::io(path, e))?
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| {
+            Error::InvalidArgument(format!(
+                "file {} has a pre-epoch mtime: {e}",
+                path.display()
+            ))
+        })?
+        .as_nanos();
+    Ok(Fingerprint {
+        hash: content_hash(&bytes),
+        mtime_ns: mtime_ns.to_string(),
+    })
+}
+
+/// A file's content together with the fingerprint captured at read time, so the
+/// frontend can store the fingerprint and later detect external modification.
+#[derive(Debug, Serialize)]
+pub struct FileRead {
+    pub content: String,
+    pub fingerprint: Fingerprint,
+}
 
 #[derive(Debug, Serialize)]
 pub struct FileNode {
@@ -55,16 +115,55 @@ pub fn list_tree(root: String) -> Result<Vec<FileNode>> {
     build_tree(&root)
 }
 
+/// Read a file's text together with the fingerprint of its current on-disk
+/// state (P48). The frontend stores the fingerprint when it opens a file so a
+/// later save can detect whether the file changed underneath the editor.
 #[tauri::command]
-pub fn read_text_file(path: String) -> Result<String> {
+pub fn read_text_file(path: String) -> Result<FileRead> {
     let path = PathBuf::from(path);
-    std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))
+    let content = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    let fingerprint = fingerprint_of(&path)?;
+    Ok(FileRead {
+        content,
+        fingerprint,
+    })
 }
 
+/// Write `content` to `path` UNCONDITIONALLY and return the fingerprint of the
+/// freshly written file. Used where there is nothing to conflict with: a Save
+/// As to a new target, and the explicit force-overwrite resolution after a
+/// conflict refusal (the user has deliberately chosen their buffer wins). The
+/// returned fingerprint is captured AFTER the write so the next guarded save
+/// compares against the just-written state.
 #[tauri::command]
-pub fn write_text_file(path: String, content: String) -> Result<()> {
+pub fn write_text_file(path: String, content: String) -> Result<Fingerprint> {
     let path = PathBuf::from(path);
-    std::fs::write(&path, content).map_err(|e| Error::io(&path, e))
+    std::fs::write(&path, content).map_err(|e| Error::io(&path, e))?;
+    fingerprint_of(&path)
+}
+
+/// Write `content` to `path` ONLY IF the file still matches `expected` — the
+/// fingerprint captured at open / last save (P48). If the on-disk fingerprint
+/// differs, the file was modified externally: the write is REFUSED with
+/// `Error::Conflict` and the external content is left intact. On success the
+/// file is written and the post-write fingerprint is returned, so the frontend
+/// refreshes its stored fingerprint and a subsequent save matches (this is why
+/// p03's second save does not false-conflict).
+#[tauri::command]
+pub fn write_text_file_checked(
+    path: String,
+    content: String,
+    expected: Fingerprint,
+) -> Result<Fingerprint> {
+    let path = PathBuf::from(path);
+    let current = fingerprint_of(&path)?;
+    if current != expected {
+        return Err(Error::Conflict {
+            path: path.display().to_string(),
+        });
+    }
+    std::fs::write(&path, content).map_err(|e| Error::io(&path, e))?;
+    fingerprint_of(&path)
 }
 
 #[tauri::command]
