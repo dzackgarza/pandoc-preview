@@ -141,6 +141,14 @@
     action: (value: string) => Promise<void>;
   } | null>(null);
 
+  // Close-guard pending state (P50). True iff a close request hit a dirty buffer
+  // and is waiting on the user to resolve (Save / Discard / Cancel). While true
+  // the window close is blocked — the app stays alive over the unsaved work.
+  // Cleared when the user resolves the prompt. The recovery backstop (F1/P45)
+  // independently already holds the dirty bytes, so even a forced quit that never
+  // honors this prompt loses nothing.
+  let pendingClose = $state(false);
+
   let html = $state("");
   let log = $state("");
   let status = $state<RenderStatus>("idle");
@@ -196,6 +204,19 @@
     // loads its MathJax <script> from — local, never a CDN.
     mathjaxUrl = convertFileSrc(await resolveResource("resources/mathjax/tex-full-svg-a11y.min.js"));
     await listen<string>("menu", (event) => handleMenu(event.payload));
+
+    // P50 close guard: intercept the native window close. A dirty buffer blocks
+    // the close (preventDefault) and raises the resolution prompt via the SAME
+    // requestClose path the E2E hook drives; a clean buffer is left to close
+    // normally. The user clicking the window's close button hits exactly this.
+    await getCurrentWindow().onCloseRequested((event) => {
+      if (dirty && currentFile) {
+        event.preventDefault();
+        requestClose();
+      } else {
+        clearTimeout(recoveryTimer);
+      }
+    });
 
     // E2E proof harness. Present only when the proof orchestrator sets
     // VITE_PPE_E2E (scripts/proof-run.sh) — never in a user build. It exposes
@@ -279,6 +300,15 @@
           void forceSave();
         },
         isDirty: () => dirty,
+        // P50 close guard. requestClose runs the EXACT close-guard path the
+        // window's onCloseRequested handler runs (fire-and-forget); on a dirty
+        // buffer it blocks the close and raises the resolution prompt rather than
+        // tearing the webview down. pendingCloseGuard reports whether that prompt
+        // is currently unresolved.
+        requestClose: () => {
+          requestClose();
+        },
+        pendingCloseGuard: () => pendingClose,
         // P47 save-gate surface. newUntitled enters an identity-less buffer (no
         // currentFile). resolveSavePath supplies the durable destination the
         // native dialog would yield, making the buffer durable through the SAME
@@ -317,6 +347,7 @@
   });
 
   onDestroy(() => {
+    clearTimeout(recoveryTimer); // stop the pending recovery autosave (F1 nit)
     split?.dispose();
   });
 
@@ -550,6 +581,50 @@
     );
     if (wantsSave) await saveCurrent();
     return true;
+  }
+
+  // ---- close guard (P50) --------------------------------------------------
+  //
+  // The window's onCloseRequested handler and the E2E requestClose hook both run
+  // THIS path. With a dirty buffer the close is BLOCKED and a resolution prompt
+  // is raised (pendingClose) — the app stays alive over the unsaved work, never
+  // tearing the webview down out from under it. A clean buffer closes the window
+  // immediately. The recovery store (F1/P45) already holds the dirty bytes, so
+  // the lose-nothing guarantee survives even a forced quit that never honors the
+  // prompt.
+  function requestClose(): void {
+    if (dirty && currentFile) {
+      pendingClose = true; // raise the resolution prompt; block the close
+      return;
+    }
+    closeWindow();
+  }
+
+  // Actually tear the window down. The single real-close seam: reached only after
+  // the guard has decided the buffer is clean or the user resolved the prompt.
+  function closeWindow(): void {
+    clearTimeout(recoveryTimer); // stop the pending recovery autosave on close
+    void getCurrentWindow().destroy();
+  }
+
+  // Resolve a pending close prompt. "discard" closes despite the dirty buffer
+  // (the recovery backstop already holds it, so nothing is lost). "cancel" keeps
+  // the app open and the buffer intact. "save" persists then closes.
+  async function resolveClose(choice: "save" | "discard" | "cancel"): Promise<void> {
+    if (choice === "cancel") {
+      pendingClose = false;
+      return;
+    }
+    if (choice === "save") {
+      await saveCurrent();
+      if (dirty) {
+        // The save did not clear dirty (e.g. a conflict refusal surfaced its
+        // toast) — keep the prompt up rather than discarding the unsaved work.
+        return;
+      }
+    }
+    pendingClose = false;
+    closeWindow();
   }
 
   async function openFile(path: string) {
@@ -1162,6 +1237,37 @@
       commands={paletteCommands()}
       onClose={() => (commandPaletteOpen = false)}
     />
+  {/if}
+
+  {#if pendingClose && currentFile}
+    <!-- P50 close guard: a dirty buffer blocks the window close until resolved.
+         Save persists then closes; Discard closes (recovery already holds the
+         buffer — nothing is lost); Cancel keeps the app open. -->
+    <div
+      data-close-guard
+      class="fixed inset-0 z-40 flex items-start justify-center bg-black/40 pt-32"
+      role="presentation"
+    >
+      <div class="w-96 rounded-lg bg-white p-4 shadow-xl dark:bg-zinc-800">
+        <h2 class="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+          Save changes to {fileName(currentFile)} before closing?
+        </h2>
+        <div class="mt-3 flex justify-end gap-2">
+          <button
+            class="rounded px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            onclick={() => void resolveClose("cancel")}>Cancel</button
+          >
+          <button
+            class="rounded px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            onclick={() => void resolveClose("discard")}>Discard</button
+          >
+          <button
+            class="rounded bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
+            onclick={() => void resolveClose("save")}>Save</button
+          >
+        </div>
+      </div>
+    </div>
   {/if}
 
   {#if prompt}
