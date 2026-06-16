@@ -1,9 +1,12 @@
-# Proof Obligations (P1–P18)
+# Proof Obligations (P1–P50)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
 No internal behaviours, no forced error modes.
 An assertion is admissible only if it would fail on a plausibly broken app (unwired pandoc, frozen preview, UI-only fake state, junk output).
+
+P45–P50 (added 2026-06-16) cover the Tier 1 "Recovery and Git State" milestone, authored from [[recovery-and-git-state-requirements]].
+Recovery durability is the deepest priority in the app: the core guarantee is that no more than several seconds of work is ever permanently lost, recovery lives on the HOST FILESYSTEM (never browser storage), and corruption is treated as strictly worse than a crash.
 
 ## Shared witness fixture
 
@@ -56,6 +59,41 @@ A per-run temp project containing `demo.md` with:
   (Added 2026-06-13, revised same day from a single ☰ toolbar toggle to the VSCode activity-bar model so more view tabs can be added later.
   Revised 2026-06-16 (commit 1dbc698): the side bar no longer carries a separate "Explorer" label header — that was redundant with the file tree's own folder-name header, which now sits at the top of the side bar and names the active view. The obligation is that the side bar shows the active view's content, not that it carries a distinct view-label header.
   Save is a File menu / Ctrl+S item, not a toolbar button — see P3.)
+
+### Tier 1 — Recovery and Git State (P45–P50)
+
+- **P45 — Recovery captures unsaved edits durably.** While the user edits, the buffer is continuously captured to an app-owned recovery store ON THE HOST FILESYSTEM within several seconds, with no user action.
+  Append a unicode-discriminating sentence (e.g. `Café résumé — naïve ζ.`) to the buffer WITHOUT saving; within several seconds, an independent process reading the host-filesystem recovery store finds a copy byte-equal to the current buffer (the appended sentence included, unicode intact), AND the project file on disk is still byte-for-byte unchanged.
+  Admissible because it fails on a no-op autosave (recovery store never contains the sentence), an autosave that only uses browser storage (no host-filesystem copy exists for the independent reader), an autosave that fires only on Save (the project-file-unchanged clause forces a pre-save witness — recovery must precede any disk write), and a debounce too long to capture within several seconds.
+
+- **P46 — Repo-state machine reflects and mutates real git state.** The app continuously reflects whether the open file is noRepo / untracked / tracked via a prominent indicator, with one-click shortcuts OUT of every degraded state.
+  Open a file in a directory that is not a git repository: the indicator reads noRepo.
+  Invoke "initialize repository": a real repository appears on disk (an independent git query against the directory succeeds) and the indicator becomes untracked.
+  Invoke "start tracking": an independent git query reports the file as tracked, and the indicator becomes tracked.
+  Admissible because it fails on a UI-only indicator that never reads real git (the independent git query contradicts the displayed state), a state hardcoded to one value (it never transitions across the three observed states), and a "track" action that relabels the indicator without actually staging the file (the independent git query still reports it untracked).
+
+- **P47 — Path-consuming actions are gated on durable identity.** Save-in-place, export, and plugin-run on an identity-less (recovery-backed) buffer first resolve a real durable destination; until that destination is resolved, the action does not run.
+  With a buffer that has no real file identity, invoke export: NO artifact is produced and the downstream command does NOT run.
+  After a real destination is resolved, the file exists at exactly that destination, that destination becomes the live editable file going forward, and a later edit followed by Save writes to that same destination (independent disk read confirms).
+  A buffer that already has a durable identity saves with no prompt at all.
+  Admissible because it fails on an export that silently runs against the volatile buffer (an artifact appears with no destination resolved), a gate that auto-guesses a filename (a destination materializes that the user never chose), a gate that runs the downstream command anyway (the command's effect is observed despite no resolved destination), and a gate that re-prompts on an already-durable save (the no-prompt clause fails).
+
+- **P48 — Save refuses to clobber an externally modified file.** Before writing, the app compares a fingerprint captured at open/last-save against the current on-disk state; if the file changed underneath the editor, Save is refused LOUDLY and the external content is preserved.
+  Open a file; an independent process then rewrites it on disk with different content; the next in-app Save is refused with a VISIBLE error, the on-disk content remains exactly what the independent process wrote (the editor buffer did not win), and the buffer stays dirty.
+  An explicit overwrite/reload resolution offered after the refusal then succeeds — the refusal is a real gate, not a dead end.
+  Admissible because it fails on a blind overwrite (the editor buffer clobbers the external content), a never-captured fingerprint (no comparison happens, so Save proceeds), and a silent refusal (Save does nothing with no visible error, leaving the user unaware their work was not written).
+
+- **P49 — Launch restores the last session and offers newer recovery content.** On launch the app reopens the last file/project and window state from host-filesystem session state, and when the recovery store is ahead of the on-disk file, offers to restore that newer content.
+  Edit a file (recovery captures the unsaved change), then relaunch the app against the same host session-state and data locations: the editor reopens that file, a restore offer presents the newer recovery content, and accepting it loads the buffer including the unsaved edit (byte-equal to the recovery copy).
+  Admissible because it fails on a launch that opens blank or a hardcoded file (the last file is not reopened), a restore offer sourced from browser storage (no host-filesystem session state drives the reopen), and a restore that loads the stale on-disk content instead of the newer recovery buffer (the accepted buffer lacks the unsaved edit).
+
+- **P50 — Closing with a dirty buffer is guarded and loses nothing.** Closing the app (or switching files) with a dirty buffer prompts the user to resolve; the app does not close until the prompt is resolved; and because recovery already captured the buffer, no content is lost even on discard.
+  With a dirty buffer, request close: a resolution prompt fires and the app stays alive (it does not close out from under the unsaved work).
+  Independently, the host-filesystem recovery store holds the dirty content — the lose-nothing backstop that survives even a forced quit.
+  Admissible because it fails on a close that drops the dirty buffer with no prompt and no recovery copy (work vanishes silently), and a prompt-only guard that still loses content on force-quit (the prompt blocks a graceful close but the recovery backstop is missing, so a hard kill loses the buffer).
+
+These six map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+.
+The spec design itself belongs to the test author and implementer, not to this obligations document.
 
 ## Verification vehicle
 
