@@ -654,27 +654,20 @@
           class="flex w-60 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700"
         >
           {#if activeView === "explorer"}
-            <!-- File tree fills the space; the Outline below is a resizable,
-                 collapsible section. -->
+            <!-- File tree fills the space (it owns its own header/background);
+                 the Outline below is a resizable, collapsible section. -->
             <div class="flex min-h-0 grow flex-col">
-              <div
-                class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
-              >
-                Explorer
-              </div>
-              <div class="min-h-0 grow overflow-auto">
-                <FileTree
-                  {tree}
-                  {projectRoot}
-                  {currentFile}
-                  onOpen={(p) => void openFile(p)}
-                  onNewFile={promptNewFile}
-                  onNewFolder={promptNewFolder}
-                  onRename={promptRename}
-                  onDelete={(n) => void deleteNode(n)}
-                  onOpenFolder={() => void openFolder()}
-                />
-              </div>
+              <FileTree
+                {tree}
+                {projectRoot}
+                {currentFile}
+                onOpen={(p) => void openFile(p)}
+                onNewFile={promptNewFile}
+                onNewFolder={promptNewFolder}
+                onRename={promptRename}
+                onDelete={(n) => void deleteNode(n)}
+                onOpenFolder={() => void openFolder()}
+              />
             </div>
             {#if !outlineCollapsed}
               <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

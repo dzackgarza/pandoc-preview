@@ -14,18 +14,15 @@
   } = $props();
 </script>
 
-<div class="flex h-full flex-col">
-  <!-- Collapsible section header (chevron toggles the list). -->
+<div class="flex h-full flex-col bg-zinc-50 dark:bg-zinc-800">
+  <!-- Collapsible section header — matches the file tree's header chrome. -->
   <button
-    class="flex w-full shrink-0 items-center gap-1 px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700/40"
+    class="flex w-full shrink-0 items-center gap-1 border-b border-zinc-200 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700/40"
     onclick={onToggle}
     data-testid="outline-header"
   >
     <span class="w-3 text-[10px] text-zinc-400">{collapsed ? "▸" : "▾"}</span>
     <span>Outline</span>
-    {#if items.length > 0}
-      <span class="ml-auto text-[10px] font-normal text-zinc-400">{items.length}</span>
-    {/if}
   </button>
 
   {#if !collapsed}
