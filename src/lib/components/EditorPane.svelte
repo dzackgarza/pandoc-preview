@@ -21,7 +21,7 @@
     bracketMatching,
     syntaxHighlighting,
     defaultHighlightStyle,
-    syntaxTree,
+    ensureSyntaxTree,
   } from "@codemirror/language";
   import type { SyntaxNode } from "@lezer/common";
   import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -47,6 +47,7 @@
   } from "@codemirror/search";
   import { lintKeymap } from "@codemirror/lint";
   import { indentationMarkers } from "@replit/codemirror-indentation-markers";
+  import { markdownMath } from "../editor/markdown-math";
   import { oneDark } from "@codemirror/theme-one-dark";
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
   import type { Config } from "../types";
@@ -131,7 +132,11 @@
           // Line-number gutter first so it renders left of the fold gutter.
           gutterCompartment.of(init.gutter),
           ...editorBasics(),
-          markdown({ base: markdownLanguage, codeLanguages: languages }),
+          markdown({
+            base: markdownLanguage,
+            codeLanguages: languages,
+            extensions: [markdownMath],
+          }),
           keymap.of([
             { key: "Mod-b", run: () => (wrapSelection("**", "**"), true) },
             { key: "Mod-i", run: () => (wrapSelection("*", "*"), true) },
@@ -207,7 +212,13 @@
     const text = view.state.doc.toString();
     const idx = text.indexOf(needle);
     if (idx < 0) throw new Error(`syntaxAncestryAt: substring not found: ${needle}`);
-    const node = syntaxTree(view.state).resolveInner(idx + 1, 1);
+    // Force a full parse: with a mixed-language parser the cached tree may not
+    // yet reach the needle, so resolveInner would bottom out at the document
+    // root. ensureSyntaxTree drives parsing (incl. mounted sub-parsers) to the
+    // needle before we read it.
+    const tree = ensureSyntaxTree(view.state, idx + needle.length + 1, 5000);
+    if (!tree) throw new Error(`syntaxAncestryAt: parse did not reach ${needle}`);
+    const node = tree.resolveInner(idx + 1, 1);
     const names: string[] = [];
     for (let x: SyntaxNode | null = node; x; x = x.parent) names.push(x.name);
     return names;
