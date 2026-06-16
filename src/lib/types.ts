@@ -1,5 +1,10 @@
 // Mirrors the Rust structs in src-tauri/src/config.rs, fsops.rs, render.rs.
 
+/** An absolute path that Rust's config loader has validated to be an existing
+ *  directory (the `ExistingDir` newtype in config.rs). Over the wire it is a
+ *  path string; the brand records that its existence was enforced at load. */
+export type ExistingDir = string;
+
 export interface Config {
   general: {
     theme: "dark" | "light";
@@ -11,6 +16,14 @@ export interface Config {
   };
   preview: {
     debounce_ms: number;
+  };
+  // Alternative-explorer roots: the macros pane browses `styles`, the figures
+  // pane browses `figures`. Each is an ExistingDir — Rust's config loader
+  // validates the path exists and is a directory at load time (ExistingDir in
+  // config.rs), failing loud otherwise, so the UI receives only real directories.
+  directories: {
+    styles: ExistingDir;
+    figures: ExistingDir;
   };
   // Export targets are config-owned plugins: each entry is a complete
   // compilation command (export-plugins-contract.md). Keyed by plugin id;

@@ -48,6 +48,9 @@ link_dir() {
 
 link_dir "$PANDOC_CONFIG/filters" "$HOME/.pandoc/filters"
 link_dir "$PANDOC_CONFIG/templates" "$HOME/.pandoc/templates"
+# The styles directory the macros explorer pane browses (.sty macro/preamble
+# files). A user override is preserved.
+link_dir "$PANDOC_CONFIG/styles" "$HOME/.pandoc/styles"
 # The CSL citation style the preview command resolves citations against (the
 # alphabetic, hyperlinked style). A user override is preserved.
 link_dir "$PANDOC_CONFIG/csl" "$HOME/.pandoc/csl"

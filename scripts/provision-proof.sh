@@ -20,6 +20,12 @@ RUN_ID="$3"
 mkdir -p "$SPEC_DIR"/{home,xdg-config,xdg-cache,xdg-state}
 ABS_SPEC_DIR="$(realpath "$SPEC_DIR")"
 
+# The alternative-explorer roots (config [directories]) must EXIST: the config
+# loader's ExistingDir type rejects a missing path at load, so every spec's
+# hermetic home gets these dirs. install-assets later populates styles with the
+# vendored .sty files (when a spec runs it); the empty dir suffices to load.
+mkdir -p "$ABS_SPEC_DIR/home/.pandoc/styles" "$ABS_SPEC_DIR/home/.pandoc/figures"
+
 PANDOC_BIN="$(command -v pandoc)"
 
 # Absolute path to the committed P12 custom export plugin (an arbitrary
@@ -56,6 +62,20 @@ command = [
   "--pdf-engine=lualatex",
   "{input}", "--output", "{output}",
 ]
+EOF
+}
+
+# The [directories] table (required schema field): the alternative-explorer roots
+# under this spec's hermetic ~/.pandoc. Every valid synthesized config appends it
+# (the canonical witness config and write_valid_config both call this); without it
+# config-schema fails the ExistingDir/required-field check and the app never boots.
+emit_directories() {
+    local out="$1"
+    cat >> "$out" <<EOF
+
+[directories]
+styles = "$ABS_SPEC_DIR/home/.pandoc/styles"
+figures = "$ABS_SPEC_DIR/home/.pandoc/figures"
 EOF
 }
 
@@ -174,6 +194,7 @@ EOF
         # [export] is REQUIRED by the schema: every valid config carries the two
         # shipped default plugin tables (export-plugins-contract.md).
         emit_default_export_tables "$CONFIG_PATH"
+        emit_directories "$CONFIG_PATH"
         # The pandoc renderer is the active renderer (its checks are the doctor's
         # pandoc-executable/pandoc-invocation rows; D1/D5 assert on them).
         emit_pandoc_renderer "$CONFIG_PATH" "$PLUGINS_DIR" "$pandoc_path"
@@ -294,6 +315,7 @@ line_numbers = true
 debounce_ms = 200
 EOF
         emit_default_export_tables "$CONFIG_PATH"
+        emit_directories "$CONFIG_PATH"
         install_plugin_fixtures "$PLUGINS_DIR" pandoc-renderer
         env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
         cat >> "$CONFIG_PATH" <<EOF
@@ -346,6 +368,7 @@ line_numbers = true
 debounce_ms = 200
 EOF
         emit_default_export_tables "$CONFIG_PATH"
+        emit_directories "$CONFIG_PATH"
         # The filters/template must be installed so the command first-run.sh writes
         # during recovery is runnable (every recovery spec does this).
         env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
@@ -430,6 +453,7 @@ EOF
     # valid config carries the two shipped default plugin tables. Without them
     # the config would fail config-schema and the app would never boot.
     emit_default_export_tables "$CONFIG_PATH"
+    emit_directories "$CONFIG_PATH"
     # Renderer setup (Milestone B): the core is renderer-agnostic and delegates the
     # preview to the active renderer plugin. Default = pandoc renderer (keeps the
     # preview byte-identical to the old core path); p20 swaps in the generic

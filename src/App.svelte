@@ -37,6 +37,10 @@
   let projectRoot = $state<string | null>(null);
   let tree = $state<FileNode[]>([]);
   let currentFile = $state<string | null>(null);
+  // Alternative-explorer trees, rooted at the configured directories. They are
+  // fixed roots (config.directories), so they have no "Open Folder" affordance.
+  let stylesTree = $state<FileNode[]>([]);
+  let figuresTree = $state<FileNode[]>([]);
   let dirty = $state(false);
 
   // VSCode-style activity bar + collapsible side bar. `activeView` is the active
@@ -46,8 +50,15 @@
   type SidebarView = { id: string; title: string; icon: string };
   const EXPLORER_ICON =
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M2.5 3.5h4l1.5 1.5h5.5v8h-11z"/></svg>';
+  // Macros (styles) pane: a backslash command glyph. Figures pane: an image glyph.
+  const MACROS_ICON =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M5 3 3 13"/><path d="M9 3l3 5-3 5"/></svg>';
+  const FIGURES_ICON =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><rect x="2.5" y="3.5" width="11" height="9" rx="1"/><circle cx="6" cy="6.5" r="1"/><path d="m3.5 11 3-3 2.5 2.5L11 8.5l1.5 1.5"/></svg>';
   const SIDEBAR_VIEWS: SidebarView[] = [
     { id: "explorer", title: "Explorer", icon: EXPLORER_ICON },
+    { id: "macros", title: "Macros", icon: MACROS_ICON },
+    { id: "figures", title: "Figures", icon: FIGURES_ICON },
   ];
   let activeView = $state<string | null>("explorer");
 
@@ -117,6 +128,9 @@
     // screen: a misconfigured environment never reaches the webview.
     configPath = await api.getConfigPath();
     config = await api.getConfig();
+    // Load the fixed-root explorer trees (macros/figures) now that config — and
+    // thus directories.styles / directories.figures — is known.
+    await refreshAuxTrees();
     // Resolve the bundled local MathJax to its asset-protocol URL (decision A).
     // resolveResource gives the absolute path under the app resource dir;
     // convertFileSrc turns it into the asset-protocol URL the srcdoc preview
@@ -323,10 +337,32 @@
 
   // ---- project / file operations ------------------------------------------
 
+  // Refresh every explorer tree (project + the configured macros/figures roots),
+  // so a file op in any of them is reflected regardless of which is active.
   async function refreshTree() {
+    await refreshProjectTree();
+    await refreshAuxTrees();
+  }
+
+  async function refreshProjectTree() {
     if (!projectRoot) return;
     try {
       tree = await api.listTree(projectRoot);
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
+  // The macros (styles) and figures explorers point at fixed configured roots.
+  async function refreshAuxTrees() {
+    if (!config) return;
+    try {
+      stylesTree = await api.listTree(config.directories.styles);
+    } catch (e) {
+      toastError(String(e));
+    }
+    try {
+      figuresTree = await api.listTree(config.directories.figures);
     } catch (e) {
       toastError(String(e));
     }
@@ -702,6 +738,32 @@
                 onSelect={(line) => editor.goToLine(line)}
               />
             </div>
+          {:else if activeView === "macros"}
+            <!-- Macros pane: an alternative explorer fixed at the styles dir. -->
+            <FileTree
+              tree={stylesTree}
+              projectRoot={config?.directories.styles ?? null}
+              {currentFile}
+              onOpen={(p) => void openFile(p)}
+              onNewFile={promptNewFile}
+              onNewFolder={promptNewFolder}
+              onRename={promptRename}
+              onDelete={(n) => void deleteNode(n)}
+              onOpenFolder={() => {}}
+            />
+          {:else if activeView === "figures"}
+            <!-- Figures pane: an alternative explorer fixed at the figures dir. -->
+            <FileTree
+              tree={figuresTree}
+              projectRoot={config?.directories.figures ?? null}
+              {currentFile}
+              onOpen={(p) => void openFile(p)}
+              onNewFile={promptNewFile}
+              onNewFolder={promptNewFolder}
+              onRename={promptRename}
+              onDelete={(n) => void deleteNode(n)}
+              onOpenFolder={() => {}}
+            />
           {:else}
             <div
               class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"

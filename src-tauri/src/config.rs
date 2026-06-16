@@ -15,6 +15,11 @@ pub struct Config {
     pub general: General,
     pub editor: Editor,
     pub preview: Preview,
+    /// Alternative-explorer roots. The macros pane browses `styles`, the figures
+    /// pane browses `figures`. Required — both are explicit absolute paths (no
+    /// implicit `~/.pandoc` default); first-run generates them as
+    /// `~/.pandoc/styles` and `~/.pandoc/figures`.
+    pub directories: Directories,
     /// Export targets are config-owned plugins: each `[export.<id>]` table is a
     /// complete compilation command. The pandoc HTML/PDF invocations are merely
     /// the shipped default plugins (scripts/first-run.sh). Required — a config
@@ -42,6 +47,40 @@ pub struct Config {
     /// a render is attempted).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub renderer: Option<Renderer>,
+}
+
+/// The `[directories]` table: roots for the alternative-explorer panes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Directories {
+    /// Root directory the macros (styles) explorer pane browses.
+    pub styles: ExistingDir,
+    /// Root directory the figures explorer pane browses.
+    pub figures: ExistingDir,
+}
+
+/// A filesystem path that is required to exist and be a directory. The invariant
+/// is enforced at deserialize time, so any `ExistingDir` value names a real
+/// directory: a config pointing at a missing or non-directory path is a hard
+/// load error, never an empty-string check or a silently-accepted dangling path.
+/// Serializes transparently as its path string.
+#[derive(Debug, Clone, Serialize)]
+pub struct ExistingDir(PathBuf);
+
+impl<'de> Deserialize<'de> for ExistingDir {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let raw = String::deserialize(deserializer)?;
+        let path = PathBuf::from(&raw);
+        if !path.is_dir() {
+            return Err(serde::de::Error::custom(format!(
+                "path is not an existing directory: {raw}"
+            )));
+        }
+        Ok(ExistingDir(path))
+    }
 }
 
 /// The `[renderer]` table: which renderer plugin is active.
@@ -184,6 +223,9 @@ pub fn validate(config: &Config) -> Result<()> {
             "preview.debounce_ms must be between {DEBOUNCE_MS_MIN} and {DEBOUNCE_MS_MAX}, got {dbg}"
         )));
     }
+    // directories.styles / directories.figures are ExistingDir: existence and
+    // dir-ness are enforced at deserialize time (a missing path is a hard load
+    // error), so there is nothing weaker to re-check here.
     if config.export.is_empty() {
         return Err(Error::InvalidArgument(
             "at least one [export.<id>] plugin must be configured".into(),

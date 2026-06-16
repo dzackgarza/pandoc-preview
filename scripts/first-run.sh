@@ -104,6 +104,10 @@ while IFS= read -r line; do
 done <<<"$EXTRA_ARGS_RAW"
 
 FILTERS_DIR="$HOME/.pandoc/filters"
+# Roots for the alternative-explorer panes: the macros pane browses the styles
+# directory, the figures pane browses the figures directory.
+STYLES_DIR="$HOME/.pandoc/styles"
+FIGURES_DIR="$HOME/.pandoc/figures"
 PREVIEW_TEMPLATE="$HOME/.pandoc/templates/pandoc_preview_template.html"
 BIBLIOGRAPHY="$HOME/.pandoc/bib/references.bib"
 # The shipped alphabetic citation style (hyperlinked [Label] citations).
@@ -160,6 +164,12 @@ line_numbers = $LINE_NUMBERS
 # Math is always MathJax (no option): KaTeX cannot cover pandoc's full
 # math syntax range.
 debounce_ms = $DEBOUNCE_MS
+
+# Roots for the alternative-explorer panes (the macros pane browses styles, the
+# figures pane browses figures). Both are required absolute paths.
+[directories]
+styles = "$STYLES_DIR"
+figures = "$FIGURES_DIR"
 
 # The app is renderer-agnostic: the preview is produced by a renderer plugin
 # discovered from the plugins directory below. The shipped pandoc renderer houses
