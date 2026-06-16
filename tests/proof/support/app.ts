@@ -172,7 +172,22 @@ export interface RenderedToken {
   tag: string;
   color: string;
   base: string;
+  fontStyle: string;
+  fontWeight: string;
+  baseStyle: string;
+  baseWeight: string;
   text: string;
+}
+
+// True when the token is visibly syntax-highlighted: CodeMirror wraps it in a
+// <span> AND at least one visual property (colour, italic, or weight) differs
+// from the editor's base prose styling. Robust across constructs that recolour
+// (headings, code) and those that don't (emphasis→italic, strong→bold).
+export function isHighlighted(t: RenderedToken): boolean {
+  return (
+    t.tag === 'SPAN' &&
+    (t.color !== t.base || t.fontStyle !== t.baseStyle || t.fontWeight !== t.baseWeight)
+  );
 }
 
 export async function renderedToken(
@@ -182,14 +197,16 @@ export async function renderedToken(
   const raw = await page.evaluate(`(() => {
     const content = document.querySelector('.cm-editor .cm-content');
     if (!content) return null;
-    const base = getComputedStyle(content).color;
+    const cs = getComputedStyle(content);
+    const base = cs.color, baseStyle = cs.fontStyle, baseWeight = cs.fontWeight;
     const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
       const i = node.nodeValue.indexOf(${JSON.stringify(needle)});
       if (i >= 0) {
         const el = node.parentElement;
-        return JSON.stringify({ tag: el.tagName, color: getComputedStyle(el).color, base, text: node.nodeValue });
+        const es = getComputedStyle(el);
+        return JSON.stringify({ tag: el.tagName, color: es.color, base, fontStyle: es.fontStyle, fontWeight: es.fontWeight, baseStyle, baseWeight, text: node.nodeValue });
       }
     }
     return null;
