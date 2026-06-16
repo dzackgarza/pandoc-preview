@@ -18,14 +18,12 @@
     codeFolding,
     foldKeymap,
     indentOnInput,
-    bracketMatching,
     syntaxHighlighting,
     defaultHighlightStyle,
     ensureSyntaxTree,
   } from "@codemirror/language";
   import type { SyntaxNode } from "@lezer/common";
-  import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-  import { languages } from "@codemirror/language-data";
+  import { latex, latexLanguage } from "codemirror-lang-latex";
   import {
     history,
     historyKeymap,
@@ -34,12 +32,7 @@
     redo,
     selectAll,
   } from "@codemirror/commands";
-  import {
-    autocompletion,
-    completionKeymap,
-    closeBrackets,
-    closeBracketsKeymap,
-  } from "@codemirror/autocomplete";
+  import { completionKeymap, closeBracketsKeymap } from "@codemirror/autocomplete";
   import {
     openSearchPanel,
     searchKeymap,
@@ -47,7 +40,6 @@
   } from "@codemirror/search";
   import { lintKeymap } from "@codemirror/lint";
   import { indentationMarkers } from "@replit/codemirror-indentation-markers";
-  import { markdownMath } from "../editor/markdown-math";
   import { oneDark } from "@codemirror/theme-one-dark";
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
   import type { Config } from "../types";
@@ -81,8 +73,9 @@
   // numbers are owned solely by gutterCompartment so the line_numbers setting
   // can both add AND remove the gutter. basicSetup's lineNumbers lived outside
   // any compartment, which made the toggle inert (the gutter could never be
-  // removed). Everything else mirrors basicSetup so undo history, code folding,
-  // bracket matching, autocomplete, and search keep working.
+  // removed). Bracket matching, bracket-closing, and autocomplete are omitted
+  // here because latex() provides latex-aware versions (latexBracketMatching,
+  // closeBrackets, command completion); duplicating them would double-insert.
   const editorBasics = () => [
     highlightActiveLineGutter(),
     highlightSpecialChars(),
@@ -95,9 +88,6 @@
     EditorState.allowMultipleSelections.of(true),
     indentOnInput(),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-    bracketMatching(),
-    closeBrackets(),
-    autocompletion(),
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
@@ -132,10 +122,15 @@
           // Line-number gutter first so it renders left of the fold gutter.
           gutterCompartment.of(init.gutter),
           ...editorBasics(),
-          markdown({
-            base: markdownLanguage,
-            codeLanguages: languages,
-            extensions: [markdownMath],
+          // codemirror-lang-latex is the editor's language: it highlights every
+          // math mode ($ $$ \( \[ environments), folds, auto-closes envs/
+          // brackets, completes commands, and lints. Only checkMissingDocumentEnv
+          // is disabled — it fires on every markdown file (no \begin{document}).
+          latex({ linter: { checkMissingDocumentEnv: false } }),
+          // The buffer is a markdown document, so Ctrl+/ comments with <!-- -->
+          // rather than the latex grammar's default '%' line comment.
+          latexLanguage.data.of({
+            commentTokens: { block: { open: "<!--", close: "-->" } },
           }),
           keymap.of([
             { key: "Mod-b", run: () => (wrapSelection("**", "**"), true) },
