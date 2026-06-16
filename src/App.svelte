@@ -318,6 +318,14 @@
         insertMatrix: (rows: number, cols: number) => {
           insertMatrix(rows, cols);
         },
+        // P58: insert a cols × rows pandoc pipe table at the cursor through the
+        // SAME insertTable handler the insertion bar's table builder invokes
+        // (buildTableSnippet(cols, rows) → editor.insertSnippet →
+        // snippetCompletion). Fire-and-forget; the `${}` tabstop lands the cursor
+        // in the table body.
+        insertTable: (cols: number, rows: number) => {
+          insertTable(cols, rows);
+        },
         cursorOffset: () => editor.cursorOffset(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
@@ -1109,6 +1117,40 @@
    * builder and the E2E bridge both route through here. */
   function insertMatrix(rows: number, cols: number) {
     editor.insertSnippet(buildMatrixSnippet(rows, cols));
+  }
+
+  /** Build a pandoc pipe-table snippet of EXACTLY `cols` columns × `rows` body
+   * rows. Every row is written with BOTH a leading and a trailing `|`, so a row
+   * of C columns carries EXACTLY C+1 pipes. The block, in order: one header row,
+   * one alignment separator row (each cell a `---` dash-run, the marker that
+   * makes a pipe table valid), then `rows` body rows. The single `${}` tabstop
+   * sits in the first header cell so the cursor lands inside the table body after
+   * expansion — the same tabstop convention buildMatrixSnippet, diagramScaffolds,
+   * and divFenceSnippet use. */
+  function buildTableSnippet(cols: number, rows: number): string {
+    if (!Number.isInteger(cols) || cols < 1) {
+      throw new Error(`table cols must be a positive integer, got ${cols}`);
+    }
+    if (!Number.isInteger(rows) || rows < 1) {
+      throw new Error(`table rows must be a positive integer, got ${rows}`);
+    }
+    const pipeRow = (cells: string[]) => `| ${cells.join(" | ")} |`;
+    const header = pipeRow(
+      Array.from({ length: cols }, (_, c) => (c === 0 ? "${}" : " ")),
+    );
+    const separator = pipeRow(Array.from({ length: cols }, () => "---"));
+    const body = Array.from({ length: rows }, () =>
+      pipeRow(Array.from({ length: cols }, () => " ")),
+    );
+    return [header, separator, ...body].join("\n");
+  }
+
+  /** Insert a `cols` × `rows` pandoc pipe table at the cursor through the SAME
+   * insertSnippet path the env insert, diagram insert, and matrix insert use, so
+   * the `${}` tabstop lands the cursor in the table body. The insertion bar's
+   * table builder and the E2E bridge both route through here. */
+  function insertTable(cols: number, rows: number) {
+    editor.insertSnippet(buildTableSnippet(cols, rows));
   }
 
   function handleMenu(id: string) {
