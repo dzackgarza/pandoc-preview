@@ -310,6 +310,14 @@
         insertDiagram: (kind: "tikz" | "tikzcd") => {
           insertDiagram(kind);
         },
+        // P57: insert a rows × cols pmatrix at the cursor through the SAME
+        // insertMatrix handler the insertion bar's matrix builder invokes
+        // (buildMatrixSnippet(rows, cols) → editor.insertSnippet →
+        // snippetCompletion). Fire-and-forget; the `${}` tabstop lands the cursor
+        // in the matrix body.
+        insertMatrix: (rows: number, cols: number) => {
+          insertMatrix(rows, cols);
+        },
         cursorOffset: () => editor.cursorOffset(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
@@ -1068,6 +1076,39 @@
    * tabstop lands the cursor in the diagram body. */
   function insertDiagram(kind: "tikz" | "tikzcd") {
     editor.insertSnippet(diagramScaffolds[kind]);
+  }
+
+  /** Build a `pmatrix` snippet of EXACTLY `rows` × `cols` shape. Each row holds
+   * `cols` cells joined by the `&` column separator (C-1 ampersands per row);
+   * rows are joined by the `\\` row separator (R-1 separators between R rows,
+   * none after the last). The single `${}` tabstop sits in the first cell so the
+   * cursor lands inside the matrix body after expansion — the same tabstop
+   * convention diagramScaffolds and divFenceSnippet use. */
+  function buildMatrixSnippet(rows: number, cols: number): string {
+    if (!Number.isInteger(rows) || rows < 1) {
+      throw new Error(`matrix rows must be a positive integer, got ${rows}`);
+    }
+    if (!Number.isInteger(cols) || cols < 1) {
+      throw new Error(`matrix cols must be a positive integer, got ${cols}`);
+    }
+    const lines: string[] = [];
+    for (let r = 0; r < rows; r++) {
+      const cells: string[] = [];
+      for (let c = 0; c < cols; c++) {
+        cells.push(r === 0 && c === 0 ? "${}" : " ");
+      }
+      const sep = r < rows - 1 ? " \\\\" : "";
+      lines.push(cells.join("&") + sep);
+    }
+    return `\\begin{pmatrix}\n${lines.join("\n")}\n\\end{pmatrix}`;
+  }
+
+  /** Insert a `rows` × `cols` pmatrix at the cursor through the SAME
+   * insertSnippet path the env insert and diagram insert use, so the `${}`
+   * tabstop lands the cursor in the matrix body. The insertion bar's matrix
+   * builder and the E2E bridge both route through here. */
+  function insertMatrix(rows: number, cols: number) {
+    editor.insertSnippet(buildMatrixSnippet(rows, cols));
   }
 
   function handleMenu(id: string) {
