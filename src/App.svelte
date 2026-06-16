@@ -58,8 +58,11 @@
   }
   let settingsOpen = $state(false);
   let commandPaletteOpen = $state(false);
-  // Document outline (headings + fenced divs) for the sidebar's Outline panel.
+  // Document outline (headings + fenced divs) for the sidebar's Outline panel,
+  // a resizable/collapsible section below the file tree.
   let outline = $state<OutlineItem[]>([]);
+  let outlineCollapsed = $state(false);
+  let outlineHeight = $state(220);
   // Per-file collapsed fold ranges, loaded on mount and persisted on file switch.
   let foldState = $state<FoldState>({});
   let prompt = $state<{
@@ -214,6 +217,23 @@
     wordCount = content.split(/\s+/).filter(Boolean).length;
     outline = editor.getOutline();
     scheduleRender(content);
+  }
+
+  // Drag the divider above the Outline panel to resize it (file tree takes the
+  // rest). Listeners on window so the drag continues outside the handle.
+  function startOutlineResize(e: MouseEvent) {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = outlineHeight;
+    const onMove = (ev: MouseEvent) => {
+      outlineHeight = Math.max(80, Math.min(startH + (startY - ev.clientY), 560));
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
   }
 
   // Persist the current file's collapsed folds to fold-state.json. Called before
@@ -634,10 +654,9 @@
           class="flex w-60 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700"
         >
           {#if activeView === "explorer"}
-            <!-- Explorer: file tree (top half) + document outline (bottom half). -->
-            <div
-              class="flex min-h-0 flex-1 flex-col border-b border-zinc-200 dark:border-zinc-700"
-            >
+            <!-- File tree fills the space; the Outline below is a resizable,
+                 collapsible section. -->
+            <div class="flex min-h-0 grow flex-col">
               <div
                 class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
               >
@@ -657,9 +676,23 @@
                 />
               </div>
             </div>
-            <div class="min-h-0 flex-1 overflow-hidden">
+            {#if !outlineCollapsed}
+              <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+              <div
+                class="h-1 shrink-0 cursor-row-resize hover:bg-sky-400/60"
+                role="separator"
+                aria-orientation="horizontal"
+                onmousedown={startOutlineResize}
+              ></div>
+            {/if}
+            <div
+              class="flex shrink-0 flex-col overflow-hidden border-t border-zinc-200 dark:border-zinc-700"
+              style={outlineCollapsed ? "" : `height: ${outlineHeight}px`}
+            >
               <OutlinePanel
                 items={outline}
+                collapsed={outlineCollapsed}
+                onToggle={() => (outlineCollapsed = !outlineCollapsed)}
                 onSelect={(line) => editor.goToLine(line)}
               />
             </div>

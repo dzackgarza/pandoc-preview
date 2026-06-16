@@ -52,5 +52,21 @@ test('Outline lists headings and divs (with titles); clicking navigates', async 
   expect(clicked).toBe(true);
   await tauriPage.waitForFunction(`window.__PPE_E2E__.cursorLine() === 13`, 10_000);
 
+  // The outline is a collapsible section: its header toggles the list.
+  await tauriPage.evaluate(
+    `(() => { document.querySelector('[data-testid="outline-header"]').click(); return null; })()`,
+  );
+  await tauriPage.waitForFunction(
+    `!document.querySelector('[data-testid="outline"]')`,
+    5_000,
+  );
+  await tauriPage.evaluate(
+    `(() => { document.querySelector('[data-testid="outline-header"]').click(); return null; })()`,
+  );
+  await tauriPage.waitForFunction(
+    `!!document.querySelector('[data-testid="outline"]')`,
+    5_000,
+  );
+
   recordObservation({ spec: manifest.spec, name: 'outline-panel', value: labels.length });
 });

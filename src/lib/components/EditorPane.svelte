@@ -21,8 +21,8 @@
     syntaxHighlighting,
     defaultHighlightStyle,
     ensureSyntaxTree,
-    foldAll as cmFoldAll,
     unfoldAll as cmUnfoldAll,
+    foldable,
     foldedRanges,
     foldEffect,
   } from "@codemirror/language";
@@ -224,9 +224,20 @@
     return names;
   }
 
-  /** Fold every foldable range (command palette: Fold All). */
+  /** Fold every foldable range at EVERY nesting level (command palette: Fold
+   * All). CodeMirror's foldAll only folds top-level ranges, so nested divs/math
+   * inside a folded heading would stay open; instead we collect a fold for every
+   * foldable line and dispatch them together. */
   export function foldAllFolds() {
-    cmFoldAll(view);
+    ensureSyntaxTree(view.state, view.state.doc.length, 5000);
+    const doc = view.state.doc;
+    const effects = [];
+    for (let i = 1; i <= doc.lines; i++) {
+      const line = doc.line(i);
+      const r = foldable(view.state, line.from, line.to);
+      if (r) effects.push(foldEffect.of(r));
+    }
+    if (effects.length) view.dispatch({ effects });
   }
 
   /** Unfold every folded range (command palette: Unfold All). */
