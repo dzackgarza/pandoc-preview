@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P54)
+# Proof Obligations (P1–P57)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -113,6 +113,20 @@ P51–P54 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the
   Type an ordinary correctly-spelled English word: it is NOT marked.
   Type a mathematical term that ordinary English spellcheck would flag but which is present in the user's custom math dictionary: it is NOT marked, proving the custom dictionary is in effect.
   Admissible because it fails when there is no spellcheck (nothing is marked, so the gibberish token is not flagged), on a checker that marks everything (the correctly-spelled English word and the dictionary math term are both wrongly flagged), on a checker that marks nothing (the gibberish token is never flagged), and on a checker WITHOUT the custom math dictionary (the math term is wrongly marked even though the dictionary lists it).
+
+### Milestone G — Insertion Bar (P55–P57)
+
+P55–P57 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: the editor's top edit bar is a math-research INSERTION bar (not a generic formatting toolbar) that inserts amsthm environments, tikz/tikzcd diagram scaffolds, and matrix environments of a chosen shape at the cursor.
+
+- **P55 — Insertion bar replaces the formatting toolbar and inserts amsthm environments.** The editor's top edit bar is a math-research INSERTION bar; the generic H1/bold/italic formatting toolbar is gone.
+  Selecting a named amsthm environment (e.g. `theorem`) from the bar inserts that environment's fenced-div scaffold (`:::{.theorem} … :::`) at the cursor, leaving the cursor at the environment body.
+  Admissible because it fails if the old formatting toolbar is still present or its buttons insert markup like `**bold**` (the bar is still a formatting toolbar, not an insertion bar), on a no-op insert (selecting the environment leaves the buffer unchanged so no scaffold appears at the cursor), and if the wrong environment is inserted (selecting `theorem` inserts a fenced div whose class is not `theorem`).
+
+- **P56 — tikz/tikzcd scaffold insert.** Selecting a tikz or tikzcd scaffold from the insertion bar inserts the corresponding diagram skeleton at the cursor, leaving the cursor inside the diagram body.
+  Admissible because it fails on a no-op insert (selecting the scaffold leaves the buffer unchanged so no skeleton appears at the cursor), on a wrong-kind insert (a tikz skeleton is inserted when tikzcd was chosen, or a tikzcd skeleton when tikz was chosen), and when the cursor is not placed inside the diagram body after the insert.
+
+- **P57 — Matrix builder.** Choosing matrix dimensions (rows×cols) on the insertion bar inserts a LaTeX matrix environment of exactly that shape at the cursor.
+  Admissible because it fails on a no-op insert (choosing dimensions leaves the buffer unchanged so no matrix appears at the cursor), on a fixed-size insert that ignores the chosen dimensions (a different rows×cols matrix is inserted than the one chosen), and on a malformed matrix (the inserted environment has the wrong number of rows or columns for the chosen shape).
 
 These map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
 
