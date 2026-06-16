@@ -6,7 +6,10 @@ import { loadRunManifest } from "./support/run-manifest";
 import { recordObservation } from "./support/observations";
 import {
   openAndSelectDemo,
+  appendAtEnd,
   editorText,
+  currentFile,
+  waitForHarness,
   waitForPreview,
   sleep,
 } from "./support/app";
@@ -20,6 +23,14 @@ import {
 // to satisfy with any pre-edit recovery commit.
 const UNIQUE = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 const SENTENCE = `Discard-durability ζ café ${UNIQUE}`;
+
+// A second UNIQUE run for the UNTITLED-buffer discard case. The untitled buffer
+// has NO file identity (currentFile() is empty), so it captures recovery under
+// the fixed UNTITLED_SESSION_ID. The unicode run (ζ, é) plus the unique suffix
+// make the asserted bytes impossible to satisfy with any pre-edit capture and
+// force the recovery store to preserve the bytes losslessly.
+const UNTITLED_UNIQUE = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+const UNTITLED_SENTENCE = `Untitled discard ζ café ${UNTITLED_UNIQUE}`;
 
 // ── P50 — Closing with a dirty buffer is guarded and loses nothing ──────────
 //
@@ -328,6 +339,140 @@ test("closing with a dirty buffer prompts, stays alive, and the final edit survi
   recordObservation({
     spec: manifest.spec,
     name: "discard-durable-buffer-bytes",
+    value: bufferBytes.length,
+  });
+});
+
+// ── P50 — Discarding an UNTITLED dirty buffer must also lose nothing ─────────
+//
+// The titled case above proves the lose-nothing-on-discard backstop for a buffer
+// that HAS a file identity. But P50's "no content is lost even on discard" is not
+// qualified by whether the buffer has a path: an UNTITLED (P47 identity-less)
+// buffer the user has been typing into is exactly the work most at risk, because
+// it has never been saved anywhere. recoveryTarget()/scheduleRecovery DO capture
+// untitled buffers (under UNTITLED_SESSION_ID), so the debounced autosave is
+// armed by an untitled edit just as it is for a titled one.
+//
+// THE BUG THIS CASE KILLS — the discard path does NOT flush an untitled buffer:
+//   closeWindow() awaits flushRecovery() before destroy. flushRecovery first
+//   clearTimeout()s the pending debounced capture, THEN early-returns on
+//   `!dirty || !currentFile`. For an untitled buffer currentFile is null, so the
+//   flush cancels the pending autosave and returns WITHOUT committing the buffer
+//   — the window is then destroyed (onDestroy also clears the timer). Because the
+//   untitled edit was made well within RECOVERY_DEBOUNCE_MS (1500ms), the
+//   debounced capture had not yet fired, so the unique sentence NEVER reaches the
+//   host-fs recovery store. An independent post-discard reader finds no
+//   byte-equal blob — the final untitled edit is lost.
+//
+// This case therefore KILLS:
+//   * a flushRecovery that skips untitled buffers (the `!currentFile`
+//     early-return) — the live bug;
+//   * any close path that cancels the untitled pending capture (clearTimeout on
+//     the autosave timer) before it reaches the host fs and then destroys the
+//     window.
+//
+// CONTRACT SURFACES (must already exist; if absent that is a DIFFERENT problem):
+//   * __PPE_E2E__.newUntitled() (P47) — enter an identity-less buffer; after it
+//     currentFile() is empty and the editor holds an editable buffer.
+//   * __PPE_E2E__.resolveClose('discard') (P50) — run the SAME discard path the
+//     prompt's Discard button runs, then tear the window down (fire-and-forget;
+//     the eval connection drops on teardown — tolerated).
+//
+// RED EXPECTATION today: the durability assertion (the recovery store holds a
+// byte-equal copy of the untitled dirty buffer AFTER discard) FAILS — the bytes
+// are MISSING because flushRecovery skipped the untitled buffer and the debounced
+// capture was cancelled by the close. The newUntitled entry, the empty
+// currentFile observation, the dirty observation, and the discard surface all
+// succeed first, so the failure lands squarely on the durability backstop, not a
+// missing hook.
+test("discarding an untitled (identity-less) dirty buffer still leaves the final edit in the recovery store", async ({
+  tauriPage,
+}) => {
+  const manifest = loadRunManifest();
+  await waitForHarness(tauriPage);
+
+  // Enter an identity-less buffer (P47). currentFile() becomes empty: this is the
+  // buffer whose final edit the discard must NOT lose, even though it was never
+  // saved to any path.
+  await tauriPage.evaluate(
+    `(() => { window.__PPE_E2E__.newUntitled(); return null; })()`,
+  );
+  await tauriPage.waitForFunction(
+    `(window.__PPE_E2E__.currentFile() ?? '') === ''`,
+    10_000,
+  );
+  expect(await currentFile(tauriPage)).toBe("");
+
+  // Append the UNIQUE unicode sentence through the real editor pipeline — this
+  // fires the same docChanged path user typing fires, marks the buffer dirty, and
+  // (re)arms the debounced recovery autosave timer under the untitled session.
+  await appendAtEnd(tauriPage, UNTITLED_SENTENCE);
+
+  // The exact bytes the durability backstop must equal: the untitled buffer
+  // contents after the append. Read the live buffer (no save anywhere).
+  const untitledBuffer = await editorText(tauriPage);
+  expect(untitledBuffer.includes(UNTITLED_SENTENCE)).toBe(true);
+  const bufferBytes = Buffer.from(untitledBuffer, "utf-8");
+
+  // Synchronously confirm the preconditions while the bridge is still reachable:
+  // the buffer is dirty (so a debounced recovery capture is armed) and the
+  // discard-resolution surface exists. If discardSurface were false this would be
+  // a missing-hook precondition failure (a DIFFERENT problem), not the durability
+  // bug — so it is asserted explicitly before the discard.
+  const pre = (await tauriPage.evaluate(
+    `(() => {
+      const E = window.__PPE_E2E__;
+      return {
+        identityless: (E.currentFile() ?? '') === '',
+        dirtyBefore: E.isDirty(),
+        discardSurface: typeof E.resolveClose === 'function',
+      };
+    })()`,
+  )) as { identityless: boolean; dirtyBefore: boolean; discardSurface: boolean };
+  expect(pre.identityless).toBe(true);
+  expect(pre.dirtyBefore).toBe(true);
+  expect(pre.discardSurface).toBe(true);
+
+  // Resolve the (untitled) close by DISCARDING — milliseconds after the append,
+  // one round-trip, far inside the 1500ms recovery debounce, so the autosave
+  // timer armed by the append is STILL PENDING. resolveClose('discard') runs the
+  // SAME discard path the prompt's Discard button runs and then tears the window
+  // down; the teardown drops the eval connection, so this is fire-and-forget and
+  // the rejection is tolerated (the window is gone — exactly the force-quit-on-
+  // discard the backstop must survive).
+  try {
+    await tauriPage.evaluate(
+      `(() => { window.__PPE_E2E__.resolveClose("discard"); return null; })()`,
+    );
+  } catch {
+    // The discard destroyed the window; the eval connection drop is expected.
+  }
+
+  // (c) The lose-nothing-on-discard backstop for the UNTITLED buffer, proven
+  // INDEPENDENTLY and AFTER the discard: an independent host process reading the
+  // host-fs recovery store finds a copy byte-equal to the untitled dirty buffer.
+  // Poll up to ~10s. RED today: flushRecovery skips the untitled buffer
+  // (`!currentFile` early-return) after cancelling the pending debounced capture,
+  // and the window is destroyed before the unique sentence ever reaches the host
+  // fs — so no byte-equal blob is written and the poll exhausts. The final
+  // untitled edit is lost.
+  let recovered = false;
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    if (
+      plainFileEqualsBuffer(manifest.xdgDataHome, bufferBytes) ||
+      gitBlobEqualsBuffer(manifest.xdgDataHome, bufferBytes)
+    ) {
+      recovered = true;
+      break;
+    }
+    await sleep(500);
+  }
+  expect(recovered).toBe(true);
+
+  recordObservation({
+    spec: manifest.spec,
+    name: "untitled-discard-durable-buffer-bytes",
     value: bufferBytes.length,
   });
 });
