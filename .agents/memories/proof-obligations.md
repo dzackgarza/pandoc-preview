@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P57)
+# Proof Obligations (P1–P61)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -114,9 +114,9 @@ P51–P54 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the
   Type a mathematical term that ordinary English spellcheck would flag but which is present in the user's custom math dictionary: it is NOT marked, proving the custom dictionary is in effect.
   Admissible because it fails when there is no spellcheck (nothing is marked, so the gibberish token is not flagged), on a checker that marks everything (the correctly-spelled English word and the dictionary math term are both wrongly flagged), on a checker that marks nothing (the gibberish token is never flagged), and on a checker WITHOUT the custom math dictionary (the math term is wrongly marked even though the dictionary lists it).
 
-### Milestone G — Insertion Bar (P55–P57)
+### Milestone G — Insertion Bar (P55–P61)
 
-P55–P57 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: the editor's top edit bar is a math-research INSERTION bar (not a generic formatting toolbar) that inserts amsthm environments, tikz/tikzcd diagram scaffolds, and matrix environments of a chosen shape at the cursor.
+P55–P61 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: the editor's top edit bar is a math-research INSERTION bar (not a generic formatting toolbar) that inserts amsthm environments, tikz/tikzcd diagram scaffolds, matrix environments of a chosen shape, pandoc pipe-tables of a chosen shape, config-declared snippets via a bar dropdown, language-tagged fenced code blocks via a dropdown, and complete footnotes (marker plus definition) via a modal — all at the cursor.
 
 - **P55 — Insertion bar replaces the formatting toolbar and inserts amsthm environments.** The editor's top edit bar is a math-research INSERTION bar; the generic H1/bold/italic formatting toolbar is gone.
   Selecting a named amsthm environment (e.g. `theorem`) from the bar inserts that environment's fenced-div scaffold (`:::{.theorem} … :::`) at the cursor, leaving the cursor at the environment body.
@@ -127,6 +127,20 @@ P55–P57 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: th
 
 - **P57 — Matrix builder.** Choosing matrix dimensions (rows×cols) on the insertion bar inserts a LaTeX matrix environment of exactly that shape at the cursor.
   Admissible because it fails on a no-op insert (choosing dimensions leaves the buffer unchanged so no matrix appears at the cursor), on a fixed-size insert that ignores the chosen dimensions (a different rows×cols matrix is inserted than the one chosen), and on a malformed matrix (the inserted environment has the wrong number of rows or columns for the chosen shape).
+
+- **P58 — Table builder.** Choosing table dimensions (cols×body-rows) on the insertion bar inserts a pandoc pipe-table of exactly that shape at the cursor: a header row, an alignment separator row, and the chosen number of body rows, where every row carries the chosen number of `|`-delimited cells.
+  Admissible because it fails on a no-op insert (choosing dimensions leaves the buffer unchanged so no table appears at the cursor), on a fixed-shape insert that ignores the chosen dimensions (a different cols×body-rows table is inserted than the one chosen), and on a missing or malformed separator row (without the alignment separator row the inserted text is not a valid pandoc pipe-table).
+
+- **P59 — Snippet dropdown on the bar.** The insertion bar surfaces the config-declared snippet dictionary's triggers in a dropdown; choosing a trigger from that dropdown inserts the snippet's expanded BODY (not its literal trigger string) at the cursor, with the cursor landing at the snippet's declared tabstop.
+  The dropdown's contents come from the config-declared snippet dictionary, so pointing config at a different dictionary makes the bar's dropdown surface that dictionary's triggers.
+  Admissible because it fails on an empty or hardcoded dropdown that ignores the config dictionary (the dictionary's triggers never appear as dropdown entries), on literal-trigger insertion (choosing the entry leaves the trigger string in the buffer rather than the expanded body, and the cursor is not at the tabstop), and on an ignored dictionary (config points at a dictionary whose triggers are never surfaced in the dropdown).
+  This is distinct from P52, which proves the autocomplete-popup path (typing a trigger in the buffer opens the completion tooltip); P59 proves the BAR-dropdown path (selecting a trigger from the insertion bar's dropdown).
+
+- **P60 — Code-block-type dropdown.** Choosing a language from the insertion bar's code-block-type dropdown inserts a fenced code block tagged with that language at the cursor: an opening fence carrying the chosen language tag (```` ```<lang> ````) and a matching closing fence, with the cursor placed inside the block.
+  Admissible because it fails on a no-op insert (choosing a language leaves the buffer unchanged so no fenced block appears at the cursor), on an untagged block that ignores the chosen language (the opening fence carries no language tag), and on a wrong language tag (the inserted fence is tagged with a language other than the one chosen).
+
+- **P61 — Footnote modal.** A footnote action on the insertion bar opens a modal in which the user types the footnote body; on confirm, a COMPLETE footnote is inserted — a reference marker (`[^id]`) at the cursor AND a footnote definition line (`[^id]: <body>`) whose body is exactly the text the user typed.
+  Admissible because it fails on a no-op insert (confirming the modal leaves the buffer unchanged so neither marker nor definition appears), on a marker-only insert with no definition (the reference marker is placed but the typed body is lost because no `[^id]:` definition line is inserted), on a plain-text insert (the typed body lands in the buffer as ordinary text rather than as a footnote marker-plus-definition pair), and on a body mismatch (the inserted definition's body is not byte-equal to what the user typed in the modal).
 
 These map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
 
