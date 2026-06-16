@@ -60,7 +60,10 @@ test('Ctrl-P palette: Fold All folds, Unfold All unfolds', async ({ tauriPage })
     `window.__PPE_E2E__.getFoldedRanges().length > 0`,
     10_000,
   );
-  expect(await foldCount(tauriPage)).toBeGreaterThan(0);
+  // Fold All collapses EVERY foldable range, not just the top level: outline.md
+  // has 2 headings and 2 fenced divs, so all 4 fold (so unfolding the heading
+  // reveals its children still folded).
+  expect(await foldCount(tauriPage)).toBe(4);
 
   await pressCtrlP(tauriPage);
   await tauriPage.waitForFunction(
