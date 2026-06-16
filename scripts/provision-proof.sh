@@ -17,7 +17,7 @@ SPEC_DIR="$1"
 SPEC="$2"
 RUN_ID="$3"
 
-mkdir -p "$SPEC_DIR"/{home,xdg-config,xdg-cache,xdg-state}
+mkdir -p "$SPEC_DIR"/{home,xdg-config,xdg-cache,xdg-state,xdg-data}
 ABS_SPEC_DIR="$(realpath "$SPEC_DIR")"
 
 # The alternative-explorer roots (config [directories]) must EXIST: the config
@@ -563,12 +563,13 @@ jq -n \
     --arg spec "$SPEC" \
     --arg runDir "$ABS_SPEC_DIR" \
     --arg xdgConfigHome "$ABS_SPEC_DIR/xdg-config" \
+    --arg xdgDataHome "$ABS_SPEC_DIR/xdg-data" \
     --arg configPath "$CONFIG_PATH" \
     --arg project "$PROJECT_DIR" \
     --arg demoFile "$DEMO_FILE" \
     '{runId: $runId, spec: $spec, runDir: $runDir,
-      xdgConfigHome: $xdgConfigHome, configPath: $configPath,
-      project: $project, demoFile: $demoFile}' \
+      xdgConfigHome: $xdgConfigHome, xdgDataHome: $xdgDataHome,
+      configPath: $configPath, project: $project, demoFile: $demoFile}' \
     > "$SPEC_DIR/manifest.json"
 
 echo "provisioned $SPEC at $ABS_SPEC_DIR"

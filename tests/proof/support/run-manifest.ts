@@ -9,6 +9,11 @@ export interface RunManifest {
   spec: string;
   runDir: string;
   xdgConfigHome: string;
+  // The hermetic XDG_DATA_HOME the app under test was launched with. The app
+  // resolves its host-filesystem recovery store under an XDG data location
+  // (dirs::data_dir() == $XDG_DATA_HOME), so a spec reads the recovery store by
+  // searching this per-run tree — never the user's real ~/.local/share (P45).
+  xdgDataHome: string;
   configPath: string;
   project: string;
   demoFile: string;
@@ -38,6 +43,7 @@ export function loadRunManifest(): RunManifest {
     spec: requireString(raw.spec, 'spec'),
     runDir: requireString(raw.runDir, 'runDir'),
     xdgConfigHome: requireString(raw.xdgConfigHome, 'xdgConfigHome'),
+    xdgDataHome: requireString(raw.xdgDataHome, 'xdgDataHome'),
     configPath: requireString(raw.configPath, 'configPath'),
     project: requireString(raw.project, 'project'),
     demoFile: requireString(raw.demoFile, 'demoFile'),

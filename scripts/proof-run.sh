@@ -196,6 +196,7 @@ run_app_spec() {
         XDG_STATE_HOME="$abs_spec_dir/xdg-state" \
         XDG_CONFIG_HOME="$abs_spec_dir/xdg-config" \
         XDG_CACHE_HOME="$abs_spec_dir/xdg-cache" \
+        XDG_DATA_HOME="$abs_spec_dir/xdg-data" \
         PANDOC_RESOURCE_PATH="$abs_spec_dir/home/.pandoc/figures" \
         "$APP_BIN" > "$spec_dir/app.log" 2>&1 &
     local app_pgid=$!
