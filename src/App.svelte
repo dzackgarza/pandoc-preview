@@ -303,6 +303,13 @@
         insertEnvironment: (env: string) => {
           insertEnvironment(env);
         },
+        // P56: insert a diagram KIND's scaffold at the cursor through the SAME
+        // insertDiagram handler the insertion bar's diagram controls invoke
+        // (diagramScaffolds[kind] → editor.insertSnippet → snippetCompletion).
+        // Fire-and-forget; the `${}` tabstop lands the cursor in the diagram body.
+        insertDiagram: (kind: "tikz" | "tikzcd") => {
+          insertDiagram(kind);
+        },
         cursorOffset: () => editor.cursorOffset(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
@@ -1046,6 +1053,23 @@
     editor.insertSnippet(divFenceSnippet(env));
   }
 
+  /** Inert diagram scaffold bodies for the insertion bar's diagram controls.
+   * tikzcd = commutative-diagram environment, tikz = general tikzpicture. The
+   * `${}` final tabstop sits on the body line so the cursor lands inside the
+   * diagram after expansion. These are inert text — no tikz toolchain knowledge
+   * lives in the app; the bodies are just the named LaTeX environment skeletons. */
+  const diagramScaffolds: Readonly<Record<"tikz" | "tikzcd", string>> = {
+    tikzcd: "\\begin{tikzcd}\n${}\n\\end{tikzcd}",
+    tikz: "\\begin{tikzpicture}\n${}\n\\end{tikzpicture}",
+  };
+
+  /** Insert a diagram KIND's scaffold at the cursor through the SAME
+   * insertSnippet path the env insert and completion accept use, so the `${}`
+   * tabstop lands the cursor in the diagram body. */
+  function insertDiagram(kind: "tikz" | "tikzcd") {
+    editor.insertSnippet(diagramScaffolds[kind]);
+  }
+
   function handleMenu(id: string) {
     // Export menu items carry the plugin id: "export:<id>". One item per
     // configured [export.<id>] plugin; the handler runs the same export command
@@ -1139,7 +1163,11 @@
 
 {#if config}
   <div class="flex h-full flex-col">
-    <InsertionBar onInsertEnvironment={insertEnvironment} fileOpen={currentFile !== null} />
+    <InsertionBar
+      onInsertEnvironment={insertEnvironment}
+      onInsertDiagram={insertDiagram}
+      fileOpen={currentFile !== null}
+    />
 
     <div class="flex min-h-0 grow">
       <!-- VSCode-style activity bar: always visible, holds the view controls. -->
