@@ -5,8 +5,7 @@ Each is an exact, externally observable happy-path state — real display, real 
 No internal behaviours, no forced error modes.
 An assertion is admissible only if it would fail on a plausibly broken app (unwired pandoc, frozen preview, UI-only fake state, junk output).
 
-P45–P50 (added 2026-06-16) cover the Tier 1 "Recovery and Git State" milestone, authored from [[recovery-and-git-state-requirements]].
-Recovery durability is the deepest priority in the app: the core guarantee is that no more than several seconds of work is ever permanently lost, recovery lives on the HOST FILESYSTEM (never browser storage), and corruption is treated as strictly worse than a crash.
+P45–P50 (added 2026-06-16) cover the Tier 1 "Recovery and Git State" milestone, authored from [[recovery-and-git-state-requirements]]. Recovery durability is the deepest priority in the app: the core guarantee is that no more than several seconds of work is ever permanently lost, recovery lives on the HOST FILESYSTEM (never browser storage), and corruption is treated as strictly worse than a crash.
 
 ## Shared witness fixture
 
@@ -57,7 +56,8 @@ A per-run temp project containing `demo.md` with:
   One view now: Explorer (file tree), control `[data-view="explorer"]`; side bar `[data-pane="sidebar"]` showing that view's content.
   The Explorer control exists; the side bar starts open showing the Explorer view (the file tree, listing the open project's files); clicking the active view's control collapses the side bar while the activity bar PERSISTS (the control stays, VSCode-style); clicking again reopens it.
   (Added 2026-06-13, revised same day from a single ☰ toolbar toggle to the VSCode activity-bar model so more view tabs can be added later.
-  Revised 2026-06-16 (commit 1dbc698): the side bar no longer carries a separate "Explorer" label header — that was redundant with the file tree's own folder-name header, which now sits at the top of the side bar and names the active view. The obligation is that the side bar shows the active view's content, not that it carries a distinct view-label header.
+  Revised 2026-06-16 (commit 1dbc698): the side bar no longer carries a separate "Explorer" label header — that was redundant with the file tree's own folder-name header, which now sits at the top of the side bar and names the active view.
+  The obligation is that the side bar shows the active view's content, not that it carries a distinct view-label header.
   Save is a File menu / Ctrl+S item, not a toolbar button — see P3.)
 
 ### Tier 1 — Recovery and Git State (P45–P50)
@@ -92,8 +92,7 @@ A per-run temp project containing `demo.md` with:
   Independently, the host-filesystem recovery store holds the dirty content — the lose-nothing backstop that survives even a forced quit.
   Admissible because it fails on a close that drops the dirty buffer with no prompt and no recovery copy (work vanishes silently), and a prompt-only guard that still loses content on force-quit (the prompt blocks a graceful close but the recovery backstop is missing, so a hard kill loses the buffer).
 
-These six map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+.
-The spec design itself belongs to the test author and implementer, not to this obligations document.
+These six map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
 
 ## Verification vehicle
 

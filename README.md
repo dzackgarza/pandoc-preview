@@ -27,14 +27,8 @@ Settings changed in-app (Tools → Settings…) are written back to the same fil
 
 ## Pandoc assets (pinned dependency)
 
-The pandoc assets (templates, filters, CSL, bibliography) are owned by
-[`pandoc-config`](https://github.com/dzackgarza/pandoc-config) and consumed here at
-a **commit-pinned** version via the git submodule at
-`src-tauri/resources/vendor/pandoc-config`. `just deps` runs
-`git submodule update --init`; `scripts/install-assets.sh` symlinks them into
-`~/.pandoc` (preserving any real-file override there). The pandoc-renderer plugin
-(`src-tauri/resources/vendor/plugins/`) and the MathJax bundle
-(`src-tauri/resources/mathjax/`) are app-owned and not part of the submodule.
+The pandoc assets (templates, filters, CSL, bibliography) are owned by [`pandoc-config`](https://github.com/dzackgarza/pandoc-config) and consumed here at a **commit-pinned** version via the git submodule at `src-tauri/resources/vendor/pandoc-config`. `just deps` runs `git submodule update --init`; `scripts/install-assets.sh` symlinks them into `~/.pandoc` (preserving any real-file override there).
+The pandoc-renderer plugin (`src-tauri/resources/vendor/plugins/`) and the MathJax bundle (`src-tauri/resources/mathjax/`) are app-owned and not part of the submodule.
 
 Bump the pin with:
 
