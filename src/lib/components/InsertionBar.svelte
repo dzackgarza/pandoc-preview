@@ -4,10 +4,16 @@
   let {
     onInsertEnvironment,
     onInsertDiagram,
+    onInsertSnippet,
+    snippetTriggers,
     fileOpen,
   }: {
     onInsertEnvironment: (env: string) => void;
     onInsertDiagram: (kind: "tikz" | "tikzcd") => void;
+    // Choose a config-dictionary snippet trigger from the bar dropdown (P59).
+    onInsertSnippet: (trigger: string) => void;
+    // The config-owned snippet dictionary's triggers the dropdown surfaces (P59).
+    snippetTriggers: readonly string[];
     fileOpen: boolean;
   } = $props();
 
@@ -42,4 +48,25 @@
       {kind}
     </button>
   {/each}
+  {#if snippetTriggers.length > 0}
+    <span class="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-600"></span>
+    <select
+      class="rounded px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200 disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-zinc-700"
+      title="Insert a snippet from the configured dictionary"
+      data-insert-snippet
+      disabled={!fileOpen}
+      value=""
+      onchange={(e) => {
+        const trigger = e.currentTarget.value;
+        if (trigger.length === 0) return;
+        onInsertSnippet(trigger);
+        e.currentTarget.value = "";
+      }}
+    >
+      <option value="" disabled>snippet</option>
+      {#each snippetTriggers as trigger (trigger)}
+        <option value={trigger}>{trigger}</option>
+      {/each}
+    </select>
+  {/if}
 </div>

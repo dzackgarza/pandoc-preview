@@ -179,6 +179,10 @@
   // targets to be $state; it is assigned once on mount and never reactively read.
   let editor = $state<EditorPane>()!;
 
+  // The config-owned snippet dictionary's triggers, surfaced by the insertion
+  // bar's snippet dropdown (P59). Populated once EditorPane parses the dict.
+  let snippetTriggers = $state<string[]>([]);
+
   // dockview split layout (editor | preview). Built on mount once the
   // container element exists; the sidebar is a sibling OUTSIDE this splitview.
   let splitContainer = $state<HTMLDivElement | undefined>(undefined);
@@ -325,6 +329,18 @@
         // in the table body.
         insertTable: (cols: number, rows: number) => {
           insertTable(cols, rows);
+        },
+        // P59: the bar's snippet dropdown. snippetTriggers returns the triggers
+        // the dropdown surfaces — the keys of the RETAINED config-owned snippet
+        // dictionary (the SAME map P52's popup completion source is built from),
+        // so a different config dict surfaces a different set. insertSnippetByTrigger
+        // is the choose-a-trigger action: it expands that entry's BODY at the cursor
+        // through the SAME editor.insertSnippet path the env/diagram/matrix/table
+        // controls use (→ runSnippet → snippetCompletion), honouring the `$0`
+        // tabstop. Fire-and-forget.
+        snippetTriggers: () => editor.snippetTriggers(),
+        insertSnippetByTrigger: (trigger: string) => {
+          editor.insertSnippetByTrigger(trigger);
         },
         cursorOffset: () => editor.cursorOffset(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
@@ -1249,6 +1265,8 @@
     <InsertionBar
       onInsertEnvironment={insertEnvironment}
       onInsertDiagram={insertDiagram}
+      onInsertSnippet={(trigger) => editor.insertSnippetByTrigger(trigger)}
+      {snippetTriggers}
       fileOpen={currentFile !== null}
     />
 
@@ -1366,6 +1384,9 @@
               onCursor={(l, c) => {
                 cursorLine = l;
                 cursorCol = c;
+              }}
+              onSnippetsLoaded={(triggers) => {
+                snippetTriggers = triggers;
               }}
             />
           </div>

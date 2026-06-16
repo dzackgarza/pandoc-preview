@@ -65,6 +65,7 @@
     parseSnippetDictionary,
     snippetCompletionSource,
     runSnippet,
+    type SnippetMap,
   } from "../editor/snippets";
   import {
     parseWordlist,
@@ -76,10 +77,14 @@
     config,
     onChange,
     onCursor,
+    onSnippetsLoaded,
   }: {
     config: Config;
     onChange: (content: string) => void;
     onCursor: (line: number, col: number) => void;
+    // Fired once the config-owned snippet dictionary is parsed, handing the bar
+    // its triggers so the dropdown can surface them (P59).
+    onSnippetsLoaded: (triggers: string[]) => void;
   } = $props();
 
   let host: HTMLDivElement;
@@ -102,6 +107,14 @@
   // the editor. CM6 consults sources in order and merges their results, so a new
   // source surfaces alongside the LaTeX completions instead of displacing them.
   const appCompletionSources: CompletionSource[] = [];
+
+  // The parsed config-owned snippet dictionary (P52), RETAINED so the insertion
+  // bar can surface its triggers in a dropdown (P59). It is the SAME map the
+  // completion source is built from — both views of one config-owned dictionary,
+  // so pointing config at a different dict changes both the popup completions and
+  // the bar dropdown. Empty until the post-mount registration parses the dict
+  // (absent path → stays empty).
+  let snippetMap: SnippetMap = {};
 
   const delegatingCompletionSource: CompletionSource = (
     context: CompletionContext,
@@ -245,7 +258,11 @@
     if (!path) return;
     const file = await readTextFile(path);
     const map = parseSnippetDictionary(file.content);
+    // Retain the parsed map for the bar dropdown (P59) AND build the popup
+    // completion source from it (P52) — one config-owned dictionary, two views.
+    snippetMap = map;
     appCompletionSources.push(snippetCompletionSource(map));
+    onSnippetsLoaded(Object.keys(map));
   }
 
   /** Build the spellchecker over the vendored English base dictionary plus the
@@ -376,6 +393,27 @@
   export function insertSnippet(body: string) {
     runSnippet(view, body);
     view.focus();
+  }
+
+  /** The triggers the insertion bar's snippet dropdown surfaces (P59): the keys
+   * of the RETAINED config-owned snippet dictionary (the SAME map P52's popup
+   * completion source is built from). A different config dict surfaces a
+   * different trigger set; an absent dict surfaces none. */
+  export function snippetTriggers(): string[] {
+    return Object.keys(snippetMap);
+  }
+
+  /** Insert the expanded BODY of the dictionary entry named by `trigger` at the
+   * cursor, routing through the SAME insertSnippet → runSnippet → snippetCompletion
+   * path the env/diagram/matrix/table bar controls use, so the `$0` tabstop lands
+   * the cursor in the body (P59). The choose-a-trigger action of the bar dropdown.
+   * An unknown trigger is a hard error — the dropdown only offers retained keys. */
+  export function insertSnippetByTrigger(trigger: string) {
+    const body = snippetMap[trigger];
+    if (typeof body !== "string") {
+      throw new Error(`unknown snippet trigger: ${JSON.stringify(trigger)}`);
+    }
+    insertSnippet(body);
   }
 
   /** E2E introspection: the language-tree node names covering the first
