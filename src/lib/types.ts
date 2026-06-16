@@ -59,3 +59,13 @@ export interface PluginResult {
 }
 
 export type RenderStatus = "idle" | "rendering" | "ok" | "error";
+
+/** A collapsed fold range (character offsets). Mirrors the Rust `Fold` in
+ * config.rs; persisted per file in fold-state.json. */
+export interface Fold {
+  from: number;
+  to: number;
+}
+
+/** file path -> its collapsed fold ranges. */
+export type FoldState = Record<string, Fold[]>;

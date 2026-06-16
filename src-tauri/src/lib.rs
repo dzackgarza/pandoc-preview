@@ -85,6 +85,12 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, config: &config::Config) -> tauri:
                 .accelerator("F11")
                 .build(app)?,
         )
+        .separator()
+        // No accelerators: the webview owns Ctrl-P (command palette) and the
+        // fold keymap; a registered menu accelerator would shadow them on Linux.
+        .item(&MenuItemBuilder::with_id("command_palette", "Command Palette").build(app)?)
+        .item(&MenuItemBuilder::with_id("fold_all", "Fold All").build(app)?)
+        .item(&MenuItemBuilder::with_id("unfold_all", "Unfold All").build(app)?)
         .build()?;
 
     let tools = SubmenuBuilder::new(app, "Tools")
@@ -154,6 +160,8 @@ pub fn run() {
             config::get_config,
             config::save_config,
             config::get_config_path,
+            config::read_fold_state,
+            config::save_fold_state,
             fsops::list_tree,
             fsops::read_text_file,
             fsops::write_text_file,

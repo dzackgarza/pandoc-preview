@@ -21,9 +21,14 @@
     syntaxHighlighting,
     defaultHighlightStyle,
     ensureSyntaxTree,
+    foldAll as cmFoldAll,
+    unfoldAll as cmUnfoldAll,
+    foldedRanges,
+    foldEffect,
   } from "@codemirror/language";
   import type { SyntaxNode } from "@lezer/common";
-  import { latex, latexLanguage } from "codemirror-lang-latex";
+  import { latex, latexLanguage, markdownOutline } from "codemirror-lang-latex";
+  import type { OutlineItem } from "codemirror-lang-latex";
   import {
     history,
     historyKeymap,
@@ -217,6 +222,52 @@
     const names: string[] = [];
     for (let x: SyntaxNode | null = node; x; x = x.parent) names.push(x.name);
     return names;
+  }
+
+  /** Fold every foldable range (command palette: Fold All). */
+  export function foldAllFolds() {
+    cmFoldAll(view);
+  }
+
+  /** Unfold every folded range (command palette: Unfold All). */
+  export function unfoldAllFolds() {
+    cmUnfoldAll(view);
+  }
+
+  /** Document outline: headings and fenced divs, for the outline panel. */
+  export function getOutline(): OutlineItem[] {
+    return markdownOutline(view.state.doc.toString());
+  }
+
+  /** Move the cursor to (and scroll to) the start of a 1-based line. */
+  export function goToLine(line: number) {
+    const n = Math.max(1, Math.min(line, view.state.doc.lines));
+    const pos = view.state.doc.line(n).from;
+    view.dispatch({
+      selection: EditorSelection.cursor(pos),
+      effects: EditorView.scrollIntoView(pos, { y: "center" }),
+    });
+    view.focus();
+  }
+
+  /** The currently-collapsed fold ranges (char offsets), for persistence. */
+  export function getFoldedRanges(): Array<{ from: number; to: number }> {
+    const out: Array<{ from: number; to: number }> = [];
+    foldedRanges(view.state).between(0, view.state.doc.length, (from, to) => {
+      out.push({ from, to });
+    });
+    return out;
+  }
+
+  /** Restore previously-collapsed fold ranges (no-op for ranges outside the doc). */
+  export function setFoldedRanges(ranges: Array<{ from: number; to: number }>) {
+    if (!ranges.length) return;
+    ensureSyntaxTree(view.state, view.state.doc.length, 5000);
+    const len = view.state.doc.length;
+    const effects = ranges
+      .filter((r) => r.from >= 0 && r.to <= len && r.from < r.to)
+      .map((r) => foldEffect.of({ from: r.from, to: r.to }));
+    if (effects.length) view.dispatch({ effects });
   }
 
   /** Wrap the current selection (or insert a placeholder) with markdown markers. */

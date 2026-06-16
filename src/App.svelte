@@ -7,7 +7,14 @@
   import { ask, open, save as saveDialog } from "@tauri-apps/plugin-dialog";
 
   import * as api from "./lib/api";
-  import type { Config, FileNode, PluginResult, RenderStatus } from "./lib/types";
+  import type {
+    Config,
+    FileNode,
+    FoldState,
+    PluginResult,
+    RenderStatus,
+  } from "./lib/types";
+  import type { OutlineItem } from "codemirror-lang-latex";
   import { toastError, toastInfo, toastSuccess } from "./lib/toast.svelte";
   import { createSplitLayout, type SplitLayout } from "./lib/dockview";
   import { portal } from "./lib/portal";
@@ -21,6 +28,8 @@
   import StatusBar from "./lib/components/StatusBar.svelte";
   import Toasts from "./lib/components/Toasts.svelte";
   import Toolbar from "./lib/components/Toolbar.svelte";
+  import OutlinePanel from "./lib/components/OutlinePanel.svelte";
+  import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
 
   let config = $state<Config | null>(null);
   let configPath = $state("");
@@ -48,6 +57,11 @@
     activeView = activeView === id ? null : id;
   }
   let settingsOpen = $state(false);
+  let commandPaletteOpen = $state(false);
+  // Document outline (headings + fenced divs) for the sidebar's Outline panel.
+  let outline = $state<OutlineItem[]>([]);
+  // Per-file collapsed fold ranges, loaded on mount and persisted on file switch.
+  let foldState = $state<FoldState>({});
   let prompt = $state<{
     title: string;
     initial: string;
@@ -152,10 +166,19 @@
           editor.appendAtEnd(text);
         },
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
+        getOutline: () => editor.getOutline(),
+        goToLine: (line: number) => editor.goToLine(line),
+        foldAll: () => editor.foldAllFolds(),
+        unfoldAll: () => editor.unfoldAllFolds(),
+        getFoldedRanges: () => editor.getFoldedRanges(),
+        cursorLine: () => cursorLine,
         currentFile: () => currentFile,
         configFontSize: () => config?.editor.font_size ?? null,
       };
     }
+
+    // Load any persisted per-file fold state so reopening a file restores folds.
+    foldState = await api.readFoldState();
 
     // Build the editor|preview splitview now that the container is in the DOM.
     // The portal action mounts the editor/preview wrappers into the pane
@@ -189,7 +212,46 @@
   function onEditorChange(content: string) {
     dirty = true;
     wordCount = content.split(/\s+/).filter(Boolean).length;
+    outline = editor.getOutline();
     scheduleRender(content);
+  }
+
+  // Persist the current file's collapsed folds to fold-state.json. Called before
+  // switching/closing a file and on save, so reopening restores the folds.
+  async function persistCurrentFoldState() {
+    if (!currentFile) return;
+    foldState[currentFile] = editor.getFoldedRanges();
+    await api.saveFoldState(foldState);
+  }
+
+  // The Ctrl-P command palette's operations, routed to the existing handlers.
+  function paletteCommands(): { id: string; label: string; run: () => void }[] {
+    const cmds = [
+      { id: "fold_all", label: "Fold All", run: () => editor.foldAllFolds() },
+      { id: "unfold_all", label: "Unfold All", run: () => editor.unfoldAllFolds() },
+      { id: "save", label: "Save", run: () => void saveCurrent() },
+      { id: "save_as", label: "Save As…", run: () => void saveAs() },
+      { id: "find", label: "Find", run: () => void editor.command("find") },
+      {
+        id: "new_file",
+        label: "New File",
+        run: () =>
+          projectRoot ? promptNewFile(projectRoot) : toastError("Open a folder first."),
+      },
+      { id: "open_folder", label: "Open Folder…", run: () => void openFolder() },
+      {
+        id: "toggle_sidebar",
+        label: "Toggle Sidebar",
+        run: () => (activeView = activeView ? null : "explorer"),
+      },
+      { id: "show_preview", label: "Show Preview", run: () => (activeTab = "preview") },
+      { id: "show_log", label: "Show Log", run: () => (activeTab = "log") },
+      { id: "settings", label: "Settings", run: () => (settingsOpen = true) },
+    ];
+    for (const [id, plugin] of Object.entries(config?.export ?? {})) {
+      cmds.push({ id: `export:${id}`, label: `Export: ${plugin.label}`, run: () => void exportDoc(id) });
+    }
+    return cmds;
   }
 
   function scheduleRender(content: string) {
@@ -269,10 +331,13 @@
   async function openFile(path: string) {
     if (path === currentFile) return;
     if (!(await resolveDirty())) return;
+    await persistCurrentFoldState(); // save the outgoing file's folds first
     try {
       const content = await api.readTextFile(path);
       currentFile = path;
       editor.setContent(content);
+      editor.setFoldedRanges(foldState[path] ?? []); // restore this file's folds
+      outline = editor.getOutline();
       dirty = false;
       wordCount = content.split(/\s+/).filter(Boolean).length;
       void doRender(content);
@@ -286,6 +351,7 @@
     try {
       await api.writeTextFile(currentFile, editor.getContent());
       dirty = false;
+      await persistCurrentFoldState();
       toastSuccess(`Saved ${fileName(currentFile)}`);
     } catch (e) {
       toastError(String(e));
@@ -502,6 +568,15 @@
       case "settings":
         settingsOpen = true;
         break;
+      case "command_palette":
+        commandPaletteOpen = true;
+        break;
+      case "fold_all":
+        editor.foldAllFolds();
+        break;
+      case "unfold_all":
+        editor.unfoldAllFolds();
+        break;
       default:
         toastError(`Unhandled menu item: ${id}`);
     }
@@ -531,6 +606,15 @@
   // during a sash drag, so the preview iframe cannot swallow the drag stream.
 </script>
 
+<svelte:window
+  onkeydown={(e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+      e.preventDefault();
+      commandPaletteOpen = true;
+    }
+  }}
+/>
+
 {#if config}
   <div class="flex h-full flex-col">
     <Toolbar onAction={toolbarAction} fileOpen={currentFile !== null} />
@@ -549,26 +633,43 @@
           data-pane="sidebar"
           class="flex w-60 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700"
         >
-          <div
-            class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
-          >
-            {SIDEBAR_VIEWS.find((v) => v.id === activeView)?.title}
-          </div>
-          <div class="min-h-0 grow overflow-auto">
-            {#if activeView === "explorer"}
-              <FileTree
-                {tree}
-                {projectRoot}
-                {currentFile}
-                onOpen={(p) => void openFile(p)}
-                onNewFile={promptNewFile}
-                onNewFolder={promptNewFolder}
-                onRename={promptRename}
-                onDelete={(n) => void deleteNode(n)}
-                onOpenFolder={() => void openFolder()}
+          {#if activeView === "explorer"}
+            <!-- Explorer: file tree (top half) + document outline (bottom half). -->
+            <div
+              class="flex min-h-0 flex-1 flex-col border-b border-zinc-200 dark:border-zinc-700"
+            >
+              <div
+                class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+              >
+                Explorer
+              </div>
+              <div class="min-h-0 grow overflow-auto">
+                <FileTree
+                  {tree}
+                  {projectRoot}
+                  {currentFile}
+                  onOpen={(p) => void openFile(p)}
+                  onNewFile={promptNewFile}
+                  onNewFolder={promptNewFolder}
+                  onRename={promptRename}
+                  onDelete={(n) => void deleteNode(n)}
+                  onOpenFolder={() => void openFolder()}
+                />
+              </div>
+            </div>
+            <div class="min-h-0 flex-1 overflow-hidden">
+              <OutlinePanel
+                items={outline}
+                onSelect={(line) => editor.goToLine(line)}
               />
-            {/if}
-          </div>
+            </div>
+          {:else}
+            <div
+              class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+            >
+              {SIDEBAR_VIEWS.find((v) => v.id === activeView)?.title}
+            </div>
+          {/if}
         </div>
       {/if}
 
@@ -628,6 +729,13 @@
       {configPath}
       onSave={(next) => void saveSettings(next)}
       onCancel={() => (settingsOpen = false)}
+    />
+  {/if}
+
+  {#if commandPaletteOpen}
+    <CommandPaletteModal
+      commands={paletteCommands()}
+      onClose={() => (commandPaletteOpen = false)}
     />
   {/if}
 

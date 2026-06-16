@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use indexmap::IndexMap;
@@ -256,4 +257,45 @@ pub fn save_config(config: Config) -> Result<()> {
 #[tauri::command]
 pub fn get_config_path() -> Result<String> {
     Ok(config_path()?.display().to_string())
+}
+
+/// A collapsed fold range (character offsets), persisted per file.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Fold {
+    pub from: usize,
+    pub to: usize,
+}
+
+fn fold_state_path() -> Result<PathBuf> {
+    let base = dirs::config_dir().ok_or_else(|| {
+        Error::InvalidArgument("no XDG config directory could be determined".into())
+    })?;
+    Ok(base.join("pandoc-preview").join("fold-state.json"))
+}
+
+/// Per-file fold state: file path -> collapsed fold ranges. A missing file is a
+/// legitimate first-run state and returns an empty map; IO/parse errors fail loud.
+#[tauri::command]
+pub fn read_fold_state() -> Result<HashMap<String, Vec<Fold>>> {
+    let path = fold_state_path()?;
+    if !path.is_file() {
+        return Ok(HashMap::new());
+    }
+    let raw = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    serde_json::from_str(&raw).map_err(|e| Error::ConfigInvalid {
+        path: path.display().to_string(),
+        message: e.to_string(),
+    })
+}
+
+#[tauri::command]
+pub fn save_fold_state(state: HashMap<String, Vec<Fold>>) -> Result<()> {
+    let path = fold_state_path()?;
+    let parent = path.parent().expect("fold-state path always has a parent");
+    std::fs::create_dir_all(parent).map_err(|e| Error::io(parent, e))?;
+    let raw = serde_json::to_string_pretty(&state).map_err(|e| Error::ConfigInvalid {
+        path: path.display().to_string(),
+        message: e.to_string(),
+    })?;
+    std::fs::write(&path, raw).map_err(|e| Error::io(&path, e))
 }

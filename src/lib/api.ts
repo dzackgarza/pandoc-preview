@@ -1,9 +1,21 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Config, ExportResult, FileNode, PluginResult, RenderResult } from "./types";
+import type {
+  Config,
+  ExportResult,
+  FileNode,
+  FoldState,
+  PluginResult,
+  RenderResult,
+} from "./types";
 
 export const getConfig = () => invoke<Config>("get_config");
 export const saveConfig = (config: Config) => invoke<void>("save_config", { config });
 export const getConfigPath = () => invoke<string>("get_config_path");
+
+// Per-file collapsed fold ranges, persisted in fold-state.json (XDG config dir).
+export const readFoldState = () => invoke<FoldState>("read_fold_state");
+export const saveFoldState = (state: FoldState) =>
+  invoke<void>("save_fold_state", { state });
 
 export const listTree = (root: string) => invoke<FileNode[]>("list_tree", { root });
 export const readTextFile = (path: string) => invoke<string>("read_text_file", { path });

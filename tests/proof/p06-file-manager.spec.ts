@@ -35,15 +35,16 @@ test('sidebar mirrors the directory and UI create/rename mutate real files', asy
     15_000,
   );
 
-  // (a) The witness project root holds exactly fig/ (dir) and demo.md, in
-  // that order: directories first, then files. Root-level tree buttons are
-  // the depth-0 nodes (padding-left: 6px); deeper nodes indent further.
+  // (a) The witness project root holds exactly fig/ (dir), demo.md, and
+  // outline.md, in that order: directories first, then files alphabetically.
+  // Root-level tree buttons are the depth-0 nodes (padding-left: 6px); deeper
+  // nodes indent further.
   const labels = (await tauriPage.evaluate(
     `Array.from(document.querySelectorAll('.grow.overflow-auto.p-1 button'))
        .filter((b) => b.style.paddingLeft === '6px')
        .map((b) => b.querySelector('span:last-child').textContent.trim())`,
   )) as string[];
-  expect(labels).toEqual(['fig', 'demo.md']);
+  expect(labels).toEqual(['fig', 'demo.md', 'outline.md']);
 
   // (b) Create chapter2.md via the real sidebar "+" affordance + prompt.
   await tauriPage.click('button[title="New file in project root"]');
