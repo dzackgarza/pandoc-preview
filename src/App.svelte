@@ -348,6 +348,28 @@
         insertFootnote: (body: string) => {
           insertFootnote(body);
         },
+        // P62: seed a KNOWN width×height image onto the REAL system clipboard
+        // (the SAME clipboard a user's screenshot/copy lands on) in ONE IPC via
+        // the Rust seed_clipboard_image command — a solid RGBA fill of EXACTLY the
+        // requested dimensions, the deterministic witness size the paste-image
+        // action later reads back and persists. Fire-and-forget: the seed's async
+        // work outlives this call, so park the in-flight promise on a window global
+        // and the paste action awaits __PPE_SEED__ so it reads the clipboard only
+        // after the image is written (the two hooks fire in separate evaluate
+        // round-trips).
+        seedClipboardImage: (width: number, height: number) => {
+          (window as unknown as { __PPE_SEED__: unknown }).__PPE_SEED__ =
+            api.seedClipboardImage(width, height);
+        },
+        // P62: the insertion bar's paste-image action. pasteImage reads the
+        // clipboard image, writes it as a real file into the CONFIGURED global
+        // figures directory through the SAME api.pasteClipboardImage backend the
+        // bar's paste-image control invokes, then inserts a markdown image
+        // reference `![](<path>)` at the cursor pointing at that exact file.
+        // Fire-and-forget; the spec awaits the on-disk file + the reference.
+        pasteClipboardImage: () => {
+          void pasteImage();
+        },
         // P59: the bar's snippet dropdown. snippetTriggers returns the triggers
         // the dropdown surfaces — the keys of the RETAINED config-owned snippet
         // dictionary (the SAME map P52's popup completion source is built from),
@@ -1219,6 +1241,43 @@
     editor.insertFootnote(body);
   }
 
+  /** Paste an image from the system clipboard (P62): the backend reads the
+   * clipboard image, PNG-encodes it, and writes it as a real file into the
+   * CONFIGURED global figures directory (config.directories.figures), returning
+   * that file's path; then a markdown image reference `![](<path>)` to that exact
+   * file is inserted at the cursor through the SAME editor.insertImageReference
+   * path the bar's paste-image control and the E2E bridge both route through. */
+  async function pasteImage() {
+    if (!config) throw new Error("paste image: config not loaded");
+    // The configured global figures directory the image is written into (the SAME
+    // ExistingDir the figures explorer browses). The backend re-resolves and is
+    // the authority; this is the path the inserted reference must name.
+    const figuresDir = config.directories.figures;
+    // A deterministic, unique basename. The reference is inserted at the cursor
+    // pointing at <figuresDir>/<filename> SYNCHRONOUSLY — before the async
+    // clipboard read + file write below — so the buffer carries the reference the
+    // instant the paste action fires, naming the exact path the backend then
+    // writes the clipboard image to.
+    const filename = `clipboard-${Date.now()}-${Math.floor(Math.random() * 1e9)}.png`;
+    const path = `${figuresDir}/${filename}`;
+    editor.insertImageReference(path);
+
+    // If a seed is in flight (E2E: seedClipboardImage fired just before this in a
+    // separate evaluate round-trip), wait for it so the clipboard holds the image
+    // before we read it. No-op in a user session (no seed promise is ever parked).
+    const seed = (window as unknown as { __PPE_SEED__?: Promise<void> }).__PPE_SEED__;
+    if (seed) await seed;
+    // The backend reads the clipboard image and writes it to <figuresDir>/<filename>
+    // (it re-resolves the configured figures dir and validates the bare filename),
+    // returning the absolute path — the SAME path the reference above names.
+    const written = await api.pasteClipboardImage(filename);
+    if (written !== path) {
+      throw new Error(
+        `paste image: backend wrote ${written} but the reference names ${path}`,
+      );
+    }
+  }
+
   function handleMenu(id: string) {
     // Export menu items carry the plugin id: "export:<id>". One item per
     // configured [export.<id>] plugin; the handler runs the same export command
@@ -1317,6 +1376,7 @@
       onInsertDiagram={insertDiagram}
       onInsertSnippet={(trigger) => editor.insertSnippetByTrigger(trigger)}
       onInsertCodeBlock={insertCodeBlock}
+      onPasteImage={() => void pasteImage()}
       {snippetTriggers}
       codeBlockLanguages={codeBlockLanguages}
       fileOpen={currentFile !== null}

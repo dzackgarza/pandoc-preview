@@ -54,6 +54,22 @@ export const repoStateFor = (path: string) =>
 export const repoInit = (dir: string) => invoke<void>("repo_init", { dir });
 export const repoTrack = (path: string) => invoke<void>("repo_track", { path });
 
+// P62: read the system clipboard's image, PNG-encode it, and write it as a real
+// file named `filename` into the CONFIGURED global figures directory
+// (config.directories.figures). Returns the absolute path of the written file.
+// The caller supplies the bare filename so it can insert the markdown image
+// reference at the cursor BEFORE awaiting this write, guaranteeing the reference
+// and the on-disk file name the SAME path. Fails loudly (no clipboard image / no
+// figures dir / non-bare filename) — never a project-local fallback.
+export const pasteClipboardImage = (filename: string) =>
+  invoke<string>("paste_clipboard_image", { filename });
+
+// P62 (E2E proof harness only): seed a deterministic width×height image onto the
+// REAL system clipboard in one IPC, so the paste-image action can read it back.
+// The write-image permission this needs is granted only in the e2e build.
+export const seedClipboardImage = (width: number, height: number) =>
+  invoke<void>("seed_clipboard_image", { width, height });
+
 export const listTree = (root: string) => invoke<FileNode[]>("list_tree", { root });
 
 // Read a file's text together with the fingerprint of its on-disk state (P48).

@@ -67,6 +67,14 @@ pub struct Directories {
 #[derive(Debug, Clone, Serialize)]
 pub struct ExistingDir(PathBuf);
 
+impl ExistingDir {
+    /// The validated directory path. The `ExistingDir` invariant (checked at
+    /// deserialize time) guarantees this names a real directory.
+    pub fn path(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
 impl<'de> Deserialize<'de> for ExistingDir {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where

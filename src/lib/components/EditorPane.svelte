@@ -527,6 +527,22 @@
     wrapSelection("![", "](path)", "alt");
   }
 
+  /** Insert a markdown image reference `![](<path>)` at the cursor pointing at an
+   * already-written on-disk file (P62: the insertion bar's paste-image action
+   * wrote the clipboard image into the configured figures dir and now references
+   * that exact file). `path` is the absolute path the backend returned; it is
+   * inserted verbatim so the reference resolves to the real persisted file. The
+   * cursor lands just after the inserted reference. */
+  export function insertImageReference(path: string) {
+    const ref = `![](${path})`;
+    const cursor = view.state.selection.main.head;
+    view.dispatch({
+      changes: { from: cursor, insert: ref },
+      selection: EditorSelection.cursor(cursor + ref.length),
+    });
+    view.focus();
+  }
+
   /** Insert a fenced code block tagged with `lang` at the cursor, routing
    * through the SAME insertSnippet → runSnippet → snippetCompletion path the
    * env/diagram/matrix/table/snippet bar controls use (P60). The opening fence

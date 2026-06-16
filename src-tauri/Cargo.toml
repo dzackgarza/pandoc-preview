@@ -15,6 +15,11 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-clipboard-manager = "2"
+# Encode the clipboard image's RGBA pixels to a real PNG file in the configured
+# figures dir (P62: insert image from clipboard). `png` is already in the lock
+# graph transitively; it is the minimal raw-RGBA→PNG encoder (no decoder/format
+# bloat from a full image toolkit).
+png = "0.17"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # preserve_order keeps the [export.<id>] tables in the file's declaration order

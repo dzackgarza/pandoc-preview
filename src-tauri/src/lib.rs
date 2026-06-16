@@ -1,3 +1,4 @@
+mod clipboard;
 mod config;
 mod doctor;
 mod error;
@@ -178,6 +179,8 @@ pub fn run() {
             render::export_document,
             plugins::run_plugin,
             plugins::configure_plugin,
+            clipboard::paste_clipboard_image,
+            clipboard::seed_clipboard_image,
             recovery::recovery_autosave,
             recovery::recovery_head_buffer,
             repostate::repo_state_for,
@@ -197,6 +200,19 @@ pub fn run() {
                         "identifier": "e2e-playwright",
                         "windows": ["main"],
                         "permissions": ["playwright:default"]
+                    }"#,
+                )?;
+                // P62: the seedClipboardImage E2E hook puts a known image on the
+                // REAL system clipboard via the clipboard-manager writeImage path.
+                // That write is a TEST-ONLY affordance (a user never writes images
+                // to the clipboard FROM the app), so the write-image permission is
+                // granted only here, at runtime, in the e2e build — the user build's
+                // static capability set grants only the paste action's read-image.
+                app.handle().add_capability(
+                    r#"{
+                        "identifier": "e2e-clipboard-write-image",
+                        "windows": ["main"],
+                        "permissions": ["clipboard-manager:allow-write-image"]
                     }"#,
                 )?;
             }

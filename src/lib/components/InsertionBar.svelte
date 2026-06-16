@@ -6,6 +6,7 @@
     onInsertDiagram,
     onInsertSnippet,
     onInsertCodeBlock,
+    onPasteImage,
     snippetTriggers,
     codeBlockLanguages,
     fileOpen,
@@ -17,6 +18,9 @@
     // Choose a language from the code-block-type dropdown (P60): inserts a
     // fenced code block tagged with that language at the cursor.
     onInsertCodeBlock: (lang: string) => void;
+    // Paste the system clipboard's image: write it into the configured figures
+    // dir and insert a markdown image reference at the cursor (P62).
+    onPasteImage: () => void;
     // The config-owned snippet dictionary's triggers the dropdown surfaces (P59).
     snippetTriggers: readonly string[];
     // The languages the code-block-type dropdown offers (P60).
@@ -43,6 +47,16 @@
       {env}
     </button>
   {/each}
+  <span class="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-600"></span>
+  <button
+    class="rounded px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200 disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-zinc-700"
+    title="Paste image from clipboard into the configured figures directory"
+    data-paste-image
+    disabled={!fileOpen}
+    onclick={() => onPasteImage()}
+  >
+    paste image
+  </button>
   <span class="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-600"></span>
   {#each diagramKinds as kind (kind)}
     <button
