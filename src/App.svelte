@@ -13,6 +13,7 @@
     FoldState,
     PluginResult,
     RenderStatus,
+    RepoState,
   } from "./lib/types";
   import type { OutlineItem } from "codemirror-lang-latex";
   import { toastError, toastInfo, toastSuccess } from "./lib/toast.svelte";
@@ -42,6 +43,45 @@
   let stylesTree = $state<FileNode[]>([]);
   let figuresTree = $state<FileNode[]>([]);
   let dirty = $state(false);
+  // Repo-state machine (P46): the REAL git state of the open file, read from the
+  // backend (libgit2) and refreshed on open/save and after init/track. The
+  // indicator NEVER reflects an optimistic guess — every action re-queries disk.
+  let repoState = $state<RepoState | null>(null);
+
+  // Re-read the open file's real git state from disk. Null when no file is open.
+  async function refreshRepoState() {
+    if (!currentFile) {
+      repoState = null;
+      return;
+    }
+    try {
+      repoState = await api.repoStateFor(currentFile);
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
+  // Initialize a real repository in the open project directory, then re-query.
+  async function repoInit() {
+    if (!projectRoot) return;
+    try {
+      await api.repoInit(projectRoot);
+      await refreshRepoState();
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
+  // Stage the open file into the index, then re-query the real state.
+  async function repoTrack() {
+    if (!currentFile) return;
+    try {
+      await api.repoTrack(currentFile);
+      await refreshRepoState();
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
 
   // VSCode-style activity bar + collapsible side bar. `activeView` is the active
   // view id, or null when the side bar is collapsed. The always-visible activity
@@ -441,6 +481,7 @@
       outline = editor.getOutline();
       dirty = false;
       wordCount = content.split(/\s+/).filter(Boolean).length;
+      void refreshRepoState();
       void doRender(content);
     } catch (e) {
       toastError(String(e));
@@ -453,6 +494,7 @@
       await api.writeTextFile(currentFile, editor.getContent());
       dirty = false;
       await persistCurrentFoldState();
+      await refreshRepoState();
       toastSuccess(`Saved ${fileName(currentFile)}`);
     } catch (e) {
       toastError(String(e));
@@ -853,6 +895,9 @@
       {wordCount}
       {cursorLine}
       {cursorCol}
+      {repoState}
+      onRepoInit={() => void repoInit()}
+      onRepoTrack={() => void repoTrack()}
     />
   </div>
 

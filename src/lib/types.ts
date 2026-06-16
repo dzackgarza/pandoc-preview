@@ -88,3 +88,7 @@ export interface Fold {
 
 /** file path -> its collapsed fold ranges. */
 export type FoldState = Record<string, Fold[]>;
+
+/** Real git state of the open file, mirroring the `RepoState` enum in
+ *  src-tauri/src/repostate.rs. Maps 1:1 onto the `data-repo-state` indicator. */
+export type RepoState = "noRepo" | "untracked" | "tracked";

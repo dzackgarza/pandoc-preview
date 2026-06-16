@@ -5,6 +5,7 @@ mod fsops;
 mod plugins;
 mod recovery;
 mod render;
+mod repostate;
 
 use tauri::menu::{AboutMetadata, Menu, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 use tauri::{AppHandle, Emitter, Runtime};
@@ -175,6 +176,9 @@ pub fn run() {
             plugins::run_plugin,
             plugins::configure_plugin,
             recovery::recovery_autosave,
+            repostate::repo_state_for,
+            repostate::repo_init,
+            repostate::repo_track,
         ])
         .setup(|app| {
             // Grant the playwright plugin's pw_result IPC permission, but only

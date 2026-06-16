@@ -6,6 +6,7 @@ import type {
   FoldState,
   PluginResult,
   RenderResult,
+  RepoState,
 } from "./types";
 
 export const getConfig = () => invoke<Config>("get_config");
@@ -24,6 +25,16 @@ export const saveFoldState = (state: FoldState) =>
 // document; `path` is recorded so the store identifies what each session held.
 export const recoveryAutosave = (sessionId: string, path: string, buffer: string) =>
   invoke<void>("recovery_autosave", { sessionId, path, buffer });
+
+// Repo-state machine (P46). The real git state of the open file is read from
+// the on-disk repository via libgit2 in the backend; `repoInit`/`repoTrack`
+// mutate that real state (init a repo / stage the file), after which the
+// frontend re-queries `repoStateFor` so the indicator reflects disk, never a
+// UI guess.
+export const repoStateFor = (path: string) =>
+  invoke<RepoState>("repo_state_for", { path });
+export const repoInit = (dir: string) => invoke<void>("repo_init", { dir });
+export const repoTrack = (path: string) => invoke<void>("repo_track", { path });
 
 export const listTree = (root: string) => invoke<FileNode[]>("list_tree", { root });
 export const readTextFile = (path: string) => invoke<string>("read_text_file", { path });
