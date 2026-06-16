@@ -435,6 +435,26 @@ if [ "$SPEC" = "p10-first-run-bootable.spec.ts" ]; then
         exit 1
     fi
 else
+    # ── User snippet dictionary (P52) ──────────────────────────────────
+    # P52 declares the snippet dictionary by a CONFIG-OWNED path, not a hardcoded
+    # list. Provision a hermetic copy of the committed FIXTURE dict (the spec owns
+    # it) and emit an extra `[editor].snippet_dictionary` line pointing config at
+    # it, so the snippets the editor offers are exactly this dict's — a different
+    # dict would offer different snippets. The dict carries one entry,
+    # mthm -> "::: {.theorem}\n$0\n:::" (a CM6 $0-tabstop snippet body). For every
+    # other spec this stays empty, so the canonical [editor] block is byte-for-byte
+    # what it was before.
+    EDITOR_EXTRA=""
+    case "$SPEC" in
+    p52-snippet-dictionary.spec.ts)
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p52-snippets.json"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p52-snippets.json" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
+    esac
+
     # Canonical witness config: theme=dark, font_size=14 (P9 base),
     # debounce_ms=200 (P2).
     cat > "$CONFIG_PATH" <<EOF
@@ -445,6 +465,7 @@ theme = "dark"
 font_size = 14
 line_wrapping = false
 line_numbers = true
+$EDITOR_EXTRA
 
 [preview]
 debounce_ms = 200

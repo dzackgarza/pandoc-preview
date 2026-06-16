@@ -373,6 +373,35 @@ export async function typeInEditor(page: EvaluatesScripts, text: string): Promis
   );
 }
 
+// ── Accept the highlighted completion (P52) ────────────────────────────────
+// CM6 accepts a completion via the Enter key / the `acceptCompletion` command,
+// which the bridge cannot synthesize into CodeMirror's contentEditable. So the
+// implementer must expose a harness hook that runs CM6's REAL acceptCompletion
+// command against the live view — the SAME path the Enter keybinding fires — so
+// the spec can accept the currently-highlighted option deterministically. This
+// is the natural sibling of typeInEditor (which runs startCompletion): the
+// observable afterwards is the editor buffer (getEditorText) and the cursor
+// position the snippet's tabstop should land at. Fire-and-forget; returns null.
+// RED today: __PPE_E2E__.acceptCompletion does not exist, so this evaluate
+// throws — there is no surface to accept a completion in-harness.
+export async function acceptCompletion(page: EvaluatesScripts): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.acceptCompletion(); return null; })()`,
+  );
+}
+
+// The cursor's character offset in the editor buffer, read straight from the
+// REAL CM6 view state via the harness. Used by P52 to prove the snippet's
+// declared tabstop ($0) is where the cursor lands after the expansion — not the
+// end of the inserted body, and not the start of the literal trigger.
+export async function cursorOffset(page: EvaluatesScripts): Promise<number> {
+  const raw = await page.evaluate(`window.__PPE_E2E__.cursorOffset()`);
+  if (typeof raw !== 'number') {
+    throw new Error(`cursorOffset returned non-number: ${JSON.stringify(raw)}`);
+  }
+  return raw;
+}
+
 // The set of completion-option labels currently shown in the live autocomplete
 // popup, read straight from the REAL rendered CM6 tooltip DOM
 // (`.cm-tooltip-autocomplete` → `.cm-completionLabel`). Returns [] when no
