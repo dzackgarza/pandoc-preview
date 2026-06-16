@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P61)
+# Proof Obligations (P1–P62)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -114,9 +114,9 @@ P51–P54 (added 2026-06-16) cover the Tier 0 "Editor Completion" milestone: the
   Type a mathematical term that ordinary English spellcheck would flag but which is present in the user's custom math dictionary: it is NOT marked, proving the custom dictionary is in effect.
   Admissible because it fails when there is no spellcheck (nothing is marked, so the gibberish token is not flagged), on a checker that marks everything (the correctly-spelled English word and the dictionary math term are both wrongly flagged), on a checker that marks nothing (the gibberish token is never flagged), and on a checker WITHOUT the custom math dictionary (the math term is wrongly marked even though the dictionary lists it).
 
-### Milestone G — Insertion Bar (P55–P61)
+### Milestone G — Insertion Bar (P55–P62)
 
-P55–P61 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: the editor's top edit bar is a math-research INSERTION bar (not a generic formatting toolbar) that inserts amsthm environments, tikz/tikzcd diagram scaffolds, matrix environments of a chosen shape, pandoc pipe-tables of a chosen shape, config-declared snippets via a bar dropdown, language-tagged fenced code blocks via a dropdown, and complete footnotes (marker plus definition) via a modal — all at the cursor.
+P55–P62 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: the editor's top edit bar is a math-research INSERTION bar (not a generic formatting toolbar) that inserts amsthm environments, tikz/tikzcd diagram scaffolds, matrix environments of a chosen shape, pandoc pipe-tables of a chosen shape, config-declared snippets via a bar dropdown, language-tagged fenced code blocks via a dropdown, complete footnotes (marker plus definition) via a modal, and an image pasted from the system clipboard persisted as a real file in the configured global figures directory — all at the cursor.
 
 - **P55 — Insertion bar replaces the formatting toolbar and inserts amsthm environments.** The editor's top edit bar is a math-research INSERTION bar; the generic H1/bold/italic formatting toolbar is gone.
   Selecting a named amsthm environment (e.g. `theorem`) from the bar inserts that environment's fenced-div scaffold (`:::{.theorem} … :::`) at the cursor, leaving the cursor at the environment body.
@@ -141,6 +141,10 @@ P55–P61 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: th
 
 - **P61 — Footnote modal.** A footnote action on the insertion bar opens a modal in which the user types the footnote body; on confirm, a COMPLETE footnote is inserted — a reference marker (`[^id]`) at the cursor AND a footnote definition line (`[^id]: <body>`) whose body is exactly the text the user typed.
   Admissible because it fails on a no-op insert (confirming the modal leaves the buffer unchanged so neither marker nor definition appears), on a marker-only insert with no definition (the reference marker is placed but the typed body is lost because no `[^id]:` definition line is inserted), on a plain-text insert (the typed body lands in the buffer as ordinary text rather than as a footnote marker-plus-definition pair), and on a body mismatch (the inserted definition's body is not byte-equal to what the user typed in the modal).
+
+- **P62 — Insert image from clipboard.** With an image on the system clipboard, the insertion bar's paste-image action writes the image as a real file into the CONFIGURED GLOBAL figures directory and inserts a markdown image reference (`![…](…)`) to that exact file at the cursor.
+  An independent process reading the configured global figures directory finds a newly-written image file whose bytes are the clipboard image (real image bytes are persisted, not zero-length), and the markdown reference inserted at the cursor points at that same on-disk file.
+  Admissible because it fails on a no-op insert (the paste-image action leaves the buffer unchanged so no image reference appears at the cursor), on a dangling reference (a markdown image reference is inserted but it points at a file that was never written / does not exist on disk), on a wrong-location write (the file is written into a local `./figures` relative to the project instead of the configured global figures directory), and on an empty persist (the reference points at a file that exists but holds no image bytes — nothing of the clipboard image was actually persisted).
 
 These map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
 
