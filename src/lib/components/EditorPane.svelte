@@ -538,6 +538,38 @@
     insertSnippet("```" + lang + "\n${}\n```");
   }
 
+  /** Insert a COMPLETE pandoc footnote (P61): a reference marker `[^<id>]` at the
+   * cursor AND a matching definition line `[^<id>]: <body>` appended at the end of
+   * the buffer, the two sharing the SAME generated id. The body is inserted
+   * byte-for-byte — exactly the text the footnote modal's user typed. Both edits
+   * ride a SINGLE dispatch so the footnote is one coherent insertion, and the
+   * cursor lands just after the inserted reference marker. The id counts the
+   * footnote definition lines already in the buffer so a second insert does not
+   * collide with the first. The insertion bar's footnote modal and the E2E bridge
+   * both route through here. */
+  export function insertFootnote(body: string) {
+    const doc = view.state.doc;
+    const existing = doc.toString().match(/^\[\^\d+\]:/gm)?.length ?? 0;
+    const id = String(existing + 1);
+    const marker = `[^${id}]`;
+    const end = doc.length;
+    // A definition line must start a fresh line; prefix a newline when the buffer
+    // does not already end with one so the `[^id]:` is at column 0 of its line.
+    const endsWithNewline = end === 0 || doc.sliceString(end - 1, end) === "\n";
+    const definition = `${endsWithNewline ? "" : "\n"}[^${id}]: ${body}\n`;
+    const cursor = view.state.selection.main.head;
+    view.dispatch({
+      changes: [
+        { from: cursor, insert: marker },
+        { from: end, insert: definition },
+      ],
+      // The marker change shifts everything after `cursor`; the end-insert keeps
+      // its mapped position. Land the cursor right after the inserted marker.
+      selection: EditorSelection.cursor(cursor + marker.length),
+    });
+    view.focus();
+  }
+
   /** Dispatch a named editor command coming from the native Edit menu. */
   export async function command(
     id: "undo" | "redo" | "cut" | "copy" | "paste" | "select_all" | "find",

@@ -339,6 +339,15 @@
         insertCodeBlockLang: (lang: string) => {
           insertCodeBlock(lang);
         },
+        // P61: the bar's footnote modal. insertFootnote performs the SAME action
+        // the modal performs on CONFIRM with `body` typed in: it inserts a COMPLETE
+        // footnote — a reference marker `[^id]` at the cursor AND a matching
+        // `[^id]: <body>` definition line at the end of the buffer, the two sharing
+        // one generated id, with `body` inserted byte-for-byte — through the SAME
+        // editor.insertFootnote path the modal invokes. Fire-and-forget.
+        insertFootnote: (body: string) => {
+          insertFootnote(body);
+        },
         // P59: the bar's snippet dropdown. snippetTriggers returns the triggers
         // the dropdown surfaces — the keys of the RETAINED config-owned snippet
         // dictionary (the SAME map P52's popup completion source is built from),
@@ -1198,6 +1207,16 @@
    * (P60). */
   function insertCodeBlock(lang: string) {
     editor.insertCodeBlock(lang);
+  }
+
+  /** Insert a COMPLETE footnote — a reference marker `[^id]` at the cursor and a
+   * matching `[^id]: <body>` definition line at the end of the buffer, sharing one
+   * generated id (P61) — through the SAME editor.insertFootnote path the insertion
+   * bar's footnote modal invokes on confirm. `body` is the exact text the modal's
+   * user typed, inserted byte-for-byte. The insertion bar's footnote modal and the
+   * E2E bridge both route through here. */
+  function insertFootnote(body: string) {
+    editor.insertFootnote(body);
   }
 
   function handleMenu(id: string) {
