@@ -514,6 +514,79 @@ p22-configure-plugin-spawn.spec.ts)
 greeting = "hi"
 EOF
     ;;
+p49-session-restore.spec.ts)
+    # P49 — launch restores the last session and offers newer recovery content.
+    #
+    # A true two-instance relaunch is infeasible in this harness: run_app_spec
+    # launches exactly ONE app instance and the Playwright fixture attaches to
+    # its socket; there is no in-harness primitive to spawn a second instance and
+    # observe its webview. So we provision, on the HOST FILESYSTEM and BEFORE the
+    # single launch, exactly the durable state a prior session would have left —
+    # then observe whether the launched app honors it. This is faithful, not a
+    # mock: the app boots against a clean hermetic XDG with NO prior in-app
+    # activity, so reopening the last file and offering the newer recovery content
+    # can ONLY come from reading this real host-fs state.
+    #
+    # Two real host-fs artifacts are provisioned:
+    #
+    #  (1) SESSION STATE under $XDG_STATE_HOME/pandoc-preview/session.json — the
+    #      last project + last file a prior session persisted. Per the contract
+    #      (recovery-and-git-state-requirements.md) session state lives on the
+    #      host fs under XDG_STATE_HOME, never browser storage. This is the
+    #      stable observable contract the implementer must read on launch.
+    #
+    #  (2) A RECOVERY STORE AHEAD OF DISK under
+    #      $XDG_DATA_HOME/pandoc-preview/recovery/<session_id>/ — a REAL git repo
+    #      built exactly as src-tauri/src/recovery.rs builds it (the buffer
+    #      committed as a blob under the recovery filename), holding the NEWER
+    #      buffer: the on-disk demo.md content PLUS an unsaved edit. The on-disk
+    #      demo.md is left as the STALE older content (the plain fixture copy), so
+    #      a restore that loads disk would be observably wrong.
+    #
+    # The spec discovers the newer recovery bytes content-addressably (it does not
+    # hardcode them), asserts they are ahead of disk, then asserts the accepted
+    # restore loads exactly those bytes into the editor buffer.
+    SESSION_ID="p49-session"
+    # The tree entry name recovery.rs records the buffer blob under
+    # (recovery.rs: BUFFER_ENTRY = "buffer", no extension). Kept in sync with the
+    # app's recovery store layout so this provisioned repo is a faithful replica
+    # of what the app's own autosave would write. The spec reads the buffer bytes
+    # content-addressably from the object database, so it does not depend on this
+    # name — but the provisioned repo must still match the real store shape.
+    RECOVERY_FILENAME="buffer"
+    RECOVERY_DIR="$ABS_SPEC_DIR/xdg-data/pandoc-preview/recovery/$SESSION_ID"
+
+    # The NEWER buffer = stale on-disk demo.md + an unsaved edit. Built from the
+    # ACTUAL on-disk bytes so "ahead of disk" is a real content delta, not an
+    # invented file. The sentence carries non-ASCII so a lossy restore is caught.
+    NEWER_BUFFER="$ABS_SPEC_DIR/p49-newer-buffer.md"
+    cp "$DEMO_FILE" "$NEWER_BUFFER"
+    printf '\n\nUnsaved recovery edit — Café ζ naïve.\n' >> "$NEWER_BUFFER"
+
+    # Build the recovery store as a REAL git repo, mirroring recovery.rs exactly:
+    # the buffer is committed as a blob at RECOVERY_FILENAME. An independent
+    # process (this provisioning) writes it; the app and the spec both read it
+    # content-addressably from the object database (p45's discipline).
+    mkdir -p "$RECOVERY_DIR"
+    git -C "$RECOVERY_DIR" init -q
+    git -C "$RECOVERY_DIR" config user.email "recovery@pandoc-preview.localhost"
+    git -C "$RECOVERY_DIR" config user.name "pandoc-preview recovery"
+    cp "$NEWER_BUFFER" "$RECOVERY_DIR/$RECOVERY_FILENAME"
+    git -C "$RECOVERY_DIR" add "$RECOVERY_FILENAME"
+    git -C "$RECOVERY_DIR" commit -q -m "autosave: $DEMO_FILE"
+
+    # Session state: the last project + last file + the recovery session id, on
+    # the host fs under XDG_STATE_HOME. The implementer reads this on launch to
+    # reopen the last file and locate the session's recovery store.
+    SESSION_STATE_DIR="$ABS_SPEC_DIR/xdg-state/pandoc-preview"
+    mkdir -p "$SESSION_STATE_DIR"
+    jq -n \
+        --arg project "$PROJECT_DIR" \
+        --arg file "$DEMO_FILE" \
+        --arg sessionId "$SESSION_ID" \
+        '{project: $project, file: $file, sessionId: $sessionId}' \
+        > "$SESSION_STATE_DIR/session.json"
+    ;;
 p29-global-figures-resource.spec.ts)
     # P29: a figure that exists ONLY in the global figures dir
     # ($HOME/.pandoc/figures), referenced relative to that dir (rendered/global.png).
@@ -564,11 +637,13 @@ jq -n \
     --arg runDir "$ABS_SPEC_DIR" \
     --arg xdgConfigHome "$ABS_SPEC_DIR/xdg-config" \
     --arg xdgDataHome "$ABS_SPEC_DIR/xdg-data" \
+    --arg xdgStateHome "$ABS_SPEC_DIR/xdg-state" \
     --arg configPath "$CONFIG_PATH" \
     --arg project "$PROJECT_DIR" \
     --arg demoFile "$DEMO_FILE" \
     '{runId: $runId, spec: $spec, runDir: $runDir,
       xdgConfigHome: $xdgConfigHome, xdgDataHome: $xdgDataHome,
+      xdgStateHome: $xdgStateHome,
       configPath: $configPath, project: $project, demoFile: $demoFile}' \
     > "$SPEC_DIR/manifest.json"
 

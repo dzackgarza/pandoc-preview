@@ -14,6 +14,13 @@ export interface RunManifest {
   // (dirs::data_dir() == $XDG_DATA_HOME), so a spec reads the recovery store by
   // searching this per-run tree — never the user's real ~/.local/share (P45).
   xdgDataHome: string;
+  // The hermetic XDG_STATE_HOME the app under test was launched with. Session
+  // state (the last opened project + file, window state) is persisted to the
+  // HOST FILESYSTEM under an XDG state location — never browser storage — so on
+  // relaunch the app reopens the last file from a place an independent process
+  // can read and provision (P49). A spec provisions session state under this
+  // per-run tree and asserts the launched app honored it.
+  xdgStateHome: string;
   configPath: string;
   project: string;
   demoFile: string;
@@ -44,6 +51,7 @@ export function loadRunManifest(): RunManifest {
     runDir: requireString(raw.runDir, 'runDir'),
     xdgConfigHome: requireString(raw.xdgConfigHome, 'xdgConfigHome'),
     xdgDataHome: requireString(raw.xdgDataHome, 'xdgDataHome'),
+    xdgStateHome: requireString(raw.xdgStateHome, 'xdgStateHome'),
     configPath: requireString(raw.configPath, 'configPath'),
     project: requireString(raw.project, 'project'),
     demoFile: requireString(raw.demoFile, 'demoFile'),
