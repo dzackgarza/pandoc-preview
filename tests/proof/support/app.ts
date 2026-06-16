@@ -329,10 +329,32 @@ export async function openAndSelectDemo(
 
 // Append text at the buffer end through the real editor update pipeline,
 // firing the same docChanged path user typing fires (the bridge cannot
-// synthesize key events into CodeMirror's contentEditable).
+// synthesize key events into CodeMirror's contentEditable). The cursor lands
+// at the END of the appended text, so the appended text is the abbreviation
+// directly preceding the cursor that an Emmet expand acts on.
 export async function appendAtEnd(page: EvaluatesScripts, text: string): Promise<void> {
   await page.evaluate(
     `(() => { window.__PPE_E2E__.appendAtEnd(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
+// ── Emmet abbreviation expansion (P53) ─────────────────────────────────────
+// Emmet expands a terse abbreviation directly before the cursor into the real
+// markup it denotes when its EXPAND ACTION is invoked. The action is a real
+// editor command the implementer must (a) bind to a user-facing keybinding —
+// Emmet's standard `Ctrl-e` for `expandAbbreviation` — and (b) expose through
+// this harness hook so the spec can fire the SAME command deterministically.
+// The bridge cannot synthesize the keystroke into CodeMirror's contentEditable
+// (see appendAtEnd / typeInEditor), so `__PPE_E2E__.expandEmmet()` runs the
+// Emmet plugin's expand command against the live view — exactly the path the
+// `Ctrl-e` keybinding fires. Fire-and-forget; returns null. The observable
+// afterwards is the editor buffer (getEditorText): the abbreviation is gone and
+// the expanded markup is in its place. RED today: __PPE_E2E__.expandEmmet does
+// not exist (there is no Emmet plugin, no expand command, and no keybinding), so
+// this evaluate throws — there is no surface to expand an Emmet abbreviation.
+export async function expandEmmet(page: EvaluatesScripts): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.expandEmmet(); return null; })()`,
   );
 }
 
