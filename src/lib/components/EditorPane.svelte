@@ -527,13 +527,15 @@
     wrapSelection("![", "](path)", "alt");
   }
 
-  export function insertCodeBlock() {
-    const { from, to } = view.state.selection.main;
-    const selected = view.state.sliceDoc(from, to) || "code";
-    view.dispatch({
-      changes: { from, to, insert: "```\n" + selected + "\n```\n" },
-    });
-    view.focus();
+  /** Insert a fenced code block tagged with `lang` at the cursor, routing
+   * through the SAME insertSnippet → runSnippet → snippetCompletion path the
+   * env/diagram/matrix/table/snippet bar controls use (P60). The opening fence
+   * carries the chosen language tag (```<lang>); the `${}` body tabstop lands the
+   * cursor strictly inside the block, between the opening and matching closing
+   * fence. The insertion bar's code-block-type dropdown and the E2E bridge both
+   * route through here. */
+  export function insertCodeBlock(lang: string) {
+    insertSnippet("```" + lang + "\n${}\n```");
   }
 
   /** Dispatch a named editor command coming from the native Edit menu. */

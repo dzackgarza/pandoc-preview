@@ -5,15 +5,22 @@
     onInsertEnvironment,
     onInsertDiagram,
     onInsertSnippet,
+    onInsertCodeBlock,
     snippetTriggers,
+    codeBlockLanguages,
     fileOpen,
   }: {
     onInsertEnvironment: (env: string) => void;
     onInsertDiagram: (kind: "tikz" | "tikzcd") => void;
     // Choose a config-dictionary snippet trigger from the bar dropdown (P59).
     onInsertSnippet: (trigger: string) => void;
+    // Choose a language from the code-block-type dropdown (P60): inserts a
+    // fenced code block tagged with that language at the cursor.
+    onInsertCodeBlock: (lang: string) => void;
     // The config-owned snippet dictionary's triggers the dropdown surfaces (P59).
     snippetTriggers: readonly string[];
+    // The languages the code-block-type dropdown offers (P60).
+    codeBlockLanguages: readonly string[];
     fileOpen: boolean;
   } = $props();
 
@@ -66,6 +73,27 @@
       <option value="" disabled>snippet</option>
       {#each snippetTriggers as trigger (trigger)}
         <option value={trigger}>{trigger}</option>
+      {/each}
+    </select>
+  {/if}
+  {#if codeBlockLanguages.length > 0}
+    <span class="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-600"></span>
+    <select
+      class="rounded px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200 disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-zinc-700"
+      title="Insert a fenced code block tagged with a language"
+      data-insert-codeblock
+      disabled={!fileOpen}
+      value=""
+      onchange={(e) => {
+        const lang = e.currentTarget.value;
+        if (lang.length === 0) return;
+        onInsertCodeBlock(lang);
+        e.currentTarget.value = "";
+      }}
+    >
+      <option value="" disabled>code</option>
+      {#each codeBlockLanguages as lang (lang)}
+        <option value={lang}>{lang}</option>
       {/each}
     </select>
   {/if}

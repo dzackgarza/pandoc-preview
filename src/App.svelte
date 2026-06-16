@@ -330,6 +330,15 @@
         insertTable: (cols: number, rows: number) => {
           insertTable(cols, rows);
         },
+        // P60: the bar's code-block-type dropdown. insertCodeBlockLang inserts a
+        // fenced code block whose opening fence carries the chosen language tag
+        // (```<lang>) and a matching closing fence, through the SAME
+        // editor.insertCodeBlock path the bar dropdown invokes (→ insertSnippet →
+        // runSnippet → snippetCompletion), so the `${}` tabstop lands the cursor
+        // strictly inside the block body. Fire-and-forget.
+        insertCodeBlockLang: (lang: string) => {
+          insertCodeBlock(lang);
+        },
         // P59: the bar's snippet dropdown. snippetTriggers returns the triggers
         // the dropdown surfaces — the keys of the RETAINED config-owned snippet
         // dictionary (the SAME map P52's popup completion source is built from),
@@ -1169,6 +1178,28 @@
     editor.insertSnippet(buildTableSnippet(cols, rows));
   }
 
+  /** The languages the insertion bar's code-block-type dropdown offers (P60).
+   * Choosing one inserts a fenced code block tagged with that language. These
+   * are inert tags — the app holds no per-language knowledge; the tag is just
+   * the fence's info string. */
+  const codeBlockLanguages: readonly string[] = [
+    "python",
+    "javascript",
+    "typescript",
+    "rust",
+    "haskell",
+    "bash",
+  ];
+
+  /** Insert a fenced code block tagged with `lang` at the cursor through the
+   * SAME insertCodeBlock path the insertion bar's code-block-type dropdown and
+   * the E2E bridge both route through, so the opening fence carries the chosen
+   * language tag and the `${}` tabstop lands the cursor inside the block body
+   * (P60). */
+  function insertCodeBlock(lang: string) {
+    editor.insertCodeBlock(lang);
+  }
+
   function handleMenu(id: string) {
     // Export menu items carry the plugin id: "export:<id>". One item per
     // configured [export.<id>] plugin; the handler runs the same export command
@@ -1266,7 +1297,9 @@
       onInsertEnvironment={insertEnvironment}
       onInsertDiagram={insertDiagram}
       onInsertSnippet={(trigger) => editor.insertSnippetByTrigger(trigger)}
+      onInsertCodeBlock={insertCodeBlock}
       {snippetTriggers}
+      codeBlockLanguages={codeBlockLanguages}
       fileOpen={currentFile !== null}
     />
 
