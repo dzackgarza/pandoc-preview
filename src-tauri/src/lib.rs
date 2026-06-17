@@ -179,6 +179,7 @@ pub fn run() {
             render::export_document,
             plugins::run_plugin,
             plugins::configure_plugin,
+            plugins::list_plugins,
             clipboard::paste_clipboard_image,
             clipboard::seed_clipboard_image,
             recovery::recovery_autosave,

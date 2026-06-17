@@ -12,6 +12,7 @@
     FileNode,
     Fingerprint,
     FoldState,
+    PluginInfo,
     PluginResult,
     RenderStatus,
     RepoState,
@@ -39,6 +40,11 @@
 
   let config = $state<Config | null>(null);
   let configPath = $state("");
+  // Discovered plugins (manifest identities) for the category-aware menu/
+  // command-palette populator: an export-category plugin surfaces an
+  // "Export: <name> (.<extension>)" entry sourced from the discovered manifest,
+  // never an app-core config table (P66).
+  let discoveredPlugins = $state<PluginInfo[]>([]);
 
   let projectRoot = $state<string | null>(null);
   let tree = $state<FileNode[]>([]);
@@ -209,6 +215,9 @@
     // screen: a misconfigured environment never reaches the webview.
     configPath = await api.getConfigPath();
     config = await api.getConfig();
+    // Discovered plugins drive the category-aware menu/command-palette populator
+    // (export-category plugins surface their own "Export: <name>" entries; P66).
+    discoveredPlugins = await api.listPlugins();
     // Load the fixed-root explorer trees (macros/figures) now that config — and
     // thus directories.styles / directories.figures — is known.
     await refreshAuxTrees();
@@ -634,6 +643,17 @@
     ];
     for (const [id, plugin] of Object.entries(config?.export ?? {})) {
       cmds.push({ id: `export:${id}`, label: `Export: ${plugin.label}`, run: () => void exportDoc(id) });
+    }
+    // Discovered export-category plugins (P66): one "Export: <name> (.<ext>)"
+    // entry per plugin, name + extension sourced from the discovered manifest
+    // (never config.export). The plugin runs through the generic firewall.
+    for (const plugin of discoveredPlugins) {
+      if (plugin.category !== "export" || plugin.extension === null) continue;
+      cmds.push({
+        id: `export-plugin:${plugin.id}`,
+        label: `Export: ${plugin.name} (.${plugin.extension})`,
+        run: () => void exportViaPlugin(plugin),
+      });
     }
     return cmds;
   }
@@ -1121,6 +1141,33 @@
     });
     if (!target) return;
     await exportToPath(pluginId, target);
+  }
+
+  /** Export through a DISCOVERED export-category plugin (P66). Unlike exportDoc
+   * (which reads an app-core config.export table), this sources the human name and
+   * output extension entirely from the discovered manifest, then runs the plugin
+   * by id through runPluginToPath — the same generic firewall proven by p19. */
+  async function exportViaPlugin(plugin: PluginInfo) {
+    if (plugin.extension === null) {
+      toastError(`Export plugin ${plugin.id} declares no output extension.`);
+      return;
+    }
+    const source = await requireDurablePath();
+    if (!source) return;
+    const target = await saveDialog({
+      title: `Export ${plugin.name}`,
+      defaultPath: source.replace(/\.[^/.]*$/, "") + "." + plugin.extension,
+      filters: [{ name: plugin.name, extensions: [plugin.extension] }],
+    });
+    if (!target) return;
+    toastInfo(`Exporting ${plugin.name}…`);
+    try {
+      const res = await runPluginToPath(plugin.id, target);
+      if (res.success) toastSuccess(`Exported ${target}`);
+      else toastError("Export failed — see compile log.");
+    } catch (e) {
+      toastError(String(e));
+    }
   }
 
   // ---- insertion bar / menu dispatch --------------------------------------

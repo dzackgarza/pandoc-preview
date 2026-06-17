@@ -80,6 +80,18 @@ export interface ExportResult {
   log: string;
 }
 
+/** A discovered plugin's identity (Mirrors the Rust `plugins::PluginInfo`). The
+ * category-aware menu/command-palette populator filters by `category` and reads
+ * the declared output `extension` (P66) — sourced from the discovered manifest,
+ * never an app-core config table. `extension` is present only on export-category
+ * plugins. */
+export interface PluginInfo {
+  id: string;
+  name: string;
+  category: string;
+  extension: string | null;
+}
+
 /** Structured result of running a generic plugin by id (Milestone A). Mirrors
  * the Rust `plugins::PluginResult`. */
 export interface PluginResult {

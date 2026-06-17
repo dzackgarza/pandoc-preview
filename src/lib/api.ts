@@ -6,6 +6,7 @@ import type {
   FileRead,
   Fingerprint,
   FoldState,
+  PluginInfo,
   PluginResult,
   RenderResult,
   RepoState,
@@ -122,3 +123,11 @@ export const runPlugin = (
  */
 export const configurePlugin = (pluginId: string) =>
   invoke<void>("configure_plugin", { pluginId });
+
+/**
+ * List every discovered plugin's identity ({id, name, category, extension}) from
+ * the configured plugins dir. The category-aware menu/command-palette populator
+ * filters these by category (e.g. "export") and reads the declared extension —
+ * sourced from the discovered manifest, never an app-core config table (P66).
+ */
+export const listPlugins = () => invoke<PluginInfo[]>("list_plugins");

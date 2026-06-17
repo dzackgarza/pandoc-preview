@@ -47,6 +47,12 @@ pub struct PluginManifest {
     pub description: String,
     pub category: String,
     pub kind: String,
+    /// The output file extension an export-category plugin writes (e.g. "wexp").
+    /// A GENERIC manifest field read by the menu/command-palette populator
+    /// (export-as-plugin migration ruling 4, 2026-06-17). Present only on
+    /// export-category plugins; serde maps a missing `extension` to `None`
+    /// without a container default.
+    pub extension: Option<String>,
     pub exec: Exec,
     /// The plugin's self-owned configuration command (`[configure]` table; user
     /// ruling 2026-06-14). Plugins own configuration entirely: the app's
@@ -98,6 +104,18 @@ pub struct PluginResult {
     pub exit_code: Option<i32>,
     pub stdout: String,
     pub stderr: String,
+}
+
+/// A discovered plugin's identity surfaced to the webview so a category-driven
+/// menu/command-palette populator can build entries (e.g. an "Export: <name>"
+/// entry carrying the plugin's declared output `extension`). Sourced ONLY from
+/// the discovered manifest, never from an app-core config table.
+#[derive(Debug, Serialize)]
+pub struct PluginInfo {
+    pub id: String,
+    pub name: String,
+    pub category: String,
+    pub extension: Option<String>,
 }
 
 /// One doctor-battery row contributed by a plugin (the config-schema check or a
@@ -474,6 +492,38 @@ pub async fn configure_plugin(plugin_id: String) -> Result<()> {
     tauri::async_runtime::spawn_blocking(move || configure_plugin_sync(plugin_id))
         .await
         .expect("configure_plugin task panicked")
+}
+
+/// List every discovered plugin's identity ({id, name, category, extension}) for
+/// the webview, in discover()'s stable (sorted) order. The category-aware menu/
+/// command-palette populator filters these by `category` (e.g. "export") and
+/// reads the plugin's declared `extension` — all sourced from the discovered
+/// manifest, never from an app-core config table. A configured-but-missing
+/// plugins dir is a loud error (discover() owns that). No [plugins] dir is
+/// configured -> an empty list (no plugins are discoverable).
+fn list_plugins_sync() -> Result<Vec<PluginInfo>> {
+    let cfg = config::load()?;
+    let Some(plugins_cfg) = cfg.plugins.as_ref() else {
+        return Ok(Vec::new());
+    };
+    let plugins = discover(Path::new(&plugins_cfg.dir))?;
+    Ok(plugins
+        .into_iter()
+        .map(|p| PluginInfo {
+            id: p.manifest.id,
+            name: p.manifest.name,
+            category: p.manifest.category,
+            extension: p.manifest.extension,
+        })
+        .collect())
+}
+
+/// List discovered plugins for the webview (see `list_plugins_sync`).
+#[tauri::command]
+pub async fn list_plugins() -> Result<Vec<PluginInfo>> {
+    tauri::async_runtime::spawn_blocking(list_plugins_sync)
+        .await
+        .expect("list_plugins task panicked")
 }
 
 /// The outcome of a render through the active renderer plugin. `render.rs` maps
