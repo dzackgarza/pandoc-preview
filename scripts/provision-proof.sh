@@ -91,7 +91,8 @@ VENDOR_PLUGINS="$REPO_ROOT/src-tauri/resources/vendor/plugins"
 # install_plugin_fixtures <dest-dir> <plugin-id>...  — copy the named plugin into a
 # hermetic plugins dir. Test-only plugins (witness-tool, ratio-tool,
 # generic-renderer) come from the committed fixtures; the shipped pandoc renderer
-# comes from the vendor dir (OSOT). A plugin is discovered only if a valid
+# and the shipped pandoc-html-export plugin come from the vendor dir (OSOT). A
+# plugin is discovered only if a valid
 # [plugin.<id>] config section is also provided (its schema may require keys), so
 # each spec installs exactly the plugins it configures.
 install_plugin_fixtures() {
@@ -100,7 +101,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
@@ -572,18 +573,15 @@ p07-export-html.spec.ts)
     # then drives runPlugin('pandoc-html-export', target) and asserts the produced
     # artifact carries the P1 witnesses and a self-contained data: image URI.
     #
-    # RED today: the shipped pandoc-html-export plugin does NOT exist yet (the only
-    # vendored plugin is pandoc-renderer), so it is NOT in the plugins dir and
-    # discover() never finds it. run_plugin returns "no plugin with id
-    # \"pandoc-html-export\" in the plugins dir", no artifact is written, and the spec
-    # fails at the existsSync(target) gate — the absent plugin, not a weakened
-    # assertion. GREEN: the implementer vendors the pandoc-html-export plugin
-    # (cloning the pandoc-renderer plugin shape: plugin.toml/render.sh/schema.json/
-    # configure) and installs it here by adding it to the vendored-plugin id list in
-    # install_plugin_fixtures (so it is sourced from $VENDOR_PLUGINS, OSOT), then
-    # adding `install_plugin_fixtures "$PLUGINS_DIR" pandoc-html-export` on the line
-    # above. For the RED the plugin is absent from $VENDOR_PLUGINS, so it cannot be
-    # installed and the plugins dir does not contain it — discover() never finds it.
+    # The shipped pandoc-html-export plugin is vendored alongside pandoc-renderer
+    # (src-tauri/resources/vendor/plugins/pandoc-html-export, OSOT) and installed
+    # into this spec's hermetic plugins dir here. Its [plugin.pandoc-html-export]
+    # config carries the raw HTML export command (the individually-managed raw
+    # command, ruling 2); export.sh runs it verbatim, layering the plugin-local
+    # MathJax bundle, the real {file} as input, and the {artifact} output. The spec
+    # then drives runPlugin('pandoc-html-export', target) and asserts the produced
+    # artifact carries the P1 witnesses and a self-contained data: image URI.
+    install_plugin_fixtures "$PLUGINS_DIR" pandoc-html-export
     cat >> "$CONFIG_PATH" <<EOF
 
 [plugin.pandoc-html-export]

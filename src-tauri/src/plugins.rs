@@ -378,9 +378,16 @@ fn run_plugin_sync(
         .split_first()
         .ok_or_else(|| Error::InvalidArgument(format!("plugin {plugin_id} has an empty command")))?;
 
+    // Deliver the plugin's own `[plugin.<id>]` config section on
+    // PPE_PLUGIN_CONFIG, exactly as render_active does for the renderer. An export
+    // plugin reads its individually-managed raw command from here (the app core
+    // owns no pandoc/export command knowledge); plugins that derive everything from
+    // {file} simply ignore the env var.
+    let plugin_config = config_json(cfg.plugin.get(&plugin_id));
     let mut child = Command::new(program)
         .args(args)
         .current_dir(&dir)
+        .env(ENV_PLUGIN_CONFIG, plugin_config)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
