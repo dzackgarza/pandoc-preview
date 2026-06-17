@@ -4,6 +4,9 @@
   let {
     onInsertEnvironment,
     onInsertDiagram,
+    onOpenMatrix,
+    onOpenTable,
+    onOpenFootnote,
     onInsertSnippet,
     onInsertCodeBlock,
     onPasteImage,
@@ -13,6 +16,12 @@
   }: {
     onInsertEnvironment: (env: string) => void;
     onInsertDiagram: (kind: "tikz" | "tikzcd") => void;
+    // Open the matrix builder modal (rows × cols → pmatrix at the cursor, P57).
+    onOpenMatrix: () => void;
+    // Open the table builder modal (cols × body-rows → pipe table, P58).
+    onOpenTable: () => void;
+    // Open the footnote modal (typed body → marker + definition pair, P61).
+    onOpenFootnote: () => void;
     // Choose a config-dictionary snippet trigger from the bar dropdown (P59).
     onInsertSnippet: (trigger: string) => void;
     // Choose a language from the code-block-type dropdown (P60): inserts a
@@ -69,6 +78,34 @@
       {kind}
     </button>
   {/each}
+  <span class="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-600"></span>
+  <button
+    class="rounded px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200 disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-zinc-700"
+    title="Insert a matrix (choose rows × cols)"
+    data-insert-matrix
+    disabled={!fileOpen}
+    onclick={() => onOpenMatrix()}
+  >
+    matrix
+  </button>
+  <button
+    class="rounded px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200 disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-zinc-700"
+    title="Insert a table (choose cols × rows)"
+    data-insert-table
+    disabled={!fileOpen}
+    onclick={() => onOpenTable()}
+  >
+    table
+  </button>
+  <button
+    class="rounded px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200 disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-zinc-700"
+    title="Insert a footnote (type the body)"
+    data-insert-footnote
+    disabled={!fileOpen}
+    onclick={() => onOpenFootnote()}
+  >
+    footnote
+  </button>
   {#if snippetTriggers.length > 0}
     <span class="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-600"></span>
     <select

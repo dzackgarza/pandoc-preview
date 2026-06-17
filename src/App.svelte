@@ -32,6 +32,8 @@
   import StatusBar from "./lib/components/StatusBar.svelte";
   import Toasts from "./lib/components/Toasts.svelte";
   import InsertionBar from "./lib/components/InsertionBar.svelte";
+  import DimensionModal from "./lib/components/DimensionModal.svelte";
+  import FootnoteModal from "./lib/components/FootnoteModal.svelte";
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
   import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
 
@@ -129,6 +131,13 @@
   }
   let settingsOpen = $state(false);
   let commandPaletteOpen = $state(false);
+  // Insertion-bar modal-backed controls. Each flag is raised by the matching bar
+  // button (matrix/table/footnote) and lowered on confirm/cancel. The confirm
+  // routes into the SAME insertMatrix/insertTable/insertFootnote handlers the
+  // P57/P58/P61 hooks call — the modal is just the user-facing affordance.
+  let matrixModalOpen = $state(false);
+  let tableModalOpen = $state(false);
+  let footnoteModalOpen = $state(false);
   // Document outline (headings + fenced divs) for the sidebar's Outline panel,
   // a resizable/collapsible section below the file tree.
   let outline = $state<OutlineItem[]>([]);
@@ -1374,6 +1383,9 @@
     <InsertionBar
       onInsertEnvironment={insertEnvironment}
       onInsertDiagram={insertDiagram}
+      onOpenMatrix={() => (matrixModalOpen = true)}
+      onOpenTable={() => (tableModalOpen = true)}
+      onOpenFootnote={() => (footnoteModalOpen = true)}
       onInsertSnippet={(trigger) => editor.insertSnippetByTrigger(trigger)}
       onInsertCodeBlock={insertCodeBlock}
       onPasteImage={() => void pasteImage()}
@@ -1583,6 +1595,55 @@
         action(value).catch((e) => toastError(String(e)));
       }}
       onCancel={() => (prompt = null)}
+    />
+  {/if}
+
+  {#if matrixModalOpen}
+    <!-- P57 matrix builder: rows × cols → insertMatrix(rows, cols). -->
+    <DimensionModal
+      title="Insert matrix"
+      firstLabel="rows"
+      firstAttr="data-matrix-rows"
+      firstInitial={2}
+      secondLabel="cols"
+      secondAttr="data-matrix-cols"
+      secondInitial={2}
+      confirmAttr="data-matrix-confirm"
+      onConfirm={(rows, cols) => {
+        matrixModalOpen = false;
+        insertMatrix(rows, cols);
+      }}
+      onCancel={() => (matrixModalOpen = false)}
+    />
+  {/if}
+
+  {#if tableModalOpen}
+    <!-- P58 table builder: cols × body-rows → insertTable(cols, rows). -->
+    <DimensionModal
+      title="Insert table"
+      firstLabel="cols"
+      firstAttr="data-table-cols"
+      firstInitial={2}
+      secondLabel="rows"
+      secondAttr="data-table-rows"
+      secondInitial={2}
+      confirmAttr="data-table-confirm"
+      onConfirm={(cols, rows) => {
+        tableModalOpen = false;
+        insertTable(cols, rows);
+      }}
+      onCancel={() => (tableModalOpen = false)}
+    />
+  {/if}
+
+  {#if footnoteModalOpen}
+    <!-- P61 footnote modal: typed body → insertFootnote(body). -->
+    <FootnoteModal
+      onConfirm={(body) => {
+        footnoteModalOpen = false;
+        insertFootnote(body);
+      }}
+      onCancel={() => (footnoteModalOpen = false)}
     />
   {/if}
 {/if}
