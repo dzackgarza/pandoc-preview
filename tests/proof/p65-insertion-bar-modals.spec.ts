@@ -22,7 +22,12 @@ import { openAndSelectDemo, editorText, cursorOffset } from './support/app';
 //            button[data-table-confirm]; confirm fires App.insertTable(cols,rows).
 //   footnote: button[data-insert-footnote] opens a modal with
 //            textarea[data-footnote-body], button[data-footnote-confirm];
-//            confirm fires App.insertFootnote(body).
+//            confirm fires App.insertFootnote(body). The body field is a
+//            <textarea> (footnote bodies may span lines); since tauri-playwright's
+//            `fill` only drives HTMLInputElement, the body is set on the REAL
+//            textarea via the SAME native `input` event a keystroke fires (the
+//            event Svelte's bind:value listens to) — still the real control, not
+//            a hook.
 //
 // Each confirm routes through the EXACT handler the P57/P58/P61 hooks call, so
 // the inserted content is identical; this spec proves the DOM path reaches it.
@@ -199,12 +204,28 @@ test('The bar footnote modal inserts a reference marker and a matching definitio
   expect(before).not.toContain(FOOTNOTE_BODY);
 
   // Open the REAL footnote modal, type the body in the REAL textarea, confirm.
+  // The footnote body field is a <textarea> (pandoc footnote bodies may span
+  // lines); the tauri-playwright `fill` convenience only drives HTMLInputElement,
+  // so the body is set on the REAL textarea by dispatching the SAME native
+  // `input` event a keystroke fires — the event Svelte's bind:value listens to.
+  // This drives the real control (real textarea, real input event), not a hook.
   await tauriPage.click('button[data-insert-footnote]');
   await tauriPage.waitForFunction(
     `!!document.querySelector('textarea[data-footnote-body]')`,
     10_000,
   );
-  await tauriPage.fill('textarea[data-footnote-body]', FOOTNOTE_BODY);
+  await tauriPage.evaluate(`(() => {
+    const ta = document.querySelector('textarea[data-footnote-body]');
+    if (!ta) throw new Error('footnote textarea not present');
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+    setter.call(ta, ${JSON.stringify(FOOTNOTE_BODY)});
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    return null;
+  })()`);
+  await tauriPage.waitForFunction(
+    `document.querySelector('textarea[data-footnote-body]').value === ${JSON.stringify(FOOTNOTE_BODY)}`,
+    10_000,
+  );
   await tauriPage.click('button[data-footnote-confirm]');
 
   await tauriPage.waitForFunction(
