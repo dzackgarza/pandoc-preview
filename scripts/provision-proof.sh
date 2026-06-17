@@ -446,7 +446,7 @@ else
     # what it was before.
     EDITOR_EXTRA=""
     case "$SPEC" in
-    p52-snippet-dictionary.spec.ts | p59-snippet-dropdown.spec.ts)
+    p52-snippet-dictionary.spec.ts | p59-snippet-dropdown.spec.ts | p63-insertion-bar-controls.spec.ts)
         # P52 (autocomplete-popup path) and P59 (insertion-bar dropdown path) both
         # declare the snippet dictionary by a CONFIG-OWNED path. They share the
         # SAME committed fixture dict (tests/proof/fixtures/snippets/p52-snippets.json,
@@ -455,7 +455,9 @@ else
         # the config-owned property both obligations name. P59 reads this same
         # config-declared path back to prove the bar's dropdown triggers come from
         # the dict (not a hardcoded list), so the fixture is the single source of
-        # truth for both specs.
+        # truth for both specs. P63 reuses the same dict to drive the bar's snippet
+        # <select> through a REAL DOM selectOption (coverage-hardening of the same
+        # dropdown P59 proves via the hook).
         SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
         mkdir -p "$SNIPPETS_DIR"
         SNIPPET_DICT="$SNIPPETS_DIR/p52-snippets.json"
