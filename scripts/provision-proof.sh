@@ -627,6 +627,20 @@ p08-export-pdf.spec.ts)
 command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
 EOF
     ;;
+p47-save-gate.spec.ts)
+    # P47 A2 proves the save-gate blocks a REAL plugin export on an identity-less
+    # buffer. So the shipped pandoc-html-export export-category plugin must be
+    # DISCOVERABLE here: install it (vendored alongside pandoc-renderer, OSOT) and
+    # its [plugin.pandoc-html-export] config section. Without it the gated-export
+    # assertion would pass for the wrong reason (plugin-not-found rather than
+    # gated); with it, the only thing stopping the artifact is the gate itself.
+    install_plugin_fixtures "$PLUGINS_DIR" pandoc-html-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.pandoc-html-export]
+command = "$PANDOC_BIN --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources"
+EOF
+    ;;
 p66-export-plugin-discovery.spec.ts)
     # P66: export is a discovered plugin in the pandoc suite. The canonical config
     # above set up the pandoc renderer + [plugins].dir (so the preview works); here

@@ -9,8 +9,8 @@ import {
   appendAtEnd,
   editorText,
   currentFile,
-  exportTo,
-  exportState,
+  exportViaPluginById,
+  pluginExportState,
   waitForPreview,
   waitForHarness,
   sleep,
@@ -54,7 +54,7 @@ import {
 //       gets the OS dialog; the harness supplies the path here. Resolving makes
 //       the buffer durable: the file is written at EXACTLY `path`, currentFile()
 //       becomes `path`, and the buffer is no longer identity-less. (DEFINED
-//       HERE; implementer provides — mirrors how openProject/exportTo bridge the
+//       HERE; implementer provides — mirrors how openProject/exportViaPluginById bridge the
 //       native-dialog surfaces other specs cannot drive.)
 //
 //   __PPE_E2E__.resolveCount()  [optional observable, falls back if absent]
@@ -67,14 +67,15 @@ import {
 //
 //   Already present / reused from existing specs:
 //       __PPE_E2E__.currentFile(), .getEditorText(), .appendAtEnd(),
-//       .exportTo(pluginId, target)  [P7/P12], the 'menu'->'save' event [P3],
-//       __PPE_EXPORT__ export-state marker [P7].
+//       .exportViaPluginById(pluginId, target) [plugin export surface, the SAME
+//       runPluginToPath firewall p07/p08/p12/p19 drive], the 'menu'->'save'
+//       event [P3], __PPE_PLUGIN_EXPORT__ plugin-export-state marker.
 //
 // ── HOW "THE ACTION DID NOT RUN" IS OBSERVABLE ──────────────────────────────
 //   - export gated: NO artifact exists at the chosen target path AND no artifact
 //     exists anywhere under the run dir (kills an auto-guessed filename), AND the
-//     export-state marker never reports "done" (the downstream pandoc command did
-//     not run to completion). No artifact, no witness.
+//     plugin-export-state marker never reports "done" (the downstream pandoc
+//     command did not run to completion). No artifact, no witness.
 //   - already-durable no-prompt: an ordinarily-opened file (which has a path) is
 //     edited and Saved; the bytes hit disk and the resolution hook is never
 //     supplied/needed — the gate did not re-prompt.
@@ -228,13 +229,16 @@ test('path-consuming actions are gated on a resolved durable destination', async
     value: recoveryHasUntitled,
   });
 
-  // ── A2: export on the identity-less buffer WITHOUT resolving a path ────────
-  // The gate must NOT run the export. Observable: no artifact at the chosen
-  // target, no artifact anywhere under the run dir, and the export never reaches
-  // "done".
+  // ── A2: PLUGIN export on the identity-less buffer WITHOUT resolving a path ──
+  // Export is now entirely the pandoc plugin suite: the shipped pandoc-html-export
+  // export-category plugin, run BY ID through the SAME generic firewall p07 proves.
+  // That plugin path funnels through requireDurablePath() — the identical save-gate
+  // every path-consuming action uses. The gate must NOT run the export. Observable:
+  // no artifact at the chosen target, no artifact anywhere under the run dir, and
+  // the plugin export never reaches "done" (its marker reports "gated").
   const filesBefore = new Set(walkFiles(manifest.runDir));
   const exportTarget = join(manifest.runDir, 'p47-gated-export.html');
-  await exportTo(tauriPage, 'html', exportTarget);
+  await exportViaPluginById(tauriPage, 'pandoc-html-export', exportTarget);
 
   // Give a generous window in which a NON-gated (broken) app would have written
   // the artifact and reached "done". A faithful gate produces neither.
@@ -243,7 +247,7 @@ test('path-consuming actions are gated on a resolved durable destination', async
   const exportDeadline = Date.now() + 8_000;
   while (Date.now() < exportDeadline) {
     if (existsSync(exportTarget)) sawArtifact = true;
-    const state = await exportState(tauriPage);
+    const state = await pluginExportState(tauriPage);
     if (state === 'done') sawDone = true;
     if (sawArtifact || sawDone) break;
     await sleep(250);

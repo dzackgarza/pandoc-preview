@@ -274,6 +274,35 @@
             },
           );
         },
+        // P47 export-gate surface. exportViaPluginById runs the REAL plugin
+        // export (the pandoc-html-export / pandoc-pdf-export category) BY ID
+        // through runPluginToPath, which funnels through the SAME
+        // requireDurablePath() gate every path-consuming action uses. On an
+        // identity-less buffer the gate resolves nothing, runPluginToPath throws,
+        // and the marker reports "gated" — the plugin export did NOT run (no
+        // artifact, no "done"). __PPE_PLUGIN_EXPORT__ is the plugin-export state
+        // marker the spec reads (sibling of __PPE_EXPORT__ for the old path).
+        exportViaPluginById: (pluginId: string, target: string) => {
+          (window as unknown as { __PPE_PLUGIN_EXPORT__: unknown }).__PPE_PLUGIN_EXPORT__ =
+            "pending";
+          runPluginToPath(pluginId, target).then(
+            () => {
+              (window as unknown as { __PPE_PLUGIN_EXPORT__: unknown }).__PPE_PLUGIN_EXPORT__ =
+                "done";
+            },
+            (e: unknown) => {
+              // runPluginToPath rejects ONLY when requireDurablePath() resolved
+              // nothing (identity-less buffer) — the gate aborted before any
+              // api.runPlugin call, so the downstream command never ran. Any other
+              // rejection here is unexpected and surfaced verbatim (fail loud).
+              const msg = String(e);
+              (window as unknown as { __PPE_PLUGIN_EXPORT__: unknown }).__PPE_PLUGIN_EXPORT__ =
+                msg.includes("No durable destination resolved")
+                  ? "gated"
+                  : "error: " + msg;
+            },
+          );
+        },
         runPlugin: (pluginId: string, target: string) => {
           (window as unknown as { __PPE_PLUGIN_RESULT__: unknown }).__PPE_PLUGIN_RESULT__ = null;
           runPluginToPath(pluginId, target).then(

@@ -80,6 +80,33 @@ export async function exportState(page: EvaluatesScripts): Promise<string> {
   );
 }
 
+// ── Plugin export by id, through the save-gate (P47) ───────────────────────
+// Drive the REAL plugin export (the pandoc-html-export / pandoc-pdf-export
+// export-category plugin) BY ID. This funnels through runPluginToPath →
+// requireDurablePath() — the SAME save-gate every path-consuming action uses.
+// On an identity-less buffer the gate resolves nothing and the export does NOT
+// run. Fire-and-forget; the spec awaits the on-disk artifact + the marker.
+export async function exportViaPluginById(
+  page: EvaluatesScripts,
+  pluginId: string,
+  target: string,
+): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.exportViaPluginById(${JSON.stringify(pluginId)}, ${JSON.stringify(target)}); return null; })()`,
+  );
+}
+
+// Read the plugin-export state marker (window.__PPE_PLUGIN_EXPORT__), sibling
+// of exportState for the plugin path: "pending" → "done" when the export ran,
+// "gated" when the save-gate aborted it. A diagnostic pointer, never a
+// substitute for the on-disk proof.
+export async function pluginExportState(page: EvaluatesScripts): Promise<string> {
+  return asString(
+    await page.evaluate(`String(window.__PPE_PLUGIN_EXPORT__)`),
+    'pluginExportState',
+  );
+}
+
 // ── Run a generic plugin by id (A1/p19) ───────────────────────────────────
 // The plugin firewall discovers plugins from the configured plugins dir and
 // runs one by id against the REAL open buffer, returning a structured
