@@ -560,6 +560,36 @@ p22-configure-plugin-spawn.spec.ts)
 greeting = "hi"
 EOF
     ;;
+p07-export-html.spec.ts)
+    # P7 (export-as-plugin migration): HTML export is the shipped pandoc-html-export
+    # export-category plugin, discovered from [plugins].dir and run BY ID through the
+    # generic firewall (proof-obligations.md migration rulings 2026-06-17;
+    # export-plugins-contract.md). The canonical config above already set up the
+    # pandoc renderer + [plugins].dir (so the preview works); here we ADD the shipped
+    # pandoc-html-export plugin into that SAME dir (vendored alongside pandoc-renderer,
+    # OSOT) and its [plugin.pandoc-html-export] config section — the raw HTML export
+    # command the plugin runs (mirroring [plugin.pandoc-renderer].command). The spec
+    # then drives runPlugin('pandoc-html-export', target) and asserts the produced
+    # artifact carries the P1 witnesses and a self-contained data: image URI.
+    #
+    # RED today: the shipped pandoc-html-export plugin does NOT exist yet (the only
+    # vendored plugin is pandoc-renderer), so it is NOT in the plugins dir and
+    # discover() never finds it. run_plugin returns "no plugin with id
+    # \"pandoc-html-export\" in the plugins dir", no artifact is written, and the spec
+    # fails at the existsSync(target) gate — the absent plugin, not a weakened
+    # assertion. GREEN: the implementer vendors the pandoc-html-export plugin
+    # (cloning the pandoc-renderer plugin shape: plugin.toml/render.sh/schema.json/
+    # configure) and installs it here by adding it to the vendored-plugin id list in
+    # install_plugin_fixtures (so it is sourced from $VENDOR_PLUGINS, OSOT), then
+    # adding `install_plugin_fixtures "$PLUGINS_DIR" pandoc-html-export` on the line
+    # above. For the RED the plugin is absent from $VENDOR_PLUGINS, so it cannot be
+    # installed and the plugins dir does not contain it — discover() never finds it.
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.pandoc-html-export]
+command = "$PANDOC_BIN --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources"
+EOF
+    ;;
 p66-export-plugin-discovery.spec.ts)
     # P66: export is a discovered plugin in the pandoc suite. The canonical config
     # above set up the pandoc renderer + [plugins].dir (so the preview works); here

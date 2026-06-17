@@ -3,17 +3,37 @@ import { join } from 'node:path';
 import { test, expect } from './fixtures';
 import { loadRunManifest } from './support/run-manifest';
 import { recordObservation } from './support/observations';
-import { openAndSelectDemo, exportTo, waitForPreview, sleep } from './support/app';
+import {
+  openAndSelectDemo,
+  runPluginById,
+  pluginResult,
+  waitForPreview,
+  sleep,
+} from './support/app';
 
-// P7 — Export HTML artifact (shipped default plugin). Export demo.md to a
-// chosen temp path via the REAL export boundary, driving the configured
-// [export.html] plugin (export-plugins-contract.md: command = pandoc ...
-// --embed-resources --mathjax ...). Provisioning writes that plugin table into
-// the hermetic config; the export must run the CONFIGURED plugin command, not a
-// hard-coded pandoc invocation. The only bypassed surface is the native save
-// dialog. Then this process asserts: the file exists at exactly that path, its
-// parsed DOM repeats the P1 witnesses, and the image is inlined as a
-// self-contained data: URI.
+// P7 — Export HTML artifact (shipped default export plugin), driven through the
+// GENERIC plugin firewall (Milestone A, proven by p19), NOT through the app-core
+// export_document / [export.html] config table. Export-as-plugin migration
+// (export-plugins-contract.md; proof-obligations.md migration rulings 2026-06-17):
+// the app core owns NO pandoc/export command knowledge — HTML export is a
+// DISCOVERED export-category plugin in the pandoc suite, exactly as rendering
+// already moved to the pandoc-renderer plugin. So this spec runs the shipped
+// "pandoc-html-export" plugin BY ID against the REAL open buffer via
+// window.__PPE_E2E__.runPlugin (the same firewall p19 exercises): the backend
+// discovers the plugin from [plugins].dir, substitutes {file}/{artifact}, and
+// spawns its command with the real buffer on stdin. The export flags
+// (--embed-resources for a self-contained artifact; local MathJax) live INSIDE
+// that plugin, never in the app core.
+//
+// Provisioning (scripts/provision-proof.sh, p07 branch) installs the
+// pandoc-html-export plugin into this spec's hermetic plugins dir and writes its
+// [plugin.pandoc-html-export] config section. The only bypassed surface is the
+// native save dialog (the harness supplies the target path). Everything else
+// reads the real produced artifact.
+//
+// Then this process asserts — VERBATIM the P7 obligation — that the file exists
+// at exactly that path, its parsed DOM repeats the P1 witnesses, and the image is
+// inlined as a self-contained data: URI.
 //
 // The exported bytes are parsed by the REAL webview engine via DOMParser
 // (page.evaluate), not a hand-rolled regex.
@@ -27,24 +47,22 @@ test('Export HTML writes a self-contained artifact carrying the P1 witnesses', a
   await waitForPreview(tauriPage, `return d.querySelector('h1') !== null;`);
 
   const target = join(manifest.runDir, 'export-witness.html');
-  // Fire the real export (api.exportDocument -> pandoc) and poll for the
-  // artifact. NOTE / PROOF DEBT: the real export runs pandoc with
-  // --embed-resources --mathjax, which performs a BLOCKING network fetch of
-  // the MathJax assets to inline them. In the hermetic proof environment that
-  // fetch stalls, so export_document never resolves and this file never
-  // appears. render.rs sets no timeout on the export subprocess, so the app
-  // hangs. This is a real, externally-observable finding, recorded as proof
-  // debt rather than worked around.
-  await exportTo(tauriPage, 'html', target);
-  for (let i = 0; i < 80 && !existsSync(target); i++) {
+  // Fire the real export by running the shipped HTML export PLUGIN by id through
+  // the generic firewall (api.runPlugin -> discover -> spawn the plugin's command
+  // with the real buffer on stdin), then poll for the artifact AND the structured
+  // PluginResult — the same shape p19 proves.
+  await runPluginById(tauriPage, 'pandoc-html-export', target);
+
+  let result = await pluginResult(tauriPage);
+  for (let i = 0; i < 80 && (!existsSync(target) || result === null); i++) {
     await sleep(250);
+    result = await pluginResult(tauriPage);
   }
   if (!existsSync(target)) {
-    const state = await tauriPage.evaluate(`String(window.__PPE_EXPORT__)`);
     throw new Error(
-      `Export HTML artifact never appeared at ${target} (export state: ${String(state)}). ` +
-        `Known cause: --embed-resources + --mathjax blocks on a network fetch of MathJax assets ` +
-        `under the hermetic HOME, and export_document has no subprocess timeout.`,
+      `Export HTML artifact never appeared at ${target} (result: ${JSON.stringify(result)}). ` +
+        `The generic plugin firewall did not discover/run the shipped pandoc-html-export ` +
+        `export plugin against the real buffer.`,
     );
   }
   expect(existsSync(target)).toBe(true);
