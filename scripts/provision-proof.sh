@@ -589,6 +589,31 @@ p07-export-html.spec.ts)
 command = "$PANDOC_BIN --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources"
 EOF
     ;;
+p17-export-html-offline.spec.ts)
+    # P17 (export-as-plugin migration): HTML export is the shipped pandoc-html-export
+    # export-category plugin (proof-obligations.md migration rulings 2026-06-17;
+    # export-plugins-contract.md), exactly as P7 already retargeted. P17 proves the
+    # OFFLINE self-containment of that plugin's artifact: it runs the plugin's
+    # export.sh as an INDEPENDENT process under unshare -rn (network-isolated),
+    # reading the command from the installed plugin manifest's [exec].command and
+    # delivering the [plugin.pandoc-html-export] config section on PPE_PLUGIN_CONFIG
+    # exactly as plugins.rs::run_plugin_sync does. export.sh layers the plugin-LOCAL
+    # MathJax bundle (vendored INSIDE the plugin dir, ruling 1) onto the raw pandoc
+    # command, so the artifact inlines MathJax and renders math with no network.
+    #
+    # The shipped pandoc-html-export plugin is vendored alongside pandoc-renderer
+    # (src-tauri/resources/vendor/plugins/pandoc-html-export, OSOT) and installed
+    # into this spec's hermetic plugins dir here; its [plugin.pandoc-html-export]
+    # config carries the raw HTML export command. The --embed-resources flag makes
+    # the artifact self-contained; the plugin-local --mathjax (layered by export.sh)
+    # makes it render offline.
+    install_plugin_fixtures "$PLUGINS_DIR" pandoc-html-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.pandoc-html-export]
+command = "$PANDOC_BIN --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources"
+EOF
+    ;;
 p08-export-pdf.spec.ts)
     # P8 (export-as-plugin migration): PDF export is the shipped pandoc-pdf-export
     # export-category plugin, discovered from [plugins].dir and run BY ID through the

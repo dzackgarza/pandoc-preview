@@ -1,6 +1,6 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 import { test, expect } from './fixtures';
@@ -10,51 +10,56 @@ import { recordObservation } from './support/observations';
 // P17 — Exported HTML renders math offline (self-contained, no remote MathJax).
 // (mathjax-offline-local-source-decision.md, decision A 2026-06-13.)
 //
-// The shipped `[export.html]` default must inline a LOCAL MathJax bundle
-// (`--mathjax=<local>` + `--embed-resources`), not a CDN link, so a user on an
-// airplane exports an HTML file that typesets math with no network.
+// Export-as-plugin migration (export-plugins-contract.md; proof-obligations.md
+// migration rulings 2026-06-17): HTML export is the shipped pandoc-html-export
+// EXPORT-CATEGORY PLUGIN, not a core [export.html] table. The plugin owns the
+// self-contained-offline flags: its export.sh layers `--mathjax=<plugin-local>`
+// (the MathJax bundle vendored INSIDE the plugin dir, ruling 1) onto the raw
+// pandoc command, so a user on an airplane exports an HTML file that typesets
+// math with no network. The app core owns no pandoc/export command knowledge.
 //
-// WHY ONLINE "no remote ref" DOES NOT DISCRIMINATE. Run ONLINE, the CURRENT
-// default `--embed-resources --mathjax` already fetches the CDN bundle and
-// inlines it, leaving no `<script src="https://...">` reference. (The inlined
-// MathJax JS *text* still contains literal `https://cdn.jsdelivr.net/...`
-// strings — speech-rule-engine runtime URLs — so a bare `cdn.jsdelivr`
+// WHY ONLINE "no remote ref" DOES NOT DISCRIMINATE. Run ONLINE, a bare
+// `--embed-resources --mathjax` (the pre-decision default) already fetches the
+// CDN bundle and inlines it, leaving no `<script src="https://...">` reference.
+// (The inlined MathJax JS *text* still contains literal `https://cdn.jsdelivr
+// .net/...` strings — speech-rule-engine runtime URLs — so a bare `cdn.jsdelivr`
 // substring match is a FALSE discriminator and is deliberately NOT used here.)
 // The real discriminator is running the export OFFLINE:
-//   - CURRENT default, offline: exit 0 but `[WARNING] Could not fetch resource
-//     https://cdn.jsdelivr.net/...mathjax...`, a dead `<script src="https://
-//     cdn.jsdelivr...">` left in a file labelled self-contained, ~3 KB, math
-//     broken offline. (Verified with pandoc 3.6 under `unshare -rn`.)
-//   - decision-A default, offline: exit 0, NO fetch warning, the local MathJax
-//     bundle inlined directly into a <script>, math renders offline.
+//   - a CDN-bound default, offline: exit 0 but `[WARNING] Could not fetch
+//     resource https://cdn.jsdelivr.net/...mathjax...`, a dead `<script
+//     src="https://cdn.jsdelivr...">` left in a file labelled self-contained,
+//     ~3 KB, math broken offline. (Verified with pandoc 3.6 under `unshare -rn`.)
+//   - the shipped plugin, offline: exit 0, NO fetch warning, the plugin-local
+//     MathJax bundle inlined directly into a <script>, math renders offline.
 //
 // This spec proves it as an INDEPENDENT-PROCESS offline run of the SHIPPED
-// `[export.html]` command, decoupled from the app (P12 already proves the app
-// runs the configured argv verbatim; P7 proves the app drives [export.html]).
-// The command is READ from the hermetic config the harness provisioned (not
-// hard-coded), so this spec tracks whatever first-run.sh / provisioning ships.
+// pandoc-html-export PLUGIN command, decoupled from the app (P12 already proves
+// the app runs the configured argv verbatim; P7 proves the app drives the
+// pandoc-html-export plugin through the firewall). The command is READ from the
+// plugin's manifest + its provisioned config section (not hard-coded), so this
+// spec tracks whatever first-run.sh / provisioning ships.
 //
-// Discriminator (what each assertion kills) — every one is RED on the current
-// shipped default when run offline:
+// Discriminator (what each assertion kills) — every one is RED on a CDN-bound
+// export when run offline:
 //   - exit 0                          : a hard failure would be a different bug.
-//   - stderr has NO "Could not fetch" : current offline emits the CDN fetch
-//                                        warning; decision-A's local file does not.
-//   - no `<script src="https://...">` : current offline leaves the dead CDN
-//                                        <script src>; local inlining has none.
-//   - substantial inlined MathJax JS  : current offline inlines nothing (~3 KB,
-//                                        no MathJax body); local bundle is large.
+//   - stderr has NO "Could not fetch" : a CDN-bound offline run emits the fetch
+//                                        warning; the plugin-local file does not.
+//   - no `<script src="https://...">` : a CDN-bound offline run leaves the dead
+//                                        CDN <script src>; local inlining has none.
+//   - substantial inlined MathJax JS  : a CDN-bound offline run inlines nothing
+//                                        (~3 KB, no MathJax body); local is large.
 //   - GOLD: the artifact, opened in a network-blocked plain Playwright page
 //     (context.setOffline(true) — a real BrowserContext genuinely honors it),
-//     typesets the P4 shape (mjx-container). Current offline artifact cannot:
+//     typesets the P4 shape (mjx-container). A CDN-bound offline artifact cannot:
 //     its only MathJax loader is a dead CDN <script src> that an offline
 //     browser cannot fetch, so no mjx-container ever appears.
 
-test('shipped [export.html] inlines local MathJax and renders math offline', async ({}) => {
+test('shipped pandoc-html-export plugin inlines local MathJax and renders math offline', async ({}) => {
   const manifest = loadRunManifest();
 
-  // ── Read the SHIPPED [export.html] command from the provisioned config ──
-  // Independent process (python tomllib), mirroring support/toml.ts: the spec
-  // must not trust any in-app report of what the command is, and must track
+  // ── Read the [plugins].dir + [plugin.pandoc-html-export] section from the
+  // provisioned config (independent process, python tomllib; mirroring
+  // support/toml.ts). The spec must not trust any in-app report and must track
   // whatever the harness shipped rather than hard-coding the flags.
   const cfgJson = execFileSync(
     'python3',
@@ -65,67 +70,115 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
     ],
     { encoding: 'utf-8' },
   );
-  const cfg = JSON.parse(cfgJson) as { export?: { html?: { command?: unknown } } };
-  const command = cfg.export?.html?.command;
-  if (
-    !Array.isArray(command) ||
-    command.length === 0 ||
-    !command.every((a) => typeof a === 'string')
-  ) {
+  const cfg = JSON.parse(cfgJson) as {
+    plugins?: { dir?: unknown };
+    plugin?: Record<string, { command?: unknown }>;
+  };
+  const pluginsDir = cfg.plugins?.dir;
+  if (typeof pluginsDir !== 'string' || pluginsDir.length === 0) {
     throw new Error(
-      `provisioned config ${manifest.configPath} has no string[] [export.html].command; ` +
-        `got ${JSON.stringify(command)}`,
+      `provisioned config ${manifest.configPath} has no [plugins].dir string; ` +
+        `got ${JSON.stringify(pluginsDir)}`,
     );
   }
-  const shippedArgv = command as string[];
+  // The plugin's own config section, delivered to the plugin on
+  // PPE_PLUGIN_CONFIG exactly as plugins.rs::run_plugin_sync / config_json do:
+  // the raw pandoc command STRING the plugin's export.sh shlex-tokenizes and
+  // runs verbatim (richness ruling 2). The schema marks `command` required.
+  const pluginSection = cfg.plugin?.['pandoc-html-export'];
+  const rawCommand = pluginSection?.command;
+  if (typeof rawCommand !== 'string' || rawCommand.length === 0) {
+    throw new Error(
+      `provisioned config ${manifest.configPath} has no [plugin.pandoc-html-export].command ` +
+        `string; got ${JSON.stringify(rawCommand)}`,
+    );
+  }
+  const pluginConfigJson = JSON.stringify({ command: rawCommand });
 
-  // ── Resolve {input}/{output}/{mathjax} exactly as render.rs::export_sync ─
-  // Per-argument substring substitution of the placeholders against the real
-  // witness demo.md and a chosen output path under the run dir.
-  //
-  // {mathjax} is the app-injected, install-portable placeholder for the bundled
-  // MathJax (decision A): the app substitutes it with file://<resource_dir>/
-  // mathjax/tex-full-svg-a11y.min.js. This independent-process spec mirrors that by
-  // resolving the SAME vendored bundle at its fixed repo path
-  // (src-tauri/resources/mathjax/tex-full-svg-a11y.min.js), computed relative to this
-  // spec file so it is independent of cwd. CONTRACT for the implementer: the
-  // bundle MUST live at that path and the shipped [export.html] uses
-  // `--mathjax={mathjax}`. While the shipped default still carries bare
-  // `--mathjax` (no {mathjax} token), this replace is a no-op and the spec
-  // stays RED at the "could not fetch" assertion below.
-  // Proof debt: the app's OWN {mathjax}->resource_dir resolution is not
-  // exercised here (this process does its own substitution); it rides on the
-  // {input}/{output} substitution mechanism (P12) + resource_dir being a Tauri
-  // primitive. A dedicated proof of the app's export-side resolution is debt.
-  const mathjaxBundleUrl = new URL(
-    '../../src-tauri/resources/mathjax/tex-full-svg-a11y.min.js',
-    import.meta.url,
-  ).href;
+  // ── Read the SHIPPED command from the installed plugin's MANIFEST ──────
+  // The command source is the plugin's [exec].command (the firewall's argv,
+  // ["{plugin_dir}/export.sh", "{file}", "{artifact}"]), NOT a core
+  // [export.html] table — the app core owns no pandoc/export command knowledge.
+  const pluginDir = join(pluginsDir, 'pandoc-html-export');
+  const manifestPath = join(pluginDir, 'plugin.toml');
+  const manifestJson = execFileSync(
+    'python3',
+    [
+      '-c',
+      'import sys,tomllib,json;print(json.dumps(tomllib.load(open(sys.argv[1],"rb"))))',
+      manifestPath,
+    ],
+    { encoding: 'utf-8' },
+  );
+  const pluginManifest = JSON.parse(manifestJson) as {
+    id?: unknown;
+    category?: unknown;
+    exec?: { command?: unknown };
+  };
+  if (pluginManifest.id !== 'pandoc-html-export' || pluginManifest.category !== 'export') {
+    throw new Error(
+      `installed plugin manifest ${manifestPath} is not the export-category ` +
+        `pandoc-html-export plugin; got ${JSON.stringify(pluginManifest)}`,
+    );
+  }
+  const manifestCommand = pluginManifest.exec?.command;
+  if (
+    !Array.isArray(manifestCommand) ||
+    manifestCommand.length === 0 ||
+    !manifestCommand.every((a) => typeof a === 'string')
+  ) {
+    throw new Error(
+      `plugin manifest ${manifestPath} has no string[] [exec].command; ` +
+        `got ${JSON.stringify(manifestCommand)}`,
+    );
+  }
+  const shippedArgv = manifestCommand as string[];
+
+  // ── Resolve the PLUGIN-LOCAL MathJax bundle ───────────────────────────
+  // Ruling 1: the MathJax bundle is vendored INSIDE the plugin dir, never an
+  // AppHandle resource path or a CDN. export.sh resolves it itself at
+  // <plugin_dir>/mathjax/tex-full-svg-a11y.min.js and layers `--mathjax=<that>`
+  // onto the raw command; the manifest command carries no {mathjax} token. This
+  // spec asserts the plugin ships that bundle so the offline run can succeed.
+  const mathjaxBundlePath = join(pluginDir, 'mathjax', 'tex-full-svg-a11y.min.js');
+  if (!existsSync(mathjaxBundlePath)) {
+    throw new Error(
+      `pandoc-html-export plugin does not ship its local MathJax bundle at ` +
+        `${mathjaxBundlePath}; export.sh cannot inline math offline`,
+    );
+  }
+
+  // ── Substitute {plugin_dir}/{file}/{artifact} exactly as run_plugin_sync ─
+  // Per-argument substring substitution of the firewall placeholders against
+  // the installed plugin dir, the real witness demo.md, and a chosen output
+  // path under the run dir.
   const inputPath = manifest.demoFile;
   const outputPath = join(manifest.runDir, 'export-offline-witness.html');
   const resolved = shippedArgv.map((arg) =>
     arg
-      .replace('{input}', inputPath)
-      .replace('{output}', outputPath)
-      .replace('{mathjax}', mathjaxBundleUrl),
+      .replace('{plugin_dir}', pluginDir)
+      .replace('{file}', inputPath)
+      .replace('{artifact}', outputPath),
   );
   const [program, ...args] = resolved;
 
-  // ── Run the shipped command OFFLINE as an independent process ───────────
+  // ── Run the shipped plugin command OFFLINE as an independent process ─────
   // `unshare -rn` runs the command in a fresh, network-isolated namespace
   // (precedent: scripts/provision-proof.sh p08 font-cache warmup, which runs
-  // the shipped [export.pdf] command under the same hermetic env). cwd = the
-  // source file's parent, mirroring the app's export contract (render.rs sets
-  // current_dir to the source's parent). The hermetic HOME/XDG mirror what
-  // proof-run.sh launches the app with, so resource resolution matches.
+  // the shipped export command under the same hermetic env). cwd = the source
+  // file's parent, mirroring the firewall's contract (run_plugin_sync sets
+  // current_dir to the source's parent). PPE_PLUGIN_CONFIG carries the plugin's
+  // own config section ({"command": "..."}), exactly as run_plugin_sync delivers
+  // it. The hermetic HOME/XDG mirror what proof-run.sh launches with.
   //
   // spawnSync (not execFileSync) so stderr is captured even on a zero exit:
   // pandoc's offline fail-open exits 0 WITH the fetch warning on stderr, which
   // is the discriminating signal. spawnSync never throws on non-zero either.
   const run = spawnSync('unshare', ['-rn', program, ...args], {
-    cwd: manifest.project,
+    cwd: dirname(inputPath),
     env: {
       ...process.env,
+      PPE_PLUGIN_CONFIG: pluginConfigJson,
       HOME: join(manifest.runDir, 'home'),
       XDG_CONFIG_HOME: manifest.xdgConfigHome,
       XDG_CACHE_HOME: join(manifest.runDir, 'xdg-cache'),
@@ -142,31 +195,31 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
   }
   const stderr = run.stderr ?? '';
 
-  // exit 0: the shipped export must succeed. (Current default offline ALSO
+  // exit 0: the shipped export must succeed. (A CDN-bound offline run ALSO
   // exits 0 — fail-open — so this alone is not the discriminator; the stderr
   // and artifact assertions below are.)
   expect(run.status).toBe(0);
 
-  // No CDN fetch warning. Current default offline emits
+  // No CDN fetch warning. A CDN-bound offline run emits
   //   "[WARNING] Could not fetch resource https://cdn.jsdelivr.net/...mathjax..."
-  // decision-A's local --mathjax=file://... emits none. Match the pandoc
-  // warning phrasing case-insensitively.
+  // the plugin-local --mathjax=<plugin_dir>/mathjax/... emits none. Match the
+  // pandoc warning phrasing case-insensitively.
   expect(/could not fetch/i.test(stderr)).toBe(false);
 
   // ── Parse the produced artifact ─────────────────────────────────────────
   const htmlText = readFileSync(outputPath, 'utf-8');
 
-  // No external <script src="https://..."> MathJax loader. Current default
-  // offline leaves a dead `<script src="https://cdn.jsdelivr.net/...">`; a
-  // local inlining has no remote <script src> at all. Match a script tag whose
-  // src is an https URL (the broken-offline signature), independent of host.
+  // No external <script src="https://..."> MathJax loader. A CDN-bound offline
+  // run leaves a dead `<script src="https://cdn.jsdelivr.net/...">`; a local
+  // inlining has no remote <script src> at all. Match a script tag whose src is
+  // an https URL (the broken-offline signature), independent of host.
   const remoteScript = /<script\b[^>]*\bsrc\s*=\s*"https:\/\/[^"]*"/i.test(htmlText);
   expect(remoteScript).toBe(false);
 
   // A <script> carries SUBSTANTIAL inlined MathJax JS — the local bundle was
-  // embedded. Current default offline inlines nothing (the ~3 KB dead-link
-  // file has no MathJax body); the embedded bundle is hundreds of KB. Require
-  // both a MathJax marker inside a script body AND a large script payload.
+  // embedded. A CDN-bound offline run inlines nothing (the ~3 KB dead-link file
+  // has no MathJax body); the embedded bundle is hundreds of KB. Require both a
+  // MathJax marker inside a script body AND a large script payload.
   const scriptBodies = [...htmlText.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(
     (m) => m[1],
   );
@@ -177,9 +230,9 @@ test('shipped [export.html] inlines local MathJax and renders math offline', asy
 
   // ── GOLD: render the artifact in a network-blocked plain Playwright page ─
   // A real BrowserContext genuinely honors setOffline(true) (verified), so
-  // this proves the artifact typesets math with NO network. The current
-  // offline artifact cannot: its only MathJax loader is a dead CDN <script
-  // src> the offline browser cannot fetch, so no mjx-container appears.
+  // this proves the artifact typesets math with NO network. A CDN-bound offline
+  // artifact cannot: its only MathJax loader is a dead CDN <script src> the
+  // offline browser cannot fetch, so no mjx-container appears.
   const browser = await chromium.launch({ headless: true });
   try {
     const context = await browser.newContext();
