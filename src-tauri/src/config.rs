@@ -20,13 +20,6 @@ pub struct Config {
     /// implicit `~/.pandoc` default); first-run generates them as
     /// `~/.pandoc/styles` and `~/.pandoc/figures`.
     pub directories: Directories,
-    /// Export targets are config-owned plugins: each `[export.<id>]` table is a
-    /// complete compilation command. The pandoc HTML/PDF invocations are merely
-    /// the shipped default plugins (scripts/first-run.sh). Required — a config
-    /// without any `[export]` table is a hard startup error, never defaulted.
-    /// IndexMap preserves declaration order so the Export menu lists entries in
-    /// config order.
-    pub export: IndexMap<String, ExportPlugin>,
     /// Plugin firewall (Milestone A). Optional capability: when the `[plugins]`
     /// table is present, `dir` is the directory the app discovers plugins from;
     /// when absent, the app has no plugins (a complete, valid state). Optional,
@@ -134,71 +127,6 @@ pub struct Plugins {
     pub dir: String,
 }
 
-/// One export plugin: the entire compilation command for an export target.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ExportPlugin {
-    /// Human-readable menu label, non-empty.
-    pub label: String,
-    /// Output file extension (no dot), non-empty. Used for the save dialog.
-    pub extension: String,
-    /// The exact argv to spawn. Never a shell string. `{input}` and `{output}`
-    /// placeholders are substituted per-argument (substring substitution); both
-    /// must appear in at least one argument. Length >= 1.
-    pub command: Vec<String>,
-}
-
-/// The two placeholders every export command must reference.
-pub const PLACEHOLDER_INPUT: &str = "{input}";
-pub const PLACEHOLDER_OUTPUT: &str = "{output}";
-/// Optional, app-injected placeholder for the bundled MathJax bundle. The app
-/// substitutes it with `file://<resource_dir>/mathjax/tex-full-svg-a11y.min.js` so the
-/// shipped `[export.html]` plugin inlines a LOCAL MathJax copy under
-/// `--embed-resources` instead of fetching a CDN (decision A,
-/// mathjax-offline-local-source-decision.md). NOT required — a command without
-/// it is valid; only `{input}`/`{output}` are mandatory.
-pub const PLACEHOLDER_MATHJAX: &str = "{mathjax}";
-
-/// Validate a single export plugin's invariants. The single source of truth for
-/// the entry shape: both `validate` (config-values / save path) and the doctor's
-/// `export-plugins` check call this; the rules are never duplicated.
-pub fn validate_export_plugin(id: &str, plugin: &ExportPlugin) -> Result<()> {
-    if plugin.label.trim().is_empty() {
-        return Err(Error::InvalidArgument(format!(
-            "export.{id}.label must not be empty"
-        )));
-    }
-    if plugin.extension.trim().is_empty() {
-        return Err(Error::InvalidArgument(format!(
-            "export.{id}.extension must not be empty"
-        )));
-    }
-    if plugin.command.is_empty() {
-        return Err(Error::InvalidArgument(format!(
-            "export.{id}.command must have at least one argument"
-        )));
-    }
-    if !plugin
-        .command
-        .iter()
-        .any(|arg| arg.contains(PLACEHOLDER_INPUT))
-    {
-        return Err(Error::InvalidArgument(format!(
-            "export.{id}.command must reference the {PLACEHOLDER_INPUT} placeholder"
-        )));
-    }
-    if !plugin
-        .command
-        .iter()
-        .any(|arg| arg.contains(PLACEHOLDER_OUTPUT))
-    {
-        return Err(Error::InvalidArgument(format!(
-            "export.{id}.command must reference the {PLACEHOLDER_OUTPUT} placeholder"
-        )));
-    }
-    Ok(())
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct General {
@@ -274,14 +202,6 @@ pub fn validate(config: &Config) -> Result<()> {
     // directories.styles / directories.figures are ExistingDir: existence and
     // dir-ness are enforced at deserialize time (a missing path is a hard load
     // error), so there is nothing weaker to re-check here.
-    if config.export.is_empty() {
-        return Err(Error::InvalidArgument(
-            "at least one [export.<id>] plugin must be configured".into(),
-        ));
-    }
-    for (id, plugin) in &config.export {
-        validate_export_plugin(id, plugin)?;
-    }
     // When a plugins directory is configured, its path must be non-empty. The
     // per-plugin `[plugin.<id>]` schema validation lives in the generic plugin
     // validator (the doctor's plugin-config checks), not here.

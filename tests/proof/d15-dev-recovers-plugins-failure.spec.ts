@@ -34,9 +34,9 @@ test('just dev recovers a plugins-class doctor failure instead of dead-ending', 
   const xdgConfigHome = `${manifest.runDir}/xdg-config`;
   const home = `${manifest.runDir}/home`;
 
-  // Pre-state: a config that passes every config-class check (and export-plugins)
-  // but points [plugins].dir at a directory that does not exist — so the ONLY
-  // failing doctor check is `plugins`.
+  // Pre-state: a config that passes every config-class check but points
+  // [plugins].dir at a directory that does not exist — so the ONLY failing
+  // doctor check is `plugins`.
   expect(existsSync(manifest.configPath)).toBe(true);
   const pluginsDir = join(dirname(manifest.configPath), 'plugins');
   expect(existsSync(pluginsDir)).toBe(false);

@@ -196,29 +196,18 @@ command = "$PANDOC_COMMAND_TOML"
 [plugin.pandoc-renderer.style]
 figure_width = "75%"
 
-# Export targets are config-owned plugins: each [export.<id>] table is a
-# complete compilation command. {input}/{output} are substituted per-argument;
-# the process runs with cwd = the source file's parent. These two are the
-# shipped defaults — add, edit, or replace them with any pipeline you need
-# (custom filters, templates, latexmk, your own build script).
+# Export is entirely the pandoc plugin suite: the shipped pandoc-html-export and
+# pandoc-pdf-export export-category plugins, discovered from [plugins].dir and run
+# by id through the generic firewall. Each carries its OWN raw pandoc command
+# (the individually-managed raw command); the plugin's export.sh runs it verbatim,
+# layering only the volatile per-export context ({file}/{artifact} and, for HTML,
+# the plugin-local MathJax bundle). Edit the command, or replace it via the
+# plugin's own Configure action.
+[plugin.pandoc-html-export]
+command = "$PANDOC_PATH --from markdown --to html5 --standalone --embed-resources"
 
-[export.html]
-label = "HTML (self-contained)"
-extension = "html"
-command = [
-  "pandoc", "--from", "markdown", "--standalone",
-  "--embed-resources", "--mathjax={mathjax}",
-  "{input}", "--output", "{output}",
-]
-
-[export.pdf]
-label = "PDF"
-extension = "pdf"
-command = [
-  "pandoc", "--from", "markdown", "--standalone",
-  "--pdf-engine=lualatex",
-  "{input}", "--output", "{output}",
-]
+[plugin.pandoc-pdf-export]
+command = "$PANDOC_PATH --from markdown --standalone --pdf-engine=lualatex"
 EOF
 
 # Install the shipped pandoc filters the command references (Milestone D):
@@ -247,5 +236,25 @@ if [ -e "$RENDERER_DEST" ] && [ ! -L "$RENDERER_DEST" ]; then
 else
     ln -sfn "$RENDERER_VENDOR" "$RENDERER_DEST"
 fi
+
+# Install the shipped export-category plugins. Export is entirely the pandoc
+# plugin suite: pandoc-html-export and pandoc-pdf-export are app-owned vendored
+# code (the single source of truth), symlinked into the plugins dir so updates
+# stay atomic and a real-directory user override is preserved. The
+# [plugin.<id>].command sections written above are validated against each
+# plugin's schema by the generic plugin-config check.
+for export_plugin in pandoc-html-export pandoc-pdf-export; do
+    EXPORT_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/$export_plugin"
+    if [ ! -d "$EXPORT_VENDOR" ]; then
+        echo "FATAL: vendored export plugin missing: $EXPORT_VENDOR" >&2
+        exit 1
+    fi
+    EXPORT_DEST="$PLUGINS_DIR/$export_plugin"
+    if [ -e "$EXPORT_DEST" ] && [ ! -L "$EXPORT_DEST" ]; then
+        echo "preserve (user override): $EXPORT_DEST" >&2
+    else
+        ln -sfn "$EXPORT_VENDOR" "$EXPORT_DEST"
+    fi
+done
 
 gum style --bold --foreground 2 "Config written to $CONFIG_FILE"

@@ -257,23 +257,6 @@
         openProject: (dir: string) => {
           void openProject(dir);
         },
-        exportTo: (pluginId: string, target: string) => {
-          (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ = "pending";
-          exportToPath(pluginId, target).then(
-            (ran: boolean) => {
-              // "done" means the export ACTUALLY RAN (gate passed, command
-              // invoked). A gated export (identity-less buffer, P47) returns
-              // false and never reports done — the downstream command did not run.
-              (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ = ran
-                ? "done"
-                : "gated";
-            },
-            (e: unknown) => {
-              (window as unknown as { __PPE_EXPORT__: unknown }).__PPE_EXPORT__ =
-                "error: " + String(e);
-            },
-          );
-        },
         // P47 export-gate surface. exportViaPluginById runs the REAL plugin
         // export (the pandoc-html-export / pandoc-pdf-export category) BY ID
         // through runPluginToPath, which funnels through the SAME
@@ -670,12 +653,10 @@
       { id: "show_log", label: "Show Log", run: () => (activeTab = "log") },
       { id: "settings", label: "Settings", run: () => (settingsOpen = true) },
     ];
-    for (const [id, plugin] of Object.entries(config?.export ?? {})) {
-      cmds.push({ id: `export:${id}`, label: `Export: ${plugin.label}`, run: () => void exportDoc(id) });
-    }
     // Discovered export-category plugins (P66): one "Export: <name> (.<ext>)"
-    // entry per plugin, name + extension sourced from the discovered manifest
-    // (never config.export). The plugin runs through the generic firewall.
+    // entry per plugin, name + extension sourced from the discovered manifest.
+    // Export is entirely the pandoc plugin suite; the app core owns no export
+    // command knowledge. The plugin runs through the generic firewall.
     for (const plugin of discoveredPlugins) {
       if (plugin.category !== "export" || plugin.extension === null) continue;
       cmds.push({
@@ -1108,40 +1089,11 @@
     }
   }
 
-  /** Run the configured [export.<pluginId>] plugin, writing to `target`. The
-   * single export command path (the menu handler and the E2E hook both reach
-   * this). The plugin's command is the whole compilation pipeline; the backend
-   * substitutes {input}/{output} and spawns it. */
-  async function exportToPath(pluginId: string, target: string): Promise<boolean> {
-    // P47: export funnels through the save-gate. On an identity-less buffer the
-    // gate must resolve a durable destination first; until then the export does
-    // NOT run (no artifact, no downstream pandoc command) — return false so the
-    // caller does not report a completed export.
-    const source = await requireDurablePath();
-    if (!source) return false;
-    if (dirty) await saveCurrent();
-    const label = config?.export[pluginId]?.label ?? pluginId;
-    toastInfo(`Exporting ${label}…`);
-    try {
-      const res = await api.exportDocument(pluginId, source, target);
-      log = res.log;
-      if (res.ok) {
-        toastSuccess(`Exported ${target}`);
-      } else {
-        activeTab = "log";
-        toastError("Export failed — see compile log.");
-      }
-    } catch (e) {
-      toastError(String(e));
-    }
-    // The export ran (the gate passed and the downstream command was invoked).
-    return true;
-  }
-
   /** Run the discovered plugin `pluginId` against the open buffer, writing to
-   * `target`; returns the structured PluginResult. The generic counterpart of
-   * exportToPath: the backend discovers the plugin, substitutes {file}/{artifact},
-   * and spawns its command with the real buffer on stdin. */
+   * `target`; returns the structured PluginResult. The backend discovers the
+   * plugin, substitutes {file}/{artifact}, and spawns its command with the real
+   * buffer on stdin. Export is entirely the pandoc plugin suite: the export-
+   * category plugins (pandoc-html-export, pandoc-pdf-export) run through here. */
   async function runPluginToPath(pluginId: string, target: string): Promise<PluginResult> {
     // P47: plugin-run funnels through the save-gate; an identity-less buffer
     // resolves a durable destination first, else the plugin does NOT run.
@@ -1153,29 +1105,11 @@
     return api.runPlugin(pluginId, source, target, editor.getContent());
   }
 
-  async function exportDoc(pluginId: string) {
-    // P47: resolve a durable destination first (no-op for an already-durable
-    // buffer); an identity-less buffer cannot export until it has one.
-    const source = await requireDurablePath();
-    if (!source) return;
-    const plugin = config?.export[pluginId];
-    if (!plugin) {
-      toastError(`Unknown export plugin: ${pluginId}`);
-      return;
-    }
-    const target = await saveDialog({
-      title: `Export ${plugin.label}`,
-      defaultPath: source.replace(/\.[^/.]*$/, "") + "." + plugin.extension,
-      filters: [{ name: plugin.label, extensions: [plugin.extension] }],
-    });
-    if (!target) return;
-    await exportToPath(pluginId, target);
-  }
-
-  /** Export through a DISCOVERED export-category plugin (P66). Unlike exportDoc
-   * (which reads an app-core config.export table), this sources the human name and
-   * output extension entirely from the discovered manifest, then runs the plugin
-   * by id through runPluginToPath — the same generic firewall proven by p19. */
+  /** Export through a DISCOVERED export-category plugin (P66). Sources the human
+   * name and output extension entirely from the discovered manifest, then runs
+   * the plugin by id through runPluginToPath — the same generic firewall proven
+   * by p19. Export is entirely the pandoc plugin suite; the app core owns no
+   * export command knowledge. */
   async function exportViaPlugin(plugin: PluginInfo) {
     if (plugin.extension === null) {
       toastError(`Export plugin ${plugin.id} declares no output extension.`);
@@ -1364,13 +1298,6 @@
   }
 
   function handleMenu(id: string) {
-    // Export menu items carry the plugin id: "export:<id>". One item per
-    // configured [export.<id>] plugin; the handler runs the same export command
-    // path as the E2E hook.
-    if (id.startsWith("export:")) {
-      void exportDoc(id.slice("export:".length));
-      return;
-    }
     switch (id) {
       case "new_file":
         if (projectRoot) promptNewFile(projectRoot);

@@ -62,9 +62,13 @@ test('just dev with an invalid config reconfigures it before starting tauri dev'
   expect(cfg.general.theme).toBe('light');
   expect(cfg.editor.font_size).toBe(20);
   expect(cfg.preview.debounce_ms).toBe(350);
-  const exp = cfg.export as Record<string, Record<string, unknown>>;
-  expect((exp.html.command as string[]).includes('--embed-resources')).toBe(true);
-  expect((exp.pdf.command as string[]).includes('--pdf-engine=lualatex')).toBe(true);
+  // Export is entirely the pandoc plugin suite: the recovered config carries the
+  // two shipped export-category plugins' config sections (no app-core [export.*]
+  // table). Each [plugin.<id>].command is the raw pandoc command the plugin runs.
+  const plugin = cfg.plugin as Record<string, Record<string, unknown>>;
+  expect(cfg.export).toBeUndefined();
+  expect((plugin['pandoc-html-export'].command as string).includes('--embed-resources')).toBe(true);
+  expect((plugin['pandoc-pdf-export'].command as string).includes('--pdf-engine=lualatex')).toBe(true);
 
   recordObservation({ spec: manifest.spec, name: 'dev-recovery-exit', value: r.status ?? -1 });
 });

@@ -28,36 +28,27 @@ mkdir -p "$ABS_SPEC_DIR/home/.pandoc/styles" "$ABS_SPEC_DIR/home/.pandoc/figures
 
 PANDOC_BIN="$(command -v pandoc)"
 
-# ── Export plugin tables (export-plugins-contract.md) ──────────────────
-# The two shipped default plugins, written EXACTLY as the contract specifies:
-# [export.html] with --embed-resources --mathjax, [export.pdf] with
-# --pdf-engine=lualatex. Now that [export] is REQUIRED by the schema, EVERY
-# valid provisioned config carries these tables (the canonical witness config
-# and write_valid_config both call this); without them config-schema fails and
-# the app never boots. p07/p08 exercise the defaults directly, d01's
-# export-plugins check validates them, and p12 adds a custom witness plugin on
-# top.
-emit_default_export_tables() {
-    local out="$1"
+# ── Shipped export-category plugins (export-plugins-contract.md) ────────
+# Export is entirely the pandoc plugin suite: the shipped pandoc-html-export and
+# pandoc-pdf-export export-category plugins (vendored alongside pandoc-renderer,
+# OSOT), discovered from [plugins].dir and run by id through the generic firewall.
+# The app core owns NO export command knowledge — no [export.*] config table
+# exists. Each plugin carries its OWN raw pandoc command in its [plugin.<id>]
+# config section. Every valid provisioned config installs both plugins and emits
+# their config sections (write_valid_config and the canonical witness config both
+# call this); their contributed doctor checks then join the battery (d01/d16),
+# and discovery surfaces them in the export menu/palette (p66). Args: config_path,
+# plugins_dir, pandoc_path.
+emit_export_plugins() {
+    local out="$1" plugins_dir="$2" pandoc_path="$3"
+    install_plugin_fixtures "$plugins_dir" pandoc-html-export pandoc-pdf-export
     cat >> "$out" <<EOF
 
-[export.html]
-label = "HTML (self-contained)"
-extension = "html"
-command = [
-  "pandoc", "--from", "markdown", "--standalone",
-  "--embed-resources", "--mathjax={mathjax}",
-  "{input}", "--output", "{output}",
-]
+[plugin.pandoc-html-export]
+command = "$pandoc_path --from markdown --to html5 --standalone --embed-resources"
 
-[export.pdf]
-label = "PDF"
-extension = "pdf"
-command = [
-  "pandoc", "--from", "markdown", "--standalone",
-  "--pdf-engine=lualatex",
-  "{input}", "--output", "{output}",
-]
+[plugin.pandoc-pdf-export]
+command = "$pandoc_path --from markdown --standalone --pdf-engine=lualatex"
 EOF
 }
 
@@ -172,13 +163,15 @@ line_numbers = true
 [preview]
 debounce_ms = 200
 EOF
-        # [export] is REQUIRED by the schema: every valid config carries the two
-        # shipped default plugin tables (export-plugins-contract.md).
-        emit_default_export_tables "$CONFIG_PATH"
         emit_directories "$CONFIG_PATH"
         # The pandoc renderer is the active renderer (its checks are the doctor's
-        # pandoc-executable/pandoc-invocation rows; D1/D5 assert on them).
+        # pandoc-executable/pandoc-invocation rows; D1/D5 assert on them); it also
+        # sets [plugins].dir = $PLUGINS_DIR, the dir the export plugins install into.
         emit_pandoc_renderer "$CONFIG_PATH" "$PLUGINS_DIR" "$pandoc_path"
+        # Export is the pandoc plugin suite: install both export-category plugins
+        # into the SAME plugins dir and emit their config sections. Their
+        # contributed doctor checks join the battery (d01/d16).
+        emit_export_plugins "$CONFIG_PATH" "$PLUGINS_DIR" "$pandoc_path"
     }
 
     # The exact observed stale key regression (schema removed 'math').
@@ -205,9 +198,10 @@ EOF
     }
 
     case "$SPEC" in
-    d01-* | d16-*) # valid env: every check OK, incl. the export-plugins check, which
-        # validates the two shipped default [export.*] plugin tables that
-        # write_valid_config now writes (export-plugins-contract.md, D1). d16
+    d01-* | d16-*) # valid env: every check OK, including the contributed doctor
+        # checks of the two shipped export-category plugins that write_valid_config
+        # installs (html-export-*, pdf-export-*; export-plugins-contract.md, D1).
+        # Export is the pandoc plugin suite — there is no app-core export check. d16
         # reuses the same valid env but is launched with PANDOC_RESOURCE_PATH unset
         # (spawnDoctor resourcePath:null), so the ONLY failing check is the
         # pandoc-resource-path startup check.
@@ -295,7 +289,6 @@ line_numbers = true
 [preview]
 debounce_ms = 200
 EOF
-        emit_default_export_tables "$CONFIG_PATH"
         emit_directories "$CONFIG_PATH"
         install_plugin_fixtures "$PLUGINS_DIR" pandoc-renderer
         env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
@@ -313,6 +306,9 @@ command = "$PANDOC_BIN --from markdown --to html5 --standalone --embed-resources
 [plugin.pandoc-renderer.style]
 figure_width = "75%"
 EOF
+        # Export is the pandoc plugin suite: install both export plugins into the
+        # same plugins dir and emit their config sections.
+        emit_export_plugins "$CONFIG_PATH" "$PLUGINS_DIR" "$PANDOC_BIN"
         ;;
     d14-*) # The REAL first-run.sh output must pass the doctor on its own. Drive
         # the real script through a PTY (no canonical config written here) and
@@ -348,7 +344,6 @@ line_numbers = true
 [preview]
 debounce_ms = 200
 EOF
-        emit_default_export_tables "$CONFIG_PATH"
         emit_directories "$CONFIG_PATH"
         # The filters/template must be installed so the command first-run.sh writes
         # during recovery is runnable (every recovery spec does this).
@@ -476,10 +471,10 @@ $EDITOR_EXTRA
 [preview]
 debounce_ms = 200
 EOF
-    # [export] is REQUIRED by the schema (export-plugins-contract.md): every
-    # valid config carries the two shipped default plugin tables. Without them
-    # the config would fail config-schema and the app would never boot.
-    emit_default_export_tables "$CONFIG_PATH"
+    # Export is entirely the pandoc plugin suite: there is NO [export.*] app-core
+    # config table. Export targets are discovered export-category plugins; the
+    # specs that exercise export (p07/p08/p17/p47/p66) install the relevant plugin
+    # in their own case below. The default config carries no export config.
     emit_directories "$CONFIG_PATH"
     # Renderer setup (Milestone B): the core is renderer-agnostic and delegates the
     # preview to the active renderer plugin. Default = pandoc renderer (keeps the
@@ -750,7 +745,7 @@ esac
 # rebuilds the luaotfload font database (written under
 # $HOME/.config/texlive/<year>/texmf-var/luatex-cache), which takes far longer
 # than the spec's artifact poll window. Warm it here by running the exact
-# shipped [export.pdf] plugin command once under the spec's hermetic env.
+# shipped pandoc-pdf-export plugin command once under the spec's hermetic env.
 # This is environment provisioning (same class as pre-building the app
 # binary), NOT the proof: the spec still drives the app's own export and
 # asserts on the artifact that export produces. Fails loudly if the command

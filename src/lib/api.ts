@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   Config,
-  ExportResult,
   FileNode,
   FileRead,
   Fingerprint,
@@ -105,8 +104,6 @@ export const renderPreview = (
   baseUrl: string,
   mathjaxUrl: string,
 ) => invoke<RenderResult>("render_preview", { source, baseDir, baseUrl, mathjaxUrl });
-export const exportDocument = (pluginId: string, sourcePath: string, outputPath: string) =>
-  invoke<ExportResult>("export_document", { pluginId, sourcePath, outputPath });
 
 /** Run a discovered plugin by id against the real open buffer (Milestone A). */
 export const runPlugin = (

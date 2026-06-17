@@ -28,9 +28,6 @@ toml = { version = "0.8", features = ["preserve_order"] }
 indexmap = { version = "2", features = ["serde"] }
 dirs = "5"
 thiserror = "2"
-# Build a correct `file://` URL for the bundled MathJax passed to pandoc's
-# `--mathjax= {mathjax}` (decision A). Already in the lock graph transitively.
-url = "2"
 # Generic plugin-config validation (Milestone A): every [plugin.<id>] section is
 # validated against the plugin's declared JSON Schema by ONE code path. Schemas
 # are local files with no remote $refs, so the network resolver is disabled.

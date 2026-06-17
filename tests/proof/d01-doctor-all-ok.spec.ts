@@ -10,13 +10,14 @@ import { execFileSync } from 'node:child_process';
 // string captured by the pandoc-executable check, exit code 0, and it NEVER
 // creates a window (it must terminate on its own).
 //
-// The valid config is provisioned by scripts/provision-proof.sh for this spec,
-// and (2026-06-13) now carries the two shipped default [export.*] plugin
-// tables: the battery's `export-plugins` check validates each entry's shape and
-// that its argv[0] resolves to an executable (doctor-contract.md, supersedes
-// the old `pdf-engine` check). The independent oracle for the captured version
-// is the real `pandoc --version` run here, in a separate process — not the
-// app's report.
+// The valid config is provisioned by scripts/provision-proof.sh for this spec.
+// Export is entirely the pandoc plugin suite (export-as-plugin migration): the
+// shipped pandoc-html-export and pandoc-pdf-export export-category plugins are
+// installed in the plugins dir, so the battery aggregates THEIR contributed
+// doctor checks (html-export-executable, pdf-export-engine, …) and per-plugin
+// config-schema rows — there is no app-core `export-plugins` check anymore. The
+// independent oracle for the captured version is the real `pandoc --version`
+// run here, in a separate process — not the app's report.
 
 test('--doctor reports every check OK with the real pandoc version and exits 0', async () => {
   const manifest = loadDoctorManifest();
@@ -29,8 +30,10 @@ test('--doctor reports every check OK with the real pandoc version and exits 0',
 
   const report = result.stdout;
 
-  // The full named check battery appears in the report (contract order). The
-  // export-plugins check supersedes the old pdf-engine check (doctor-contract).
+  // The full named check battery appears in the report. The renderer-agnostic
+  // core checks, the active renderer plugin's contributed checks (pandoc-
+  // executable, pandoc-invocation, pandoc-resource-path), and the export-category
+  // plugins' contributed checks all appear in the one aggregated battery.
   for (const check of [
     'config-exists',
     'config-schema',
@@ -38,11 +41,18 @@ test('--doctor reports every check OK with the real pandoc version and exits 0',
     'pandoc-executable',
     'pandoc-invocation',
     'pandoc-resource-path',
-    'export-plugins',
+    // Export is the pandoc plugin suite: the export targets' OWN contributed
+    // doctor checks, not an app-core export check.
+    'html-export-executable',
+    'html-export-runnable',
+    'pdf-export-executable',
+    'pdf-export-engine',
   ]) {
     expect(report.includes(check)).toBe(true);
   }
-  // The superseded check name must be gone, not merely supplemented.
+  // The app-core export check is gone: export is entirely plugin-contributed.
+  expect(report.includes('export-plugins')).toBe(false);
+  // The old superseded check name must be gone too.
   expect(report.includes('pdf-engine')).toBe(false);
 
   // Every check is OK: the report contains no FAIL marker on a valid env.

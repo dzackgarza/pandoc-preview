@@ -13,7 +13,7 @@
 //! No fallbacks, no defaults: every check either proves its obligation against
 //! the real environment or reports FAIL with the concrete diagnostic.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::config::{self, Config};
 
@@ -22,7 +22,6 @@ use crate::config::{self, Config};
 pub const CHECK_CONFIG_EXISTS: &str = "config-exists";
 pub const CHECK_CONFIG_SCHEMA: &str = "config-schema";
 pub const CHECK_CONFIG_VALUES: &str = "config-values";
-pub const CHECK_EXPORT_PLUGINS: &str = "export-plugins";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {
@@ -84,37 +83,6 @@ impl Report {
         };
         out.push_str(&format!("--\n{summary}\n"));
         out
-    }
-}
-
-/// Resolve a pandoc path the same way `Command::new` will: an absolute or
-/// relative path with a separator is used verbatim; a bare name is searched on
-/// PATH. Returns the concrete file that would be executed, or None.
-fn resolve_program(program: &str) -> Option<PathBuf> {
-    let p = Path::new(program);
-    if p.components().count() > 1 || p.is_absolute() {
-        return if p.exists() {
-            Some(p.to_path_buf())
-        } else {
-            None
-        };
-    }
-    let path_var = std::env::var_os("PATH")?;
-    for dir in std::env::split_paths(&path_var) {
-        let candidate = dir.join(program);
-        if candidate.is_file() {
-            return Some(candidate);
-        }
-    }
-    None
-}
-
-#[cfg(unix)]
-fn is_executable(path: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt;
-    match std::fs::metadata(path) {
-        Ok(meta) => meta.is_file() && (meta.permissions().mode() & 0o111) != 0,
-        Err(_) => false,
     }
 }
 
@@ -190,56 +158,6 @@ fn check_config_values(cfg: &Config) -> CheckResult {
 }
 
 
-/// Every configured `[export.<id>]` plugin must be well-formed (the same
-/// invariants the save path enforces, via `config::validate_export_plugin`) and
-/// its argv[0] must resolve to an executable file. No full probe run is
-/// performed — that would compile real documents; this honest limit is part of
-/// the contract (doctor-contract.md, export-plugins-contract.md). Supersedes the
-/// old `pdf-engine` check, which asserted lualatex on PATH while the export
-/// command never passed `--pdf-engine` and ran pandoc's implicit pdflatex.
-fn check_export_plugins(cfg: &Config) -> CheckResult {
-    if cfg.export.is_empty() {
-        return CheckResult {
-            name: CHECK_EXPORT_PLUGINS.into(),
-            status: Status::Fail,
-            detail: "no [export.<id>] plugins configured".into(),
-        };
-    }
-    for (id, plugin) in &cfg.export {
-        if let Err(e) = config::validate_export_plugin(id, plugin) {
-            return CheckResult {
-                name: CHECK_EXPORT_PLUGINS.into(),
-                status: Status::Fail,
-                detail: e.to_string(),
-            };
-        }
-        // argv[0] is the program; validate_export_plugin guarantees it exists.
-        let program = &plugin.command[0];
-        match resolve_program(program) {
-            Some(p) if is_executable(&p) => {}
-            Some(p) => {
-                return CheckResult {
-                    name: CHECK_EXPORT_PLUGINS.into(),
-                    status: Status::Fail,
-                    detail: format!("export.{id}: {} is not executable", p.display()),
-                };
-            }
-            None => {
-                return CheckResult {
-                    name: CHECK_EXPORT_PLUGINS.into(),
-                    status: Status::Fail,
-                    detail: format!("export.{id}: program {program:?} does not resolve to a file"),
-                };
-            }
-        }
-    }
-    CheckResult {
-        name: CHECK_EXPORT_PLUGINS.into(),
-        status: Status::Ok,
-        detail: format!("{} export plugin(s) well-formed", cfg.export.len()),
-    }
-}
-
 fn skip(name: &'static str, reason: &str) -> CheckResult {
     CheckResult {
         name: name.into(),
@@ -262,11 +180,7 @@ pub fn run() -> Report {
                 status: Status::Fail,
                 detail: e.to_string(),
             });
-            for name in [
-                CHECK_CONFIG_SCHEMA,
-                CHECK_CONFIG_VALUES,
-                CHECK_EXPORT_PLUGINS,
-            ] {
+            for name in [CHECK_CONFIG_SCHEMA, CHECK_CONFIG_VALUES] {
                 checks.push(skip(name, "config path could not be determined"));
             }
             return Report { checks };
@@ -301,19 +215,11 @@ pub fn run() -> Report {
         }
     };
 
-    // The renderer-specific checks (pandoc-executable, pandoc-invocation) are no
-    // longer core: they are contributed by the active renderer plugin and appear
-    // below, aggregated with every other plugin's checks (doctor-contract.md
-    // ownership note). The core battery keeps only renderer-agnostic checks.
-
-    // export-plugins needs the parsed, valid config to enumerate the entries.
-    match &cfg {
-        Some(cfg) => checks.push(check_export_plugins(cfg)),
-        None => checks.push(skip(
-            CHECK_EXPORT_PLUGINS,
-            "config is invalid; cannot enumerate export plugins",
-        )),
-    }
+    // The renderer-specific checks (pandoc-executable, pandoc-invocation) and the
+    // export targets are no longer core: they are contributed by the active
+    // renderer plugin and the export-category plugins respectively, aggregated
+    // with every other plugin's checks below (doctor-contract.md ownership note).
+    // The core battery keeps only renderer-agnostic, export-agnostic checks.
 
     // Plugin firewall (Milestone A): when the config is valid and declares a
     // [plugins] dir, discover plugins and aggregate each plugin's config-schema

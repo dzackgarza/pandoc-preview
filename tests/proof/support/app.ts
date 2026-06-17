@@ -43,43 +43,6 @@ export async function openProject(
   );
 }
 
-// ── Real export path (P7/P8): real api.exportDocument, no native dialog ───
-export async function exportTo(
-  page: EvaluatesScripts,
-  format: 'html' | 'pdf',
-  target: string,
-): Promise<void> {
-  await page.evaluate(
-    `(() => { window.__PPE_E2E__.exportTo(${JSON.stringify(format)}, ${JSON.stringify(target)}); return null; })()`,
-  );
-}
-
-// ── Export by configured plugin id (P12) ──────────────────────────────────
-// The export surface is plugin-shaped (export-plugins-contract.md): export
-// targets are the [export.<id>] config entries, and the E2E hook drives them
-// by id through the SAME command path the menu uses. A plugin id is an
-// arbitrary user-defined string (e.g. "witness"), not the html/pdf literals,
-// so this drives the real plugin dispatch rather than a fixed format switch.
-export async function exportByPlugin(
-  page: EvaluatesScripts,
-  pluginId: string,
-  target: string,
-): Promise<void> {
-  await page.evaluate(
-    `(() => { window.__PPE_E2E__.exportTo(${JSON.stringify(pluginId)}, ${JSON.stringify(target)}); return null; })()`,
-  );
-}
-
-// Read the hook's last-export state marker (window.__PPE_EXPORT__), used only
-// to enrich the diagnostic when an expected artifact never appears. It is a
-// pointer for the failure message, never a substitute for the on-disk proof.
-export async function exportState(page: EvaluatesScripts): Promise<string> {
-  return asString(
-    await page.evaluate(`String(window.__PPE_EXPORT__)`),
-    'exportState',
-  );
-}
-
 // ── Plugin export by id, through the save-gate (P47) ───────────────────────
 // Drive the REAL plugin export (the pandoc-html-export / pandoc-pdf-export
 // export-category plugin) BY ID. This funnels through runPluginToPath →
@@ -96,10 +59,10 @@ export async function exportViaPluginById(
   );
 }
 
-// Read the plugin-export state marker (window.__PPE_PLUGIN_EXPORT__), sibling
-// of exportState for the plugin path: "pending" → "done" when the export ran,
-// "gated" when the save-gate aborted it. A diagnostic pointer, never a
-// substitute for the on-disk proof.
+// Read the plugin-export state marker (window.__PPE_PLUGIN_EXPORT__) for the
+// plugin export path: "pending" → "done" when the export ran, "gated" when the
+// save-gate aborted it. A diagnostic pointer, never a substitute for the on-disk
+// proof.
 export async function pluginExportState(page: EvaluatesScripts): Promise<string> {
   return asString(
     await page.evaluate(`String(window.__PPE_PLUGIN_EXPORT__)`),
@@ -110,11 +73,9 @@ export async function pluginExportState(page: EvaluatesScripts): Promise<string>
 // ── Run a generic plugin by id (A1/p19) ───────────────────────────────────
 // The plugin firewall discovers plugins from the configured plugins dir and
 // runs one by id against the REAL open buffer, returning a structured
-// PluginResult. The harness hook fires the run (fire-and-forget, like exportTo)
-// and stashes the resolved PluginResult on window.__PPE_PLUGIN_RESULT__ — the
-// same pattern as __PPE_EXPORT__. The on-disk artifact is the decisive proof;
-// the structured result is asserted alongside it. RED today: __PPE_E2E__.runPlugin
-// does not exist, so this evaluate throws — the generic run-plugin surface is absent.
+// PluginResult. The harness hook fires the run (fire-and-forget) and stashes the
+// resolved PluginResult on window.__PPE_PLUGIN_RESULT__. The on-disk artifact is
+// the decisive proof; the structured result is asserted alongside it.
 export async function runPluginById(
   page: EvaluatesScripts,
   pluginId: string,

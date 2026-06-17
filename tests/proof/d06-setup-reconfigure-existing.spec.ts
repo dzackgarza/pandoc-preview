@@ -31,7 +31,7 @@ test('just setup over an existing config reconfigures it to a valid config', () 
   const home = `${manifest.runDir}/home`;
 
   // Pre-state: a config already exists and is stale/invalid under the current
-  // schema (carries the removed `math` key, lacks the now-required [export]).
+  // schema (carries the removed `math` key).
   expect(existsSync(manifest.configPath)).toBe(true);
   const before = readFileSync(manifest.configPath, 'utf-8');
   expect(before.includes('math = "mathjax"')).toBe(true);
@@ -71,13 +71,16 @@ test('just setup over an existing config reconfigures it to a valid config', () 
   expect(cfg.editor.font_size).toBe(20);
   expect(cfg.preview.debounce_ms).toBe(350);
 
-  // The reconfigured config carries the two shipped export plugins (required
-  // by the current schema): the rewrite produced a real, schema-valid config,
-  // not a partial one that would fail the doctor's config-schema check.
-  const exp = cfg.export as Record<string, Record<string, unknown>>;
-  expect(Array.isArray(exp.html.command)).toBe(true);
-  expect((exp.html.command as string[]).includes('--embed-resources')).toBe(true);
-  expect((exp.pdf.command as string[]).includes('--pdf-engine=lualatex')).toBe(true);
+  // Export is entirely the pandoc plugin suite: the reconfigured config carries
+  // the two shipped export-category plugins' config sections (no app-core
+  // [export.*] table). Each [plugin.<id>].command is the raw pandoc command the
+  // plugin runs verbatim, proving the rewrite produced a real, schema-valid
+  // config — not a partial one that would fail the doctor's config-schema check.
+  const plugin = cfg.plugin as Record<string, Record<string, unknown>>;
+  expect(cfg.export).toBeUndefined();
+  expect(typeof plugin['pandoc-html-export'].command).toBe('string');
+  expect((plugin['pandoc-html-export'].command as string).includes('--embed-resources')).toBe(true);
+  expect((plugin['pandoc-pdf-export'].command as string).includes('--pdf-engine=lualatex')).toBe(true);
 
   recordObservation({ spec: manifest.spec, name: 'setup-reconfigure-exit', value: r.status ?? -1 });
 });
