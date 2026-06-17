@@ -1,0 +1,35 @@
+{
+  "run_id": "20260616T200150Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p54-spellcheck.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p54-spellcheck.spec.ts",
+            "title": "Spellcheck marks misspelled words while honoring a custom math dictionary",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 15879,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (() => {\n      const content = document.querySelector('.cm-editor .cm-content');\n      if (!content) return false;\n      const marks = content.querySelectorAll('.cm-spellError');\n      return Array.from(marks).some((m) => (m.textContent ?? '').includes(\"zzxqwbgg\"));\n    })()"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

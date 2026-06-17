@@ -1,0 +1,35 @@
+{
+  "run_id": "20260616T225744Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p62-clipboard-image.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p62-clipboard-image.spec.ts",
+            "title": "the paste-image action writes the clipboard image into the configured figures dir and references that exact file at the cursor",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1470,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: not \u001b[32m/!\\[[^\\]]*\\]\\(([^)]+)\\)/\u001b[39m\nReceived string:      \u001b[31m\"# Geometry of Numbers — Café\u001b[39m\n\u001b[31m\u001b[39m\n\u001b[31mA *naïve* introduction to the geometry of numbers.\u001b[39m\n\u001b[31m\u001b[39m\n\u001b[31mThe lattice points are counted by the following steps:\u001b[39m\n\u001b[31m\u001b[39m\n\u001b[31m1. Choose a symmetric convex body.\u001b[39m\n\u001b[31m2. Apply Minkowski's theorem.\u001b[39m\n\u001b[31m3. Minkowski bound\u001b[39m\n\u001b[31m\u001b[39m\n\u001b[31mThe Basel sum is $\\\\zeta(2) = \\\\pi^2/6$.\u001b[39m\n\u001b[31m\u001b[39m\n\u001b[31m> [!NOTE] Lattice note\u001b[39m\n\u001b[31m> \u001b[39m\n\u001b[31m> Minkowski bounds the points.\u001b[39m\n\u001b[31m\u001b[39m\n\u001b[31m\u001b[7m![scatter](fig/plot.png)\u001b[27m\u001b[39m\n\u001b[31m\"\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

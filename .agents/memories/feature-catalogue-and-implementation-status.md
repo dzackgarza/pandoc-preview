@@ -18,6 +18,10 @@ CodeMirror 6 extensions natively provide folding, autocomplete/snippets, and mos
 Conceals are demoted to very optional since the live preview is already good.
 Autocomplete/snippets are now Tier-0 concerns delivered through CodeMirror extensions and plugins like [emmetio/codemirror6-plugin](https://github.com/emmetio/codemirror6-plugin), not through Firenvim.
 
+**Competitive parity research (2026-06-16):** a second, cross-cutting ordering of follow-up work — prioritized by importance to real mathematical writing rather than by tier dependency — lives in [Competitive Parity Roadmap — Follow-up Phases](competitive-parity-roadmap) (Phases A–H: lint-faster-than-compile, snippet-engine depth, citations, figure/TikZ management, large-project navigation, PDF/Gummi parity, arXiv export, low-priority QOL).
+Backed by durable per-program feature studies under `parity-research/`: [Overleaf](parity-research/overleaf), [Gummi](parity-research/gummi), [arXiv export](parity-research/arxiv-export), [vimtex](parity-research/vimtex), [quicktex](parity-research/quicktex), [snippet & lint ecosystem](parity-research/snippet-and-lint-ecosystem), [QTikz](parity-research/qtikz), [Ipe](parity-research/ipe), [TikzIt](parity-research/tikzit), [Zettlr](parity-research/zettlr), [VSCode](parity-research/vscode), [amar-jay/pandoc-editor](parity-research/pandoc-editor).
+The roadmap tags every item net-new-gap / refines-TierN / maps-TierN so nothing already tracked below is double-counted.
+
 ## Tier 0 — Core working loop (the product itself; the MVP gate)
 
 - [ ] Open project/file → edit in a readable, themed CodeMirror pane (canonical text ownership)

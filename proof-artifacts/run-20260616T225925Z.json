@@ -1,0 +1,35 @@
+{
+  "run_id": "20260616T225925Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p62-clipboard-image.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p62-clipboard-image.spec.ts",
+            "title": "the paste-image action writes the clipboard image into the configured figures dir and references that exact file at the cursor",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1191,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.seedClipboardImage is not a function. (In 'window.__PPE_E2E__.seedClipboardImage(7, 5)', 'window.__PPE_E2E__.seedClipboardImage' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "run_id": "20260616T134311Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p46-repo-state.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p46-repo-state.spec.ts",
+            "title": "the repo-state indicator transitions noRepo→untracked→tracked, driving real git on disk",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2426,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p46-repo-state.spec.ts",
+          "name": "repo-state-transitions",
+          "value": "noRepo->untracked->tracked"
+        }
+      ]
+    }
+  ]
+}

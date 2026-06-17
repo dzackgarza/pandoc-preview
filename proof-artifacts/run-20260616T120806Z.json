@@ -1,0 +1,39 @@
+{
+  "run_id": "20260616T120806Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p02-live-rerender.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p02-live-rerender.spec.ts",
+            "title": "typing at the buffer end re-renders the preview with the new sentence",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3406,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p02-live-rerender.spec.ts",
+          "name": "sentence",
+          "value": "The discriminant equals −163."
+        }
+      ]
+    }
+  ]
+}

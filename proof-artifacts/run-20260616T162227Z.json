@@ -1,0 +1,140 @@
+{
+  "run_id": "20260616T162227Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p03-save-exact-bytes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p03-save-exact-bytes.spec.ts",
+            "title": "Save writes the editor buffer to disk byte-for-byte",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2673,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p03-save-exact-bytes.spec.ts",
+          "name": "on-disk-bytes",
+          "value": 383
+        }
+      ]
+    },
+    {
+      "spec": "p45-recovery-autosave.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p45-recovery-autosave.spec.ts",
+            "title": "the recovery store holds a host-fs copy of the unsaved buffer within seconds",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4166,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p45-recovery-autosave.spec.ts",
+          "name": "recovered-buffer-bytes",
+          "value": 381
+        }
+      ]
+    },
+    {
+      "spec": "p47-save-gate.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p47-save-gate.spec.ts",
+            "title": "path-consuming actions are gated on a resolved durable destination",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 18312,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "identityless-recovery-backed",
+          "value": false
+        },
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "resolved-live-file-bytes",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "spec": "p48-save-conflict.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p48-save-conflict.spec.ts",
+            "title": "Save refuses to clobber an externally modified file, then an explicit overwrite resolves it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2456,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p48-save-conflict.spec.ts",
+          "name": "conflict-refusal-then-overwrite",
+          "value": "refused-marker-intact-then-forced-write"
+        }
+      ]
+    },
+    {
+      "spec": "p49-session-restore.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p49-session-restore.spec.ts",
+            "title": "launch reopens the last session file and offers the newer recovery buffer",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3343,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p49-session-restore.spec.ts",
+          "name": "restored-recovery-bytes",
+          "value": 395
+        }
+      ]
+    }
+  ]
+}

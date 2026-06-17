@@ -1,0 +1,35 @@
+{
+  "run_id": "20260616T153556Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p50-close-guard.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p50-close-guard.spec.ts",
+            "title": "closing with a dirty buffer fires a prompt, stays alive, and the recovery backstop holds the buffer",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 3846,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.requestClose is not a function. (In 'window.__PPE_E2E__.requestClose()', 'window.__PPE_E2E__.requestClose' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

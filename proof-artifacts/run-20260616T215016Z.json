@@ -1,0 +1,35 @@
+{
+  "run_id": "20260616T215016Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p56-tikz-scaffold.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p56-tikz-scaffold.spec.ts",
+            "title": "The insertion bar inserts a tikzcd scaffold and a DISTINCT tikz scaffold at the cursor, cursor in the diagram body",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1650,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.insertDiagram is not a function. (In 'window.__PPE_E2E__.insertDiagram('tikzcd')', 'window.__PPE_E2E__.insertDiagram' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

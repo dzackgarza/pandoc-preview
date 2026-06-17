@@ -1,0 +1,44 @@
+{
+  "run_id": "20260616T223621Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p60-codeblock-dropdown.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p60-codeblock-dropdown.spec.ts",
+            "title": "The insertion bar code-block dropdown inserts a fence tagged with the chosen language at the cursor, cursor in the body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2342,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p60-codeblock-dropdown.spec.ts",
+          "name": "codeblock-language-tag",
+          "value": "python"
+        },
+        {
+          "spec": "p60-codeblock-dropdown.spec.ts",
+          "name": "codeblock-cursor-offset",
+          "value": 10
+        }
+      ]
+    }
+  ]
+}

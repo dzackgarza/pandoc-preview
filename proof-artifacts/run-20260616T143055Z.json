@@ -1,0 +1,63 @@
+{
+  "run_id": "20260616T143055Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p03-save-exact-bytes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p03-save-exact-bytes.spec.ts",
+            "title": "Save writes the editor buffer to disk byte-for-byte",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2055,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p03-save-exact-bytes.spec.ts",
+          "name": "on-disk-bytes",
+          "value": 383
+        }
+      ]
+    },
+    {
+      "spec": "p48-save-conflict.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p48-save-conflict.spec.ts",
+            "title": "Save refuses to clobber an externally modified file, then an explicit overwrite resolves it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2314,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p48-save-conflict.spec.ts",
+          "name": "conflict-refusal-then-overwrite",
+          "value": "refused-marker-intact-then-forced-write"
+        }
+      ]
+    }
+  ]
+}

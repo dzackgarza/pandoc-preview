@@ -1,0 +1,35 @@
+{
+  "run_id": "20260616T194337Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p53-emmet-expansion.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p53-emmet-expansion.spec.ts",
+            "title": "Firing the Emmet-expand action replaces the abbreviation with its expanded markup",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 928,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.expandEmmet is not a function. (In 'window.__PPE_E2E__.expandEmmet()', 'window.__PPE_E2E__.expandEmmet' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

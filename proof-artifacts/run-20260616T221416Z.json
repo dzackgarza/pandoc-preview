@@ -1,0 +1,44 @@
+{
+  "run_id": "20260616T221416Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p58-table-builder.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p58-table-builder.spec.ts",
+            "title": "The insertion bar table builder inserts a pandoc pipe table of exactly the chosen cols × body-rows at the cursor, cursor in the body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2321,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p58-table-builder.spec.ts",
+          "name": "table-body-rows",
+          "value": 2
+        },
+        {
+          "spec": "p58-table-builder.spec.ts",
+          "name": "table-cursor-offset",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}

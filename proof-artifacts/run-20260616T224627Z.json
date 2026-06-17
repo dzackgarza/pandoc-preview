@@ -1,0 +1,68 @@
+{
+  "run_id": "20260616T224627Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p55-insertion-bar-amsthm.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p55-insertion-bar-amsthm.spec.ts",
+            "title": "The insertion bar replaced the formatting toolbar and inserts the theorem amsthm environment at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2403,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p55-insertion-bar-amsthm.spec.ts",
+          "name": "inserted-env-class",
+          "value": "theorem"
+        },
+        {
+          "spec": "p55-insertion-bar-amsthm.spec.ts",
+          "name": "insert-cursor-offset",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "spec": "p34-editor-find.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p34-editor-find.spec.ts",
+            "title": "Ctrl+F and the native Find menu both open the search panel; Escape closes it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2643,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p34-editor-find.spec.ts",
+          "name": "find-panel-routes",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}

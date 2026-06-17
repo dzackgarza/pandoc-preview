@@ -1,0 +1,111 @@
+{
+  "run_id": "20260616T133715Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p06-file-manager.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p06-file-manager.spec.ts",
+            "title": "sidebar mirrors the directory and UI create/rename mutate real files",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1346,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p06-file-manager.spec.ts",
+          "name": "renamed-path",
+          "value": "/tmp/pandoc-preview-proof-runs/20260616T133715Z/p06-file-manager/project/chapter-two.md"
+        }
+      ]
+    },
+    {
+      "spec": "p45-recovery-autosave.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p45-recovery-autosave.spec.ts",
+            "title": "the recovery store holds a host-fs copy of the unsaved buffer within seconds",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4026,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p45-recovery-autosave.spec.ts",
+          "name": "recovered-buffer-bytes",
+          "value": 381
+        }
+      ]
+    },
+    {
+      "spec": "p18-sidebar-collapse-control.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p18-sidebar-collapse-control.spec.ts",
+            "title": "the activity bar persists and its Explorer control collapses/expands the side bar",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2158,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p18-sidebar-collapse-control.spec.ts",
+          "name": "activity-bar",
+          "value": "explorer-collapses-sidebar"
+        }
+      ]
+    },
+    {
+      "spec": "p03-save-exact-bytes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p03-save-exact-bytes.spec.ts",
+            "title": "Save writes the editor buffer to disk byte-for-byte",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2542,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p03-save-exact-bytes.spec.ts",
+          "name": "on-disk-bytes",
+          "value": 383
+        }
+      ]
+    }
+  ]
+}
