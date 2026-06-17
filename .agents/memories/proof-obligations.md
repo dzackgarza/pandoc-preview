@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P62)
+# Proof Obligations (P1–P66)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -145,6 +145,23 @@ P55–P62 (added 2026-06-16) cover the Milestone G "Insertion Bar" milestone: th
 - **P62 — Insert image from clipboard.** With an image on the system clipboard, the insertion bar's paste-image action writes the image as a real file into the CONFIGURED GLOBAL figures directory and inserts a markdown image reference (`![…](…)`) to that exact file at the cursor.
   An independent process reading the configured global figures directory finds a newly-written image file whose bytes are the clipboard image (real image bytes are persisted, not zero-length), and the markdown reference inserted at the cursor points at that same on-disk file.
   Admissible because it fails on a no-op insert (the paste-image action leaves the buffer unchanged so no image reference appears at the cursor), on a dangling reference (a markdown image reference is inserted but it points at a file that was never written / does not exist on disk), on a wrong-location write (the file is written into a local `./figures` relative to the project instead of the configured global figures directory), and on an empty persist (the reference points at a file that exists but holds no image bytes — nothing of the clipboard image was actually persisted).
+
+### Milestone — Export as a discovered plugin (P66)
+
+P66 (added 2026-06-17) covers the milestone that retires the transitional `[export.<id>]` app-config tables ([[export-plugins-contract]]) by making export a discovered plugin in the pandoc suite — exactly as rendering already moved to the pandoc-renderer plugin. The app core owns NO pandoc/export command knowledge; the export flags live inside the export plugins themselves.
+
+- **P66 — Export is a discovered plugin in the pandoc suite.** A plugin declaring `category = "export"` placed in the plugins directory is discovered the same way the pandoc-renderer plugin is — no app-core `[export.<id>]` config table is involved anywhere.
+  Once discovered, that plugin auto-populates an "Export: <name>" menu / command-palette entry that carries the plugin's declared output extension (a generic manifest field on the export-category plugin, read by the menu populator), AND the plugin contributes its own row to the doctor check.
+  Admissible because it fails if the export menu still reads the app-core `[export.<id>]` config (an export plugin that declares NO `[export.*]` table would then never appear in the menu), if discovery ignores `category` (a non-export plugin populates an "Export:" entry, or the export plugin does not), and if the export plugin contributes no doctor row (the doctor output has no entry attributable to that discovered export plugin).
+
+## Export-as-plugin migration rulings (2026-06-17)
+
+Ratified rulings for the export-as-plugin-suite migration. Apply these; do not re-litigate.
+
+1. **MathJax (total externality).** The HTML export plugin VENDORS its own MathJax bundle INSIDE its plugin dir (copy from `src-tauri/resources/mathjax/tex-full-svg-a11y.min.js`) and references it locally — NOT via an AppHandle resource path.
+2. **Independent raw command per plugin (richness bar).** Each export plugin carries its OWN independent raw command; export commands are individually managed per plugin.
+3. **Enable/disable OUT OF SCOPE this milestone.** Export plugins are discovered + run + doctored + configured exactly like the pandoc-renderer plugin — no enable/disable.
+4. **Output extension is a generic manifest field.** The output file extension is a generic manifest field on the export-category plugin, read by the menu populator.
 
 These map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
 
