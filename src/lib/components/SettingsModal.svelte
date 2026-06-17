@@ -78,7 +78,7 @@
         {#if pane === "general"}
           <label class={labelCls}>
             Theme
-            <select bind:value={draft.general.theme} class={inputCls}>
+            <select data-setting="theme" bind:value={draft.general.theme} class={inputCls}>
               <option value="dark">Dark</option>
               <option value="light">Light</option>
             </select>

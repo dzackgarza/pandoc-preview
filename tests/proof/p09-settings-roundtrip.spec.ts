@@ -53,9 +53,12 @@ test('Settings changes persist to config.toml and re-style the editor', async ({
   await clickModalButton(tauriPage, 'Editor');
   await tauriPage.fill('input[type="number"]', '18');
 
-  // General pane: change theme dark -> light (the only select shown).
+  // General pane: change theme dark -> light. Target the theme select by its
+  // stable data-setting hook — a bare 'select' selector is ambiguous now that
+  // the insertion bar renders its own always-present selects (code-block
+  // language, snippet dropdown), which would otherwise shadow this one.
   await clickModalButton(tauriPage, 'General');
-  await tauriPage.selectOption('select', 'light');
+  await tauriPage.selectOption('[data-setting="theme"]', 'light');
 
   // Save the settings via the modal footer Save button.
   await clickModalButton(tauriPage, 'Save');
