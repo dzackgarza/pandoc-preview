@@ -560,6 +560,22 @@ p22-configure-plugin-spawn.spec.ts)
 greeting = "hi"
 EOF
     ;;
+p66-export-plugin-discovery.spec.ts)
+    # P66: export is a discovered plugin in the pandoc suite. The canonical config
+    # above set up the pandoc renderer + [plugins].dir (so the preview works); here
+    # we ADD the export-category fixture plugin into that SAME dir and its config
+    # section — and deliberately NO [export.witness-export-plugin] app-core table.
+    # The plugin declares category="export", a generic `extension` manifest field
+    # ("wexp"), and a contributed doctor check. The ONLY way it can surface in the
+    # menu/command-palette and in the doctor battery is via category-aware discovery
+    # of the plugin manifest, never via the app-core [export.<id>] config table.
+    install_plugin_fixtures "$PLUGINS_DIR" witness-export-plugin
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.witness-export-plugin]
+command = "true"
+EOF
+    ;;
 p49-session-restore.spec.ts)
     # P49 — launch restores the last session and offers newer recovery content.
     #

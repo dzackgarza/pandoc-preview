@@ -1,0 +1,55 @@
+# Export-as-plugin fixture (P66). A discovered plugin in the pandoc suite that
+# declares `category = "export"` and carries a generic `extension` manifest field
+# (the output file extension the menu populator reads). It is discovered exactly
+# the way the shipped pandoc-renderer plugin is — from the [plugins].dir, by the
+# SAME generic discover() — with NO app-core [export.<id>] config table involved
+# anywhere. This is the milestone that retires the transitional [export.<id>]
+# tables (export-plugins-contract.md): export flags live INSIDE the plugin, the
+# app core owns no pandoc/export command knowledge.
+#
+# Cloned from the witness-tool / pandoc-renderer shape: id/name/description/
+# category/kind, a JSON Schema referenced (not inlined) for its [plugin.<id>]
+# section, an [exec] command (real buffer on stdin, {file}/{artifact}
+# substituted), a self-owned [configure] command, and a contributed doctor check.
+#
+# The DISCRIMINATORS this fixture carries (so the spec cannot pass on a broken or
+# config.export-reading menu):
+#   - category = "export"      → a category-driven menu populator must surface it
+#   - extension = "wexp"        → a generic manifest field the "Export: <name>"
+#                                 entry must carry (NOT sourced from any config)
+#   - name = "Witness Export"   → the human label the entry is built from
+#   - a [[doctor_checks]] row    → joins the ONE doctor battery via plugin_check_rows
+# It declares NO [export.*] table; the only way it can appear is via category-aware
+# discovery, never via the app-core [export.<id>] config (the documented KILL).
+id = "witness-export-plugin"
+name = "Witness Export"
+description = "An export-category plugin discovered from the plugins dir (P66)."
+category = "export"
+kind = "command"
+# The output file extension this export target writes — a GENERIC manifest field
+# on the export-category plugin, read by the menu populator (export-as-plugin
+# migration ruling 4, 2026-06-17). Distinct from html/pdf so the spec proves the
+# entry's extension is sourced from THIS plugin, not a hardcoded/config value.
+extension = "wexp"
+# JSON Schema (draft 2020-12) for this plugin's [plugin.witness-export-plugin]
+# config section. Referenced, not inlined.
+config_schema = "schema.json"
+
+[exec]
+# argv with per-element placeholder substitution: {plugin_dir} = this plugin's
+# directory, {file} = the real on-disk source path, {artifact} = the app-provided
+# output path. The real buffer is also on stdin.
+command = ["{plugin_dir}/export.sh", "{file}", "{artifact}"]
+
+# Self-owned configure command (C1). The app's "Configure" action SPAWNS this
+# detached; this fixture is non-interactive.
+[configure]
+command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
+
+# A doctor check this export plugin contributes to the one battery. Its id is the
+# observable the spec asserts appears in the --doctor report (the plugin's own row
+# attributable to this discovered export plugin). exit 0 -> OK, nonzero -> FAIL.
+[[doctor_checks]]
+id = "witness-export-runnable"
+description = "witness-export-plugin export.sh is present and executable"
+command = ["test", "-x", "{plugin_dir}/export.sh"]
