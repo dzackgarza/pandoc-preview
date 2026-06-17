@@ -28,10 +28,6 @@ mkdir -p "$ABS_SPEC_DIR/home/.pandoc/styles" "$ABS_SPEC_DIR/home/.pandoc/figures
 
 PANDOC_BIN="$(command -v pandoc)"
 
-# Absolute path to the committed P12 custom export plugin (an arbitrary
-# executable, NOT pandoc). Referenced verbatim as argv[0] in [export.witness].
-WITNESS_PLUGIN="$REPO_ROOT/tests/proof/fixtures/plugins/witness-export.sh"
-
 # ── Export plugin tables (export-plugins-contract.md) ──────────────────
 # The two shipped default plugins, written EXACTLY as the contract specifies:
 # [export.html] with --embed-resources --mathjax, [export.pdf] with
@@ -147,23 +143,6 @@ command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to h
 
 [plugin.pandoc-renderer.style]
 figure_width = "75%"
-EOF
-}
-
-# The P12 custom plugin: an arbitrary user-defined [export.witness] entry whose
-# command is the committed witness-export.sh, not pandoc. Proves the export
-# surface runs the configured argv verbatim against the real source.
-emit_witness_export_table() {
-    local out="$1"
-    cat >> "$out" <<EOF
-
-[export.witness]
-label = "Witness"
-extension = "txt"
-command = [
-  "$WITNESS_PLUGIN",
-  "{input}", "{output}",
-]
 EOF
 }
 
@@ -526,11 +505,23 @@ fi
 
 # ── Custom export plugin (p12 only) ────────────────────────────────────
 # P12 asserts the export surface runs an ARBITRARY configured argv against the
-# real source, so its config additionally carries a user-defined [export.witness]
-# plugin whose command is the committed witness-export.sh (not pandoc).
+# real source. Export is now plugin-shaped (export-plugins-contract.md): the
+# canonical config above already set up the pandoc renderer + [plugins].dir (so
+# the preview works); here we ADD the user-defined "witness" export-category
+# plugin into that SAME dir and its [plugin.witness] config section — there is NO
+# app-core [export.witness] config table. The plugin's [exec].command is an
+# arbitrary executable (its export.sh), NOT pandoc; the spec then drives
+# runPlugin('witness', target) through the generic firewall and asserts the
+# produced witness file carries the WITNESS-EXPORT marker, the real input's first
+# heading, and the SHA-256 of the input's exact bytes.
 case "$SPEC" in
 p12-export-custom-pipeline.spec.ts)
-    emit_witness_export_table "$CONFIG_PATH"
+    install_plugin_fixtures "$PLUGINS_DIR" witness
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.witness]
+command = "noop"
+EOF
     ;;
 p19-plugin-run-by-id.spec.ts)
     # A1: the generic plugin firewall runs a tools plugin by id. The canonical

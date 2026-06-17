@@ -4,31 +4,40 @@ import { join } from 'node:path';
 import { test, expect } from './fixtures';
 import { loadRunManifest } from './support/run-manifest';
 import { recordObservation } from './support/observations';
-import { openAndSelectDemo, exportByPlugin, exportState, waitForPreview, sleep } from './support/app';
+import {
+  openAndSelectDemo,
+  runPluginById,
+  pluginResult,
+  waitForPreview,
+  sleep,
+} from './support/app';
 
-// P12 — Custom export pipeline honored. The hermetic config carries a
-// user-defined [export.witness] plugin whose `command` is an ARBITRARY
-// executable (tests/proof/fixtures/plugins/witness-export.sh), NOT pandoc.
-// Provisioning wires it in (scripts/provision-proof.sh emit_witness_export_table).
+// P12 — Custom export pipeline honored. The hermetic plugins dir carries a
+// USER-DEFINED export-category plugin (id "witness") whose [exec].command is an
+// ARBITRARY executable (tests/proof/fixtures/plugins/witness/export.sh), NOT
+// pandoc. Provisioning installs it into the [plugins].dir and writes its
+// [plugin.witness] config section (scripts/provision-proof.sh) — there is NO
+// app-core [export.witness] config table.
 //
-// Driving export by the plugin id "witness" through the same command path the
-// menu uses, this spec proves the export surface is plugin-shaped, not
-// pandoc-shaped (export-plugins-contract.md). The witness script derives its
-// output from the REAL input file — the input's first heading line and the
-// SHA-256 of the input's exact bytes — so an implementation that hard-codes a
-// pandoc invocation, ignores the configured argv, or writes a fixed string
-// cannot produce the asserted content.
+// Driving the plugin by id "witness" through the SAME generic plugin firewall the
+// menu uses (plugins.rs run_plugin_sync), this spec proves the export surface is
+// plugin-shaped, not pandoc-shaped (export-plugins-contract.md). The witness
+// script derives its output from the REAL input file — the input's first heading
+// line and the SHA-256 of the input's exact bytes — so an implementation that
+// hard-codes a pandoc invocation, ignores the configured argv, or writes a fixed
+// string cannot produce the asserted content.
 //
 // The expected oracle is computed INDEPENDENTLY here, in separate processes,
 // from the real on-disk input the app rendered — never from the app's report.
 //
 // Proof debt (export-plugins-contract.md): native muda menus are unreachable
-// from the webview DOM, so menu population itself is not asserted; the E2E hook
-// drives the plugin by id through the same export command path. This is not a
-// weakened assertion — the on-disk witness still proves the configured argv ran
-// against the real source.
+// from the webview DOM, so menu population itself is not asserted here (P66 owns
+// the discovery/menu-population claim); the E2E hook drives the plugin by id
+// through the same run_plugin command path the menu uses. This is not a weakened
+// assertion — the on-disk witness still proves the configured argv ran against
+// the real source.
 
-test('A custom [export.witness] plugin runs verbatim against the real source', async ({
+test('A user-defined export-category plugin runs verbatim against the real source', async ({
   tauriPage,
 }) => {
   const manifest = loadRunManifest();
@@ -50,18 +59,21 @@ test('A custom [export.witness] plugin runs verbatim against the real source', a
     .split(/\s+/)[0];
   expect(expectedDigest).toMatch(/^[0-9a-f]{64}$/);
 
-  // Fire the real export by the configured plugin id and poll for the artifact
-  // at exactly the chosen path.
+  // Fire the real export by running the configured plugin BY ID through the
+  // generic firewall, and poll for the artifact at exactly the chosen path AND
+  // for the resolved structured result.
   const target = join(manifest.runDir, 'witness-output.txt');
-  await exportByPlugin(tauriPage, 'witness', target);
-  for (let i = 0; i < 80 && !existsSync(target); i++) {
+  await runPluginById(tauriPage, 'witness', target);
+
+  let result = await pluginResult(tauriPage);
+  for (let i = 0; i < 80 && (!existsSync(target) || result === null); i++) {
     await sleep(250);
+    result = await pluginResult(tauriPage);
   }
   if (!existsSync(target)) {
-    const state = await exportState(tauriPage);
     throw new Error(
-      `Custom witness export never appeared at ${target} (export state: ${state}). ` +
-        `The export surface did not run the configured [export.witness] argv against the real source.`,
+      `Custom witness export never appeared at ${target} (result: ${JSON.stringify(result)}). ` +
+        `The export surface did not run the configured "witness" plugin argv against the real source.`,
     );
   }
 
@@ -74,6 +86,15 @@ test('A custom [export.witness] plugin runs verbatim against the real source', a
   expect(produced).toContain(`sha256: ${expectedDigest}`);
   // It is the witness executable's output, not a pandoc artifact.
   expect(produced.startsWith('WITNESS-EXPORT v1')).toBe(true);
+
+  // The structured PluginResult reports the real outcome of the run through the
+  // SAME firewall the menu uses.
+  if (result === null) {
+    throw new Error('plugin run produced an artifact but no structured PluginResult was surfaced');
+  }
+  expect(result.success).toBe(true);
+  expect(result.exit_code).toBe(0);
+  expect(result.artifact).toBe(target);
 
   recordObservation({ spec: manifest.spec, name: 'witness-sha256', value: expectedDigest });
 });

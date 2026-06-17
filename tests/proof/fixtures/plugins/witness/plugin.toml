@@ -1,0 +1,47 @@
+# P12 custom-export fixture — a USER-DEFINED export-category plugin (id "witness")
+# discovered from the [plugins].dir and run BY ID through the generic plugin
+# firewall (plugins.rs run_plugin_sync), exactly as the shipped pandoc-html-export
+# / pandoc-pdf-export plugins are. It proves the export surface is plugin-shaped,
+# not pandoc-shaped (export-plugins-contract.md): its [exec].command is an
+# ARBITRARY executable (this plugin's export.sh, NOT pandoc), so an implementation
+# that hard-codes a pandoc invocation, ignores the configured argv, or writes a
+# fixed string cannot produce the asserted content.
+#
+# Distinct from the P66 witness-export-plugin fixture (that one proves category-aware
+# DISCOVERY + menu population + a doctor row). THIS fixture proves P12's claim: the
+# configured argv runs verbatim against the REAL source. Its id is the arbitrary
+# user-defined string "witness" (not the html/pdf literals), so driving it by id
+# exercises the real plugin dispatch rather than a fixed format switch. Its export.sh
+# emits a witness DERIVED FROM THE REAL SOURCE — the first ATX heading line and the
+# SHA-256 of the input's exact bytes — keeping P12's verbatim assertions
+# (WITNESS-EXPORT v1 marker + heading + sha256).
+id = "witness"
+name = "Witness"
+description = "A user-defined export-category plugin whose command is an arbitrary executable (P12)."
+category = "export"
+kind = "command"
+# The output file extension this export target writes — a GENERIC manifest field on
+# the export-category plugin (export-as-plugin migration ruling 4).
+extension = "txt"
+# JSON Schema (draft 2020-12) for this plugin's [plugin.witness] config section.
+# Referenced, not inlined.
+config_schema = "schema.json"
+
+[exec]
+# argv with per-element placeholder substitution: {plugin_dir} = this plugin's
+# directory, {file} = the real on-disk source path, {artifact} = the app-provided
+# output path. The real buffer is also on stdin. export.sh reads {file} from disk,
+# so its SHA-256 oracle is computed over the exact source bytes the app rendered.
+command = ["{plugin_dir}/export.sh", "{file}", "{artifact}"]
+
+# Self-owned configure command (C1; required manifest field). The app's "Configure"
+# action SPAWNS this detached; this fixture is non-interactive.
+[configure]
+command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
+
+# A doctor check this export plugin contributes to the one battery. exit 0 -> OK,
+# nonzero -> FAIL.
+[[doctor_checks]]
+id = "witness-export-runnable"
+description = "witness export.sh is present and executable"
+command = ["test", "-x", "{plugin_dir}/export.sh"]
