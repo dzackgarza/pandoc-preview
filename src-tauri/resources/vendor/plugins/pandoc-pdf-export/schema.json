@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pandoc-pdf-export config section",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["command"],
+  "properties": {
+    "command": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

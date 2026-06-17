@@ -91,7 +91,8 @@ VENDOR_PLUGINS="$REPO_ROOT/src-tauri/resources/vendor/plugins"
 # install_plugin_fixtures <dest-dir> <plugin-id>...  — copy the named plugin into a
 # hermetic plugins dir. Test-only plugins (witness-tool, ratio-tool,
 # generic-renderer) come from the committed fixtures; the shipped pandoc renderer
-# and the shipped pandoc-html-export plugin come from the vendor dir (OSOT). A
+# and the shipped pandoc-html-export / pandoc-pdf-export plugins come from the
+# vendor dir (OSOT). A
 # plugin is discovered only if a valid
 # [plugin.<id>] config section is also provided (its schema may require keys), so
 # each spec installs exactly the plugins it configures.
@@ -101,7 +102,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
@@ -586,6 +587,28 @@ p07-export-html.spec.ts)
 
 [plugin.pandoc-html-export]
 command = "$PANDOC_BIN --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources"
+EOF
+    ;;
+p08-export-pdf.spec.ts)
+    # P8 (export-as-plugin migration): PDF export is the shipped pandoc-pdf-export
+    # export-category plugin, discovered from [plugins].dir and run BY ID through the
+    # generic firewall (proof-obligations.md migration rulings 2026-06-17;
+    # export-plugins-contract.md), exactly as HTML export moved to pandoc-html-export.
+    # The canonical config above already set up the pandoc renderer + [plugins].dir
+    # (so the preview works); here we ADD the shipped pandoc-pdf-export plugin into
+    # that SAME dir (vendored alongside pandoc-renderer, OSOT) and its
+    # [plugin.pandoc-pdf-export] config section — the raw PDF export command the
+    # plugin runs (the individually-managed raw command, ruling 2). export.sh runs it
+    # verbatim, layering the real {file} as input and the {artifact} output. The
+    # configured --pdf-engine=lualatex lives in that raw command, so the produced PDF
+    # carries a LuaTeX Producer (the spec's engine discriminator). The spec then
+    # drives runPlugin('pandoc-pdf-export', target) and asserts the produced PDF is
+    # valid, carries the P1 witnesses, and was built by lualatex (not pdfTeX).
+    install_plugin_fixtures "$PLUGINS_DIR" pandoc-pdf-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.pandoc-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
 EOF
     ;;
 p66-export-plugin-discovery.spec.ts)
