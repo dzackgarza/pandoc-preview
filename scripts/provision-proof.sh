@@ -945,6 +945,21 @@ p84-bib-config-key.spec.ts)
     # config value governs both surfaces.
     cp "$REPO_ROOT/tests/proof/fixtures/p84-bib.bib" "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
     ;;
+p87-cross-file-labels.spec.ts)
+    # P87 (C3): cross-file label completion harvested from the project's markdown
+    # files. C3 is an INDEPENDENT completion source — labels come from the project's
+    # files, not from editor.bibliography — so this case adds a DISTINCTIVE label to
+    # file A (outline.md) in THIS spec's hermetic project copy only. The witness
+    # project ships two markdown files (demo.md + outline.md); the spec opens file B
+    # (demo.md) and triggers label completion, which must offer the label defined in
+    # file A (outline.md). The appended `\label{lem:xyz-cross}` carries a token
+    # (`xyz-cross`) that appears in NEITHER demo.md nor outline.md beforehand, so a
+    # candidate offered for it while editing demo.md can ONLY have come from
+    # harvesting outline.md — proving the index spans the whole project, not the
+    # current buffer. Appended (not edited into a heading line) so p41/p42's
+    # line-numbered outline/fold assertions over their OWN copies are untouched.
+    printf '\n\nA cross-file lemma. \\label{lem:xyz-cross}\n' >> "$PROJECT_DIR/outline.md"
+    ;;
 p85-citation-completion.spec.ts | p86-citation-tooltip.spec.ts)
     # P85/P86 (C2): citation completion sourced from the SINGLE config-declared
     # bibliography P84 established (editor.bibliography). The canonical [editor]
