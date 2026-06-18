@@ -50,3 +50,8 @@ command = ["{plugin_dir}/check-required-filters.sh"]
 id = "pandoc-resource-path"
 description = "the global figures resource dir (PANDOC_RESOURCE_PATH) is set and exists"
 command = ["{plugin_dir}/check-resource-path.sh"]
+
+[[doctor_checks]]
+id = "tikz-toolchain"
+description = "the tikz->SVG compile toolchain (pdflatex + pdf2svg, required by tikzcd.lua) resolves"
+command = ["{plugin_dir}/check-tikz-toolchain.sh"]

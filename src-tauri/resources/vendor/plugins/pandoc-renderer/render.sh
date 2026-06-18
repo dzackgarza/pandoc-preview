@@ -31,6 +31,15 @@ command_str="$(printf '%s' "$cfg" | jq -r '.command')"
 # guard, same as .command above.
 figure_width="$(printf '%s' "$cfg" | jq -r '.style.figure_width')"
 
+# Tikz->SVG preview compile env (Phase D / D-0): the canonical command carries
+# --lua-filter=.../tikzcd.lua, which compiles each tikzpicture/tikzcd block to a
+# PDF (pdflatex) then an SVG (pdf2svg) and inlines the SVG into the preview HTML.
+# That filter reads PANDOC_DIR/FIGURES_DIR/SVG_DIR from the environment (not baked
+# into the command). The derivation is OSOT in tikz-env.sh, sourced here and by the
+# doctor's check-invocation.sh so the filter sees the same env in both paths.
+# shellcheck source=tikz-env.sh
+. "$(dirname "${BASH_SOURCE[0]}")/tikz-env.sh"
+
 # Tokenize the raw command with a shlex-class parser (quotes respected, NO shell
 # expansion) — run it, do not interpret it. The first token is the executable.
 mapfile -t cmd < <(printf '%s' "$command_str" \

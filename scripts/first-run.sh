@@ -116,9 +116,13 @@ CSL="$HOME/.pandoc/csl/alpha-preview.csl"
 # the extension makes pandoc parse them as lists (Obsidian does). Citeproc resolves
 # [@key] citations against the installed bibliography (override it with your own).
 FROM_FORMAT_EXT="$FROM_FORMAT+lists_without_preceding_blankline"
-# tikzcd.lua is intentionally NOT referenced yet: it errors at load without its
-# standalone-tikz.tex template + PANDOC_DIR/FIGURES_DIR env, which is the Milestone
-# F tikz pipeline. It is still vendored/installed; it joins the command in F.
+# tikzcd.lua compiles each tikzpicture/tikzcd block to PDF (pdflatex) then SVG
+# (pdf2svg) and inlines the SVG into the preview HTML. It is installed alongside
+# its load dependency utilities.lua and its standalone-tikz.tex template, and reads
+# PANDOC_DIR/FIGURES_DIR/SVG_DIR from the environment (the renderer exports them
+# from PANDOC_RESOURCE_PATH). It loads LAST so it sees blocks after the other
+# filters have run. The tikz-toolchain doctor check fails the startup gate if
+# pdflatex or pdf2svg is absent, so the converter is a proven hard dependency here.
 # Citations render preprint-style: --citeproc enables processing, --metadata
 # link-citations hyperlinks the labels to the bibliography, and
 # reference-section-title gives the bibliography a separated "References" heading.
@@ -126,7 +130,7 @@ FROM_FORMAT_EXT="$FROM_FORMAT+lists_without_preceding_blankline"
 # are the ONE config-declared source (editor.bibliography / editor.csl below), which
 # the renderer layers onto the command as render context. The path lives in exactly
 # one place (the config key); the canonical command carries no bib/csl literal.
-PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua --lua-filter=$FILTERS_DIR/tikzcd.lua$EXTRA_ARGS_CMD"
 # Escape for a TOML basic string ("..."): backslash first, then double-quote.
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}

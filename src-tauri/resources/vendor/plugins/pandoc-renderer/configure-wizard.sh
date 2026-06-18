@@ -27,10 +27,11 @@ fmt="$(gum input --header "Input format (--from)" --value "$cur_fmt")"
 extra_raw="$(gum write --header "Extra pandoc arguments, one per line (Esc to finish, empty for none)" || true)"
 
 # Required HTML-preview filters — LOCKED: always written, never optional
-# (required-filter-set.md). tikzcd joins this set in Milestone F (it needs its
-# template + env before it can load).
+# (required-filter-set.md). tikzcd is LAST: it compiles tikzpicture/tikzcd blocks
+# to inline SVG (pdflatex + pdf2svg) and must see blocks after the other filters
+# run; render.sh exports the PANDOC_DIR/FIGURES_DIR/SVG_DIR it reads.
 filters_dir="$HOME/.pandoc/filters"
-required=(convert_amsthm_envs obsidian_callouts obsidian)
+required=(convert_amsthm_envs obsidian_callouts obsidian tikzcd)
 filter_args=""
 for f in "${required[@]}"; do
     filter_args+=" --lua-filter=$filters_dir/$f.lua"
