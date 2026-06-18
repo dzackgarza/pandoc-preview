@@ -79,13 +79,14 @@
     buildSpellChecker,
     spellcheckExtension,
   } from "../editor/spellcheck";
-  import { chktexDiagnostics } from "../editor/lint";
+  import { mdLintDiagnostics } from "../editor/lint";
 
   let {
     config,
     onChange,
     onCursor,
     onSnippetsLoaded,
+    sourcePath,
   }: {
     config: Config;
     onChange: (content: string) => void;
@@ -93,6 +94,11 @@
     // Fired once the config-owned snippet dictionary is parsed, handing the bar
     // its triggers so the dropdown can surface them (P59).
     onSnippetsLoaded: (triggers: string[]) => void;
+    // The real on-disk path of the open buffer (or null for an identity-less
+    // buffer). The static-lint source needs it to run the pandoc-md-lint plugin
+    // through the generic firewall (which resolves the run's working directory
+    // from it). A getter, so the live lint source always reads the CURRENT file.
+    sourcePath: () => string | null;
   } = $props();
 
   let host: HTMLDivElement;
@@ -107,13 +113,15 @@
   // it can be reconfigured in without rebuilding the editor (mirrors the snippet
   // dictionary's post-mount registration).
   const spellCompartment = new Compartment();
-  // The app-owned static lint source (P70): an async `linter()` over the real
-  // ChkTeX backend plus its gutter. It is a SEPARATE `linter()` extension from
-  // the fork's `latexLinter` (carried inside latex() below) — CM6 merges the two
-  // diagnostic sets, so the fork's {}/\begin-\end checks COMPOSE with ChkTeX's
-  // delimiter/math-mode balance rather than either overriding the other (the P51
-  // compose-don't-override lesson). A compartment so A.2's config-driven class
-  // toggles can reconfigure it post-mount, mirroring spellCompartment.
+  // The app-owned static lint source (P70): an async `linter()` that runs the
+  // pandoc-md-lint firewall plugin (markdown-native $-balance + the real
+  // chktex/lacheck via md->tex interop) plus its gutter. It is a SEPARATE
+  // `linter()` extension from the fork's `latexLinter` (carried inside latex()
+  // below) — CM6 merges the two diagnostic sets, so the fork's {}/\begin-\end
+  // checks COMPOSE with the plugin's delimiter/math-mode balance rather than
+  // either overriding the other (the P51 compose-don't-override lesson). A
+  // compartment so A.2's config-driven class toggles can reconfigure it
+  // post-mount, mirroring spellCompartment.
   const lintCompartment = new Compartment();
 
   // App-owned completion sources, COMPOSED with the LaTeX command source rather
@@ -239,9 +247,10 @@
           spellCompartment.of([]),
           // The app static lint source (P70) + its gutter, COMPOSED with the
           // fork's latexLinter (not routed through latex({linter})). The source
-          // is async: it spawns the real ChkTeX on the pandoc-emitted .tex.
+          // is async: it runs the pandoc-md-lint plugin through the generic
+          // firewall (the app core owns no chktex/lint knowledge).
           lintCompartment.of([
-            linter((view) => chktexDiagnostics(view.state)),
+            linter((view) => mdLintDiagnostics(view.state, sourcePath())),
             lintGutter(),
           ]),
           EditorView.updateListener.of((u) => {

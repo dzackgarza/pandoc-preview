@@ -1,0 +1,61 @@
+# The pandoc-md-lint firewall plugin — the seed of a reusable "pandoc-md-lint"
+# tool. The app core owns ZERO lint knowledge: it discovers this plugin and runs
+# it by id through the generic plugin firewall (plugins.rs run_plugin), exactly
+# as it runs the renderer and export plugins. All chktex/lacheck orchestration,
+# the pandoc md->tex interop, and the markdown-native math-mode balance check
+# live INSIDE this plugin's script, never in src-tauri/src.
+#
+# The tool reads the markdown buffer on stdin and emits structured diagnostics
+# JSON on stdout: a list of {line,col,severity,message,ruleId}, where line/col
+# are 1-based coordinates into the MARKDOWN buffer (NOT the transient .tex). The
+# CM6 @codemirror/lint host (src/lib/editor/lint.ts) maps that to CM6 Diagnostic
+# ranges by resolving (line,col) against the live document.
+#
+# It performs TWO classes of check, merged into one diagnostic stream:
+#   (a) markdown-native checks the tool OWNS — math-mode $/$$ balance. Pandoc's
+#       md->latex writer ESCAPES a lone markdown `$` to a literal `\$`, so the
+#       emitted .tex carries no open math zone and chktex's "Mathmode still on"
+#       (warning 16) NEVER fires for a pandoc-escaped lone `$`. An unterminated
+#       inline `$` (or display `$$`) in the MARKDOWN is therefore a genuinely
+#       pandoc-markdown-specific imbalance chktex-on-.tex structurally cannot
+#       see; this tool detects it directly on the markdown. It also owns a
+#       \left/\right + bracket balance pass over the markdown math content.
+#   (b) interop — pandoc md->tex, then the REAL chktex and lacheck on the emitted
+#       .tex for the LaTeX-native warnings (delimiter-count / environment
+#       matching), anchored back to markdown lines and merged.
+#
+# Vendored shipped asset (the canonical copy lives here); scripts/first-run.sh
+# and scripts/provision-proof.sh install it into the configured plugins dir
+# alongside the pandoc-renderer / export plugins (OSOT).
+#
+# Its config ([plugin.pandoc-md-lint]) is the RAW pandoc command STRING
+# (canonical), delivered on PPE_PLUGIN_CONFIG as {"command": "..."}; lint.sh
+# lifts the binary (token 0) and the --from reader from it so the lint pass reads
+# markdown exactly as the preview does, swapping only the writer to latex (this
+# is a LINT pass, not a render — the HTML writer is irrelevant).
+id = "pandoc-md-lint"
+name = "Pandoc Markdown Lint"
+description = "Static math/delimiter balance lint for the markdown buffer via the real chktex/lacheck (md->tex interop) plus a markdown-native math-mode $-balance check; the shipped default linter."
+category = "lint"
+kind = "command"
+# JSON Schema (draft 2020-12) for this plugin's [plugin.pandoc-md-lint] config
+# section. Referenced, not inlined.
+config_schema = "schema.json"
+
+[exec]
+# The markdown buffer arrives on stdin; structured diagnostics JSON on stdout.
+# {file}/{artifact} are unused by a lint pass (the tool reads stdin, writes
+# stdout) — the firewall substitutes them harmlessly. The raw pandoc command
+# arrives on PPE_PLUGIN_CONFIG as {"command": "..."}.
+command = ["{plugin_dir}/lint.sh"]
+
+# The lint configurator. The app's "Configure" action SPAWNS this detached; this
+# stub is non-interactive (it records the substituted paths so an implementation
+# that ignores the manifest cannot fabricate the effect).
+[configure]
+command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
+
+[[doctor_checks]]
+id = "md-lint-binaries"
+description = "the real chktex and lacheck binaries the linter wraps are present and runnable"
+command = ["{plugin_dir}/check-binaries.sh"]

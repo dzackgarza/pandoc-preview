@@ -208,6 +208,15 @@ command = "$PANDOC_PATH --from markdown --to html5 --standalone --embed-resource
 
 [plugin.pandoc-pdf-export]
 command = "$PANDOC_PATH --from markdown --standalone --pdf-engine=lualatex"
+
+# The shipped lint plugin (Phase A / P70): static math/delimiter balance lint for
+# the markdown buffer, discovered from [plugins].dir and run by id through the
+# generic firewall. The app core owns NO lint knowledge — this plugin wraps the
+# real chktex/lacheck (md->tex interop) AND owns the markdown-native math-mode
+# \$-balance check chktex-on-.tex cannot do. Its command is the raw md->tex pandoc
+# command the tool lifts the binary + --from reader from.
+[plugin.pandoc-md-lint]
+command = "$PANDOC_PATH --from markdown --to latex"
 EOF
 
 # Install the shipped pandoc filters the command references (Milestone D):
@@ -256,5 +265,22 @@ for export_plugin in pandoc-html-export pandoc-pdf-export; do
         ln -sfn "$EXPORT_VENDOR" "$EXPORT_DEST"
     fi
 done
+
+# Install the shipped lint plugin (Phase A / P70). Like the renderer/export
+# plugins it is app-owned vendored code (the single source of truth), symlinked
+# into the plugins dir so updates stay atomic and a real-directory user override is
+# preserved. Its [plugin.pandoc-md-lint].command section written above is validated
+# against its schema by the generic plugin-config check.
+LINT_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/pandoc-md-lint"
+if [ ! -d "$LINT_VENDOR" ]; then
+    echo "FATAL: vendored lint plugin missing: $LINT_VENDOR" >&2
+    exit 1
+fi
+LINT_DEST="$PLUGINS_DIR/pandoc-md-lint"
+if [ -e "$LINT_DEST" ] && [ ! -L "$LINT_DEST" ]; then
+    echo "preserve (user override): $LINT_DEST" >&2
+else
+    ln -sfn "$LINT_VENDOR" "$LINT_DEST"
+fi
 
 gum style --bold --foreground 2 "Config written to $CONFIG_FILE"

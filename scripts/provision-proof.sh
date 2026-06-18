@@ -89,7 +89,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "pandoc-md-lint" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
@@ -134,6 +134,17 @@ command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to h
 
 [plugin.pandoc-renderer.style]
 figure_width = "75%"
+EOF
+    # The shipped lint plugin (Phase A / P70): static math/delimiter balance lint
+    # for the markdown buffer, run by id through the generic firewall. Installed
+    # alongside the renderer into the SAME plugins dir and given its own raw md->tex
+    # pandoc command (the binary + --from reader the tool lifts from it). The app
+    # core owns no lint knowledge — this plugin is the sole source of diagnostics.
+    install_plugin_fixtures "$plugins_dir" pandoc-md-lint
+    cat >> "$config_path" <<EOF
+
+[plugin.pandoc-md-lint]
+command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to latex"
 EOF
 }
 

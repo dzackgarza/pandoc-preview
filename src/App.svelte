@@ -1519,6 +1519,7 @@
               onSnippetsLoaded={(triggers) => {
                 snippetTriggers = triggers;
               }}
+              sourcePath={() => currentFile}
             />
           </div>
         </div>
