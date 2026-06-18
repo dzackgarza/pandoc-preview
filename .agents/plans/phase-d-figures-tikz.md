@@ -476,3 +476,25 @@ mocks, no skips, no forced error modes.
     parser-independent. **Upstream-dependency check pending:** D-7/D-10 external launches
     require the diagram-tool-as-plugin firewall model — verify it exists before D-7; if not,
     surface it as a blocker (do NOT hardcode a tool launch in core).
+
+- **2026-06-18: SCOPE DISCOVERY — the tikz→SVG preview compile seam is DORMANT, not active.**
+  The plan assumed "the figure compile reuses this exact compile-to-SVG seam"
+  (render.rs/tikzcd.lua), but investigation found: (1) `pdf2svg` was not installed (user
+  installed it on request); (2) `tikzcd.lua` is DELIBERATELY omitted from the renderer
+  pandoc command (`first-run.sh:119`: "intentionally NOT referenced yet: it errors at load
+  without its standalone-tikz.tex template + PANDOC_DIR/FIGURES_DIR env, which is the
+  Milestone F tikz pipeline") — it is a required-on-disk filter but never LOADED; (3) no
+  proof exercises tikz→SVG rendering (p23 uses a callout as its dependency-free witness; p56
+  is insertion-only). So tikz figure rendering in the preview has NEVER worked/been proven.
+  (`tikz_to_svg.sh` in the submodule has a separate `--output-directory`-after-filename bug,
+  but the preview path is `tikzcd.lua::run_pdflatex_and_convert`, which orders the flag
+  correctly and does not use that script.)
+  - **Consequence:** Phase D needs a foundational **D-0** before D-2/D-3/D-6: activate +
+    PROVE the tikz→SVG preview pipeline — wire `tikzcd.lua` into the renderer command (the 3
+    generators: first-run.sh, provision-proof.sh, configure-wizard.sh) with the
+    PANDOC_DIR/FIGURES_DIR/SVG_DIR env it needs (set by render.sh, alongside {mathjax} etc.),
+    and contribute a renderer-plugin doctor check for the tikz toolchain (pdf2svg + pdflatex)
+    so the dependency fails loud at the startup gate (the plan's "hard deps surfaced through
+    the doctor battery" discipline, currently unmet). Proof: a tikzpicture in the document
+    renders to an inline SVG in the preview. This is the deferred "Milestone F tikz pipeline",
+    which is squarely Phase D (figures-tikz) — D-2/D-3/D-6 ride it.
