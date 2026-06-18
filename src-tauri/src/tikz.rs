@@ -39,6 +39,8 @@
 
 use std::fmt;
 
+use serde::Serialize;
+
 use nom::{
     bytes::complete::{tag, take_until},
     character::complete::{char, multispace0},
@@ -154,6 +156,39 @@ impl Graph {
         self.bbox.as_ref()
     }
 
+    /// Form the subgraph INDUCED by a set of selected node names (D-8 / P97):
+    /// the nodes whose names are in `selected` (with their coordinates, props,
+    /// and labels intact, taken from this fully-parsed graph) plus EXACTLY the
+    /// edges whose BOTH endpoints are selected. Every other node and every edge
+    /// with an endpoint outside the selection is dropped. The bounding box is
+    /// dropped: a sub-selection's box would be a fabricated extent, not an owned
+    /// fact. Node/edge source order is preserved so the result serializes
+    /// deterministically through [`Graph::to_tikz`].
+    ///
+    /// This is the TikzIt "copy a region of nodes" model: the induced subgraph is
+    /// the selected vertices and the edges internal to them.
+    pub fn induced_subgraph(&self, selected: &[String]) -> Graph {
+        let nodes: Vec<Node> = self
+            .nodes
+            .iter()
+            .filter(|n| selected.iter().any(|s| s == &n.name))
+            .cloned()
+            .collect();
+        let edges: Vec<Edge> = self
+            .edges
+            .iter()
+            .filter(|e| {
+                nodes.iter().any(|n| n.name == e.source) && nodes.iter().any(|n| n.name == e.target)
+            })
+            .cloned()
+            .collect();
+        Graph {
+            bbox: None,
+            nodes,
+            edges,
+        }
+    }
+
     /// Serialize the model back to canonical tikz source.
     ///
     /// Layout mirrors the TikzIt `Graph::tikz()` serializer: a tab-indented
@@ -253,6 +288,87 @@ pub fn parse(src: &str) -> Result<Graph, TikzError> {
             excerpt: src.lines().last().unwrap_or("").trim().to_string(),
             reason: "unexpected end of input (unterminated construct)".to_string(),
         }),
+    }
+}
+
+/// A JSON-serializable node, the shape the `parseTikz` E2E observable returns
+/// (D-8 / P97): name, coordinates, the `style=` value (or null), and the label.
+#[derive(Debug, Serialize)]
+pub struct ParsedNode {
+    name: String,
+    x: f64,
+    y: f64,
+    style: Option<String>,
+    label: String,
+}
+
+/// A JSON-serializable edge: endpoints and the `style=` value (or null).
+#[derive(Debug, Serialize)]
+pub struct ParsedEdge {
+    source: String,
+    target: String,
+    style: Option<String>,
+}
+
+/// The JSON-serializable structured graph the `parseTikz` observable returns.
+#[derive(Debug, Serialize)]
+pub struct ParsedGraph {
+    nodes: Vec<ParsedNode>,
+    edges: Vec<ParsedEdge>,
+}
+
+/// Re-parse tikz `source` through the D-1 / P90 parser and return its structured
+/// node/edge content (D-8 / P97). This is the faithful re-parse the subgraph-copy
+/// obligation demands: clipboard text written by [`crate::clipboard::copy_subgraph_tikz`]
+/// is fed back through this command and the recovered structure is asserted to be
+/// EXACTLY the selected subgraph — proving the clipboard carries canonical,
+/// round-trippable tikz. A `source` that is not parseable tikz is a LOUD error.
+#[tauri::command]
+pub fn parse_tikz(source: String) -> crate::error::Result<ParsedGraph> {
+    let g = parse(&source)
+        .map_err(|e| crate::error::Error::InvalidArgument(format!("tikz parse failed: {e}")))?;
+    Ok(ParsedGraph {
+        nodes: g
+            .nodes()
+            .iter()
+            .map(|n| ParsedNode {
+                name: n.name().to_string(),
+                x: n.coord().0,
+                y: n.coord().1,
+                style: n.style().map(str::to_string),
+                label: n.label().to_string(),
+            })
+            .collect(),
+        edges: g
+            .edges()
+            .iter()
+            .map(|e| ParsedEdge {
+                source: e.source().to_string(),
+                target: e.target().to_string(),
+                style: e.style().map(str::to_string),
+            })
+            .collect(),
+    })
+}
+
+/// Extract the node names defined in a selected source FRAGMENT (D-8 / P97).
+///
+/// A TikzIt "select a region of nodes" gesture covers a contiguous span of node
+/// definition lines — a PROPER SUBSET of a picture's source, NOT a full
+/// `tikzpicture` envelope — so [`parse`] (which demands the envelope) cannot
+/// read it. This runs the SAME D-1 `\node` parser ([`node`]) over the fragment
+/// with `many0`, returning the names of the nodes the selection covers, in
+/// source order. The induced subgraph is then formed by
+/// [`Graph::induced_subgraph`] against the FULLY-parsed picture, so each selected
+/// node's authoritative coordinates/props/label come from the real source.
+///
+/// A fragment that covers no parseable `\node` (an empty or non-node selection)
+/// yields an empty name list; the caller turns the resulting empty subgraph into
+/// a LOUD error rather than copying a raw-text guess.
+pub fn node_names_in(fragment: &str) -> Vec<String> {
+    match many0(node).parse(fragment) {
+        Ok((_, ns)) => ns.into_iter().map(|n| n.name).collect(),
+        Err(_) => Vec::new(),
     }
 }
 

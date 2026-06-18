@@ -174,6 +174,26 @@ export interface FileRead {
   fingerprint: Fingerprint;
 }
 
+/** The structured graph the D-1 / P90 tikz parser returns through the
+ *  `parse_tikz` command (D-8 / P97), the shape the `parseTikz` re-parse
+ *  observable yields. */
+export interface ParsedTikzNode {
+  name: string;
+  x: number;
+  y: number;
+  style: string | null;
+  label: string;
+}
+export interface ParsedTikzEdge {
+  source: string;
+  target: string;
+  style: string | null;
+}
+export interface ParsedGraph {
+  nodes: ParsedTikzNode[];
+  edges: ParsedTikzEdge[];
+}
+
 /** Stable sentinel prefix on the serialized conflict-refusal error message
  *  (`Error::Conflict` in src-tauri/src/error.rs, `CONFLICT_PREFIX`). The save
  *  path matches this to tell a P48 conflict refusal apart from a generic IO

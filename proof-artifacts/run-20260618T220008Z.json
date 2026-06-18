@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T220008Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p104-subgraph-copy.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p104-subgraph-copy.spec.ts",
+            "title": "selecting a subgraph and invoking copy places EXACTLY that subgraph as canonical, re-parseable tikz on the system clipboard",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 12228,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.readClipboardText() === \"__P104_PRECOPY_SENTINEL__\""
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

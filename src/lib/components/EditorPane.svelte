@@ -68,7 +68,8 @@
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
   import type { Config } from "../types";
   import { toastError } from "../toast.svelte";
-  import { readTextFile } from "../api";
+  import { readTextFile, parseTikz, copySubgraphTikz } from "../api";
+  import type { ParsedGraph } from "../types";
   import {
     parseSnippetDictionary,
     parseQuicktexSource,
@@ -832,6 +833,114 @@
   export function seedClipboardText(text: string) {
     (window as unknown as { __PPE_TEXT_SEED__: Promise<void> }).__PPE_TEXT_SEED__ =
       writeText(text);
+  }
+
+  /** The owned `\begin{tikzpicture}…\end{tikzpicture}` envelope the buffer
+   * carries (D-8 / P97). A figure lives inside a `{=latex}` fence; the
+   * copy-subgraph action parses the envelope itself, so this extracts EXACTLY
+   * the envelope (begin marker through end marker, inclusive). Fails LOUDLY when
+   * the buffer carries no tikzpicture — the copy action has nothing to copy and
+   * must never guess. */
+  function ownedTikzEnvelope(): string {
+    const doc = view.state.doc.toString();
+    const begin = doc.indexOf("\\begin{tikzpicture}");
+    if (begin < 0) {
+      throw new Error("copySelectedSubgraph: buffer carries no \\begin{tikzpicture}");
+    }
+    const endMarker = "\\end{tikzpicture}";
+    const endAt = doc.indexOf(endMarker, begin);
+    if (endAt < 0) {
+      throw new Error("copySelectedSubgraph: buffer carries no \\end{tikzpicture}");
+    }
+    return doc.slice(begin, endAt + endMarker.length);
+  }
+
+  /** E2E (P104 / D-8): the live editor selection's text — the contiguous source
+   * span the user selected (the SAME `selection.main` range seedSelection sets).
+   * The copy-subgraph action intersects this with the parsed picture to form the
+   * induced subgraph. */
+  function selectionText(): string {
+    const sel = view.state.selection.main;
+    return view.state.doc.sliceString(sel.from, sel.to);
+  }
+
+  /** E2E (P104 / D-8): the copy-selected-subgraph action — copy a SELECTED
+   * subgraph of the buffer's owned tikz source to the REAL system clipboard as
+   * deterministic CANONICAL tikz (the TikzIt "copy a region of nodes" model).
+   *
+   * Parses the owned tikzpicture envelope and the selected span through the D-1 /
+   * P90 parser (the `copy_subgraph_tikz` backend), forms the induced subgraph
+   * (the selected nodes + the edges whose BOTH endpoints are selected), and
+   * serializes it with the SAME canonical Graph::to_tikz() serializer P90
+   * round-trips — the backend writes that canonical tikz onto the system
+   * clipboard via the clipboard-manager write_text path. A selection that is not
+   * parseable tikz is a LOUD error there; the clipboard is never populated with a
+   * raw-text guess.
+   *
+   * Fire-and-forget (like pasteImage): the async parse+serialize+clipboard-write
+   * outlives this call. The in-flight promise is parked on `__PPE_SUBGRAPH_COPY__`
+   * so the clipboard-read cache refreshes only after the write lands, and the
+   * canonical text is parsed once and cached (keyed by the exact canonical string)
+   * so the subsequent `parseTikz(clipboard)` re-parse resolves synchronously from
+   * the SAME backend parser. */
+  export function copySelectedSubgraphAsTikz() {
+    const source = ownedTikzEnvelope();
+    const selection = selectionText();
+    const w = window as unknown as {
+      __PPE_SUBGRAPH_COPY__: Promise<void>;
+      __PPE_TIKZ_PARSE_CACHE__?: Record<string, ParsedGraph>;
+      __PPE_CLIPBOARD_TEXT__?: string;
+    };
+    w.__PPE_SUBGRAPH_COPY__ = (async () => {
+      const canonical = await copySubgraphTikz(source, selection);
+      // Cache the backend re-parse of the exact canonical string the clipboard
+      // now holds, so parseTikz(clipboard) — called once, not polled — resolves
+      // synchronously from the SAME D-1 parser the obligation demands.
+      const parsed = await parseTikz(canonical);
+      w.__PPE_TIKZ_PARSE_CACHE__ = { ...(w.__PPE_TIKZ_PARSE_CACHE__ ?? {}), [canonical]: parsed };
+      // Refresh the independent clipboard-read cache off the real clipboard.
+      w.__PPE_CLIPBOARD_TEXT__ = await readText();
+    })();
+  }
+
+  /** E2E (P104 / D-8): the INDEPENDENT system-clipboard read. Returns the last
+   * cached clipboard text synchronously (so `waitForFunction` can compare it) and
+   * kicks an async `readText()` to refresh the cache off the REAL clipboard — the
+   * SAME clipboard-manager read path P82 reads through. Polling converges the
+   * cache to the live clipboard bytes. Does NOT trust the copy action's report:
+   * it observes the actual bytes on the system clipboard. */
+  export function readClipboardText(): string {
+    const w = window as unknown as {
+      __PPE_TEXT_SEED__?: Promise<void>;
+      __PPE_CLIPBOARD_TEXT__?: string;
+    };
+    void (async () => {
+      if (w.__PPE_TEXT_SEED__) await w.__PPE_TEXT_SEED__;
+      try {
+        w.__PPE_CLIPBOARD_TEXT__ = await readText();
+      } catch (e) {
+        if (String(e).includes(CLIPBOARD_EMPTY_SIGNAL)) w.__PPE_CLIPBOARD_TEXT__ = "";
+        else throw e;
+      }
+    })();
+    return w.__PPE_CLIPBOARD_TEXT__ ?? "";
+  }
+
+  /** E2E (P104 / D-8): re-parse `src` through the app's OWN tikz parser (the D-1
+   * / P90 `parse_tikz` backend) and return the structured graph. Returns the
+   * cached parse (populated by copySelectedSubgraphAsTikz for the exact canonical
+   * string it wrote) synchronously so the spec's single `parseTikz(clipboard)`
+   * call resolves the SAME backend parser's result. A cache miss kicks an async
+   * backend parse and throws LOUDLY — the harness never silently parses in JS. */
+  export function parseTikz_(src: string): ParsedGraph {
+    const w = window as unknown as { __PPE_TIKZ_PARSE_CACHE__?: Record<string, ParsedGraph> };
+    const cached = w.__PPE_TIKZ_PARSE_CACHE__?.[src];
+    if (cached) return cached;
+    void (async () => {
+      const parsed = await parseTikz(src);
+      w.__PPE_TIKZ_PARSE_CACHE__ = { ...(w.__PPE_TIKZ_PARSE_CACHE__ ?? {}), [src]: parsed };
+    })();
+    throw new Error("parseTikz: source not yet parsed by the backend (no cached result)");
   }
 
   /** Insert a snippet body at the cursor, expanding it through the SAME

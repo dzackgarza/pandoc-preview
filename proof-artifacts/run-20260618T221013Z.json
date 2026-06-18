@@ -1,0 +1,49 @@
+{
+  "run_id": "20260618T221013Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p104-subgraph-copy.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p104-subgraph-copy.spec.ts",
+            "title": "selecting a subgraph and invoking copy places EXACTLY that subgraph as canonical, re-parseable tikz on the system clipboard",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3606,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p104-subgraph-copy.spec.ts",
+          "name": "p104-clipboard-tikz",
+          "value": "\\begin{tikzpicture}\n\t\\begin{pgfonlayer}{nodelayer}\n\t\t\\node [style=object] (0) at (0, 2) {$A$};\n\t\t\\node [style=object] (1) at (2, 2) {$B$};\n\t\\end{pgfonlayer}\n\t\\begin{pgfonlayer}{edgelayer}\n\t\t\\draw [style=arrow] (0) to (1);\n\t\\end{pgfonlayer}\n\\end{tikzpicture}\n"
+        },
+        {
+          "spec": "p104-subgraph-copy.spec.ts",
+          "name": "p104-reparsed-nodes",
+          "value": "0,1"
+        },
+        {
+          "spec": "p104-subgraph-copy.spec.ts",
+          "name": "p104-reparsed-edges",
+          "value": "0->1"
+        }
+      ]
+    }
+  ]
+}

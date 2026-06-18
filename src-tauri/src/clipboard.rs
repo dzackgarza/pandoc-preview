@@ -7,6 +7,7 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 
 use crate::config;
 use crate::error::{Error, Result};
+use crate::tikz;
 
 /// Build a deterministic `width`×`height` RGBA raster and write it onto the REAL
 /// system clipboard in ONE IPC (P62). The frontend's seedClipboardImage E2E hook
@@ -36,6 +37,55 @@ pub async fn seed_clipboard_image<R: Runtime>(
     app.clipboard()
         .write_image(&image)
         .map_err(|e| Error::InvalidArgument(format!("clipboard write_image failed: {e}")))
+}
+
+/// Copy a SELECTED subgraph of owned tikz source to the system clipboard as
+/// deterministic, canonical, re-parseable tikz (D-8 / P97 — the TikzIt
+/// "copy a region of nodes" model).
+///
+/// `source` is the full owned `\begin{tikzpicture}…\end{tikzpicture}` the editor
+/// buffer carries; `selection` is the contiguous source span the user selected (a
+/// PROPER SUBSET — a region of node-definition lines). This:
+///
+///  1. parses `source` with the D-1 / P90 parser ([`tikz::parse`]) into the
+///     authoritative [`tikz::Graph`] — a `source` that is not parseable tikz is a
+///     LOUD error here, never a raw-text copy;
+///  2. extracts the names of the nodes the selection covers by running the SAME
+///     D-1 `\node` parser over the selected fragment ([`tikz::node_names_in`]);
+///  3. forms the INDUCED subgraph ([`Graph::induced_subgraph`]): the selected
+///     nodes plus EXACTLY the edges whose BOTH endpoints are selected;
+///  4. serializes that subgraph with the SAME canonical [`Graph::to_tikz`]
+///     serializer P90 round-trips — so the clipboard text re-parses STABLY back
+///     to the selected subgraph;
+///  5. writes that canonical tikz onto the REAL system clipboard via the
+///     clipboard-manager `write_text` path (the sibling of
+///     [`seed_clipboard_image`]'s write).
+///
+/// A selection that covers no parseable node (the induced subgraph would be
+/// empty) is a LOUD error: the clipboard is NEVER populated with a raw-text
+/// guess.
+#[tauri::command]
+pub async fn copy_subgraph_tikz<R: Runtime>(
+    app: AppHandle<R>,
+    source: String,
+    selection: String,
+) -> Result<String> {
+    let graph = tikz::parse(&source)
+        .map_err(|e| Error::InvalidArgument(format!("selection is not parseable tikz: {e}")))?;
+
+    let selected = tikz::node_names_in(&selection);
+    if selected.is_empty() {
+        return Err(Error::InvalidArgument(format!(
+            "selection covers no tikz node, refusing to copy a raw-text guess: {selection:?}"
+        )));
+    }
+
+    let canonical = graph.induced_subgraph(&selected).to_tikz();
+
+    app.clipboard()
+        .write_text(canonical.clone())
+        .map_err(|e| Error::InvalidArgument(format!("clipboard write_text failed: {e}")))?;
+    Ok(canonical)
 }
 
 /// Read the image currently on the system clipboard, PNG-encode it, and write it

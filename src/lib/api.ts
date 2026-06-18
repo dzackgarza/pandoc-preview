@@ -5,6 +5,7 @@ import type {
   FileRead,
   Fingerprint,
   FoldState,
+  ParsedGraph,
   PluginInfo,
   PluginResult,
   RenderResult,
@@ -69,6 +70,27 @@ export const pasteClipboardImage = (filename: string) =>
 // The write-image permission this needs is granted only in the e2e build.
 export const seedClipboardImage = (width: number, height: number) =>
   invoke<void>("seed_clipboard_image", { width, height });
+
+// D-8 (P97): the structured re-parse of tikz `source` through the app's OWN
+// D-1 / P90 parser, returning { nodes: [{name,x,y,style,label}], edges:
+// [{source,target,style}] } or failing loudly when `source` is not parseable
+// tikz. The subgraph-copy proof feeds the clipboard text back through this to
+// assert the copied text re-parses STABLY to the selected subgraph.
+export const parseTikz = (source: string) =>
+  invoke<ParsedGraph>("parse_tikz", { source });
+
+// D-8 (P97): copy a SELECTED subgraph of owned tikz `source` to the REAL system
+// clipboard as deterministic CANONICAL tikz (the TikzIt "copy a region of nodes"
+// model). `source` is the full owned tikzpicture; `selection` is the contiguous
+// span the user selected. The backend parses `source` with the D-1 parser, forms
+// the induced subgraph from the selected nodes (plus the edges whose BOTH
+// endpoints are selected), serializes it with the SAME canonical Graph::to_tikz()
+// P90 round-trips, and writes that tikz onto the system clipboard via the
+// clipboard-manager write_text path. Returns the canonical tikz it wrote. Fails
+// LOUDLY on an unparseable source or a selection covering no node — never a
+// raw-text copy.
+export const copySubgraphTikz = (source: string, selection: string) =>
+  invoke<string>("copy_subgraph_tikz", { source, selection });
 
 export const listTree = (root: string) => invoke<FileNode[]>("list_tree", { root });
 

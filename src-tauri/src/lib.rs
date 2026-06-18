@@ -175,6 +175,8 @@ pub fn run() {
             plugins::list_plugins,
             clipboard::paste_clipboard_image,
             clipboard::seed_clipboard_image,
+            clipboard::copy_subgraph_tikz,
+            tikz::parse_tikz,
             recovery::recovery_autosave,
             recovery::recovery_head_buffer,
             repostate::repo_state_for,

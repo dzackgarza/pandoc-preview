@@ -499,6 +499,29 @@
         seedSelection: (text: string) => {
           editor.seedSelection(text);
         },
+        // P104 / D-8: copy a SELECTED subgraph of the buffer's owned tikz source
+        // to the REAL system clipboard as deterministic CANONICAL tikz (the
+        // TikzIt "copy a region of nodes" model). Parses the owned tikzpicture +
+        // the live selection through the D-1 / P90 parser, forms the induced
+        // subgraph (selected nodes + edges whose BOTH endpoints are selected),
+        // serializes it with the SAME canonical Graph::to_tikz() P90 round-trips,
+        // and writes that tikz onto the system clipboard via the clipboard-manager
+        // write_text path. A selection not parseable as tikz is a LOUD error —
+        // never a raw-text copy. Fire-and-forget; the decisive observable is the
+        // system clipboard, read INDEPENDENTLY by readClipboardText.
+        copySelectedSubgraphAsTikz: () => {
+          editor.copySelectedSubgraphAsTikz();
+        },
+        // P104 / D-8: the INDEPENDENT system-clipboard read (the sibling of
+        // P62's independent figures-dir listing). Reads the REAL clipboard text
+        // through the clipboard-manager read-text path; does NOT trust the copy
+        // action's own report of what it wrote.
+        readClipboardText: () => editor.readClipboardText(),
+        // P104 / D-8: re-parse `src` through the app's OWN tikz parser (the D-1 /
+        // P90 parse_tikz backend) into { nodes, edges }. The clipboard text is fed
+        // back through this to assert it re-parses STABLY to the selected
+        // subgraph.
+        parseTikz: (src: string) => editor.parseTikz_(src),
         cursorOffset: () => editor.cursorOffset(),
         // P70: the live @codemirror/lint diagnostics (forceLinting-flushed) and
         // their count, read from the SAME field the gutter renders.
