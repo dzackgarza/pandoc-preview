@@ -356,6 +356,13 @@
         acceptCompletion: () => {
           editor.acceptCompletion();
         },
+        // P80: type into the ACTIVE snippet field (the live `${N}` tabstop) after
+        // a snippet expands, through the SAME docChanged pipeline real typing
+        // fires. UNLIKE typeInEditor, no startCompletion — typing into a field is
+        // plain editing, and CM6 mirrors the text into every repeated `${N}`.
+        typeIntoSnippetField: (text: string) => {
+          editor.typeIntoSnippetField(text);
+        },
         // P53: fire Emmet's expandAbbreviation command against the live view,
         // the same command the Ctrl-e keybinding fires (fire-and-forget).
         expandEmmet: () => {

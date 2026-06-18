@@ -497,6 +497,22 @@
     cmAcceptCompletion(view);
   }
 
+  /** E2E (P80): type `text` into the ACTIVE snippet field after a snippet has
+   * expanded and CM6 is in snippet-field mode (the first `${N}` tabstop is the
+   * live, selected range). Insert through the SAME docChanged pipeline real
+   * typing fires — replacing the selected field range — and, UNLIKE
+   * `typeInEditor`, do NOT call `startCompletion`, because typing into a snippet
+   * field is plain editing (opening a popup would tear down the active field and
+   * defeat the mirror). CM6's `snippetCompletion` machinery maps the change
+   * through its snippet state and MIRRORS the typed text into every other
+   * occurrence of the same `${N}` live (the established TextMate mirror
+   * behaviour). The bridge cannot synthesize key events into CodeMirror's
+   * contentEditable, so this is the in-harness surface for typing into a field. */
+  export function typeIntoSnippetField(text: string) {
+    view.dispatch(view.state.replaceSelection(text));
+    view.focus();
+  }
+
   /** E2E (P53): fire Emmet's expandAbbreviation StateCommand against the live
    * view — the SAME command the `Ctrl-e` keybinding fires. The bridge cannot
    * synthesize Ctrl-e into CodeMirror's contentEditable, so this is the
