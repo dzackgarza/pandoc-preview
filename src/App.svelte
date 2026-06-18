@@ -413,6 +413,10 @@
           editor.insertSnippetByTrigger(trigger);
         },
         cursorOffset: () => editor.cursorOffset(),
+        // P70: the live @codemirror/lint diagnostics (forceLinting-flushed) and
+        // their count, read from the SAME field the gutter renders.
+        lintDiagnostics: () => editor.lintDiagnostics(),
+        lintCount: () => editor.lintCount(),
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
         goToLine: (line: number) => editor.goToLine(line),

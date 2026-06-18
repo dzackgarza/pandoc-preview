@@ -3,6 +3,7 @@ mod config;
 mod doctor;
 mod error;
 mod fsops;
+mod lint;
 mod plugins;
 mod recovery;
 mod render;
@@ -166,6 +167,7 @@ pub fn run() {
             fsops::rename_path,
             fsops::delete_path,
             render::render_preview,
+            lint::lint_buffer,
             plugins::run_plugin,
             plugins::configure_plugin,
             plugins::list_plugins,

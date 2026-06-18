@@ -54,7 +54,14 @@
     searchKeymap,
     highlightSelectionMatches,
   } from "@codemirror/search";
-  import { lintKeymap } from "@codemirror/lint";
+  import {
+    lintKeymap,
+    linter,
+    lintGutter,
+    forceLinting,
+    forEachDiagnostic,
+    diagnosticCount,
+  } from "@codemirror/lint";
   import { indentationMarkers } from "@replit/codemirror-indentation-markers";
   import { oneDark } from "@codemirror/theme-one-dark";
   import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
@@ -72,6 +79,7 @@
     buildSpellChecker,
     spellcheckExtension,
   } from "../editor/spellcheck";
+  import { chktexDiagnostics } from "../editor/lint";
 
   let {
     config,
@@ -99,6 +107,14 @@
   // it can be reconfigured in without rebuilding the editor (mirrors the snippet
   // dictionary's post-mount registration).
   const spellCompartment = new Compartment();
+  // The app-owned static lint source (P70): an async `linter()` over the real
+  // ChkTeX backend plus its gutter. It is a SEPARATE `linter()` extension from
+  // the fork's `latexLinter` (carried inside latex() below) — CM6 merges the two
+  // diagnostic sets, so the fork's {}/\begin-\end checks COMPOSE with ChkTeX's
+  // delimiter/math-mode balance rather than either overriding the other (the P51
+  // compose-don't-override lesson). A compartment so A.2's config-driven class
+  // toggles can reconfigure it post-mount, mirroring spellCompartment.
+  const lintCompartment = new Compartment();
 
   // App-owned completion sources, COMPOSED with the LaTeX command source rather
   // than overriding it. latex() folds a single delegating source (below) into
@@ -221,6 +237,13 @@
           // Empty until the spellchecker is built (post-mount, once the
           // config-owned custom dictionary is read); reconfigured in below.
           spellCompartment.of([]),
+          // The app static lint source (P70) + its gutter, COMPOSED with the
+          // fork's latexLinter (not routed through latex({linter})). The source
+          // is async: it spawns the real ChkTeX on the pandoc-emitted .tex.
+          lintCompartment.of([
+            linter((view) => chktexDiagnostics(view.state)),
+            lintGutter(),
+          ]),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) onChange(u.state.doc.toString());
             if (u.selectionSet || u.docChanged) {
@@ -384,6 +407,46 @@
    * lands after expansion. */
   export function cursorOffset(): number {
     return view.state.selection.main.head;
+  }
+
+  /** E2E (P70): the live `@codemirror/lint` diagnostics — the SAME field the
+   * gutter renders — flushed via `forceLinting` so the async ChkTeX source has
+   * run for the current buffer, then read straight from the lint state via
+   * `forEachDiagnostic`. NOT a parallel array: a side array could pass while the
+   * gutter shows nothing. Mapped to a JSON-serializable shape (from/to char
+   * offsets, severity, message, source = the ChkTeX rule id). */
+  export function lintDiagnostics(): {
+    from: number;
+    to: number;
+    severity: string;
+    message: string;
+    source: string;
+  }[] {
+    forceLinting(view);
+    const out: {
+      from: number;
+      to: number;
+      severity: string;
+      message: string;
+      source: string;
+    }[] = [];
+    forEachDiagnostic(view.state, (d, from, to) => {
+      out.push({
+        from,
+        to,
+        severity: d.severity,
+        message: d.message,
+        source: d.source ?? "",
+      });
+    });
+    return out;
+  }
+
+  /** E2E (P70): the count of currently-active diagnostics in the SAME flushed
+   * lint field `lintDiagnostics()` reads. */
+  export function lintCount(): number {
+    forceLinting(view);
+    return diagnosticCount(view.state);
   }
 
   /** Insert a snippet body at the cursor, expanding it through the SAME

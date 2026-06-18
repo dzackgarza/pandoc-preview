@@ -65,6 +65,18 @@ export interface RenderResult {
   log: string;
 }
 
+/** One mapped static-lint diagnostic (Phase A / P70). Mirrors the Rust
+ * `lint::LintDiagnostic`: the real ChkTeX's diagnostic, mapped from the pandoc-
+ * emitted .tex back to markdown character offsets. `source` is the ChkTeX warning
+ * id (e.g. "chktex:17") so an in-document suppression can later name it. */
+export interface LintBackendDiagnostic {
+  from: number;
+  to: number;
+  severity: string;
+  message: string;
+  source: string;
+}
+
 /** A discovered plugin's identity (Mirrors the Rust `plugins::PluginInfo`). The
  * category-aware menu/command-palette populator filters by `category` and reads
  * the declared output `extension` (P66) — sourced from the discovered manifest,

@@ -5,12 +5,15 @@ import type {
   FileRead,
   Fingerprint,
   FoldState,
+  LintBackendDiagnostic,
   PluginInfo,
   PluginResult,
   RenderResult,
   RepoState,
   SessionState,
 } from "./types";
+
+export type { LintBackendDiagnostic } from "./types";
 
 export const getConfig = () => invoke<Config>("get_config");
 export const saveConfig = (config: Config) => invoke<void>("save_config", { config });
@@ -104,6 +107,13 @@ export const renderPreview = (
   baseUrl: string,
   mathjaxUrl: string,
 ) => invoke<RenderResult>("render_preview", { source, baseDir, baseUrl, mathjaxUrl });
+
+/** Static-lint pass (Phase A / P70): run the REAL ChkTeX over the buffer's
+ * pandoc-emitted .tex (via the active renderer plugin's lint.sh) and return
+ * diagnostics mapped back to markdown character offsets. Cheap — no HTML render,
+ * no latex compile ("feedback faster than a compile"). */
+export const lintBuffer = (buffer: string) =>
+  invoke<LintBackendDiagnostic[]>("lint_buffer", { buffer });
 
 /** Run a discovered plugin by id against the real open buffer (Milestone A). */
 export const runPlugin = (
