@@ -6,6 +6,9 @@ import {
   appendAtEnd,
   seedClipboardText,
   insertSnippetByTrigger,
+  typeInEditor,
+  acceptCompletion,
+  completionLabels,
   editorText,
 } from './support/app';
 
@@ -31,13 +34,15 @@ import {
 //       the tokens change the buffer).
 //
 // ── THE VARIABLE CONTRACT (what the implementer must honor) ──────────────────
-// Resolution happens AT EXPANSION TIME, inside the SHARED runSnippet body before
-// snippetCompletion (so BOTH the popup-accept path P52/P77 and the insertion-bar
-// path P59 get variables). `$CLIPBOARD` → the system-clipboard text, read through
-// the SAME clipboard backend the P62 paste-image path owns; `$CURRENT_DATE` /
-// `$CURRENT_YEAR` → the host date (the standard VSCode semantics: CURRENT_DATE is
-// the day of the month, CURRENT_YEAR the 4-digit year). This spec is BLIND to how
-// resolution is implemented; it only observes the user-facing buffer effect.
+// Resolution happens AT EXPANSION TIME, BEFORE snippetCompletion instantiates the
+// template — and it must be resolved on EVERY shipped expansion path, BOTH the
+// popup-accept path P52/P77 (type the trigger, accept the offered completion) AND
+// the insertion-bar path P59 (insertSnippet → runSnippet). `$CLIPBOARD` → the
+// system-clipboard text, read through the SAME clipboard backend the P62
+// paste-image path owns; `$CURRENT_DATE` / `$CURRENT_YEAR` → the host date (the
+// standard VSCode semantics: CURRENT_DATE is the day of the month, CURRENT_YEAR
+// the 4-digit year). This spec is BLIND to how resolution is implemented; it only
+// observes the user-facing buffer effect — on BOTH expansion paths.
 //
 // The dictionary is declared by the SAME config-owned path P52/P59 read
 // ([editor].snippet_dictionary); provision-proof.sh (the p82 case) provisions a
@@ -179,6 +184,74 @@ test('Expanding a snippet whose body contains $CLIPBOARD and $CURRENT_DATE resol
   expect(afterSeed).toContain(CLIPBOARD_SENTINEL);
   // and still no literal `$CLIPBOARD` token survives in the seeded expansion:
   expect(afterSeed).not.toContain(TOKEN_CLIPBOARD);
+
+  // ── PART C — THE POPUP-ACCEPT PATH (P52/P77) MUST RESOLVE VARIABLES TOO ──────
+  // Parts A/B drove the insertion-bar path (insertSnippetByTrigger → insertSnippet
+  // → runSnippet), where variable resolution lives today. But the SHIPPED
+  // popup-accept path a user hits by typing a trigger and pressing Enter does NOT
+  // route through runSnippet: snippetCompletionSource builds each option via
+  // snippetOption → snippetCompletion(normalizeTabstops(entry.body)) (snippets.ts),
+  // expanding the RAW body with NO call to resolveSnippetVariables. So a user who
+  // opens the completion popup and accepts gets `$CLIPBOARD` / `$CURRENT_DATE` /
+  // `$CURRENT_YEAR` left VERBATIM. A spec that drives only the insertion-bar path
+  // would pass while this real shipped path leaks literal tokens — inadmissible.
+  // This part adds the missing path: type the trigger, accept the OFFERED popup
+  // completion (the SAME real accept surface P52/P77 use), and require the SAME
+  // resolution the insertion-bar path delivers.
+  //
+  // The clipboard sentinel seeded in Part B is still on the REAL clipboard, so a
+  // resolving popup-accept path substitutes it for `$CLIPBOARD`.
+  await appendAtEnd(tauriPage, ZONE);
+  // Type the trigger; CM6 opens the autocomplete tooltip and offers `sig`
+  // (the `both`-mode entry surfaces in this prose zone).
+  await typeInEditor(tauriPage, TRIGGER);
+  await tauriPage.waitForFunction(
+    `(() => {
+      const tip = document.querySelector('.cm-tooltip-autocomplete');
+      if (!tip) return false;
+      return Array.from(tip.querySelectorAll('.cm-completionLabel'))
+        .some((el) => el.textContent === ${JSON.stringify(TRIGGER)});
+    })()`,
+    10_000,
+  );
+  const popupLabels = await completionLabels(tauriPage);
+  expect(popupLabels).toContain(TRIGGER);
+
+  // Accept the highlighted option through CM6's REAL acceptCompletion command —
+  // the SAME path the Enter keybinding fires (P52/P77). The body lands at the
+  // cursor; the body marker proves the expansion fired (never a no-op).
+  await acceptCompletion(tauriPage);
+  await tauriPage.waitForFunction(
+    `(() => {
+      const text = window.__PPE_E2E__.getEditorText();
+      // The popup-accept expansion fired (its body marker is present) — wait for
+      // that, NOT for the resolved values, so the assertions below observe the
+      // REAL expanded body whether or not it resolved (a literal-token expansion
+      // still contains the marker, and is exactly what must FAIL here).
+      const markers = text.split(${JSON.stringify(BODY_MARKER)}).length - 1;
+      return markers >= 3;
+    })()`,
+    10_000,
+  );
+  // Isolate the popup-accept expansion: the LAST occurrence of the body marker is
+  // the body just inserted by acceptCompletion (Parts A/B inserted the two earlier
+  // ones via the insertion-bar path). Assert resolution on THAT body only, so a
+  // resolved insertion-bar body cannot mask an unresolved popup-accept body.
+  const afterPopup = await editorText(tauriPage);
+  const lastMarker = afterPopup.lastIndexOf(BODY_MARKER);
+  expect(lastMarker).toBeGreaterThanOrEqual(0);
+  const popupBody = afterPopup.slice(lastMarker);
+  // (1) `$CLIPBOARD` resolved to the REAL clipboard sentinel on the popup path:
+  expect(popupBody).toContain(CLIPBOARD_SENTINEL);
+  // (2) the host year resolved on the popup path:
+  expect(popupBody).toContain(HOST_YEAR);
+  // (3) NO literal variable token survives in the popup-accept expansion — the
+  // decisive kill: the shipped popup-accept path expands the raw body with no
+  // variable resolution, leaving every token VERBATIM, so each of these FAILS
+  // today and passes only once the popup-accept path resolves variables too.
+  expect(popupBody).not.toContain(TOKEN_CLIPBOARD);
+  expect(popupBody).not.toContain(TOKEN_DATE);
+  expect(popupBody).not.toContain(TOKEN_YEAR);
 
   recordObservation({ spec: manifest.spec, name: 'p82-clipboard-sentinel', value: CLIPBOARD_SENTINEL });
   recordObservation({ spec: manifest.spec, name: 'p82-host-year', value: HOST_YEAR });
