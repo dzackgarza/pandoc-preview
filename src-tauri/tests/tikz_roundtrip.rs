@@ -8,21 +8,19 @@
 //! Intended parser API (provided by the GREEN implementer — NOT implemented
 //! here):
 //!
-//!   - `pandoc_preview_lib::tikz::parse(src: &str) -> Result<Graph, TikzError>`
-//!         parses TikzIt-class `.tikz` source into the owned structured graph
-//!         model, or returns a LOUD structured error naming the offending
-//!         line/token.
-//!   - `Graph::to_tikz(&self) -> String`
-//!         serializes the model back to canonical tikz source.
-//!   - `Graph` derives `PartialEq` so two parses can be compared structurally.
-//!   - Content accessors used by the explicit-content assertions below:
-//!       `Graph::nodes() -> &[Node]`, `Graph::edges() -> &[Edge]`,
-//!       `Graph::bbox() -> Option<&BoundingBox>`,
-//!       `Node::name() -> &str`, `Node::coord() -> (f64, f64)`,
-//!       `Node::style() -> Option<&str>`, `Node::label() -> &str`,
-//!       `Edge::source() -> &str`, `Edge::target() -> &str`,
-//!       `Edge::style() -> Option<&str>`.
-//!   - `TikzError: std::error::Error` whose `Display` names the offending line.
+//! - `pandoc_preview_lib::tikz::parse(src: &str) -> Result<Graph, TikzError>`
+//!   parses TikzIt-class `.tikz` source into the owned structured graph model,
+//!   or returns a LOUD structured error naming the offending line/token.
+//! - `Graph::to_tikz(&self) -> String` serializes the model back to canonical
+//!   tikz source.
+//! - `Graph` derives `PartialEq` so two parses can be compared structurally.
+//! - Content accessors used by the explicit-content assertions below:
+//!   `Graph::nodes() -> &[Node]`, `Graph::edges() -> &[Edge]`,
+//!   `Graph::bbox() -> Option<&BoundingBox>`, `Node::name() -> &str`,
+//!   `Node::coord() -> (f64, f64)`, `Node::style() -> Option<&str>`,
+//!   `Node::label() -> &str`, `Edge::source() -> &str`,
+//!   `Edge::target() -> &str`, `Edge::style() -> Option<&str>`.
+//! - `TikzError: std::error::Error` whose `Display` names the offending line.
 //!
 //! ADMISSIBILITY: the test fails on a parser that DROPS a node/edge/style/label
 //! (the explicit-content assertions and the structural `assert_eq!` break), on a
@@ -94,7 +92,11 @@ fn commutative_square_round_trips_with_full_content() {
     let g = round_trip("commutative_square.tikz");
 
     // Four styled, coordinate-bearing, labelled nodes survive the parse.
-    assert_eq!(g.nodes().len(), 4, "expected 4 nodes in the commutative square");
+    assert_eq!(
+        g.nodes().len(),
+        4,
+        "expected 4 nodes in the commutative square"
+    );
 
     let a = g
         .nodes()
@@ -114,9 +116,12 @@ fn commutative_square_round_trips_with_full_content() {
     assert_eq!(d.label(), "$D$", "node (3) label must round-trip");
 
     // Four styled edges with the right endpoints survive the parse.
-    assert_eq!(g.edges().len(), 4, "expected 4 edges in the commutative square");
-    let endpoints: Vec<(&str, &str)> =
-        g.edges().iter().map(|e| (e.source(), e.target())).collect();
+    assert_eq!(
+        g.edges().len(),
+        4,
+        "expected 4 edges in the commutative square"
+    );
+    let endpoints: Vec<(&str, &str)> = g.edges().iter().map(|e| (e.source(), e.target())).collect();
     assert!(endpoints.contains(&("0", "1")), "edge 0->1 must be present");
     assert!(endpoints.contains(&("0", "2")), "edge 0->2 must be present");
     assert!(endpoints.contains(&("1", "3")), "edge 1->3 must be present");
@@ -143,7 +148,11 @@ fn string_diagram_round_trips_with_mixed_styles_and_labels() {
         .iter()
         .find(|n| n.name() == "0")
         .expect("node (0) must be present");
-    assert_eq!(red.style(), Some("red node"), "multi-word style must round-trip");
+    assert_eq!(
+        red.style(),
+        Some("red node"),
+        "multi-word style must round-trip"
+    );
     assert_eq!(red.coord(), (0.0, 1.0));
     assert_eq!(red.label(), "", "empty label must round-trip as empty");
 
@@ -160,8 +169,16 @@ fn string_diagram_round_trips_with_mixed_styles_and_labels() {
         .iter()
         .find(|n| n.name() == "4")
         .expect("node (4) must be present");
-    assert_eq!(dec.coord(), (0.0, -1.5), "decimal/negative coordinate must round-trip");
-    assert_eq!(dec.label(), "$\\bar{x}$", "LaTeX label must round-trip verbatim");
+    assert_eq!(
+        dec.coord(),
+        (0.0, -1.5),
+        "decimal/negative coordinate must round-trip"
+    );
+    assert_eq!(
+        dec.label(),
+        "$\\bar{x}$",
+        "LaTeX label must round-trip verbatim"
+    );
 
     // Five edges, mixed styled and unstyled.
     assert_eq!(g.edges().len(), 5, "expected 5 edges in the string diagram");
