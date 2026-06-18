@@ -29,3 +29,12 @@ Seen on p02. This is the instability the "real GUI session only" rule guards aga
 **Latent risk to flag, not yet a product bug:** if the app is configured to use pandoc ≥3.9, `[export.html]`'s `--mathjax={mathjax}` (a `file://` URL) will likely break the same way 3.9 broke the p17 repro.
 The app picks `command -v pandoc` at first-run; with system 3.1.3 it works.
 Revisit if the user's pandoc is upgraded.
+
+**Single-tenant DISPLAY :88 — never run two proof invocations concurrently.**
+The harness drives one webview on the single Xvfb `DISPLAY=:88`. Two `just proof` runs at
+once (e.g. a background gate re-run while a Workflow's GREEN/review phase also runs proofs)
+make the webviews contend for the one display, and a genuinely-green spec **times out
+(30s `wait_for_function`)** — a starvation flake, distinct from an assertion failure (which
+fails fast with a value mismatch). Trust a Workflow's internally-run gate (serial, isolated)
+and run a single consolidated gate only at milestone end when no workflow is in flight. If a
+green spec times out, re-run it ALONE before concluding a regression.
