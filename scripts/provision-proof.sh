@@ -473,6 +473,27 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p77-math-mode-snippets.json" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p78-autotrigger.spec.ts)
+        # P78 (autotrigger space-expansion + re-arm, Phase-B B2) declares the SAME
+        # config-owned snippet-dictionary path P52/P59/P77 read, but its entries
+        # carry a per-entry `auto: true` flag (B-DESIGN-0): an AUTOTRIGGER expands
+        # the moment the user types the trigger followed by a space — IN PLACE,
+        # with NO completion popup and NO accept keypress (LuaSnip autosnippet /
+        # UltiSnips A). The committed fixture
+        # (tests/proof/fixtures/snippets/p78-autotrigger-snippets.json) declares two
+        # autotrigger entries — `tii` -> "\\tilde{$0}" and `hii` -> "\\hat{$0}" —
+        # so the spec can prove the engine RE-ARMS (a second autotrigger + space
+        # fires immediately after the first). Pointing config at it makes those the
+        # autotriggers the editor honors. RED today: there is no autotrigger input
+        # handler at all (no __PPE_E2E__.typeAutotrigger, no on-space expansion), so
+        # the literal trigger + space stays inert in the buffer — the no-op /
+        # popup-only failure P78 names.
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p78-autotrigger-snippets.json"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p78-autotrigger-snippets.json" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
     p54-spellcheck.spec.ts)
         # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
         # hardcoded list. Provision a hermetic copy of the committed FIXTURE

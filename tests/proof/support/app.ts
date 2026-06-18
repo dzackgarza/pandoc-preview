@@ -383,6 +383,32 @@ export async function typeInEditor(page: EvaluatesScripts, text: string): Promis
   );
 }
 
+// ── Autotrigger / space-trigger auto-expansion (P78) ───────────────────────
+// An AUTOTRIGGER entry expands the moment the user types the trigger followed by
+// its terminator (a space) — IN PLACE, with NO completion popup and NO accept
+// keypress (LuaSnip autosnippet / UltiSnips `A`). The trigger condition is owned
+// by an INPUT HANDLER / updateListener in EditorPane (NOT the completion source —
+// the autotrigger fires WITHOUT a popup); the expansion REUSES the shared
+// `runSnippet` path. After one autotrigger fires, the engine RE-ARMS so a
+// subsequent autotrigger + space fires immediately (chained expansion).
+//
+// The driving hook is `typeAutotrigger(text)`: a per-keystroke REAL-typing path
+// that feeds `text` into the editor through the SAME docChanged pipeline user
+// typing fires (so the autotrigger input handler / updateListener observes the
+// keystrokes), and — UNLIKE typeInEditor — does NOT call startCompletion, because
+// an autotrigger must fire WITHOUT a popup. This is the deterministic stand-in
+// for synthetic key events the bridge cannot send into CodeMirror's
+// contentEditable. Fire-and-forget; returns null. The observable afterwards is
+// the editor buffer (getEditorText): the literal trigger text is GONE and the
+// expanded body sits at the cursor. RED today: __PPE_E2E__.typeAutotrigger does
+// not exist (there is no autotrigger input handler at all), so this evaluate
+// throws — there is no surface to drive a no-popup space-expansion.
+export async function typeAutotrigger(page: EvaluatesScripts, text: string): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.typeAutotrigger(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
 // ── Accept the highlighted completion (P52) ────────────────────────────────
 // CM6 accepts a completion via the Enter key / the `acceptCompletion` command,
 // which the bridge cannot synthesize into CodeMirror's contentEditable. So the

@@ -1,0 +1,16 @@
+{
+  "snippets": [
+    {
+      "trigger": "tii",
+      "mode": "both",
+      "auto": true,
+      "body": "\\tilde{$0}"
+    },
+    {
+      "trigger": "hii",
+      "mode": "both",
+      "auto": true,
+      "body": "\\hat{$0}"
+    }
+  ]
+}
