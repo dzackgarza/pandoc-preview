@@ -3,11 +3,23 @@
   "title": "pandoc-md-lint config section",
   "type": "object",
   "additionalProperties": false,
-  "required": ["command"],
+  "required": [
+    "command",
+    "operator_as_variable",
+    "script_grouping"
+  ],
   "properties": {
     "command": {
       "type": "string",
       "minLength": 1
+    },
+    "operator_as_variable": {
+      "type": "boolean",
+      "description": "Enable ChkTeX warning 35 (operator-as-variable: an operator name like 'sin' in math should be \\sin). When false, the plugin passes -n 35 to chktex so the class never fires."
+    },
+    "script_grouping": {
+      "type": "boolean",
+      "description": "Enable ChkTeX warning 25 (sub/superscript grouping: 'x^10' should be 'x^{10}'). When false, the plugin passes -n 25 to chktex so the class never fires."
     }
   }
 }

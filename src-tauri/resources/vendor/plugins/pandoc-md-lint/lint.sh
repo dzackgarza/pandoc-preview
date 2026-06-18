@@ -34,6 +34,23 @@ cfg="${PPE_PLUGIN_CONFIG:-}"
 [ -n "$cfg" ] || cfg='{}'
 command_str="$(printf '%s' "$cfg" | jq -r '.command')"
 
+# The typographic ChkTeX warning classes this plugin gates from its config
+# section (validated REQUIRED by schema.json, delivered whole on PPE_PLUGIN_CONFIG
+# by the generic firewall): operator-as-variable is ChkTeX warning 35
+# (`sin`->`\sin`), sub/superscript grouping is ChkTeX warning 25 (`x^10`->`x^{10}`).
+# A `false` toggle suppresses its warning number via chktex's `-n <num>` (disable);
+# a `true` toggle leaves chktex's default (the class on). A missing/non-boolean
+# value is a LOUD config error (jq -e), never a silent default — bad lint config
+# fails loud.
+operator_as_variable="$(printf '%s' "$cfg" | jq -e -r '.operator_as_variable | if type == "boolean" then tostring else error("operator_as_variable must be a boolean") end')"
+script_grouping="$(printf '%s' "$cfg" | jq -e -r '.script_grouping | if type == "boolean" then tostring else error("script_grouping must be a boolean") end')"
+
+# Build the chktex disable flags for the gated typographic classes. ChkTeX has both
+# warnings on by default, so only a `false` toggle contributes a `-n` flag.
+chktex_class_flags=()
+[ "$operator_as_variable" = "false" ] && chktex_class_flags+=(-n 35)
+[ "$script_grouping" = "false" ] && chktex_class_flags+=(-n 25)
+
 # The pandoc binary (token 0) and the --from reader, lifted from the canonical
 # command so the md->tex interop reads markdown exactly as the preview does.
 read -r pandoc_bin reader < <(printf '%s' "$command_str" | python3 -c '
@@ -70,7 +87,7 @@ command -v lacheck > /dev/null || {
 # (the count) — that is success for us; `|| true` keeps only that expected nonzero
 # from aborting set -e (a genuine spawn failure was already caught by command -v).
 chktex_fmt='%l:%c:%d:%k:%n:%m'$'\035'
-chktex_records="$(printf '%s' "$tex" | chktex -q -v0 -f "$chktex_fmt" || true)"
+chktex_records="$(printf '%s' "$tex" | chktex -q -v0 "${chktex_class_flags[@]}" -f "$chktex_fmt" || true)"
 # lacheck reads a FILE, not stdin: write the .tex to a temp file and lint it.
 lacheck_tex="$(mktemp --suffix=.tex)"
 trap 'rm -f "$lacheck_tex"' EXIT
@@ -198,20 +215,78 @@ if left_stack:
 # ── (b) interop: anchor chktex/lacheck .tex diagnostics back to markdown ──────
 tex_lines = tex.split("\n")
 
+# Pandoc's md->latex writer rewrites the math-zone delimiters and ONLY them: an
+# inline `$...$` becomes `\(...\)` and a display `$$...$$` becomes `\[...\]`, while
+# the math CONTENT passes through verbatim. To anchor a .tex line back to the
+# markdown buffer we therefore reverse exactly those delimiter rewrites,
+# reconstructing the markdown form of the line AND a per-character map from .tex
+# column to markdown column (each 2-char `\(`/`\)`/`\[`/`\]` collapses to the
+# 1-char `$`/`$$` it came from). chktex reports columns in the .tex; remapping
+# through this collapse lands the diagnostic on the SAME token in the markdown
+# buffer (e.g. the `sin`/`x^10` inside `$...$`). A line whose reconstructed
+# markdown form is not present verbatim in the buffer (pandoc-restructured prose)
+# is dropped (returns None) rather than placed on a wrong line.
+DELIM_REWRITES = [("\\(", "$"), ("\\)", "$"), ("\\[", "$$"), ("\\]", "$$")]
+
+def reconstruct_markdown_line(text):
+    # Walk the .tex line, collapsing each math-delimiter rewrite back to its
+    # markdown form. Returns (md_text, texcol_to_mdoffset): the reconstructed
+    # markdown line and a list mapping each 1-based .tex column to the 0-based
+    # offset into md_text where that .tex character begins.
+    md_chars = []
+    texcol_to_mdoffset = []  # index by (tex char index); value = md offset
+    i = 0
+    n = len(text)
+    while i < n:
+        matched = None
+        for tex_delim, md_delim in DELIM_REWRITES:
+            if text.startswith(tex_delim, i):
+                matched = (tex_delim, md_delim)
+                break
+        if matched is not None:
+            tex_delim, md_delim = matched
+            md_start = len(md_chars)
+            md_chars.extend(md_delim)
+            # Both .tex delimiter chars map to the start of the md delimiter.
+            for _ in range(len(tex_delim)):
+                texcol_to_mdoffset.append(md_start)
+            i += len(tex_delim)
+            continue
+        texcol_to_mdoffset.append(len(md_chars))
+        md_chars.append(text[i])
+        i += 1
+    return "".join(md_chars), texcol_to_mdoffset
+
 def anchor_tex_line(tex_lineno):
-    # Find the .tex line's text verbatim in the buffer and return its (line,col).
-    # Math/delimiter content passes through pandoc unchanged, so the offending
-    # line is found exactly; pandoc-restructured prose is not and is dropped
-    # (returns None) rather than placed on a wrong line.
+    # Reconstruct the .tex line's markdown form, find it verbatim in the buffer,
+    # and return (md_line, buffer_offset_of_line, texcol_to_mdoffset). None when
+    # the line is blank or its reconstructed form is not present in the buffer.
     if tex_lineno < 1 or tex_lineno > len(tex_lines):
         return None
     text = tex_lines[tex_lineno - 1]
     if not text.strip():
         return None
-    off = buffer.find(text)
+    md_text, texcol_to_mdoffset = reconstruct_markdown_line(text)
+    off = buffer.find(md_text)
     if off < 0:
         return None
-    return offset_to_linecol(off)
+    line, _col = offset_to_linecol(off)
+    return line, off, texcol_to_mdoffset
+
+def tex_col_to_md_col(anchored, tex_col):
+    # Map a 1-based .tex column to a 1-based markdown column on the anchored line,
+    # via the delimiter-collapse offset map. A column past the mapped range (chktex
+    # can point one past the last char) clamps to the line end.
+    _line, _off, texcol_to_mdoffset = anchored
+    idx = tex_col - 1
+    if idx < 0:
+        idx = 0
+    if idx >= len(texcol_to_mdoffset):
+        # One-past-the-end: point at the char after the last mapped md offset.
+        md_offset = (texcol_to_mdoffset[-1] + 1) if texcol_to_mdoffset else 0
+    else:
+        md_offset = texcol_to_mdoffset[idx]
+    return md_offset + 1
 
 CHKTEX_KIND_SEVERITY = {"Error": "error", "Warning": "warning", "Message": "info"}
 
@@ -227,14 +302,14 @@ for raw in os.environ["CHKTEX"].split("\035"):
     anchored = anchor_tex_line(int(tl))
     if anchored is None:
         continue
-    line, _col = anchored
+    line, _off, _map = anchored
     severity = CHKTEX_KIND_SEVERITY.get(kind)
     if severity is None:
         sys.stderr.write(f"unknown chktex kind: {kind!r}\n")
         sys.exit(6)
     diagnostics.append({
         "line": line,
-        "col": int(tc),
+        "col": tex_col_to_md_col(anchored, int(tc)),
         "len": max(int(length), 1),
         "severity": severity,
         "message": message,
@@ -252,10 +327,10 @@ for raw in os.environ["LACHECK"].splitlines():
     anchored = anchor_tex_line(tex_lineno)
     if anchored is None:
         continue
-    line, col = anchored
+    line, _off, _map = anchored
     diagnostics.append({
         "line": line,
-        "col": col,
+        "col": 1,
         "len": 1,
         "severity": "warning",
         "message": message,
