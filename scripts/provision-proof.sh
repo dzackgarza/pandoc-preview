@@ -1134,6 +1134,75 @@ PPE_P101_BLUE_EOF
     # starter (symlinked by install-assets) suffices — the witness style needs no
     # extra preamble. Leave it as the installed starter.
     ;;
+p102-perfigure-template.spec.ts)
+    # P92 (Phase D / D-3): the per-figure PREAMBLE TEMPLATE is config-swappable.
+    # The FIXED vendored standalone-tikz.tex preamble is generalized into a
+    # config-declared, existing-file-validated template carrying a single `<>`
+    # placeholder (the QTikz `.pgs` `TemplateReplaceText` convention) where the
+    # figure source is substituted before the pdflatex compile — letting a figure
+    # declare its OWN `\usetikzlibrary`/macros independent of the fixed
+    # pandoc-filter preamble.
+    #
+    # Two real per-figure template fixtures are provisioned into this spec's
+    # hermetic global figures dir (the same place [figures].tikzstyles/.tikzdefs
+    # already live):
+    #
+    #  (1) perfigure-spy.tikztemplate — a standalone preamble that loads
+    #      `\usetikzlibrary{spy}` and carries the `<>` placeholder in the document
+    #      body. The `spy` library is the witness: it is NOT loaded by the FIXED
+    #      standalone-tikz.tex's transitive preamble (dzg-tikz → dzg-preamble loads
+    #      arrows.meta/cd/calc/matrix/positioning/decorations/shapes/backgrounds/
+    #      fit/intersections/hobby/…, plus pgfplots/quiver/tikz-cd/dynkin/xy, and
+    #      tikzit loads backgrounds/arrows/shapes — but NONE of them load `spy`),
+    #      so a figure using `spy using outlines` + `\spy on ...` compiles ONLY when
+    #      THIS template wraps it. Verified against the real pdflatex+pdf2svg
+    #      toolchain: without `\usetikzlibrary{spy}` the compile fails hard
+    #      (`pgfkeys Error: I do not know the key '/tikz/spy using outlines'`); with
+    #      it the figure compiles and pdf2svg yields an SVG carrying drawing content.
+    #
+    #  (2) perfigure-nospy.tikztemplate — the DISCRIMINATOR variant: byte-identical
+    #      EXCEPT it OMITS the `\usetikzlibrary{spy}` line. The spec swaps this onto
+    #      the active [figures].template path on disk for the second leg; the SAME
+    #      spy-requiring figure must then FAIL to compile (no figure rendered),
+    #      proving the configured template — not a fixed built-in preamble —
+    #      governs the compile outcome.
+    #
+    # NOTE (the RED today): there is no [figures].template config key — the
+    # [figures] table declares only tikzstyles/tikzdefs (D-2/P91) and the config
+    # schema is deny_unknown_fields, so declaring an undefined `template` key here
+    # would be a BOOT failure, not the missing-template-governance behavior this
+    # obligation targets. So (exactly as P91 places its shared .tikzstyles on disk
+    # unconsumed) these template fixtures sit on disk and the figure compile uses
+    # the FIXED standalone-tikz.tex preamble regardless — which lacks `spy`, so the
+    # spy-requiring figure NEVER compiles to a vector figure. The GREEN wiring (D-3)
+    # adds the config-declared, ExistingFile-validated [figures].template path and
+    # wraps the figure source at the template's `<>` placeholder; this provisioning
+    # places the templates where that wiring will read them.
+    FIGS_DIR="$ABS_SPEC_DIR/home/.pandoc/figures"
+    mkdir -p "$FIGS_DIR"
+    # The spy-carrying per-figure template. `<>` is the QTikz `.pgs`
+    # TemplateReplaceText marker the wiring substitutes the figure source into.
+    cat > "$FIGS_DIR/perfigure-spy.tikztemplate" <<'PPE_P102_SPY_EOF'
+\documentclass[tikz,border=2pt]{standalone}
+\usepackage{tikz}
+\usepackage{tikzit}
+\usetikzlibrary{spy}
+\begin{document}
+\nopagecolor
+<>
+\end{document}
+PPE_P102_SPY_EOF
+    # The DISCRIMINATOR variant: identical preamble MINUS \usetikzlibrary{spy}.
+    cat > "$FIGS_DIR/perfigure-nospy.tikztemplate" <<'PPE_P102_NOSPY_EOF'
+\documentclass[tikz,border=2pt]{standalone}
+\usepackage{tikz}
+\usepackage{tikzit}
+\begin{document}
+\nopagecolor
+<>
+\end{document}
+PPE_P102_NOSPY_EOF
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────
