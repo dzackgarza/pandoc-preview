@@ -1,0 +1,88 @@
+{
+  "run_id": "20260618T161001Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p88-perfile-bib-override.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p88-perfile-bib-override.spec.ts",
+            "title": "a frontmatter `bibliography:` override file offers its file-local key while a file without the key still offers the global config bibliography key",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 18622,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (window.__PPE_E2E__.currentFile() ?? '').endsWith('/demo.md')"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p85-citation-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p85-citation-completion.spec.ts",
+            "title": "typing @ surfaces a configured-bibliography candidate by a title word absent from its key, and accepting inserts pandoc citation syntax",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3064,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p85-citation-completion.spec.ts",
+          "name": "citation-completion-key",
+          "value": "xq7"
+        },
+        {
+          "spec": "p85-citation-completion.spec.ts",
+          "name": "citation-completion-title-query",
+          "value": "crystalline"
+        }
+      ]
+    },
+    {
+      "spec": "p51-composable-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p51-composable-completion.spec.ts",
+            "title": "A registered app completion source composes with the LaTeX source (both surface)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1941,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p51-composable-completion.spec.ts",
+          "name": "completion-sources-compose",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}
