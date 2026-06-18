@@ -85,6 +85,18 @@ export const repoTrack = (path: string) => invoke<void>("repo_track", { path });
 export const pasteClipboardImage = (filename: string) =>
   invoke<string>("paste_clipboard_image", { filename });
 
+// P99 / D-10: register + insert an EXTERNAL-editor-produced vector asset (an
+// Ipe/Inkscape SVG/PDF — NOT tikz). Reads the external asset at `sourcePath` and
+// writes its REAL bytes as a file named `filename` into the CONFIGURED global
+// figures directory (config.directories.figures), returning the absolute path of
+// the written file — the non-tikz sibling of pasteClipboardImage. The caller
+// supplies the bare filename so it can insert the markdown image reference at the
+// cursor BEFORE awaiting this write, guaranteeing the reference and the on-disk
+// file name the SAME path. Fails loudly (unreadable / zero-length source, no
+// figures dir, non-bare filename) — never a project-local fallback.
+export const registerVectorFigure = (sourcePath: string, filename: string) =>
+  invoke<string>("register_vector_figure", { sourcePath, filename });
+
 // P62 (E2E proof harness only): seed a deterministic width×height image onto the
 // REAL system clipboard in one IPC, so the paste-image action can read it back.
 // The write-image permission this needs is granted only in the e2e build.

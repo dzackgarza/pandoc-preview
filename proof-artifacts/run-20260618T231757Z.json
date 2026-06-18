@@ -1,0 +1,88 @@
+{
+  "run_id": "20260618T231757Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p62-clipboard-image.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p62-clipboard-image.spec.ts",
+            "title": "the paste-image action writes the clipboard image into the configured figures dir and references that exact file at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2383,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "figures-dir",
+          "value": "/tmp/pandoc-preview-proof-runs/20260618T231757Z/p62-clipboard-image/home/.pandoc/figures"
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "written-file",
+          "value": "clipboard-1781824715634-996550159.png"
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-width",
+          "value": 7
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-height",
+          "value": 5
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-ref-target",
+          "value": "/tmp/pandoc-preview-proof-runs/20260618T231757Z/p62-clipboard-image/home/.pandoc/figures/clipboard-1781824715634-996550159.png"
+        }
+      ]
+    },
+    {
+      "spec": "p106-dual-asset-registry.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p106-dual-asset-registry.spec.ts",
+            "title": "a registered non-tikz figure edit launches the editor on the tracked SOURCE (not the render), with the pairing persisted on the host filesystem",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4341,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p106-dual-asset-registry.spec.ts",
+          "name": "p106-launched-on",
+          "value": "/tmp/pandoc-preview-proof-runs/20260618T231757Z/p106-dual-asset-registry/project/fig.svg"
+        },
+        {
+          "spec": "p106-dual-asset-registry.spec.ts",
+          "name": "p106-registry-sidecar",
+          "value": "/tmp/pandoc-preview-proof-runs/20260618T231757Z/p106-dual-asset-registry/xdg-state/pandoc-preview/figure-registry.json"
+        }
+      ]
+    }
+  ]
+}

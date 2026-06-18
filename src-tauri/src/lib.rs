@@ -177,6 +177,7 @@ pub fn run() {
             plugins::launch_diagram_tool,
             plugins::list_plugins,
             clipboard::paste_clipboard_image,
+            clipboard::register_vector_figure,
             clipboard::seed_clipboard_image,
             clipboard::copy_subgraph_tikz,
             tikz::parse_tikz,

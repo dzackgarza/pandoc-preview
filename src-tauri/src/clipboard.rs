@@ -39,6 +39,76 @@ pub async fn seed_clipboard_image<R: Runtime>(
         .map_err(|e| Error::InvalidArgument(format!("clipboard write_image failed: {e}")))
 }
 
+/// Register + insert an EXTERNAL-editor-produced vector asset (an Ipe/Inkscape
+/// SVG/PDF — NOT tikz) into the CONFIGURED global figures directory
+/// (`config.directories.figures`), returning the absolute path of the written
+/// file (P99 / D-10). The non-tikz sibling of [`paste_clipboard_image`]: the
+/// inclusion bar's vector-figure control inserts a markdown image reference at the
+/// cursor pointing at the path this command returns, and registers the written
+/// render alongside its editable `source` in the D-7 / P96 dual-asset registry.
+///
+/// `source_path` is the external asset's absolute path (where the user's Ipe/
+/// Inkscape source file lives, OUTSIDE the figures dir). Its REAL bytes are read
+/// and atomically written under the (bare) `filename` directly inside the
+/// configured figures dir, so an independent reader finds a non-zero-length file
+/// byte-identical to the source.
+///
+/// Fails LOUDLY: a non-bare filename (any path separator), an unreadable source,
+/// a zero-length source asset, or an unconfigured figures dir is a hard error —
+/// never a silent no-op, never a fallback to a project-local `./figures`.
+#[tauri::command]
+pub async fn register_vector_figure(source_path: String, filename: String) -> Result<String> {
+    // The filename must be a bare basename: the file lands directly in the
+    // configured figures dir, never one path component away from it. A separator
+    // (or a `..`) would let the write escape the configured dir — reject it.
+    if filename.is_empty()
+        || filename.contains('/')
+        || filename.contains('\\')
+        || filename == "."
+        || filename == ".."
+    {
+        return Err(Error::InvalidArgument(format!(
+            "vector-figure filename must be a bare basename, got {filename:?}"
+        )));
+    }
+
+    // The configured global figures directory, resolved from the loaded config —
+    // the SAME ExistingDir P62's paste-image write lands in. No project-local
+    // fallback: the file lands HERE or the command fails.
+    let cfg = config::load()?;
+    let figures_dir = cfg.directories.figures.path();
+
+    // Read the external asset's REAL bytes off disk. An unreadable source is a
+    // hard error; a zero-length asset is a LOUD error (never persist an empty /
+    // placeholder render).
+    let source = PathBuf::from(&source_path);
+    let bytes = std::fs::read(&source).map_err(|e| Error::io(&source, e))?;
+    if bytes.is_empty() {
+        return Err(Error::InvalidArgument(format!(
+            "external vector asset is zero-length, refusing to persist an empty render: {source_path}"
+        )));
+    }
+
+    let dest: PathBuf = figures_dir.join(&filename);
+
+    // Write atomically: stage a temp file in the figures dir's PARENT (same
+    // filesystem, so rename(2) is atomic), then rename into the figures dir — the
+    // SAME stage-and-rename discipline P62 uses, so an independent before/after
+    // listing of the figures dir never observes a half-written asset nor the
+    // staging temp itself.
+    let stage_dir = figures_dir.parent().ok_or_else(|| {
+        Error::InvalidArgument(format!(
+            "configured figures dir has no parent: {}",
+            figures_dir.display()
+        ))
+    })?;
+    let tmp: PathBuf = stage_dir.join(format!(".{filename}.partial"));
+    std::fs::write(&tmp, &bytes).map_err(|e| Error::io(&tmp, e))?;
+    std::fs::rename(&tmp, &dest).map_err(|e| Error::io(&dest, e))?;
+
+    Ok(dest.display().to_string())
+}
+
 /// Copy a SELECTED subgraph of owned tikz source to the system clipboard as
 /// deterministic, canonical, re-parseable tikz (D-8 / P97 — the TikzIt
 /// "copy a region of nodes" model).

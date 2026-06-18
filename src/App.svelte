@@ -638,6 +638,16 @@
         registerFigureAssets: (render: string, source: string) => {
           void registerFigureAssets(render, source);
         },
+        // P99 / D-10: the insertion bar's vector-figure-inclusion action through
+        // the SAME registerAndInsertVectorFigure path the bar's control invokes —
+        // copy the external-editor-produced SVG/PDF into the CONFIGURED global
+        // figures dir, insert a markdown image reference to that exact file at the
+        // cursor, and register the written render alongside its editable source in
+        // the dual-asset registry. Fire-and-forget; the observables are the editor
+        // buffer, the figures dir on disk, and the registry sidecar JSON.
+        registerAndInsertVectorFigure: (sourcePath: string) => {
+          void registerAndInsertVectorFigure(sourcePath);
+        },
         // P96 / D-7: the figure's "edit this figure" action through the SAME
         // editFigure path the figure surface invokes — resolve the render to its
         // tracked SOURCE via the registry, then launch the diagram-tool editor on
@@ -1551,6 +1561,48 @@
         `paste image: backend wrote ${written} but the reference names ${path}`,
       );
     }
+  }
+
+  /** P99 / D-10: the insertion bar's vector-figure-inclusion action — the non-tikz
+   * sibling of pasteImage. Copies the external-editor-produced vector asset
+   * (an Ipe/Inkscape SVG/PDF) at `sourcePath` into the CONFIGURED global figures
+   * directory through the SAME api.registerVectorFigure atomic-write backend P62's
+   * paste reuses, inserts a markdown image reference `![](<path>)` to that exact
+   * written file at the cursor (the SAME editor.insertImageReference path P62
+   * uses), and REGISTERS the written render alongside its editable source in the
+   * D-7 / P96 dual-asset registry, so the inserted figure is later re-openable in
+   * its source tool via editFigure. */
+  async function registerAndInsertVectorFigure(sourcePath: string) {
+    if (!config) throw new Error("vector figure: config not loaded");
+    // The configured global figures directory the asset is written into (the SAME
+    // ExistingDir the figures explorer browses). The backend re-resolves and is the
+    // authority; this is the path the inserted reference must name.
+    const figuresDir = config.directories.figures;
+    // Preserve the external asset's extension (svg/pdf) so the included render
+    // keeps the vector format the source tool emitted. A deterministic unique
+    // basename, so the inclusion's file + reference are keyed apart from any
+    // pre-existing reference.
+    const ext = sourcePath.split(".").pop() ?? "svg";
+    const filename = `vector-${Date.now()}-${Math.floor(Math.random() * 1e9)}.${ext}`;
+    const path = `${figuresDir}/${filename}`;
+    // Insert the reference at the cursor SYNCHRONOUSLY, before the async copy
+    // below, so the buffer carries the reference naming the exact path the backend
+    // then writes the asset to.
+    editor.insertImageReference(path);
+
+    // The backend reads the external asset's bytes and writes them to
+    // <figuresDir>/<filename> (re-resolving the configured figures dir, validating
+    // the bare filename, failing loud on a zero-length/unreadable source),
+    // returning the absolute path — the SAME path the reference above names.
+    const written = await api.registerVectorFigure(sourcePath, filename);
+    if (written !== path) {
+      throw new Error(
+        `vector figure: backend wrote ${written} but the reference names ${path}`,
+      );
+    }
+    // Register the written RENDER alongside its editable SOURCE in the dual-asset
+    // registry, so editFigure can later re-open the figure in its source tool.
+    await registerFigureAssets(written, sourcePath);
   }
 
   // P96 / D-7: register a NON-tikz figure's dual-asset pairing — the included
