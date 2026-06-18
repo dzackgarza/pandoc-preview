@@ -334,21 +334,16 @@
         typeInEditor: (text: string) => {
           editor.typeInEditor(text);
         },
-        // P78: feed text per-keystroke through the docChanged pipeline so the
-        // autotrigger input handler observes it; a space terminator after an
-        // `auto` trigger expands the body in place (no popup, no accept) and
-        // re-arms for a chained autotrigger. UNLIKE typeInEditor, no
-        // startCompletion — an autotrigger fires WITHOUT a popup.
-        typeAutotrigger: (text: string) => {
-          editor.typeAutotrigger(text);
-        },
-        // P79: feed text per-keystroke through the docChanged pipeline so the
-        // regex-trigger input handler observes it; a space terminator after a
-        // token matching a `regex` entry substitutes its captures into the body
-        // and expands it in place (no popup, no accept). UNLIKE typeInEditor, no
-        // startCompletion — a regex/postfix trigger fires WITHOUT a popup.
-        typeRegexTrigger: (text: string) => {
-          editor.typeRegexTrigger(text);
+        // P78/P79: the REAL editor input driver — feed text per-keystroke
+        // through view.dispatch (the SAME docChanged path real typing fires) and
+        // NOTHING ELSE. It does NOT itself fire the snippet expansion (the prior
+        // typeAutotrigger/typeRegexTrigger DID — the harness was the handler);
+        // the expansion must fire because a real CM6 input observer the editor
+        // registers sees the inserted characters (the terminating space in
+        // particular). UNLIKE typeInEditor, no startCompletion — an autotrigger /
+        // regex trigger fires WITHOUT a popup.
+        insertChars: (text: string) => {
+          editor.insertChars(text);
         },
         // P52: accept the highlighted completion through CM6's real
         // acceptCompletion command, and read the cursor offset to prove the

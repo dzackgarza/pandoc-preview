@@ -27,9 +27,14 @@ import {
 //     - a CAPTURE-BLIND engine (it matches the regex but inserts the literal `$1`
 //       instead of the captured `p` — body comes out as `\bar{$1}`): assertion
 //       (3) fails (the buffer holds the literal `$1`, not the captured `p`);
-//     - a NO-OP (the trigger leaves the literal text in the buffer): there is no
-//       regex-trigger path at all today, so the very FIRST typeRegexTrigger throws
-//       (no __PPE_E2E__.typeRegexTrigger surface) — the faithful RED state.
+//     - a NO-OP (the trigger leaves the literal text in the buffer): on the
+//       current code the regex expansion is invoked ONLY from a self-driving
+//       harness function — there is NO real CM6 input observer
+//       (EditorView.inputHandler / transactionFilter / updateListener) that fires
+//       it. So when `pbar ` arrives through the REAL input path (per-character
+//       view.dispatch inserts, including the space) NOTHING expands: `pbar` stays
+//       inert and `\bar{p}` never appears — the faithful RED state this spec
+//       exposes (missing real-input wiring).
 //
 // ── THE REGEX CONFIG CONTRACT (what the implementer must honor) ──────────────
 // The dictionary is declared by the SAME config-owned path P52/P59/P77/P78 read
@@ -54,14 +59,16 @@ import {
 //     real docChanged pipeline; the cursor lands at the END of the appended text.
 //     Used to place the cursor in a clean zone before the regex trigger fires.
 //
-//   typeRegexTrigger(text) [P79, NEW] — feed `text` into the editor through the
-//     SAME docChanged pipeline user typing fires, so the regex-trigger input
-//     handler observes the keystrokes and matches its pattern against the text
-//     before the cursor — and, UNLIKE typeInEditor, does NOT call startCompletion,
-//     because a regex/postfix trigger fires WITHOUT a popup. The capture
-//     substitution is owned by that path; the residual body REUSES the shared
-//     `runSnippet` expansion. This is the driving hook the spec uses so the regex
-//     path actually fires.
+//   typeRegexTrigger(text) [P79] — drive `text` into the editor through the REAL
+//     input driver (__PPE_E2E__.insertChars): per-character view.dispatch insert
+//     transactions, including the terminating space, flowing through the editor's
+//     real input path — NOT a call to any expansion function. So the regex trigger
+//     fires ONLY if a REAL CM6 input observer the editor registers
+//     (EditorView.inputHandler / transactionFilter / updateListener) sees the
+//     inserted space, matches its pattern against the text before the cursor, and
+//     substitutes the captures into the body via the shared `runSnippet`
+//     expansion. The driver itself never calls startCompletion (a regex/postfix
+//     trigger fires WITHOUT a popup).
 //
 //   completionLabels() [P52, reused] — the labels in the live CM6 autocomplete
 //     tooltip. Used here to PROVE NO POPUP opened (the regex trigger fires in
@@ -135,9 +142,10 @@ test('Typing a regex trigger substitutes its capture group into the body and exp
   );
 
   // ── (1)+(2)+(3)+(4) Regex trigger `pbar ` substitutes the capture, no popup ──
-  // Type the regex-matching token followed by its space terminator through the
-  // no-popup driving hook. RED: __PPE_E2E__.typeRegexTrigger does not exist (there
-  // is no regex-trigger path), so this throws here — the faithful no-op state.
+  // Drive the regex-matching token + its space terminator through the REAL input
+  // driver (per-character view.dispatch inserts). RED on the current code: no real
+  // CM6 input observer fires the expansion, so the wait below for `\bar{p}` times
+  // out — `pbar` stays inert. The faithful missing-wiring state.
   await typeRegexTrigger(tauriPage, MATCHED_TRIGGER + ' ');
   await tauriPage.waitForFunction(
     `window.__PPE_E2E__.getEditorText().includes(${JSON.stringify(EXPANDED_BODY)})`,

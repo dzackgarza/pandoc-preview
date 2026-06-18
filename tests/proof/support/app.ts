@@ -383,30 +383,53 @@ export async function typeInEditor(page: EvaluatesScripts, text: string): Promis
   );
 }
 
+// ── REAL editor input driver (P78/P79) ─────────────────────────────────────
+// `insertChars(text)` feeds `text` into the editor character-by-character
+// through the editor's REAL input dispatch — a CM6 `view.dispatch` per-character
+// text-insert transaction, the SAME docChanged path a real keystroke fires — and
+// NOTHING ELSE. It does NOT itself call the snippet-expansion functions
+// (`tryAutoExpand` / `tryRegexExpand`) and — UNLIKE typeInEditor — does NOT call
+// startCompletion (an autotrigger / regex trigger fires WITHOUT a popup). This is
+// the deterministic stand-in for synthetic key events the bridge cannot send
+// into CodeMirror's contentEditable, but a real `view.dispatch` insert flows
+// through whatever input observer the editor registers
+// (EditorView.inputHandler / transactionFilter / updateListener) — the REAL
+// production path. Fire-and-forget; returns null.
+//
+// The point: the spec drives GENUINE editor input here, never a self-executing
+// expansion. For the body to expand, the PRODUCTION editor must register an
+// input observer that sees these inserted characters (the terminating space in
+// particular) and invokes the expansion. If the expansion is wired ONLY into a
+// harness function that calls `tryAutoExpand`/`tryRegexExpand` directly (the
+// inadmissible state this driver exposes), nothing expands here.
+export async function insertChars(page: EvaluatesScripts, text: string): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.insertChars(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
 // ── Autotrigger / space-trigger auto-expansion (P78) ───────────────────────
 // An AUTOTRIGGER entry expands the moment the user types the trigger followed by
 // its terminator (a space) — IN PLACE, with NO completion popup and NO accept
-// keypress (LuaSnip autosnippet / UltiSnips `A`). The trigger condition is owned
-// by an INPUT HANDLER / updateListener in EditorPane (NOT the completion source —
-// the autotrigger fires WITHOUT a popup); the expansion REUSES the shared
-// `runSnippet` path. After one autotrigger fires, the engine RE-ARMS so a
-// subsequent autotrigger + space fires immediately (chained expansion).
+// keypress (LuaSnip autosnippet / UltiSnips `A`). The trigger condition must be
+// owned by a REAL CM6 INPUT OBSERVER the editor registers (an
+// EditorView.inputHandler, a transactionFilter, or the existing updateListener),
+// NOT by the test driver: the autotrigger fires WITHOUT a popup, and the
+// expansion REUSES the shared `runSnippet` path. After one autotrigger fires, the
+// engine RE-ARMS so a subsequent autotrigger + space fires immediately (chained
+// expansion).
 //
-// The driving hook is `typeAutotrigger(text)`: a per-keystroke REAL-typing path
-// that feeds `text` into the editor through the SAME docChanged pipeline user
-// typing fires (so the autotrigger input handler / updateListener observes the
-// keystrokes), and — UNLIKE typeInEditor — does NOT call startCompletion, because
-// an autotrigger must fire WITHOUT a popup. This is the deterministic stand-in
-// for synthetic key events the bridge cannot send into CodeMirror's
-// contentEditable. Fire-and-forget; returns null. The observable afterwards is
-// the editor buffer (getEditorText): the literal trigger text is GONE and the
-// expanded body sits at the cursor. RED today: __PPE_E2E__.typeAutotrigger does
-// not exist (there is no autotrigger input handler at all), so this evaluate
-// throws — there is no surface to drive a no-popup space-expansion.
+// `typeAutotrigger` drives the trigger through the REAL input driver
+// (`insertChars`): per-character `view.dispatch` insert transactions, including
+// the terminating space, flowing through the editor's real input path — it does
+// NOT call any expansion function itself. The observable afterwards is the editor
+// buffer (getEditorText): the literal trigger text is GONE and the expanded body
+// sits at the cursor. RED on the current code: the expansion is invoked ONLY from
+// a self-driving harness function, so when the trigger arrives through the real
+// input path NOTHING fires — the literal `tii ` stays inert and the expanded body
+// never appears (the missing real-wiring this spec exposes).
 export async function typeAutotrigger(page: EvaluatesScripts, text: string): Promise<void> {
-  await page.evaluate(
-    `(() => { window.__PPE_E2E__.typeAutotrigger(${JSON.stringify(text)}); return null; })()`,
-  );
+  await insertChars(page, text);
 }
 
 // ── Regex / postfix capture triggers (P79) ─────────────────────────────────
@@ -416,28 +439,22 @@ export async function typeAutotrigger(page: EvaluatesScripts, text: string): Pro
 // …) are resolved from the regex match FIRST, distinct from the TextMate
 // tabstop `${1}`; the residual body (with its `${N}` tabstops intact) is then
 // expanded through the shared `runSnippet` path P52/P77/P78 already reuse. A
-// regex/postfix trigger fires WITHOUT a popup (the pattern is matched against the
-// text before the cursor when expansion is invoked), so its driving hook is a
-// no-popup typing path — it does NOT call startCompletion.
+// regex/postfix trigger fires WITHOUT a popup, and — like the autotrigger — its
+// match condition must be owned by a REAL CM6 input observer the editor
+// registers, NOT by the test driver.
 //
-// The driving hook is `typeRegexTrigger(text)`: feed `text` into the editor
-// through the SAME docChanged pipeline user typing fires (so the regex-trigger
-// input handler observes the keystrokes and matches its pattern against the text
-// before the cursor), and — like typeAutotrigger and UNLIKE typeInEditor — does
-// NOT call startCompletion, because a regex/postfix trigger fires WITHOUT a
-// popup. This is the deterministic stand-in for synthetic key events the bridge
-// cannot send into CodeMirror's contentEditable. Fire-and-forget; returns null.
-// The observable afterwards is the editor buffer (getEditorText): the literal
-// matched trigger text is GONE and the capture-substituted body sits at the
-// cursor (`pbar` → `\bar{p}`, the captured `p` in the body, NOT a literal `$1`).
-// RED today: __PPE_E2E__.typeRegexTrigger does not exist (there is no
-// regex-trigger path, no pattern match, no capture substitution), so this
-// evaluate throws — there is no surface to drive a regex/postfix capture
-// expansion.
+// `typeRegexTrigger` drives the regex-matching token through the REAL input
+// driver (`insertChars`): per-character `view.dispatch` insert transactions,
+// including the terminating space, flowing through the editor's real input path —
+// it does NOT call any expansion function itself. The observable afterwards is
+// the editor buffer (getEditorText): the literal matched trigger text is GONE and
+// the capture-substituted body sits at the cursor (`pbar` → `\bar{p}`, the
+// captured `p` in the body, NOT a literal `$1`). RED on the current code: the
+// regex expansion is invoked ONLY from a self-driving harness function, so when
+// the token arrives through the real input path NOTHING fires — `pbar` stays
+// inert and `\bar{p}` never appears (the missing real-wiring this spec exposes).
 export async function typeRegexTrigger(page: EvaluatesScripts, text: string): Promise<void> {
-  await page.evaluate(
-    `(() => { window.__PPE_E2E__.typeRegexTrigger(${JSON.stringify(text)}); return null; })()`,
-  );
+  await insertChars(page, text);
 }
 
 // ── Accept the highlighted completion (P52) ────────────────────────────────

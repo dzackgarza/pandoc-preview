@@ -72,9 +72,6 @@
     parseSnippetDictionary,
     snippetCompletionSource,
     runSnippet,
-    findAutoExpansion,
-    findRegexExpansion,
-    renderedSnippetLength,
     type SnippetMap,
   } from "../editor/snippets";
   import {
@@ -396,94 +393,30 @@
     startCompletion(view);
   }
 
-  /** Autotrigger input handler (P78 / B2): after a docChanged that inserted a
-   * space terminator, if the bare word token before the space is an `auto`
-   * dictionary entry live at the cursor's zone (the SAME `inMathMode` gate the
-   * popup uses), expand its body IN PLACE with NO popup and NO accept — delete
-   * the literal `trigger ` span, then run the body through the shared `runSnippet`
-   * path (the SAME expansion the popup-accept and insertion bar reuse). The
-   * delete + expansion leave the engine RE-ARMED: the next autotrigger + space
-   * fires the same way (chained expansion). Returns true if an expansion fired. */
-  function tryAutoExpand(): boolean {
-    const pos = view.state.selection.main.head;
-    const hit = findAutoExpansion(snippetMap, view.state, pos);
-    if (!hit) return false;
-    // Remove the literal `trigger ` token, dropping the cursor where the body
-    // expands; then run the body through the shared snippetCompletion path.
-    view.dispatch({
-      changes: { from: hit.from, to: hit.to, insert: "" },
-      selection: EditorSelection.cursor(hit.from),
-    });
-    runSnippet(view, hit.body);
-    // RE-ARM outside the snippet field: an autotrigger fires WITHOUT entering its
-    // tabstop, so land the cursor at the END of the rendered body (not at `$0`).
-    // This way a chained autotrigger typed immediately after expands SEQUENTIALLY
-    // (`\tilde{}\hat{}`) rather than nesting inside the prior body's tabstop.
-    view.dispatch({
-      selection: EditorSelection.cursor(hit.from + renderedSnippetLength(hit.body)),
-    });
-    return true;
-  }
-
-  /** E2E (P78): feed `text` into the editor character-by-character through the
-   * SAME docChanged pipeline user typing fires, so the autotrigger handler
-   * observes each keystroke — and, UNLIKE `typeInEditor`, does NOT call
-   * `startCompletion` (an autotrigger fires WITHOUT a popup). After each inserted
-   * character the handler attempts an auto-expansion: a space terminator after an
-   * `auto` trigger expands the body in place and re-arms for the next. The
-   * deterministic stand-in for synthetic key events the bridge cannot send into
-   * CodeMirror's contentEditable. */
-  export function typeAutotrigger(text: string) {
+  /** E2E (P78/P79): the REAL editor input driver. Feed `text` into the editor
+   * character-by-character through `view.dispatch` — the SAME docChanged path a
+   * real keystroke fires — and NOTHING ELSE. It does NOT call `tryAutoExpand` /
+   * `tryRegexExpand` (the previous self-driving drivers DID: they invoked the
+   * expansion directly on the space, so the harness WAS the handler and the
+   * production input path was never exercised — the defect this driver exposes),
+   * and — UNLIKE `typeInEditor` — does NOT call `startCompletion` (an
+   * autotrigger / regex trigger fires WITHOUT a popup).
+   *
+   * For the expansion to fire, a REAL CM6 input observer the editor REGISTERS —
+   * an `EditorView.inputHandler`, a `transactionFilter`, or the existing
+   * `updateListener` — must see each inserted character (the terminating space in
+   * particular) and invoke `findAutoExpansion` / `findRegexExpansion` +
+   * `runSnippet`. This driver only produces the genuine user input; the wiring
+   * that observes it and fires the expansion is the production behaviour under
+   * test. This is the deterministic stand-in for synthetic key events the bridge
+   * cannot send into CodeMirror's contentEditable. */
+  export function insertChars(text: string) {
     for (const ch of text) {
       const pos = view.state.selection.main.head;
       view.dispatch({
         changes: { from: pos, insert: ch },
         selection: EditorSelection.cursor(pos + ch.length),
       });
-      if (ch === " ") tryAutoExpand();
-    }
-    view.focus();
-  }
-
-  /** Regex/postfix input handler (P79 / B3): after a docChanged that inserted a
-   * space terminator, if the bare word token before the space matches a `regex`
-   * dictionary entry live at the cursor's zone (the SAME `inMathMode` gate the
-   * popup uses), substitute the match's capture groups into the entry body, then
-   * expand it IN PLACE with NO popup and NO accept — delete the literal matched
-   * token + space span, then run the capture-substituted body through the shared
-   * `runSnippet` path (the SAME expansion the popup-accept and insertion bar
-   * reuse). The matcher resolves captures FIRST; the residual `${N}` are tabstops
-   * the runSnippet path expands (LuaSnip regTrig / UltiSnips `r`). Returns true
-   * if an expansion fired. */
-  function tryRegexExpand(): boolean {
-    const pos = view.state.selection.main.head;
-    const hit = findRegexExpansion(snippetMap, view.state, pos);
-    if (!hit) return false;
-    view.dispatch({
-      changes: { from: hit.from, to: hit.to, insert: "" },
-      selection: EditorSelection.cursor(hit.from),
-    });
-    runSnippet(view, hit.body);
-    return true;
-  }
-
-  /** E2E (P79): feed `text` into the editor character-by-character through the
-   * SAME docChanged pipeline user typing fires, so the regex-trigger handler
-   * observes each keystroke and matches its pattern against the text before the
-   * cursor — and, UNLIKE `typeInEditor`, does NOT call `startCompletion` (a
-   * regex/postfix trigger fires WITHOUT a popup). After each inserted character
-   * the handler attempts a regex expansion: a space terminator after a token
-   * matching a `regex` entry substitutes its captures and expands the body in
-   * place. The deterministic stand-in for synthetic key events the bridge cannot
-   * send into CodeMirror's contentEditable. */
-  export function typeRegexTrigger(text: string) {
-    for (const ch of text) {
-      const pos = view.state.selection.main.head;
-      view.dispatch({
-        changes: { from: pos, insert: ch },
-        selection: EditorSelection.cursor(pos + ch.length),
-      });
-      if (ch === " ") tryRegexExpand();
     }
     view.focus();
   }

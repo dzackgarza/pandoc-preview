@@ -26,9 +26,13 @@ import {
 //     - a ONE-SHOT engine (the first autotrigger fires but the second does not,
 //       proving no re-arm): assertion (4) — the second body never appears;
 //     - a NO-OP (the trigger + space leaves the literal trigger in the buffer):
-//       there is no autotrigger input handler at all today, so the very FIRST
-//       typeAutotrigger throws (no __PPE_E2E__.typeAutotrigger surface) — the
-//       faithful RED state.
+//       on the current code the expansion is invoked ONLY from a self-driving
+//       harness function — there is NO real CM6 input observer
+//       (EditorView.inputHandler / transactionFilter / updateListener) that fires
+//       it. So when the trigger arrives through the REAL input path (per-character
+//       view.dispatch inserts, including the space) NOTHING expands: the literal
+//       `tii ` stays inert and `\tilde{}` never appears — the faithful RED state
+//       this spec exposes (missing real-input wiring).
 //
 // ── THE AUTOTRIGGER CONFIG CONTRACT (what the implementer must honor) ────────
 // The dictionary is declared by the SAME config-owned path P52/P59/P77 read
@@ -54,13 +58,15 @@ import {
 //     real docChanged pipeline; the cursor lands at the END of the appended text.
 //     Used to place the cursor in a clean zone before the autotrigger fires.
 //
-//   typeAutotrigger(text) [P78, NEW] — feed `text` into the editor through the
-//     SAME docChanged pipeline user typing fires, so the autotrigger INPUT HANDLER
-//     / updateListener in EditorPane observes the keystrokes — and, UNLIKE
-//     typeInEditor, does NOT call startCompletion, because an autotrigger fires
-//     WITHOUT a popup. The on-space trigger condition + re-arm are owned by that
-//     input handler; the expansion REUSES the shared `runSnippet` path. This is
-//     the driving hook the spec uses so the autotrigger path actually fires.
+//   typeAutotrigger(text) [P78] — drive `text` into the editor through the REAL
+//     input driver (__PPE_E2E__.insertChars): per-character view.dispatch insert
+//     transactions, including the terminating space, flowing through the editor's
+//     real input path — NOT a call to any expansion function. So the autotrigger
+//     fires ONLY if a REAL CM6 input observer the editor registers
+//     (EditorView.inputHandler / transactionFilter / updateListener) sees the
+//     inserted space, keys the on-space trigger condition + re-arm, and runs the
+//     expansion through the shared `runSnippet` path. The driver itself never
+//     calls startCompletion (an autotrigger fires WITHOUT a popup).
 //
 //   completionLabels() [P52, reused] — the labels in the live CM6 autocomplete
 //     tooltip. Used here to PROVE NO POPUP opened (the autotrigger fires in
@@ -125,9 +131,10 @@ test('Typing an autotrigger followed by a space expands its body in place with n
   );
 
   // ── (1)+(2)+(3) Autotrigger `tii ` expands in place, no popup, no accept ──
-  // Type the trigger followed by its space terminator through the no-popup
-  // driving hook. RED: __PPE_E2E__.typeAutotrigger does not exist (there is no
-  // autotrigger input handler), so this throws here — the faithful no-op state.
+  // Drive the trigger + its space terminator through the REAL input driver
+  // (per-character view.dispatch inserts). RED on the current code: no real CM6
+  // input observer fires the expansion, so the wait below for `\tilde{}` times
+  // out — the literal `tii ` stays inert. The faithful missing-wiring state.
   await typeAutotrigger(tauriPage, TRIGGER_A + ' ');
   await tauriPage.waitForFunction(
     `window.__PPE_E2E__.getEditorText().includes(${JSON.stringify(BODY_A)})`,
