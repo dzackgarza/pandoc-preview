@@ -31,8 +31,8 @@ import {
 // hermetic `config.toml` (validated by the plugin's own `config_schema`, delivered
 // to the plugin on `PPE_PLUGIN_CONFIG` by the existing generic `run_plugin`
 // firewall). There is NO `[editor.lint]` section in the app-core `config.rs`. The
-// plugin's `lint.sh` consumes its config to drive the REAL chktex — generating a
-// `chktexrc` (per-warning enable/disable for warnings 35 and 25) and running the
+// plugin's `lint.sh` consumes its config to drive the REAL chktex — passing
+// `chktex -n <num>` per-warning disable flags (warnings 35 and 25) and running the
 // real `/usr/bin/chktex` on the pandoc-emitted `.tex`. The checks are ChkTeX's,
 // not a re-authored matcher.
 //
@@ -50,8 +50,8 @@ import {
 // `buffer.find` MISSES and the chktex 35/25 records are DROPPED. The typographic
 // diagnostics therefore NEVER reach the editor. Independently, the plugin's
 // `schema.json` accepts ONLY `{"command": ...}` and its `lint.sh` reads ONLY the
-// command — it generates NO `chktexrc` and consults NO typographic config, so
-// there is no config gate at all. The class is neither emitted NOR toggleable.
+// command — it passes NO `chktex -n` disable flags and consults NO typographic
+// config, so there is no config gate at all. The class is neither emitted NOR toggleable.
 // This spec is RED on the ENABLED arm (the math `sin`/`x^10` are never marked)
 // before the DISABLED arm is even reached.
 //
