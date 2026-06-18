@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "recording-diagram-tool config section",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["extension"],
+  "properties": {
+    "extension": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

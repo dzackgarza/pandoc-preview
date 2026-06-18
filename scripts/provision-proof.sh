@@ -831,6 +831,56 @@ p22-configure-plugin-spawn.spec.ts)
 greeting = "hi"
 EOF
     ;;
+p106-dual-asset-registry.spec.ts)
+    # P96 (Phase D / D-7): a NON-tikz figure is a DUAL asset — an editable SOURCE
+    # (.ipe/.svg) tracked ALONGSIDE the included RENDER (PDF/SVG) — and the "edit
+    # this figure" action launches the real diagram-tool editor on the SOURCE via
+    # the plugin firewall (a configure_plugin-shaped detached launch; the launch
+    # argv lives in a diagram-tool PLUGIN, not app core). Ipe owns NO tikz; there
+    # is no owned parser and tikz extraction is NEVER attempted here.
+    #
+    # The canonical config above already set up the pandoc renderer + [plugins].dir
+    # (so the app boots). Here we ADD the recording-diagram-tool plugin into that
+    # SAME dir and its [plugin.recording-diagram-tool] config section. A real
+    # Ipe/Inkscape GUI cannot be asserted headless, so this REAL plugin's launch
+    # command (launch.sh) RECORDS the {file} path it was handed to a sentinel under
+    # the config dir — a real plugin exercising the real firewall launch path, NOT
+    # a mock. The recorded path is the observable proving the SOURCE, not the
+    # render, was passed to the editor.
+    install_plugin_fixtures "$PLUGINS_DIR" recording-diagram-tool
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.recording-diagram-tool]
+extension = "svg"
+EOF
+    # The DUAL asset on disk: a distinct editable SOURCE and included RENDER for one
+    # non-tikz figure, both in the hermetic project (where the document references
+    # the render). The SOURCE (fig.svg) is what the editor must be launched on; the
+    # RENDER (fig-render.svg) is the asset embedded in the document — a DIFFERENT
+    # file. Each carries distinctive bytes so the recorded launch path and the
+    # persisted registry pairing cannot be confused. The source↔render PAIRING is
+    # written into the host-FS registry sidecar by the app at runtime (the
+    # __PPE_E2E__.registerFigureAssets hook the spec drives), so provisioning stages
+    # only the two real asset files — never the sidecar itself.
+    FIG_SOURCE="$PROJECT_DIR/fig.svg"
+    FIG_RENDER="$PROJECT_DIR/fig-render.svg"
+    cat > "$FIG_SOURCE" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- editable SOURCE: the .svg an Inkscape-class editor opens (P96) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48">
+  <rect x="0" y="0" width="64" height="48" fill="#1e90ff"/>
+  <!-- __P106_EDITABLE_SOURCE__ -->
+</svg>
+EOF
+    cat > "$FIG_RENDER" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- included RENDER: the asset embedded in the document, NOT the editor target -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48">
+  <rect x="0" y="0" width="64" height="48" fill="#ff4500"/>
+  <!-- __P106_INCLUDED_RENDER__ -->
+</svg>
+EOF
+    ;;
 p07-export-html.spec.ts)
     # P7 (export-as-plugin migration): HTML export is the shipped pandoc-html-export
     # export-category plugin, discovered from [plugins].dir and run BY ID through the

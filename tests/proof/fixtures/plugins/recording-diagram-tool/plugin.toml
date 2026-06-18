@@ -1,0 +1,49 @@
+# Diagram-tool recording fixture (P96 / D-7). A discovered plugin in the
+# `diagram-tool` category whose launch command stands in for the REAL Ipe /
+# Inkscape editor binary the app cannot drive headless. It is discovered exactly
+# the way the shipped pandoc-renderer / witness-tool plugins are — from the
+# [plugins].dir, by the SAME generic discover() — with NO app-core knowledge of
+# any external diagram tool's argv.
+#
+# The dual-asset registry's "edit this figure" action launches the diagram-tool
+# plugin (firewall, configure_plugin-shaped detached spawn) on the figure's
+# tracked editable SOURCE, substituting that source path into {file}. A REAL
+# Ipe/Inkscape GUI cannot be asserted headless, so this plugin's launch command
+# is a thin script that RECORDS the {file} path it was handed to a sentinel file
+# under {config_dir}. This is a REAL plugin exercising the REAL firewall launch
+# path (NOT a mock); the recorded path is the observable proving the edit action
+# launched the editor on the SOURCE, never the included render.
+#
+# Cloned from the witness-tool / witness-export-plugin shape: id/name/description/
+# category/kind, a JSON Schema referenced (not inlined) for its [plugin.<id>]
+# section, an [exec] launch command ({plugin_dir}/{file}/{config_dir} substituted),
+# a self-owned [configure] command, and a contributed doctor check.
+id = "recording-diagram-tool"
+name = "Recording Diagram Tool"
+description = "A diagram-tool plugin that records the source path the edit action launched it on (P96)."
+category = "diagram-tool"
+kind = "command"
+# JSON Schema (draft 2020-12) for this plugin's [plugin.recording-diagram-tool]
+# config section. Referenced, not inlined.
+config_schema = "schema.json"
+
+[exec]
+# The LAUNCH argv with per-element placeholder substitution: {plugin_dir} = this
+# plugin's directory, {file} = the figure's tracked editable SOURCE path the edit
+# action resolves from the registry, {config_dir} = the app's real config dir
+# (where the sentinel is recorded). The real diagram tool would open {file} in its
+# GUI; this fixture instead records the {file} path it received to a sentinel and
+# exits.
+command = ["{plugin_dir}/launch.sh", "{file}", "{config_dir}"]
+
+# Self-owned configure command (C1). The app's "Configure" action SPAWNS this
+# detached; this fixture is non-interactive (it only needs to exist).
+[configure]
+command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
+
+# A doctor check this diagram-tool plugin contributes to the one battery (A3).
+# exit 0 -> OK, nonzero -> FAIL. {plugin_dir} is substituted.
+[[doctor_checks]]
+id = "recording-diagram-tool-runnable"
+description = "recording-diagram-tool launch.sh is present and executable"
+command = ["test", "-x", "{plugin_dir}/launch.sh"]
