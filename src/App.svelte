@@ -310,6 +310,14 @@
         appendAtEnd: (text: string) => {
           editor.appendAtEnd(text);
         },
+        // P73: replace the WHOLE buffer through the real CM update pipeline (a
+        // full-doc replace fires the docChanged path the same way typing does),
+        // so the lint source re-runs on the new buffer — used by the suppression
+        // spec to remove an in-document directive and prove the diagnostic
+        // restores. Fire-and-forget, same shape as appendAtEnd.
+        setEditorText: (text: string) => {
+          editor.setContent(text);
+        },
         // P51: register a sentinel app completion source that COMPOSES with the
         // LaTeX source, then drive completion by inserting text at the cursor.
         registerTestCompletionSource: () => {

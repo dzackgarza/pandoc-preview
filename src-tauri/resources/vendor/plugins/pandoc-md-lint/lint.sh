@@ -418,5 +418,34 @@ for raw in os.environ["LACHECK"].splitlines():
         "ruleId": "lacheck",
     })
 
+# ── (c) in-document line-scoped suppression (A.4) ────────────────────────────
+# An author silences a single intentional lint hit IN THE DOCUMENT with a
+# line-scoped directive that names the rule:
+#   <!-- ppe-lint-disable-line <ruleId> -->
+# placed ON the line it scopes. <ruleId> is the bare ChkTeX warning NUMBER (the
+# numeric tail of the diagnostic's `chktex:<number>` ruleId — e.g. `25` for the
+# sub/superscript-grouping class surfaced as `chktex:25`). A directive on
+# markdown line L removes ONLY diagnostics whose markdown line == L AND whose
+# ruleId == `chktex:<that number>`. The same construct on a DIFFERENT line, with
+# no directive, is untouched (line-scoped). Removing the directive from the
+# buffer (a fresh lint pass with no directive present) restores the diagnostic
+# (the suppression is recomputed from the live buffer every pass, never latched).
+# This is a thin port of ChkTeX's `% chktex N` suppression to the markdown
+# surface — filtering by (line, ruleId), no new suppression engine. The directive
+# is an HTML comment, inert to the rendered preview.
+DIRECTIVE_RE = re.compile(r"<!--\s*ppe-lint-disable-line\s+(\d+)\s*-->")
+suppressions = set()  # (1-based markdown line, ChkTeX warning number string)
+for lineno0, line_text in enumerate(buffer.split("\n")):
+    for m in DIRECTIVE_RE.finditer(line_text):
+        suppressions.add((lineno0 + 1, m.group(1)))
+
+if suppressions:
+    def is_suppressed(d):
+        rule = d["ruleId"]
+        if not rule.startswith("chktex:"):
+            return False
+        return (d["line"], rule[len("chktex:"):]) in suppressions
+    diagnostics = [d for d in diagnostics if not is_suppressed(d)]
+
 json.dump(diagnostics, sys.stdout)
 PY
