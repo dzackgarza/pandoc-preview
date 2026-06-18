@@ -1,0 +1,10 @@
+{
+  "snippets": [
+    {
+      "trigger": "([a-z])bar",
+      "mode": "both",
+      "regex": true,
+      "body": "\\bar{$1}"
+    }
+  ]
+}

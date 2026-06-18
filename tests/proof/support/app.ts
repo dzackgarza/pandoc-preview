@@ -409,6 +409,37 @@ export async function typeAutotrigger(page: EvaluatesScripts, text: string): Pro
   );
 }
 
+// ── Regex / postfix capture triggers (P79) ─────────────────────────────────
+// A REGEX entry matches its PATTERN against the text before the cursor and
+// substitutes the matched CAPTURE GROUPS into the body — the LuaSnip `regTrig` /
+// UltiSnips `r` capture-group model. The body's capture references (`$1`, `$2`,
+// …) are resolved from the regex match FIRST, distinct from the TextMate
+// tabstop `${1}`; the residual body (with its `${N}` tabstops intact) is then
+// expanded through the shared `runSnippet` path P52/P77/P78 already reuse. A
+// regex/postfix trigger fires WITHOUT a popup (the pattern is matched against the
+// text before the cursor when expansion is invoked), so its driving hook is a
+// no-popup typing path — it does NOT call startCompletion.
+//
+// The driving hook is `typeRegexTrigger(text)`: feed `text` into the editor
+// through the SAME docChanged pipeline user typing fires (so the regex-trigger
+// input handler observes the keystrokes and matches its pattern against the text
+// before the cursor), and — like typeAutotrigger and UNLIKE typeInEditor — does
+// NOT call startCompletion, because a regex/postfix trigger fires WITHOUT a
+// popup. This is the deterministic stand-in for synthetic key events the bridge
+// cannot send into CodeMirror's contentEditable. Fire-and-forget; returns null.
+// The observable afterwards is the editor buffer (getEditorText): the literal
+// matched trigger text is GONE and the capture-substituted body sits at the
+// cursor (`pbar` → `\bar{p}`, the captured `p` in the body, NOT a literal `$1`).
+// RED today: __PPE_E2E__.typeRegexTrigger does not exist (there is no
+// regex-trigger path, no pattern match, no capture substitution), so this
+// evaluate throws — there is no surface to drive a regex/postfix capture
+// expansion.
+export async function typeRegexTrigger(page: EvaluatesScripts, text: string): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.typeRegexTrigger(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
 // ── Accept the highlighted completion (P52) ────────────────────────────────
 // CM6 accepts a completion via the Enter key / the `acceptCompletion` command,
 // which the bridge cannot synthesize into CodeMirror's contentEditable. So the

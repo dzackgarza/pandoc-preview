@@ -494,6 +494,29 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p78-autotrigger-snippets.json" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p79-regex-trigger.spec.ts)
+        # P79 (regex/postfix capture triggers, Phase-B B3) declares the SAME
+        # config-owned snippet-dictionary path P52/P59/P77/P78 read, but its entry
+        # carries a per-entry `regex: true` flag (B-DESIGN-0; the LuaSnip regTrig /
+        # UltiSnips `r` capture-group model). A regex entry matches its PATTERN
+        # against the text before the cursor and substitutes the capture groups into
+        # the body: capture `$1` (distinct from the TextMate tabstop `${1}`) is
+        # replaced by the matched group BEFORE the residual body is expanded through
+        # the shared CM6 snippet path. The committed fixture
+        # (tests/proof/fixtures/snippets/p79-regex-trigger-snippets.json) declares
+        # ONE regex entry — `([a-z])bar` -> "\\bar{$1}" — so the spec can prove that
+        # typing `pbar` and triggering expansion yields `\bar{p}` (the captured `p`
+        # substituted), with the matched trigger text gone. Pointing config at it
+        # makes that the regex trigger the editor honors. RED today: there is no
+        # regex-trigger path at all (no __PPE_E2E__.typeRegexTrigger, no regex match,
+        # no capture substitution), so the literal `pbar` stays inert in the buffer —
+        # the literal-trigger / capture-blind / no-op failure P79 names.
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p79-regex-trigger-snippets.json"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p79-regex-trigger-snippets.json" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
     p54-spellcheck.spec.ts)
         # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
         # hardcoded list. Provision a hermetic copy of the committed FIXTURE
