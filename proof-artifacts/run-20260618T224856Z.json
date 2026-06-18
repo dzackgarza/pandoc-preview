@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T224856Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p106-dual-asset-registry.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p106-dual-asset-registry.spec.ts",
+            "title": "a registered non-tikz figure edit launches the editor on the tracked SOURCE (not the render), with the pairing persisted on the host filesystem",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 2640,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.registerFigureAssets is not a function. (In 'window.__PPE_E2E__.registerFigureAssets(\"/tmp/pandoc-preview-proof-runs/20260618T224856Z/p106-dual-asset-registry/project/fig-render.svg\", \"/tmp/pandoc-preview-proof-runs/20260618T224856Z/p106-dual-asset-registry/project/fig.svg\")', 'window.__PPE_E2E__.registerFigureAssets' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

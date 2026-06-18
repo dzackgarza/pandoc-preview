@@ -1,50 +1,29 @@
 # Competitive Parity Roadmap — Follow-up Phases
 
-**When this applies:** picking the next QOL feature once the Tier-0/1 core loop is usable;
-deciding what to build to make this app a real daily driver for large mathematical writing
-projects (theses, papers). This is a SECOND ordering of work, cross-cutting the tier
-sequencing in [[feature-catalogue-and-implementation-status]]: the tiers order by
-architectural dependency and the MVP gate; THIS doc orders the parity push by **importance to
-getting research work done**, the axis the user named.
+**When this applies:** picking the next QOL feature once the Tier-0/1 core loop is usable; deciding what to build to make this app a real daily driver for large mathematical writing projects (theses, papers).
+This is a SECOND ordering of work, cross-cutting the tier sequencing in [[feature-catalogue-and-implementation-status]]: the tiers order by architectural dependency and the MVP gate; THIS doc orders the parity push by **importance to getting research work done**, the axis the user named.
 
-**Provenance:** synthesized from durable per-program parity studies (2026-06-16), one per
-target program, under `parity-research/`:
-[[parity-research/overleaf]], [[parity-research/gummi]], [[parity-research/arxiv-export]],
-[[parity-research/vimtex]], [[parity-research/quicktex]],
-[[parity-research/snippet-and-lint-ecosystem]], [[parity-research/qtikz]],
-[[parity-research/ipe]], [[parity-research/tikzit]], [[parity-research/zettlr]],
-[[parity-research/vscode]], [[parity-research/pandoc-editor]].
-Each study holds the full feature inventory, parity matrix, and dispositions; this doc carries
-only the prioritized actionable residue.
+**Provenance:** synthesized from durable per-program parity studies (2026-06-16), one per target program, under `parity-research/`: [[parity-research/overleaf]], [[parity-research/gummi]], [[parity-research/arxiv-export]], [[parity-research/vimtex]], [[parity-research/quicktex]], [[parity-research/snippet-and-lint-ecosystem]], [[parity-research/qtikz]], [[parity-research/ipe]], [[parity-research/tikzit]], [[parity-research/zettlr]], [[parity-research/vscode]], [[parity-research/pandoc-editor]]. Each study holds the full feature inventory, parity matrix, and dispositions; this doc carries only the prioritized actionable residue.
 
 **How to read the status tag on each item:**
 - **net-new gap** — not tracked anywhere in the catalogue; a genuine addition.
-- **refines TierN / Pxx** — the feature is tracked, but a target program supplies a concrete
-  MECHANISM the catalogue does not yet specify.
+- **refines TierN / Pxx** — the feature is tracked, but a target program supplies a concrete MECHANISM the catalogue does not yet specify.
 - **maps TierN / Pxx** — already tracked and parity-confirmed; listed only for context.
 
-**Standing constraint:** the sequencing rule still binds — the Tier-0 core loop is provable and
-human-verified before any phase here starts ([[product-destination-what-done-looks-like]]).
-Nothing here re-opens a banned non-goal; the per-program Dispositions sections record every
-exclusion.
+**Standing constraint:** the sequencing rule still binds — the Tier-0 core loop is provable and human-verified before any phase here starts ([[product-destination-what-done-looks-like]]). Nothing here re-opens a banned non-goal; the per-program Dispositions sections record every exclusion.
 
-**Governing principle — interop-first, never reinvent (see `AGENTS.md` HARD RULE #0):** every
-item below is a request to *support* what an existing tool/format/standard already does, NOT to
-reimplement it. Default disposition: run the real binary, embed the maintained library, support
-the tool's native file format so users bring their existing work with zero porting. Each phase
-plan must open every work item with the "what already exists" research step and name the tool /
-format / reference implementation it leverages, supports, or ports. Greenfield is never the
-answer; a "converter that flattens an existing format into a bespoke shape" is a red flag.
+**Governing principle — interop-first, never reinvent (see `AGENTS.md` HARD RULE #0):** every item below is a request to *support* what an existing tool/format/standard already does, NOT to reimplement it.
+Default disposition: run the real binary, embed the maintained library, support the tool's native file format so users bring their existing work with zero porting.
+Each phase plan must open every work item with the "what already exists" research step and name the tool / format / reference implementation it leverages, supports, or ports.
+Greenfield is never the answer; a "converter that flattens an existing format into a bespoke shape" is a red flag.
 
----
+* * *
 
 ## Phase A — Feedback faster than a compile (static lint + structured logs)
 
-*Why first:* the user named "extremely good linting that kicks in long before compiles" and
-"feedback faster than a latex compile" as core. This is the single most under-tracked High-
-relevance cluster: the catalogue has matched-delimiter HIGHLIGHTING (Tier 0) and post-compile
-LOG surfacing (Tier 2, P11), but NO static pre-compile diagnostic layer. CodeMirror 6's
-`@codemirror/lint` is the native host, so the surface is small and the payoff is daily.
+*Why first:* the user named "extremely good linting that kicks in long before compiles" and "feedback faster than a latex compile" as core.
+This is the single most under-tracked High- relevance cluster: the catalogue has matched-delimiter HIGHLIGHTING (Tier 0) and post-compile LOG surfacing (Tier 2, P11), but NO static pre-compile diagnostic layer.
+CodeMirror 6's `@codemirror/lint` is the native host, so the surface is small and the payoff is daily.
 Source: [[parity-research/snippet-and-lint-ecosystem]] (ChkTeX/lacheck), [[parity-research/vimtex]].
 
 | Item | Status | Rel |
@@ -57,16 +36,14 @@ Source: [[parity-research/snippet-and-lint-ecosystem]] (ChkTeX/lacheck), [[parit
 | In-document lint suppression (`% chktex N` analog) — per-line/per-file opt-out | net-new gap | Med |
 | Optionally run real ChkTeX on the pandoc-emitted transient `.tex`, map diagnostics back (gated on the `sourcepos` line-mapping problem — see Tier-2 scroll-sync) | net-new gap | Med |
 
-Prefer ChkTeX's tunable/suppressible model over lacheck (self-described "crude approximation",
-no per-warning disable). Running an external linter binary is a plugin-firewall candidate.
+Prefer ChkTeX's tunable/suppressible model over lacheck (self-described "crude approximation", no per-warning disable).
+Running an external linter binary is a plugin-firewall candidate.
 
 ## Phase B — Snippet engine depth + the quicktex dictionary migration
 
-*Why second:* snippets/autocomplete are the next daily-friction win and the heritage workflow's
-core ergonomic. The catalogue's snippet model (P52 tooltip path, P59 bar-dropdown path) is a
-FLAT config dict; the engine capabilities the heritage stack actually used are untracked. The
-**math-mode-only context condition is the keystone** — it is what makes short single-letter math
-triggers safe and what the quicktex prose/math split requires.
+*Why second:* snippets/autocomplete are the next daily-friction win and the heritage workflow's core ergonomic.
+The catalogue's snippet model (P52 tooltip path, P59 bar-dropdown path) is a FLAT config dict; the engine capabilities the heritage stack actually used are untracked.
+The **math-mode-only context condition is the keystone** — it is what makes short single-letter math triggers safe and what the quicktex prose/math split requires.
 Source: [[parity-research/snippet-and-lint-ecosystem]] (LuaSnip/UltiSnips), [[parity-research/quicktex]], [[parity-research/zettlr]].
 
 | Item | Status | Rel |
@@ -80,15 +57,13 @@ Source: [[parity-research/snippet-and-lint-ecosystem]] (LuaSnip/UltiSnips), [[pa
 | Transform/function nodes (derive a label from a title; case transforms) | net-new gap | Med |
 | Visual-selection wrap (`${VISUAL}`: select → wrap in `\emph{}`/environment) | net-new gap | Med |
 
-Exclude UltiSnips shell/Python interpolation (security/portability surface, gimmick) and
-LuaSnip dynamic/restore nodes (heavy, Low). Map quicktex's vim-keystroke bodies to CM6
-`${1}`/`${2}` template syntax — do NOT reimplement a keystroke interpreter.
+Exclude UltiSnips shell/Python interpolation (security/portability surface, gimmick) and LuaSnip dynamic/restore nodes (heavy, Low).
+Map quicktex's vim-keystroke bodies to CM6 `${1}`/`${2}` template syntax — do NOT reimplement a keystroke interpreter.
 
 ## Phase C — Citations done right
 
-*Why third:* "quickly finding and inserting citations" is a top-3 user priority. The catalogue
-already plans bib-citation autocomplete + a workspace-aware `\cref` picker + Tier-4 Zotero CAYW;
-the parity work supplies the MECHANISMS that make them usable, plus two small net-new surfaces.
+*Why third:* "quickly finding and inserting citations" is a top-3 user priority.
+The catalogue already plans bib-citation autocomplete + a workspace-aware `\cref` picker + Tier-4 Zotero CAYW; the parity work supplies the MECHANISMS that make them usable, plus two small net-new surfaces.
 Source: [[parity-research/vimtex]], [[parity-research/zettlr]], [[parity-research/overleaf]], [[parity-research/pandoc-editor]].
 
 | Item | Status | Rel |
@@ -102,12 +77,9 @@ Source: [[parity-research/vimtex]], [[parity-research/zettlr]], [[parity-researc
 
 ## Phase D — Figure & TikZ management and live editing
 
-*Why fourth:* "managing and editing figures/tikz/tikzcd" is a top user priority and the densest
-net-new cluster. The catalogue tracks rendering (tikz→SVG), a figures dir, a figures sidebar
-tab, TikZ mode, an insertion gallery, external-tool launches, and Tier-6 QTikz/Ipe/Tikzit parity
-milestones — but the round-trip foundation and the shared-config model are missing. The
-**tikz-subset parser is the single highest-leverage item across all parity research**: it
-underpins owned-tikz edit-in-place AND any future in-app node/edge editor.
+*Why fourth:* "managing and editing figures/tikz/tikzcd" is a top user priority and the densest net-new cluster.
+The catalogue tracks rendering (tikz→SVG), a figures dir, a figures sidebar tab, TikZ mode, an insertion gallery, external-tool launches, and Tier-6 QTikz/Ipe/Tikzit parity milestones — but the round-trip foundation and the shared-config model are missing.
+The **tikz-subset parser is the single highest-leverage item across all parity research**: it underpins owned-tikz edit-in-place AND any future in-app node/edge editor.
 Source: [[parity-research/tikzit]], [[parity-research/qtikz]], [[parity-research/ipe]].
 
 | Item | Status | Rel |
@@ -123,24 +95,17 @@ Source: [[parity-research/tikzit]], [[parity-research/qtikz]], [[parity-research
 | Watch-file reload of an owned figure when an external tool rewrites it (closes the launch→edit→return loop) | net-new gap | Med |
 | SVG/PDF-vector inclusion path for external-editor figures (Ipe/Inkscape emit SVG/PDF, not tikz) — a parallel "register + insert a non-tikz vector asset" path | net-new gap | Med |
 
-Do NOT greenfield an in-app vector/node-edge canvas (Tier-6 Ipe/Tikzit parity) before the
-round-trip parser and shared-style model land; external launch is the interim path. Ipe has NO
-native tikz export (negative finding) — treat its output as PDF/SVG assets, not owned tikz.
+Do NOT greenfield an in-app vector/node-edge canvas (Tier-6 Ipe/Tikzit parity) before the round-trip parser and shared-style model land; external launch is the interim path.
+Ipe has NO native tikz export (negative finding) — treat its output as PDF/SVG assets, not owned tikz.
 quiver/FreeTikZ already cover node/edge→tikz extraction — referenced, not re-proposed.
 
 ## Phase E — Large-project navigation (theses)
 
-*Why fifth:* "navigating and organizing large projects like theses" and "easily jumping around
-files" are named priorities. The catalogue's Tier-3 tree + Ctrl+P browser + filtering already
-match VSCode's REAL navigation model (and P18 already encodes the activity-bar/side-bar); the
-gaps are a command surface, content search, and in-buffer structural motion.
+*Why fifth:* "navigating and organizing large projects like theses" and "easily jumping around files" are named priorities.
+The catalogue's Tier-3 tree + Ctrl+P browser + filtering already match VSCode's REAL navigation model (and P18 already encodes the activity-bar/side-bar); the gaps are a command surface, content search, and in-buffer structural motion.
 Source: [[parity-research/zettlr]], [[parity-research/vscode]], [[parity-research/vimtex]], [[parity-research/overleaf]], [[parity-research/pandoc-editor]].
 
-**Keybinding correction (carry forward):** the user's phrasing "Ctrl+P for commands /
-Ctrl+Shift+P for recent files" transposes VSCode's real bindings — **Ctrl+P = Quick Open /
-fuzzy file finder (+ recent files)**, **Ctrl+Shift+P = Command Palette**. The existing Tier-3
-"Ctrl+P workspace file browser" already matches VSCode's REAL Ctrl+P. Implement both surfaces;
-use the real bindings.
+**Keybinding correction (carry forward):** the user's phrasing "Ctrl+P for commands / Ctrl+Shift+P for recent files" transposes VSCode's real bindings — **Ctrl+P = Quick Open / fuzzy file finder (+ recent files)**, **Ctrl+Shift+P = Command Palette**. The existing Tier-3 "Ctrl+P workspace file browser" already matches VSCode's REAL Ctrl+P. Implement both surfaces; use the real bindings.
 
 | Item | Status | Rel |
 | --- | --- | --- |
@@ -153,10 +118,8 @@ use the real bindings.
 
 ## Phase F — PDF preview, Gummi parity, faster export feedback
 
-*Why sixth:* "modes for previewing PDFs", "partially replace Gummi", "slide modes with quick
-feedback", and "feedback faster than a compile" on the export side. Much of this is already the
-Tier-2 PDF-preview / "Gummi parity" milestone; the parity work adds the bidirectional jump and
-build-hygiene mechanisms.
+*Why sixth:* "modes for previewing PDFs", "partially replace Gummi", "slide modes with quick feedback", and "feedback faster than a compile" on the export side.
+Much of this is already the Tier-2 PDF-preview / "Gummi parity" milestone; the parity work adds the bidirectional jump and build-hygiene mechanisms.
 Source: [[parity-research/gummi]], [[parity-research/overleaf]], [[parity-research/vimtex]], [[parity-research/zettlr]].
 
 | Item | Status | Rel |
@@ -171,11 +134,9 @@ Source: [[parity-research/gummi]], [[parity-research/overleaf]], [[parity-resear
 
 ## Phase G — Arxiv-ready export pipeline
 
-*Why seventh (high value, late lifecycle):* "export to a fully arxiv-ready paper" is High-value
-but happens at the END of a paper's life, so it ranks after daily-writing features. It is also
-the LARGEST single gap cluster — arXiv export is essentially untracked beyond generic latexmk
-plumbing. Each item fits the existing export-plugin contract ([[export-plugins-contract]]) as a
-standalone plugin running on the pandoc-EMITTED `.tex` (post `md→tex`), not on the markdown.
+*Why seventh (high value, late lifecycle):* "export to a fully arxiv-ready paper" is High-value but happens at the END of a paper's life, so it ranks after daily-writing features.
+It is also the LARGEST single gap cluster — arXiv export is essentially untracked beyond generic latexmk plumbing.
+Each item fits the existing export-plugin contract ([[export-plugins-contract]]) as a standalone plugin running on the pandoc-EMITTED `.tex` (post `md→tex`), not on the markdown.
 Source: [[parity-research/arxiv-export]].
 
 | Item | Status | Rel |
@@ -188,8 +149,7 @@ Source: [[parity-research/arxiv-export]].
 
 ## Phase H — Low-priority QOL / writing-comfort
 
-*Why last:* recorded for completeness; cheap but low-leverage for math research, and one item is
-a correctness risk.
+*Why last:* recorded for completeness; cheap but low-leverage for math research, and one item is a correctness risk.
 Source: [[parity-research/zettlr]], [[parity-research/pandoc-editor]].
 
 | Item | Status | Rel |
@@ -200,26 +160,23 @@ Source: [[parity-research/zettlr]], [[parity-research/pandoc-editor]].
 | Reading-time metric in the status cluster | refines Tier 0 (status cluster) | Low |
 | Autocorrect / magic quotes — **deprioritized with caution**: smart-quote/autocorrect substitution can corrupt LaTeX-bearing math source (`"` inside `\text{}`, breaking `$…$`); a correctness risk, not just low value | net-new gap (do not prioritize) | Low |
 
----
+* * *
 
 ## Where the catalogue already EXCEEDS the targets (not gaps — keep)
 
-- **Outline/TOC indexes fenced divs** (`:::{.remark title="…"}` → "Remark: …"): Gummi has NO
-  document outline at all; Overleaf's is single-file. ([[parity-research/gummi]], [[parity-research/overleaf]])
-- **Workspace-aware `\cref` picker** scans across subdocuments: Overleaf's ref scope is
-  single-file. ([[parity-research/overleaf]])
-- **Recovery is a host-FS git repo with a sub-10s loss bound** (P45): stronger than the plain
-  autosave of pandoc-editor and Gummi. ([[parity-research/pandoc-editor]], [[parity-research/gummi]])
+- **Outline/TOC indexes fenced divs** (`:::{.remark title="…"}` → "Remark: …"): Gummi has NO document outline at all; Overleaf's is single-file.
+  ([[parity-research/gummi]], [[parity-research/overleaf]])
+- **Workspace-aware `\cref` picker** scans across subdocuments: Overleaf's ref scope is single-file.
+  ([[parity-research/overleaf]])
+- **Recovery is a host-FS git repo with a sub-10s loss bound** (P45): stronger than the plain autosave of pandoc-editor and Gummi.
+  ([[parity-research/pandoc-editor]], [[parity-research/gummi]])
 - **Spellcheck honors a custom math dictionary** (P54): the targets' spellcheck flags math terms.
-- **The math-research insertion bar** (P55–P62) is richer than Gummi's absent math-symbol palette
-  and replaces the generic formatting toolbar the markdown editors ship.
+- **The math-research insertion bar** (P55–P62) is richer than Gummi's absent math-symbol palette and replaces the generic formatting toolbar the markdown editors ship.
 
 ## The cross-cutting ANTI-pattern (do not port)
 
-Three of the markdown editors (amar-jay/pandoc-editor: react-markdown+KaTeX; Zettlr: in-editor
-CodeMirror render+KaTeX; VSCode: markdown-it) preview WITHOUT pandoc — a CommonMark/KaTeX
-approximation that does not reflect real pandoc output (no amsthm environments, no filters, no
-`~/.pandoc` template). This is exactly the failure the P1/P4 real-pandoc loop exists to avoid;
-none of the three is parity for the core loop. KaTeX previews also violate the MathJax-always
-premise. Recorded so no future synthesis mistakes their preview for a target.
+Three of the markdown editors (amar-jay/pandoc-editor: react-markdown+KaTeX; Zettlr: in-editor CodeMirror render+KaTeX; VSCode: markdown-it) preview WITHOUT pandoc — a CommonMark/KaTeX approximation that does not reflect real pandoc output (no amsthm environments, no filters, no `~/.pandoc` template).
+This is exactly the failure the P1/P4 real-pandoc loop exists to avoid; none of the three is parity for the core loop.
+KaTeX previews also violate the MathJax-always premise.
+Recorded so no future synthesis mistakes their preview for a target.
 ([[parity-research/pandoc-editor]], [[parity-research/zettlr]], [[parity-research/vscode]])

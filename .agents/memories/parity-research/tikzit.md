@@ -1,24 +1,52 @@
 # TikzIt — Parity Research
 
-**Source-verified** against the [tikzit/tikzit](https://github.com/tikzit/tikzit) source tree (Flex/Bison parser, Qt GUI, sample `.tikz`/`.tikzstyles`/`.tikzdefs`), not the landing page. Cross-linked to [[../plugins-diagrams-figures-requirements]], [[../feature-catalogue-and-implementation-status]], [[../proof-obligations]].
+**Source-verified** against the [tikzit/tikzit](https://github.com/tikzit/tikzit) source tree (Flex/Bison parser, Qt GUI, sample `.tikz`/`.tikzstyles`/`.tikzdefs`), not the landing page.
+Cross-linked to [[../plugins-diagrams-figures-requirements]], [[../feature-catalogue-and-implementation-status]], [[../proof-obligations]].
 
 ## What it is
 
-TikzIt is a **node/edge graph editor whose canonical file IS a `.tikz` source** that is also directly `\input`-able into a paper. You place nodes and draw edges on a canvas; the canvas state round-trips to/from a real (subset-of-)tikz file via a Flex/Bison parser and a `Graph::tikz()` serializer. Styles live in a shared `.tikzstyles` file (a palette of `\tikzstyle{name}=[...]` definitions) reused across many figures, with an optional `.tikzdefs` preamble. Of the three Agent-C tools, TikzIt is **the closest fit to our doctrine**: it owns a real tikz-source figure (not a PDF, not an XML blob), the source is human-`\input`-able, styling is shared config, and preview is a separate real-pdflatex compile. It is on the allowlist (FreeTikZ/Tikzit-class). FreeTikZ — already in the repo plan ([[../plugins-diagrams-figures-requirements]], one-button extraction P-line) — is the web sibling of this node/edge model; do not re-propose it as net-new.
+TikzIt is a **node/edge graph editor whose canonical file IS a `.tikz` source** that is also directly `\input`-able into a paper.
+You place nodes and draw edges on a canvas; the canvas state round-trips to/from a real (subset-of-)tikz file via a Flex/Bison parser and a `Graph::tikz()` serializer.
+Styles live in a shared `.tikzstyles` file (a palette of `\tikzstyle{name}=[...]` definitions) reused across many figures, with an optional `.tikzdefs` preamble.
+Of the three Agent-C tools, TikzIt is **the closest fit to our doctrine**: it owns a real tikz-source figure (not a PDF, not an XML blob), the source is human-`\input`-able, styling is shared config, and preview is a separate real-pdflatex compile.
+It is on the allowlist (FreeTikZ/Tikzit-class).
+FreeTikZ — already in the repo plan ([[../plugins-diagrams-figures-requirements]], one-button extraction P-line) — is the web sibling of this node/edge model; do not re-propose it as net-new.
 
 ## Feature inventory
 
-- **Node/edge graph editing** `[relevance: High]` — Qt Graphics View; three tools (SELECT/VERTEX/EDGE). VERTEX click creates a named node `{position, label, name, style}`; EDGE click-drag connects source→target nodes with optional per-node anchors and an optional edge-label node. Bend controls: basic symmetric `bend` angle, or advanced independent `in`/`out` angles, plus `looseness`/weight; draggable Bezier control-point handles; self-loop handling. (`src/gui/tikzscene.*`, `src/data/edge.*`, `src/data/node.*`)
-- **Round-tripping a `.tikz` source** `[relevance: High]` — THE defining feature. Flex/Bison parser (`tikzlexer.l`, `tikzparser.y`) reads a tikz subset: `tikzpicture` envelope, `\node[props](name) at (x,y){label};`, `\draw[props](src) to (tgt);` edge chains, `\begin{pgfonlayer}{nodelayer/edgelayer}`, bbox via `\path … rectangle …`. `Graph::tikz()` re-emits canonical source. Hand-edit the `.tikz` externally → Ctrl+T re-parses to canvas; Ctrl+J jumps from a selected node to its source line. Parse failure soft-reverts to last valid state. TikzIt-private dummy props (`tikzit fill/draw/shape/category`) are preserved in source but ignored by LaTeX. (`src/data/tikzassembler.*`, `src/data/graph.cpp`)
-- **Style libraries (`.tikzstyles`)** `[relevance: High]` — a flat file of `\tikzstyle{name}=[fill=…, draw=…, shape=…]` lines; one `.tikzstyles` shared by every `.tikz` in a directory and `\input` by the paper. The **StylePalette** dock lists node/edge styles by category (`tikzit category`), each with a rendered icon; double-click applies to selection; N/P cycle styles; Ctrl+Shift+N clears. Built-in style editor dialog; load/save preserves order. (`src/data/tikzstyles.*`, `src/gui/stylepalette.*`, `src/data/style.*`)
+- **Node/edge graph editing** `[relevance: High]` — Qt Graphics View; three tools (SELECT/VERTEX/EDGE). VERTEX click creates a named node `{position, label, name, style}`; EDGE click-drag connects source→target nodes with optional per-node anchors and an optional edge-label node.
+  Bend controls: basic symmetric `bend` angle, or advanced independent `in`/`out` angles, plus `looseness`/weight; draggable Bezier control-point handles; self-loop handling.
+  (`src/gui/tikzscene.*`, `src/data/edge.*`, `src/data/node.*`)
+- **Round-tripping a `.tikz` source** `[relevance: High]` — THE defining feature.
+  Flex/Bison parser (`tikzlexer.l`, `tikzparser.y`) reads a tikz subset: `tikzpicture` envelope, `\node[props](name) at (x,y){label};`, `\draw[props](src) to (tgt);` edge chains, `\begin{pgfonlayer}{nodelayer/edgelayer}`, bbox via `\path … rectangle …`. `Graph::tikz()` re-emits canonical source.
+  Hand-edit the `.tikz` externally → Ctrl+T re-parses to canvas; Ctrl+J jumps from a selected node to its source line.
+  Parse failure soft-reverts to last valid state.
+  TikzIt-private dummy props (`tikzit fill/draw/shape/category`) are preserved in source but ignored by LaTeX. (`src/data/tikzassembler.*`, `src/data/graph.cpp`)
+- **Style libraries (`.tikzstyles`)** `[relevance: High]` — a flat file of `\tikzstyle{name}=[fill=…, draw=…, shape=…]` lines; one `.tikzstyles` shared by every `.tikz` in a directory and `\input` by the paper.
+  The **StylePalette** dock lists node/edge styles by category (`tikzit category`), each with a rendered icon; double-click applies to selection; N/P cycle styles; Ctrl+Shift+N clears.
+  Built-in style editor dialog; load/save preserves order.
+  (`src/data/tikzstyles.*`, `src/gui/stylepalette.*`, `src/data/style.*`)
 - **Snapping/grid** `[relevance: Med]` — grid is rendered (`TikzView::drawBackground`, minor `GRID_SEP` / major `GRID_N`, axes highlighted, hidden below 0.2× zoom, colors in QSettings) as an **alignment aid**; node placement is free-positioned, snap-to-grid is not hard-enforced in the examined code (Medium confidence — mouse-move handler not exhaustively traced).
-- **Snippet/symbol palette** `[relevance: Med]` — the StylePalette IS the palette (node-style tree + edge-style tree, icon previews, double-click-to-apply, keyboard cycle). No tikz-command palette à la QTikz; the "symbols" are user styles, persisted to `.tikzstyles`.
-- **Clipboard/export** `[relevance: High]` — copy/cut serializes the selected subgraph to **tikz code on the clipboard** (paste into LaTeX directly, or back into TikzIt with fresh node names + position shift). Export to PNG/JPG/PDF via the preview's pdflatex output + Poppler (ExportDialog: format, resolution, size). (`src/gui/tikzscene.cpp` copyToClipboard/paste, `src/gui/exportdialog.*`)
-- **Preamble/template management** `[relevance: High]` — embedded `tikzit.sty` resource declares the `nodelayer`/`edgelayer` pgf layers, dummy props, baseline/scale, and the `\tikzfig` macro. Per-project `.tikzstyles` (mandatory, auto-included in preview) + optional same-basename `.tikzdefs` (arbitrary `\usepackage`/`\newcommand` preamble, auto-detected and `\input` into the preview compile). Preview temp LaTeX: `article` + `tikzit.sty` + `[active,tightpage]{preview}` + `\input` of the active `.tikzstyles`/`.tikzdefs`. (`src/gui/latexprocess.cpp`)
-- **Live preview** `[relevance: High]` — NOT continuous WYSIWYG. Ctrl+R compiles the current graph through pdflatex in a temp dir (async subprocess, compile-log tab) and renders the PDF via Poppler in a separate PreviewWindow. The CANVAS itself is a Qt/QPainter approximation: shapes/fills come from style props, but node labels show raw `$\alpha$` text (math NOT typeset on canvas — only in the pdflatex preview). (`src/gui/previewwindow.*`, `src/gui/latexprocess.*`)
-- **File formats owned** `[relevance: High]` — `.tikz` (the figure, `\input`-able tikz subset), `.tikzstyles` (shared style palette), `.tikzdefs` (optional preamble). No project file; pairing is by shared basename/directory convention. PNG/JPG/PDF are export-only. (`src/data/tikzparser.y`, `src/gui/tikzdocument.cpp`)
-- **LaTeX-typeset node labels** `[relevance: High]` — label stored verbatim between the node braces `{…}`; full LaTeX/math in the pdflatex preview; canvas shows approximate (non-typeset) text. Edge-label nodes and anchor points (`name.north`) supported. (`src/data/node.*`, `src/data/graph.cpp` tikz())
-- **Bidirectional source↔canvas sync + shortcuts** `[relevance: High]` — Ctrl+T refresh-from-source, Ctrl+J jump-to-source-line, Ctrl+Alt+T revert-unsaved; QUndoStack per document. This is the round-trip-editing UX our "right-click to edit owned tikz" milestone needs.
+- **Snippet/symbol palette** `[relevance: Med]` — the StylePalette IS the palette (node-style tree + edge-style tree, icon previews, double-click-to-apply, keyboard cycle).
+  No tikz-command palette à la QTikz; the "symbols" are user styles, persisted to `.tikzstyles`.
+- **Clipboard/export** `[relevance: High]` — copy/cut serializes the selected subgraph to **tikz code on the clipboard** (paste into LaTeX directly, or back into TikzIt with fresh node names + position shift).
+  Export to PNG/JPG/PDF via the preview's pdflatex output + Poppler (ExportDialog: format, resolution, size).
+  (`src/gui/tikzscene.cpp` copyToClipboard/paste, `src/gui/exportdialog.*`)
+- **Preamble/template management** `[relevance: High]` — embedded `tikzit.sty` resource declares the `nodelayer`/`edgelayer` pgf layers, dummy props, baseline/scale, and the `\tikzfig` macro.
+  Per-project `.tikzstyles` (mandatory, auto-included in preview) + optional same-basename `.tikzdefs` (arbitrary `\usepackage`/`\newcommand` preamble, auto-detected and `\input` into the preview compile).
+  Preview temp LaTeX: `article` + `tikzit.sty` + `[active,tightpage]{preview}` + `\input` of the active `.tikzstyles`/`.tikzdefs`. (`src/gui/latexprocess.cpp`)
+- **Live preview** `[relevance: High]` — NOT continuous WYSIWYG. Ctrl+R compiles the current graph through pdflatex in a temp dir (async subprocess, compile-log tab) and renders the PDF via Poppler in a separate PreviewWindow.
+  The CANVAS itself is a Qt/QPainter approximation: shapes/fills come from style props, but node labels show raw `$\alpha$` text (math NOT typeset on canvas — only in the pdflatex preview).
+  (`src/gui/previewwindow.*`, `src/gui/latexprocess.*`)
+- **File formats owned** `[relevance: High]` — `.tikz` (the figure, `\input`-able tikz subset), `.tikzstyles` (shared style palette), `.tikzdefs` (optional preamble).
+  No project file; pairing is by shared basename/directory convention.
+  PNG/JPG/PDF are export-only.
+  (`src/data/tikzparser.y`, `src/gui/tikzdocument.cpp`)
+- **LaTeX-typeset node labels** `[relevance: High]` — label stored verbatim between the node braces `{…}`; full LaTeX/math in the pdflatex preview; canvas shows approximate (non-typeset) text.
+  Edge-label nodes and anchor points (`name.north`) supported.
+  (`src/data/node.*`, `src/data/graph.cpp` tikz())
+- **Bidirectional source↔canvas sync + shortcuts** `[relevance: High]` — Ctrl+T refresh-from-source, Ctrl+J jump-to-source-line, Ctrl+Alt+T revert-unsaved; QUndoStack per document.
+  This is the round-trip-editing UX our "right-click to edit owned tikz" milestone needs.
 
 ## Parity matrix
 
@@ -37,16 +65,25 @@ TikzIt is a **node/edge graph editor whose canonical file IS a `.tikz` source** 
 
 ## Gaps (net-new candidates our catalogue does NOT track)
 
-- **A real tikz-subset parser (round-trip, not just render)** `[relevance: High]` — our doctrine is "app renders tikz→SVG, never owns generation," and the catalogue tracks rendering and external launches but NOT parsing tikz back into a structured node/edge model. TikzIt's Flex/Bison parser + `Graph::tikz()` serializer is the missing foundation for (a) in-app node/edge editing (Tier6 Tikzit parity) and (b) "hand-edit the `.tikz`, re-sync the editor" round-trip. This is the single highest-leverage net-new item across all three programs: it underpins owned-tikz edit-in-place.
-- **Shared `.tikzstyles` + `.tikzdefs` palette for the global figures dir** `[relevance: High]` — TikzIt's model (one style file + one preamble file shared by every figure in a directory, `\input` by the paper) is a concrete, blessed shared-config pattern our figures-dir doctrine lacks. Our shared config is the pandoc filter preamble; a per-figures-dir style/preamble pair (that both the in-app preview AND the paper consume) is net-new and directly aligned with the global figures dir.
-- **Source↔preview line jumping for owned tikz figures** `[relevance: High]` — Ctrl+J (select node → jump to its `.tikz` line) and Ctrl+T (re-parse source → update view) are the precise round-trip affordances "right-click to edit owned tikz" (Tier3) needs but does not yet specify. Net-new at the obligation level.
+- **A real tikz-subset parser (round-trip, not just render)** `[relevance: High]` — our doctrine is "app renders tikz→SVG, never owns generation," and the catalogue tracks rendering and external launches but NOT parsing tikz back into a structured node/edge model.
+  TikzIt's Flex/Bison parser + `Graph::tikz()` serializer is the missing foundation for (a) in-app node/edge editing (Tier6 Tikzit parity) and (b) "hand-edit the `.tikz`, re-sync the editor" round-trip.
+  This is the single highest-leverage net-new item across all three programs: it underpins owned-tikz edit-in-place.
+- **Shared `.tikzstyles` + `.tikzdefs` palette for the global figures dir** `[relevance: High]` — TikzIt's model (one style file + one preamble file shared by every figure in a directory, `\input` by the paper) is a concrete, blessed shared-config pattern our figures-dir doctrine lacks.
+  Our shared config is the pandoc filter preamble; a per-figures-dir style/preamble pair (that both the in-app preview AND the paper consume) is net-new and directly aligned with the global figures dir.
+- **Source↔preview line jumping for owned tikz figures** `[relevance: High]` — Ctrl+J (select node → jump to its `.tikz` line) and Ctrl+T (re-parse source → update view) are the precise round-trip affordances "right-click to edit owned tikz" (Tier3) needs but does not yet specify.
+  Net-new at the obligation level.
 - **Compile-log + jump-to-error in TikZ mode** `[relevance: Med]` — same gap noted for QTikz; TikzIt's preview log tab confirms it as table-stakes for an owned-tikz preview, not currently a TikZ-mode obligation.
 - **VS Code extension (`vstikzit`) precedent** `[relevance: Low]` — confirms the node/edge editor can live as an embedded extension rather than a standalone app; informs (does not add) the in-app Tier6 parity goal.
 
 ## Dispositions
 
-- **Full in-app node/edge graphical canvas (Tikzit parity)** — already tracked as Tier6 ("TikZ parity with Ipe and Tikzit"); a very large surface. The blessed interim path is **external launch + owned `.tikz` round-trip**; do not greenfield the canvas before the round-trip parser and the shared-style model land. Not a gimmick — a real but late milestone.
-- **Canvas-side approximate (non-typeset) label rendering** — gimmick — deprioritized: TikzIt shows raw `$\alpha$` on the canvas because it cannot cheaply typeset. Our preview already typesets via real MathJax/pdflatex; do not replicate an approximate canvas renderer.
-- **Cross-platform Qt build / VS Code extension** — excluded — banned non-goal (cross-platform). Relevant only as evidence the editor can be embedded, not as a target.
-- **FreeTikZ re-proposal** — NOT net-new: the node/edge → tikz extraction model is FreeTikZ/quiver, already in the repo plan (Tier3 one-button extraction). Referenced, not re-proposed.
+- **Full in-app node/edge graphical canvas (Tikzit parity)** — already tracked as Tier6 ("TikZ parity with Ipe and Tikzit"); a very large surface.
+  The blessed interim path is **external launch + owned `.tikz` round-trip**; do not greenfield the canvas before the round-trip parser and the shared-style model land.
+  Not a gimmick — a real but late milestone.
+- **Canvas-side approximate (non-typeset) label rendering** — gimmick — deprioritized: TikzIt shows raw `$\alpha$` on the canvas because it cannot cheaply typeset.
+  Our preview already typesets via real MathJax/pdflatex; do not replicate an approximate canvas renderer.
+- **Cross-platform Qt build / VS Code extension** — excluded — banned non-goal (cross-platform).
+  Relevant only as evidence the editor can be embedded, not as a target.
+- **FreeTikZ re-proposal** — NOT net-new: the node/edge → tikz extraction model is FreeTikZ/quiver, already in the repo plan (Tier3 one-button extraction).
+  Referenced, not re-proposed.
 - **Grid snap-to enforcement** — deprioritized: TikzIt itself leaves the grid as a visual aid with free positioning; hard snap is not load-bearing for tikz figures where coordinates are often semantic, not pixel-aligned.

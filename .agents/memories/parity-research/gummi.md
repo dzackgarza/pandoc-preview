@@ -1,52 +1,47 @@
 # Gummi — Parity Research
 
-**Scope note (read first):** Gummi is a single-user GTK desktop LaTeX editor — the closest
-analogue to this app's deployment shape, and the user explicitly wants to "partially replace
-Gummi." Gummi's source of truth is raw `.tex`; this app is pandoc-markdown-first, so Gummi's
-compile/preview machinery maps to the markdown → pandoc → latex export-and-PDF-preview path, not
-to a raw-tex editor. See [[../feature-catalogue-and-implementation-status]],
-[[../product-destination-what-done-looks-like]], [[../rendering-pipeline-requirements-filters-mathjax-references]].
+**Scope note (read first):** Gummi is a single-user GTK desktop LaTeX editor — the closest analogue to this app's deployment shape, and the user explicitly wants to "partially replace Gummi."
+Gummi's source of truth is raw `.tex`; this app is pandoc-markdown-first, so Gummi's compile/preview machinery maps to the markdown → pandoc → latex export-and-PDF-preview path, not to a raw-tex editor.
+See [[../feature-catalogue-and-implementation-status]], [[../product-destination-what-done-looks-like]], [[../rendering-pipeline-requirements-filters-mathjax-references]].
 
 ## What it is
 
-A lightweight GTK+ Linux LaTeX editor "designed with simplicity in mind." It compiles the open
-`.tex` automatically on idle via **latexmk** (with **rubber** as an alternative build system),
-writes build artifacts to a **temp directory** (jobname routed to `C_TMPDIR`, keeping the source
-tree clean), enables **SyncTeX** (`-synctex=1`), and shows the resulting PDF in a **continuous
-live preview pane** that updates without manual compilation. Verified against the Gummi source
-(`src/compile/latexmk.c`), Wikipedia, and the project wiki (June 2026).
+A lightweight GTK+ Linux LaTeX editor "designed with simplicity in mind."
+It compiles the open `.tex` automatically on idle via **latexmk** (with **rubber** as an alternative build system), writes build artifacts to a **temp directory** (jobname routed to `C_TMPDIR`, keeping the source tree clean), enables **SyncTeX** (`-synctex=1`), and shows the resulting PDF in a **continuous live preview pane** that updates without manual compilation.
+Verified against the Gummi source (`src/compile/latexmk.c`), Wikipedia, and the project wiki (June 2026).
 
 ## Feature inventory
 
-- **Continuous live PDF preview** — "The pdf is shown without the need to compile it manually";
-  preview pane updates as you edit. `[relevance: High]` (the Tier-2 "PDF preview Gummi parity"
-  milestone is named directly after this)
+- **Continuous live PDF preview** — "The pdf is shown without the need to compile it manually"; preview pane updates as you edit.
+  `[relevance: High]` (the Tier-2 "PDF preview Gummi parity" milestone is named directly after this)
 - **Compile-on-idle (automatic compilation)** — latexmk-driven compile triggered while editing.
   `[relevance: High]`
-- **latexmk + rubber build systems** — rubber "runs just as many compilations as necessary" and
-  runs BibTeX/Makeindex when needed; latexmk is the default driver. `[relevance: High]` (matches
-  our latexmk-class export-pipeline requirement exactly)
-- **Temp-directory builds** — output `-jobname` routed to a temp dir so artifacts don't pollute
-  the source directory. `[relevance: Med]` (clean mechanism worth porting to the export path)
+- **latexmk + rubber build systems** — rubber "runs just as many compilations as necessary" and runs BibTeX/Makeindex when needed; latexmk is the default driver.
+  `[relevance: High]` (matches our latexmk-class export-pipeline requirement exactly)
+- **Temp-directory builds** — output `-jobname` routed to a temp dir so artifacts don't pollute the source directory.
+  `[relevance: Med]` (clean mechanism worth porting to the export path)
 - **SyncTeX integration** — `-synctex=1` injected; jump between source and PDF. `[relevance: High]`
-- **BibTeX / bibliography support** — bibliography handling + BibTeX processing via the build
-  system. `[relevance: High]`
-- **Snippets (configurable LaTeX snippets)** — user-configurable snippet expansion. `[relevance: High]`
-- **Templates and wizards for new documents** — starter docs + a new-document wizard. `[relevance: Low]`
-- **Graphical insertion of tables and images** — GUI table/image inserters. `[relevance: Med]`
-  (directly parallels our insertion-bar table builder P58 and clipboard-image P62)
-- **Project management** — basic multi-file project handling. `[relevance: Med]`
-- **Syntax highlighting** — LaTeX source highlighting. `[relevance: Med]`
-- **LaTeX error checking** — surfaces compile errors. `[relevance: High]`
+- **BibTeX / bibliography support** — bibliography handling + BibTeX processing via the build system.
+  `[relevance: High]`
+- **Snippets (configurable LaTeX snippets)** — user-configurable snippet expansion.
+  `[relevance: High]`
+- **Templates and wizards for new documents** — starter docs + a new-document wizard.
+  `[relevance: Low]`
+- **Graphical insertion of tables and images** — GUI table/image inserters.
+  `[relevance: Med]` (directly parallels our insertion-bar table builder P58 and clipboard-image P62)
+- **Project management** — basic multi-file project handling.
+  `[relevance: Med]`
+- **Syntax highlighting** — LaTeX source highlighting.
+  `[relevance: Med]`
+- **LaTeX error checking** — surfaces compile errors.
+  `[relevance: High]`
 - **Spell check (enchant-based)** — `[relevance: Med]`
 - **Export to PDF** — `[relevance: High]`
-- **Autosave** — periodic save of the working file. `[relevance: High]` (we go further: host-FS
-  recovery store, P45)
-- **Document structure / outline summary** — **Gummi explicitly LACKS this** (Wikipedia notes
-  Gummi has no document-structure summary, unlike Kile/GNOME LaTeX). `[relevance: High]` (an area
-  where our Tier-0 outline already EXCEEDS the replace-target)
-- **Graphical math-symbol insertion** — Gummi explicitly LACKS this too. `[relevance: Med]` (our
-  insertion bar is math-research-first, so this is covered by design)
+- **Autosave** — periodic save of the working file.
+  `[relevance: High]` (we go further: host-FS recovery store, P45)
+- **Document structure / outline summary** — **Gummi explicitly LACKS this** (Wikipedia notes Gummi has no document-structure summary, unlike Kile/GNOME LaTeX). `[relevance: High]` (an area where our Tier-0 outline already EXCEEDS the replace-target)
+- **Graphical math-symbol insertion** — Gummi explicitly LACKS this too.
+  `[relevance: Med]` (our insertion bar is math-research-first, so this is covered by design)
 
 ## Parity matrix
 
@@ -73,27 +68,21 @@ live preview pane** that updates without manual compilation. Verified against th
 
 Target features our catalogue does NOT track (net-new candidates):
 
-- **Temp-directory build isolation for the compile/export path** — Gummi routes latexmk
-  `-jobname` to a temp dir so `.aux`/`.log`/`.pdf` never litter the source tree. Our export-plugin
-  contract runs with `cwd = source file's parent directory` ([[../export-plugins-contract]]), which
-  WILL scatter latex aux files next to the user's thesis. A temp-build-dir convention for the
-  latexmk-class export path is untracked and worth adopting. `[relevance: Med]`
-- **`rubber` as an alternative build driver / auto BibTeX-Makeindex orchestration** — our pipeline
-  names latexmk + include.lua but does not track rubber's "run exactly as many passes as needed,
-  auto-invoke BibTeX/Makeindex" behavior as a first-class option. For reference-heavy theses this
-  multi-pass auto-orchestration is the substance of "references done right." `[relevance: Med]`
-  (overlaps the existing Tier-2 reference-resolution requirement but is not pinned as an obligation)
-- **New-document wizard** — Gummi has GUI wizards; our equivalent is the first-run gum walkthrough
-  (P10), which bootstraps config, not per-document scaffolding. A per-document "new math paper from
-  template" scaffold is untracked. `[relevance: Low]`
+- **Temp-directory build isolation for the compile/export path** — Gummi routes latexmk `-jobname` to a temp dir so `.aux`/`.log`/`.pdf` never litter the source tree.
+  Our export-plugin contract runs with `cwd = source file's parent directory` ([[../export-plugins-contract]]), which WILL scatter latex aux files next to the user's thesis.
+  A temp-build-dir convention for the latexmk-class export path is untracked and worth adopting.
+  `[relevance: Med]`
+- **`rubber` as an alternative build driver / auto BibTeX-Makeindex orchestration** — our pipeline names latexmk + include.lua but does not track rubber's "run exactly as many passes as needed, auto-invoke BibTeX/Makeindex" behavior as a first-class option.
+  For reference-heavy theses this multi-pass auto-orchestration is the substance of "references done right."
+  `[relevance: Med]` (overlaps the existing Tier-2 reference-resolution requirement but is not pinned as an obligation)
+- **New-document wizard** — Gummi has GUI wizards; our equivalent is the first-run gum walkthrough (P10), which bootstraps config, not per-document scaffolding.
+  A per-document "new math paper from template" scaffold is untracked.
+  `[relevance: Low]`
 
 ## Dispositions
 
 - No Gummi gimmicks (no AI/collab/telemetry) — nothing to deprioritize on that axis.
-- **GTK-native / cross-toolkit packaging** — excluded, banned non-goal (cross-platform). This app
-  is Tauri/Linux-single-target by design.
-- **Raw-.tex source-of-truth editing** — not copied literally; this app is markdown-first and maps
-  Gummi's tex-compile loop onto the markdown→pandoc→latex export/PDF-preview path.
-- **In-app GTK math-symbol palette** — superseded (not a gap): the math-research insertion bar
-  (Milestone G, P55–P62) is the deliberate replacement and is richer (amsthm envs, tikz/tikzcd,
-  matrix builder, footnote modal) than Gummi's absent symbol palette.
+- **GTK-native / cross-toolkit packaging** — excluded, banned non-goal (cross-platform).
+  This app is Tauri/Linux-single-target by design.
+- **Raw-.tex source-of-truth editing** — not copied literally; this app is markdown-first and maps Gummi's tex-compile loop onto the markdown→pandoc→latex export/PDF-preview path.
+- **In-app GTK math-symbol palette** — superseded (not a gap): the math-research insertion bar (Milestone G, P55–P62) is the deliberate replacement and is richer (amsthm envs, tikz/tikzcd, matrix builder, footnote modal) than Gummi's absent symbol palette.

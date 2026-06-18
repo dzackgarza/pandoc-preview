@@ -1,0 +1,49 @@
+{
+  "run_id": "20260618T223337Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p105-tikz-error-map.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p105-tikz-error-map.spec.ts",
+            "title": "a tikz figure-compile error surfaces as a clickable TikZ-mode log entry whose activation jumps the editor cursor to the offending tikz source line",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 7237,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p105-tikz-error-map.spec.ts",
+          "name": "figure-error-line",
+          "value": 24
+        },
+        {
+          "spec": "p105-tikz-error-map.spec.ts",
+          "name": "figure-error-message",
+          "value": "Package pgfkeys Error: I do not know the key '/tikz/ppe_no_such_style' and I"
+        },
+        {
+          "spec": "p105-tikz-error-map.spec.ts",
+          "name": "cursor-landed-offset",
+          "value": 439
+        }
+      ]
+    }
+  ]
+}

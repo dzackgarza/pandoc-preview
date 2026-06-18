@@ -2,7 +2,10 @@
 
 ## What it is
 
-A cross-platform Electron + React/TypeScript markdown editor ("built in 2 days with Claude Sonnet 4.0 + GitHub Copilot"; ~9 stars), pitched at "academic and professional writing." Source read directly from `github.com/amar-jay/pandoc-editor` (default branch `main`): main process in `src/main/` (`pandoc.ts`, `install-pandoc.ts`, `filesystem.ts`), renderer in `src/renderer/src/`. The critical architectural fact for our lens: **its live preview is NOT pandoc** — `preview-pane.tsx` renders with `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `rehype-highlight` and a `MermaidRenderer`. Pandoc is invoked ONLY on export (`src/main/pandoc.ts`, `buildPandocCommand`). So for a math-research user, the on-screen preview is a CommonMark/KaTeX approximation that does not reflect the real pandoc output (no amsthm/theorem environments, no filters, no `~/.pandoc` template). That is exactly the failure mode our product exists to avoid: our P1/P4 obligations demand the preview be the user's REAL raw pandoc command. This editor is a useful inventory of "ordinary editor affordances" but an anti-example on the core loop.
+A cross-platform Electron + React/TypeScript markdown editor ("built in 2 days with Claude Sonnet 4.0 + GitHub Copilot"; ~9 stars), pitched at "academic and professional writing."
+Source read directly from `github.com/amar-jay/pandoc-editor` (default branch `main`): main process in `src/main/` (`pandoc.ts`, `install-pandoc.ts`, `filesystem.ts`), renderer in `src/renderer/src/`. The critical architectural fact for our lens: **its live preview is NOT pandoc** — `preview-pane.tsx` renders with `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `rehype-highlight` and a `MermaidRenderer`. Pandoc is invoked ONLY on export (`src/main/pandoc.ts`, `buildPandocCommand`). So for a math-research user, the on-screen preview is a CommonMark/KaTeX approximation that does not reflect the real pandoc output (no amsthm/theorem environments, no filters, no `~/.pandoc` template).
+That is exactly the failure mode our product exists to avoid: our P1/P4 obligations demand the preview be the user's REAL raw pandoc command.
+This editor is a useful inventory of "ordinary editor affordances" but an anti-example on the core loop.
 
 ## Feature inventory
 
@@ -56,9 +59,13 @@ A cross-platform Electron + React/TypeScript markdown editor ("built in 2 days w
 
 Features this editor has that our catalogue does NOT explicitly track as items:
 
-- **YAML frontmatter editor / preview surface** `[relevance: Med]` — a dedicated metadata-editing affordance (title/author/date/bibliography/csl front matter). Our catalogue assumes frontmatter is hand-typed; a structured frontmatter helper (especially to declare `bibliography:` per-file, which Zettlr also does) is a net-new candidate worth recording. NOT a banned non-goal.
-- **Batch / multi-format export in one action** (`PandocUtils.batchConvert`, `Promise.allSettled` over several format options) `[relevance: Low–Med]` — our export model is per-type plugins (Tier 2/4); "export to N formats at once" is not tracked. Minor, plugin-composable later.
-- **"Reading time" metric** `[relevance: Low]` — trivial; our status cluster tracks word/line count but not reading time. Negligible.
+- **YAML frontmatter editor / preview surface** `[relevance: Med]` — a dedicated metadata-editing affordance (title/author/date/bibliography/csl front matter).
+  Our catalogue assumes frontmatter is hand-typed; a structured frontmatter helper (especially to declare `bibliography:` per-file, which Zettlr also does) is a net-new candidate worth recording.
+  NOT a banned non-goal.
+- **Batch / multi-format export in one action** (`PandocUtils.batchConvert`, `Promise.allSettled` over several format options) `[relevance: Low–Med]` — our export model is per-type plugins (Tier 2/4); "export to N formats at once" is not tracked.
+  Minor, plugin-composable later.
+- **"Reading time" metric** `[relevance: Low]` — trivial; our status cluster tracks word/line count but not reading time.
+  Negligible.
 
 Negative finding on net-new depth:
 
@@ -70,8 +77,12 @@ Negative finding on net-new depth:
 
 ## Dispositions
 
-- **Mermaid-in-browser preview** — gimmick/misaligned, deprioritized. Reason: our diagram model owns tikz/tikzcd through the pandoc filter layer ([[../plugins-diagrams-figures-requirements]]); in-browser mermaid is not a math-research goal and overlaps the spirit of in-browser TikZ rendering we avoid.
-- **KaTeX preview engine** — excluded. Reason: violates the user-owned "MathJax always, no engine option anywhere" premise ([[../decision-provenance-user-owned-vs-framework-forced]], P4/P16). KaTeX cannot cover pandoc's full math syntax.
+- **Mermaid-in-browser preview** — gimmick/misaligned, deprioritized.
+  Reason: our diagram model owns tikz/tikzcd through the pandoc filter layer ([[../plugins-diagrams-figures-requirements]]); in-browser mermaid is not a math-research goal and overlaps the spirit of in-browser TikZ rendering we avoid.
+- **KaTeX preview engine** — excluded.
+  Reason: violates the user-owned "MathJax always, no engine option anywhere" premise ([[../decision-provenance-user-owned-vs-framework-forced]], P4/P16). KaTeX cannot cover pandoc's full math syntax.
 - **Cross-platform packaging + bundled per-OS pandoc download** — excluded — banned non-goal (cross-platform) ([[../product-destination-what-done-looks-like]]). We provision pandoc single-platform via doctor/first-run.
-- **Generic formatting toolbar (bold/italic/H1/H2/H3)** — excluded by design. Reason: P55 explicitly replaces the formatting toolbar with a math-research INSERTION bar; trivial-in-markdown formatting is Low relevance by definition ([[../feature-catalogue-and-implementation-status]]).
-- **react-markdown live preview** — excluded as the core-loop approach. Reason: directly contradicts the "preview = real raw pandoc command" invariant (P1/P4); recorded here so synthesis never mistakes this editor's preview for parity.
+- **Generic formatting toolbar (bold/italic/H1/H2/H3)** — excluded by design.
+  Reason: P55 explicitly replaces the formatting toolbar with a math-research INSERTION bar; trivial-in-markdown formatting is Low relevance by definition ([[../feature-catalogue-and-implementation-status]]).
+- **react-markdown live preview** — excluded as the core-loop approach.
+  Reason: directly contradicts the "preview = real raw pandoc command" invariant (P1/P4); recorded here so synthesis never mistakes this editor's preview for parity.

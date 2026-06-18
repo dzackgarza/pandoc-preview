@@ -1,0 +1,125 @@
+{
+  "run_id": "20260618T230233Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d09-plugin-doctor-check.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d09-plugin-doctor-check.spec.ts",
+            "title": "a discovered plugin contributes doctor checks that join the battery and reflect real conditions",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1267,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d09-plugin-doctor-check.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p62-clipboard-image.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p62-clipboard-image.spec.ts",
+            "title": "the paste-image action writes the clipboard image into the configured figures dir and references that exact file at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2647,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "figures-dir",
+          "value": "/tmp/pandoc-preview-proof-runs/20260618T230233Z/p62-clipboard-image/home/.pandoc/figures"
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "written-file",
+          "value": "clipboard-1781823822286-983223410.png"
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-width",
+          "value": 7
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-height",
+          "value": 5
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-ref-target",
+          "value": "/tmp/pandoc-preview-proof-runs/20260618T230233Z/p62-clipboard-image/home/.pandoc/figures/clipboard-1781823822286-983223410.png"
+        }
+      ]
+    },
+    {
+      "spec": "p19-plugin-run-by-id.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p19-plugin-run-by-id.spec.ts",
+            "title": "A generic plugin runs by id against the real buffer and returns a structured result",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3253,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p19-plugin-run-by-id.spec.ts",
+          "name": "plugin-witness-sha256",
+          "value": "685c99f9f2cf4d19cf16fd23e212367771f093d1b0f9250aebe5e8d0373f323b"
+        }
+      ]
+    },
+    {
+      "spec": "p22-configure-plugin-spawn.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p22-configure-plugin-spawn.spec.ts",
+            "title": "A plugin is configured by id: the app spawns its [configure] command",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2868,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
