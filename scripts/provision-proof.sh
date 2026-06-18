@@ -960,6 +960,38 @@ p87-cross-file-labels.spec.ts)
     # line-numbered outline/fold assertions over their OWN copies are untouched.
     printf '\n\nA cross-file lemma. \\label{lem:xyz-cross}\n' >> "$PROJECT_DIR/outline.md"
     ;;
+p87b-label-precision.spec.ts)
+    # P87b (C3 precision): a label is an anchor DEFINITION — a pandoc `{#id}`
+    # heading attribute, a `:::{#id}` fenced-div id, or a `\label{}` — NOT an
+    # arbitrary `#id` token. Provision ONE markdown file (file A, precision.md) in
+    # THIS spec's hermetic project copy only, carrying THREE distinctive tokens
+    # together:
+    #   (a) a REAL anchor that MUST be offered: a heading with a pandoc attribute
+    #       `{#sec:realprecision}` (and a `\label{lem:realprecision}` for good
+    #       measure) — genuine anchor definitions.
+    #   (b) a DECOY markdown link fragment that MUST NOT be offered:
+    #       `[see here](#decoyfragment)` — a `#id` inside a link target, NOT an
+    #       attribute brace.
+    #   (c) a DECOY prose hash that MUST NOT be offered: a bare `#decoyprose`
+    #       token in ordinary prose, NOT inside any attribute brace.
+    # The tokens `realprecision`, `decoyfragment`, `decoyprose` appear in NEITHER
+    # demo.md nor outline.md, so candidates surfaced for them while editing demo.md
+    # came ONLY from harvesting precision.md. The spec opens file B (demo.md) and
+    # triggers `\cref{` label completion; the precise harvester must offer
+    # `sec:realprecision`/`lem:realprecision` and must NOT offer the link fragment
+    # `decoyfragment` nor the prose hash `decoyprose`. Added as a NEW file (not
+    # appended to demo/outline) so p41/p42/p87 expectations over their copies are
+    # untouched.
+    cat > "$PROJECT_DIR/precision.md" <<'PPE_P87B_EOF'
+# Precision section {#sec:realprecision}
+
+A real lemma. \label{lem:realprecision}
+
+A markdown link to elsewhere: [see here](#decoyfragment).
+
+A bare prose hash like #decoyprose is not an anchor definition.
+PPE_P87B_EOF
+    ;;
 p88-perfile-bib-override.spec.ts)
     # P88 (C4): per-file `bibliography:` YAML frontmatter override, with the global
     # config bibliography as the source for files WITHOUT it. Two distinct
