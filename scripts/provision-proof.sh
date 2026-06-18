@@ -1339,6 +1339,39 @@ PPE_P102_SPY_EOF
 \end{document}
 PPE_P102_NOSPY_EOF
     ;;
+p108-watch-file-reload.spec.ts)
+    # P98 (Phase D / D-9): watch-file reload of the OPEN owned figure. The open
+    # file (the one carrying the P48 fingerprint) must carry ONE owned tikz figure
+    # whose distinctive rendered content is in the figure SOURCE itself, so an
+    # external rewrite of that file changes the rendered signature. Provision
+    # demo.md as a minimal markdown doc carrying a single `{=latex}` tikz figure
+    # whose node is filled RED — the figure compile seam P100 activated renders it
+    # to an inline <svg> with fill `rgb(100%, 0%, 0%)` (verified against the real
+    # pdflatex+pdf2svg toolchain; the SAME signature p101 verifies). The spec then
+    # has an INDEPENDENT process rewrite this file with the SAME figure filled BLUE
+    # (`rgb(0%, 0%, 100%)`) and asserts the preview RELOADS to the blue signature
+    # (the stale red render gone) via the P48 fingerprint divergence — and that an
+    # unsaved in-app buffer edit (no on-disk change, no fingerprint divergence)
+    # triggers NO spurious reload.
+    #
+    # NOTE (the RED today): nothing watches the open owned figure file, so an
+    # external on-disk rewrite produces no preview reload — the stale red render
+    # persists and the blue signature never appears. The figure itself compiles
+    # (P100's seam is active), so the initial red render is present and the failure
+    # is the missing watch-reload, not a boot/setup error. The GREEN wiring (D-9)
+    # reuses the EXISTING P48 fingerprint to detect the open file's divergence and
+    # reload the preview.
+    cat > "$DEMO_FILE" <<'PPE_P108_RED_EOF'
+# P108 — watch-file reload witness
+
+```{=latex}
+\begin{tikzpicture}
+  \node[fill=red, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm] (a) at (0,0) {Aleph};
+\end{tikzpicture}
+```
+
+PPE_P108_RED_EOF
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────
