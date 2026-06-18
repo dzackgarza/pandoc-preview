@@ -454,6 +454,25 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p52-snippets.json" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p77-math-mode-snippet.spec.ts)
+        # P77 (math-mode-only expansion, the Phase-B keystone) declares the SAME
+        # config-owned snippet-dictionary path P52/P59 read, but the dictionary is
+        # MODE-TAGGED: its entries carry a per-entry prose|math mode (B-DESIGN-0),
+        # a shape the flat trigger->string dict cannot express. The committed
+        # fixture (tests/proof/fixtures/snippets/p77-math-mode-snippets.json) maps
+        # the SAME short trigger `st` to a PROSE body and a MATH body, plus a
+        # MATH-ONLY trigger `mcal`. Pointing config at it makes those the snippets
+        # the editor offers, gated by the cursor's math/prose zone. RED today: the
+        # flat parser (parseSnippetDictionary) rejects the object-valued entries
+        # (non-string body) → hard toast → no snippet source loads → the trigger
+        # is offered in NEITHER zone, which is the faithful schema-cannot-carry-mode
+        # failure P77 names.
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p77-math-mode-snippets.json"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p77-math-mode-snippets.json" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
     p54-spellcheck.spec.ts)
         # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
         # hardcoded list. Provision a hermetic copy of the committed FIXTURE

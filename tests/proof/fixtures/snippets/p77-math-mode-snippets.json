@@ -1,0 +1,19 @@
+{
+  "snippets": [
+    {
+      "trigger": "st",
+      "mode": "prose",
+      "body": "::: {.PPE-PROSE-STRUCTURE}\n$0\n:::"
+    },
+    {
+      "trigger": "st",
+      "mode": "math",
+      "body": "\\PPEmathstar{$0}"
+    },
+    {
+      "trigger": "mcal",
+      "mode": "math",
+      "body": "\\mathcal{$0}"
+    }
+  ]
+}
