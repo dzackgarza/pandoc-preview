@@ -1060,6 +1060,48 @@ p29-global-figures-resource.spec.ts)
     cp "$REPO_ROOT/tests/proof/fixtures/global-figures/rendered/global.png" "$FIGS_DIR/"
     printf '\n![globalfig](rendered/global.png)\n' >> "$DEMO_FILE"
     ;;
+p101-shared-tikzstyles.spec.ts)
+    # P91 (Phase D / D-2): a tikz style defined ONLY in the shared `.tikzstyles`
+    # palette must visibly determine a compiled figure's appearance in the live
+    # preview, and changing that shared file must change the render.
+    #
+    # Provision the shared palette file in TikzIt's NATIVE `.tikzstyles` format
+    # (`\tikzstyle{NAME}=[...]`, per [[parity-research/tikzit]]) into this spec's
+    # hermetic global figures dir. It declares ONE distinctive style, `bigredbox`,
+    # with `fill=red` — a clearly detectable visual signature: a node carrying
+    # this style compiles (pdflatex + pdf2svg) to an SVG whose fill is
+    # `rgb(100%, 0%, 0%)` (verified against the real toolchain). The style name and
+    # its fill appear in NO other fixture, so a red fill in the rendered figure can
+    # ONLY come from the figure compile having consumed THIS shared file.
+    #
+    # The companion BLUE variant (`bigredbox`=fill=blue) is provisioned alongside,
+    # under a sibling name the spec swaps in on disk for the discriminator leg: the
+    # spec overwrites the active shared file with the blue definition and
+    # re-triggers a render, asserting the rendered figure changes from the red
+    # signature to the blue signature (`rgb(0%, 0%, 100%)`). This proves the SHARED
+    # FILE'S CONTENT determines the render — a hardcoded-red compile that ignored
+    # the file would survive the first leg but fail the discriminator.
+    #
+    # NOTE (the RED today): the figure-compile seam P100 activated does NOT
+    # `\input` this shared file, and there is no config key declaring it (the
+    # config schema is deny_unknown_fields, so declaring an undefined
+    # shared-tikzstyles key here would be a BOOT failure, not the missing-
+    # consumption behavior this obligation targets). So a node using
+    # `style=bigredbox` compiles WITHOUT the style's effect: the figure either
+    # fails to produce a vector figure or renders with no red fill. The shared
+    # file sits on disk, unconsumed. The GREEN wiring (D-2) adds the
+    # config-declared, ExistingFile-validated shared-tikzstyles path and `\input`s
+    # it into the figure compile; this provisioning places the file where that
+    # wiring will read it (the configured global figures dir).
+    FIGS_DIR="$ABS_SPEC_DIR/home/.pandoc/figures"
+    mkdir -p "$FIGS_DIR"
+    cat > "$FIGS_DIR/shared.tikzstyles" <<'PPE_P101_RED_EOF'
+\tikzstyle{bigredbox}=[fill=red, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm]
+PPE_P101_RED_EOF
+    cat > "$FIGS_DIR/shared-blue.tikzstyles" <<'PPE_P101_BLUE_EOF'
+\tikzstyle{bigredbox}=[fill=blue, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm]
+PPE_P101_BLUE_EOF
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────
