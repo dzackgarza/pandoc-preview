@@ -37,6 +37,7 @@
   import FootnoteModal from "./lib/components/FootnoteModal.svelte";
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
   import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
+  import { parseCompileLog, type LogEntry } from "./lib/editor/complog";
 
   let config = $state<Config | null>(null);
   let configPath = $state("");
@@ -167,6 +168,13 @@
 
   let html = $state("");
   let log = $state("");
+  // Structured post-compile log entries (A.6 / P74). A pure parse of the SAME
+  // raw `log` the Compile Log pane shows, through complog.ts (the ported pplatex
+  // parse contract). Derived from `log` so the structured list and the raw text
+  // always reflect the same render; the raw `log` source is unchanged so the P11
+  // raw-log surface stays untouched. The Compile Log pane renders these as a
+  // clickable list ALONGSIDE the raw text; clicking jumps the editor to the line.
+  const logEntries = $derived<LogEntry[]>(parseCompileLog(log));
   let status = $state<RenderStatus>("idle");
   // Ordered record of every render-status transition (drives the preview
   // indicator). Exposed to the E2E harness so the stale -> rendering -> ok
@@ -428,6 +436,13 @@
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
         goToLine: (line: number) => editor.goToLine(line),
+        // A.6 / P74: the structured parse of the compile log the Compile Log pane
+        // currently shows — the SAME `logEntries` the pane renders as a clickable
+        // list (parseCompileLog over the real render `log`, the ported pplatex
+        // parse). Each entry is {line, severity, message}; activating an entry in
+        // the pane calls editor.goToLine(entry.line), the SAME jump this hook's
+        // sibling goToLine drives.
+        structuredLog: (): LogEntry[] => logEntries,
         foldAll: () => editor.foldAllFolds(),
         unfoldAll: () => editor.unfoldAllFolds(),
         getFoldedRanges: () => editor.getFoldedRanges(),
@@ -1534,7 +1549,14 @@
 
         <!-- Preview wrapper — relocated into the dockview preview panel. -->
         <div class="h-full w-full" use:portal={previewPaneEl}>
-          <PreviewPane {html} {log} {status} bind:activeTab />
+          <PreviewPane
+            {html}
+            {log}
+            {logEntries}
+            onEntryClick={(entry) => editor.goToLine(entry.line)}
+            {status}
+            bind:activeTab
+          />
         </div>
       </div>
     </div>

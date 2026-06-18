@@ -1,15 +1,23 @@
 <script lang="ts">
   import type { RenderStatus } from "../types";
+  import type { LogEntry } from "../editor/complog";
 
   let {
     html,
     log,
+    logEntries,
+    onEntryClick,
     status,
     dragging = false,
     activeTab = $bindable(),
   }: {
     html: string;
     log: string;
+    // Structured compile-log entries (A.6 / P74) parsed from the SAME raw `log`,
+    // rendered as a clickable list ABOVE the raw text. Activating an entry calls
+    // onEntryClick(entry), which jumps the editor to entry.line.
+    logEntries: LogEntry[];
+    onEntryClick: (entry: LogEntry) => void;
     status: RenderStatus;
     // True while the editor/preview divider is being dragged: the iframe's
     // pointer-events are disabled so the cursor crossing it cannot swallow the
@@ -72,8 +80,43 @@
       srcdoc={html}
     ></iframe>
   {:else}
-    <pre
-      class="h-full grow overflow-auto bg-zinc-50 p-3 font-mono text-xs whitespace-pre-wrap text-zinc-800 select-text dark:bg-zinc-900 dark:text-zinc-200">{log ||
-        "No compilation has run yet."}</pre>
+    <div class="flex h-full grow flex-col overflow-hidden">
+      <!-- Structured entries (A.6 / P74): a clickable list parsed from the raw
+           log via the ported pplatex parse. Clicking jumps the editor to the
+           cited source line. Shown ABOVE — and ALONGSIDE — the raw log, which
+           stays the P11 surface below. -->
+      {#if logEntries.length > 0}
+        <ul
+          class="shrink-0 divide-y divide-zinc-200 overflow-auto border-b border-zinc-200 bg-white dark:divide-zinc-700 dark:border-zinc-700 dark:bg-zinc-800"
+          data-testid="structured-log"
+        >
+          {#each logEntries as entry, i (i)}
+            <li>
+              <button
+                type="button"
+                class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                onclick={() => onEntryClick(entry)}
+              >
+                <span
+                  class="font-mono font-semibold {entry.severity === 'error'
+                    ? 'text-red-600 dark:text-red-400'
+                    : entry.severity === 'warning'
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-sky-600 dark:text-sky-400'}"
+                  >{entry.severity}</span
+                >
+                <span class="font-mono text-zinc-400">L{entry.line}</span>
+                <span class="grow text-zinc-700 dark:text-zinc-200"
+                  >{entry.message}</span
+                >
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+      <pre
+        class="grow overflow-auto bg-zinc-50 p-3 font-mono text-xs whitespace-pre-wrap text-zinc-800 select-text dark:bg-zinc-900 dark:text-zinc-200">{log ||
+          "No compilation has run yet."}</pre>
+    </div>
   {/if}
 </div>
