@@ -1,0 +1,55 @@
+{
+  "run_id": "20260618T151342Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p85-citation-completion.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p85-citation-completion.spec.ts",
+            "title": "typing @ surfaces a configured-bibliography candidate by a title word absent from its key, and accepting inserts pandoc citation syntax",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 11928,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!document.querySelector('.cm-tooltip-autocomplete')"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p86-citation-tooltip.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p86-citation-tooltip.spec.ts",
+            "title": "the selected citation completion option renders an info tooltip previewing the configured entry author, year, and title",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 11257,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!document.querySelector('.cm-tooltip-autocomplete')"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

@@ -945,6 +945,23 @@ p84-bib-config-key.spec.ts)
     # config value governs both surfaces.
     cp "$REPO_ROOT/tests/proof/fixtures/p84-bib.bib" "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
     ;;
+p85-citation-completion.spec.ts | p86-citation-tooltip.spec.ts)
+    # P85/P86 (C2): citation completion sourced from the SINGLE config-declared
+    # bibliography P84 established (editor.bibliography). The canonical [editor]
+    # block (written above) declares editor.bibliography pointing at
+    # $HOME/.pandoc/bib/references.bib; point that SAME config value at the C2
+    # fixture bib, whose entries deliberately carry TITLE words and AUTHOR
+    # surnames ABSENT from their cite keys (key xq7 → title "Crystalline
+    # cohomology of supersingular abelian varieties", authors Grothendieck/Serre).
+    # A title-word query ("crystalline"/"supersingular") or author query
+    # ("grothendieck") therefore surfaces that entry ONLY if the candidate match
+    # string is built from the bibliographic metadata, not the cite key — the
+    # property P85 proves and P86's tooltip previews. The spec drives the editor
+    # UI (type @, read the completion popup + info tooltip DOM, accept) and is
+    # AGNOSTIC to how the .bib is parsed; this provisioning only points the one
+    # config-declared bibliography at the fixture.
+    cp "$REPO_ROOT/tests/proof/fixtures/p85-bib.bib" "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+    ;;
 p29-global-figures-resource.spec.ts)
     # P29: a figure that exists ONLY in the global figures dir
     # ($HOME/.pandoc/figures), referenced relative to that dir (rendered/global.png).
