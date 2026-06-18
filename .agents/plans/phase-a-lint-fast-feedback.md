@@ -516,3 +516,11 @@ is the guard against that.
 produces a real `@codemirror/lint` diagnostic sourced from the real `chktex` on the emitted
 `.tex`; fails because no app lint source wires the real linter yet, only the fork's grammar
 checks). Commit RED before any GREEN.
+
+## STATUS UPDATE — 2026-06-18: Phase A COMPLETE (P75 HELD)
+
+Delivered under AGENTS.md HARD RULE #0 (interop-first) + the user ruling that lint be COMPLETELY MODULAR — lint is a firewall PLUGIN, app core owns ZERO lint code.
+- Lint engine = `src-tauri/resources/vendor/plugins/pandoc-md-lint/` (run via the generic `run_plugin` firewall); `src-tauri/src/lint.rs` DELETED; arch gate green (no chktex/lint in core).
+- **A.1/P70** real `chktex`/`lacheck` delimiter balance + owned markdown-native `$`/`$$` math-mode balance (pandoc escapes lone `$`, so chktex can't — the one genuinely-md-specific check). **A.2/P71** typographic classes config-gated via the plugin's `[plugin.pandoc-md-lint]` section. **A.3/P72** user-regex via chktex `UserWarnRegex`. **A.4/P73** in-document `% chktex N` suppression. **A.6/P74** structured compile-log → jump-to-source (pplatex parse ported; `render.rs` untouched, P11 intact). **A.5** consolidation: full lint+completion+snippet+spellcheck+fork-linter stack composes.
+- **A.7/P75 HELD** — precise `.tex`→markdown per-line mapping, gated on the struck sourcepos reader decision (the lualatex `l.NN` jump is deferred to avoid a semantically-wrong line jump).
+- Verified green together at HEAD: p70–p74 + p11. The pandoc-md-lint plugin script is the seed of the standalone reusable `pandoc-md-lint` tool (extract to its own repo when warranted).
