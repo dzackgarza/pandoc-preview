@@ -37,6 +37,14 @@ jsonschema = { version = "0.40", default-features = false }
 # is statically vendored (no system git binary, no ambient discovery); the store
 # has no remotes, so the https/openssl transport features are disabled.
 git2 = { version = "0.18", default-features = false, features = ["vendored-libgit2"] }
+# D-1 keystone (P90): owned tikz-subset parser/serializer. The TikzIt format has
+# no maintained Rust parser crate (rust_tikz is a TeX→SVG runtime; svg-tikz goes
+# SVG→TikZ; depict-tikz is a layout/generator — none parse TikzIt source into a
+# structured graph). The TikzIt bison/flex grammar (tikzparser.y / tikzlexer.l)
+# is ported here with the nom parser-combinator crate, which is already resolved
+# in the lock graph (no new build-graph node) and gives byte-offset spans for the
+# loud, line-naming structured parse errors P90 mandates.
+nom = "8"
 
 # E2E proof harness: the in-app Playwright socket bridge. Gated behind the
 # `e2e-testing` cargo feature so a normal user build never embeds it. The

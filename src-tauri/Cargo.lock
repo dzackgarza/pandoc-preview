@@ -2479,6 +2479,7 @@ dependencies = [
  "git2",
  "indexmap 2.14.0",
  "jsonschema",
+ "nom",
  "png 0.17.16",
  "serde",
  "serde_json",

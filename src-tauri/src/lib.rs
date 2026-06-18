@@ -7,6 +7,10 @@ mod plugins;
 mod recovery;
 mod render;
 mod repostate;
+/// D-1 keystone (P90): owned tikz-subset parser/serializer. Public so the
+/// frozen `tests/tikz_roundtrip.rs` round-trip proof can reach `tikz::parse`
+/// and `Graph::to_tikz`; D-4 (line-jump) and D-8 (subgraph-copy) ride on it.
+pub mod tikz;
 
 use tauri::menu::{AboutMetadata, Menu, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 use tauri::{AppHandle, Emitter, Runtime};
