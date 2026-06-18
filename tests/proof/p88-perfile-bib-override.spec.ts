@@ -11,6 +11,8 @@ import {
   typeInEditor,
   completionLabels,
   editorText,
+  saveCurrentFile,
+  bufferIsDirty,
 } from './support/app';
 
 // ── P88 — Per-file `bibliography:` frontmatter override ──────────────────────
@@ -215,8 +217,29 @@ test('a frontmatter `bibliography:` override file offers its file-local key whil
   const overrideGlobalLabels = await completionLabels(tauriPage);
   expect(overrideGlobalLabels.some((l) => l.includes(GLOBAL_KEY))).toBe(false);
 
+  // ── SAVE before switching files (clean edit → save → switch flow) ───────────
+  // LEG (a)'s liveness probe and @-queries appended text to p88-override.md, so
+  // its buffer is now DIRTY. Switching files while dirty fires App.svelte's
+  // openFile → resolveDirty(), which raises a NATIVE Tauri ask() "Save changes?"
+  // dialog the headless Xvfb harness cannot answer (the switch would hang). The
+  // correct user flow — and the one this spec exercises — is to SAVE first: the
+  // already-durable Save writes the buffer to disk and clears the dirty flag
+  // (App.svelte saveCurrent → dirty = false), so the subsequent switch is clean
+  // and raises no dialog. We confirm the buffer is dirty before the save and
+  // clean after it (the live __PPE_E2E__.isDirty() observable p48/p50 assert on),
+  // pinning the clean switch to a REAL cleared dirty flag, not luck.
+  expect(await bufferIsDirty(tauriPage)).toBe(true);
+  await saveCurrentFile(tauriPage);
+  await tauriPage.waitForFunction(`!window.__PPE_E2E__.isDirty()`, 15_000);
+  expect(await bufferIsDirty(tauriPage)).toBe(false);
+
   // ── LEG (b): the global config bibliography is the source for non-overriding
   // files ─────────────────────────────────────────────────────────────────────
+  // The switch now happens from a CLEAN buffer, so no save-changes dialog is
+  // raised. Switching here (AFTER the override file was open) is what makes this
+  // leg a real no-hole regression: the override source was active a moment ago,
+  // and demo.md (no frontmatter `bibliography:`) must restore the global config
+  // bibliography rather than inherit the displaced/empty override source.
   await clickSidebarEntry(tauriPage, 'demo.md');
   await tauriPage.waitForFunction(
     `(window.__PPE_E2E__.currentFile() ?? '').endsWith('/demo.md')`,

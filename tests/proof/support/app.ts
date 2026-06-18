@@ -326,6 +326,26 @@ export async function appendAtEnd(page: EvaluatesScripts, text: string): Promise
   );
 }
 
+// ── Save the active buffer (P03/P47 precedent) ──────────────────────────────
+// Drives the SAME path the application's Save menu item fires: the 'menu'
+// 'save' Tauri event, which App.svelte routes to saveCurrent(). For an
+// already-durable file (one that has a path on disk) the write runs with NO
+// resolution prompt and clears the dirty flag (App.svelte saveCurrent → dirty
+// = false). This is the exact surface p03-save-exact-bytes and the p47 A4
+// already-durable leg drive; no new product hook is invented here.
+export async function saveCurrentFile(page: EvaluatesScripts): Promise<void> {
+  await page.evaluate(`(() => { window.__TAURI__.event.emit('menu', 'save'); return null; })()`);
+}
+
+// ── Live dirty-flag observable (P48/P50 precedent) ──────────────────────────
+// Reads the SAME __PPE_E2E__.isDirty() getter p48 (conflict gate) and p50
+// (close guard) assert against — the live App.svelte `dirty` state. Used to
+// confirm a save has cleared the buffer BEFORE switching files (so the switch
+// is clean and raises no un-answerable native "Save changes?" dialog headless).
+export async function bufferIsDirty(page: EvaluatesScripts): Promise<boolean> {
+  return Boolean(await page.evaluate(`!!window.__PPE_E2E__.isDirty()`));
+}
+
 // ── Emmet abbreviation expansion (P53) ─────────────────────────────────────
 // Emmet expands a terse abbreviation directly before the cursor into the real
 // markup it denotes when its EXPAND ACTION is invoked. The action is a real
