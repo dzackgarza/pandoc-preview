@@ -41,12 +41,21 @@ export type SnippetMode = "prose" | "math" | "both";
  *  (B-DESIGN-0): it expands the instant the user types the trigger followed by
  *  its terminator (a space), in place, with no completion popup and no accept
  *  keypress (LuaSnip autosnippet / UltiSnips `A`). A non-`auto` entry expands
- *  only through the popup-accept path (P52) or the insertion bar (P59). */
+ *  only through the popup-accept path (P52) or the insertion bar (P59).
+ *
+ *  A `regex` entry is a REGEX/POSTFIX trigger (B-DESIGN-0; the LuaSnip `regTrig`
+ *  / UltiSnips `r` capture-group model): its `trigger` is a JS regex pattern
+ *  matched against the text before the cursor, and its body's capture references
+ *  (`$1`, `$2`, …) are substituted from the match FIRST — distinct from a
+ *  TextMate tabstop `${1}`. The residual body (its `${N}` tabstops intact) is
+ *  then expanded through the shared `runSnippet` path. A non-`regex` entry's
+ *  trigger is a literal token. */
 export interface SnippetEntry {
   readonly trigger: string;
   readonly body: string;
   readonly mode: SnippetMode;
   readonly auto: boolean;
+  readonly regex: boolean;
 }
 
 /** The parsed shape of a snippet dictionary: an ordered list of mode-tagged
@@ -109,7 +118,14 @@ export function parseSnippetDictionary(json: string): SnippetMap {
       );
     }
     const auto: boolean = rawAuto ?? false;
-    entries.push({ trigger, body, mode, auto });
+    const rawRegex = entry.regex;
+    if (rawRegex !== undefined && typeof rawRegex !== "boolean") {
+      throw new Error(
+        `snippet dictionary entry ${JSON.stringify(trigger)} regex must be a boolean`,
+      );
+    }
+    const regex: boolean = rawRegex ?? false;
+    entries.push({ trigger, body, mode, auto, regex });
   }
   return entries;
 }
@@ -215,6 +231,77 @@ export function findAutoExpansion(
     if (!live) continue;
     // Replace the bare trigger token AND the space terminator with the body.
     return { from: triggerFrom, to: pos, body: entry.body };
+  }
+  return null;
+}
+
+/** Substitute regex capture references (`$1`, `$2`, …) in a snippet body from a
+ *  match's capture groups. This is the LuaSnip `regTrig` / UltiSnips `r` model:
+ *  capture references resolve FIRST, from the regex match — distinct from a
+ *  TextMate tabstop `${1}` (which is left untouched here for the subsequent
+ *  `runSnippet` expansion). A bare `$N` whose N indexes a capture group becomes
+ *  that captured text; `${N}` (braced) is never touched (it is a tabstop). */
+function substituteCaptures(body: string, match: RegExpExecArray): string {
+  return body.replace(/\$(\d+)/g, (_m, n: string) => {
+    const captured = match[Number(n)];
+    if (captured === undefined) {
+      throw new Error(
+        `snippet body references capture group $${n} but the regex match has no such group`,
+      );
+    }
+    return captured;
+  });
+}
+
+/** Resolve the REGEX/POSTFIX expansion to fire when a space terminator has just
+ *  been typed at `pos` (the offset immediately AFTER the space). Reads the bare
+ *  word token ending right before the space and, for each `regex` entry live at
+ *  the cursor's zone (the SAME `inMathMode` predicate the popup gates on), tests
+ *  the entry's trigger as a JS regex ANCHORED to the END of that token. On a
+ *  match the entry's capture references (`$1`, …) are substituted from the match
+ *  (the LuaSnip `regTrig` / UltiSnips `r` model); the residual body (its `${N}`
+ *  tabstops intact) is what the caller expands via `runSnippet`. Returns the span
+ *  to replace (the matched token AND the space terminator) and the
+ *  capture-substituted body, or null. */
+export function findRegexExpansion(
+  map: SnippetMap,
+  state: EditorView["state"],
+  pos: number,
+): { from: number; to: number; body: string } | null {
+  if (pos <= 0) return null;
+  const before = state.doc.sliceString(pos - 1, pos);
+  if (before !== " ") return null;
+  // The non-space run immediately before the space — the bare token the user
+  // just typed (`pbar`), the postfix operand the regex matcher keys on.
+  const line = state.doc.lineAt(pos - 1);
+  const runText = state.doc.sliceString(line.from, pos - 1);
+  const runMatch = /(\S+)$/.exec(runText);
+  if (!runMatch) return null;
+  const run = runMatch[1];
+  for (const entry of map) {
+    if (!entry.regex) continue;
+    // Anchor the entry's pattern to the END of the typed token so it matches the
+    // postfix operand right before the space, not somewhere earlier in the line.
+    const pattern = new RegExp(`(?:${entry.trigger})$`);
+    const match = pattern.exec(run);
+    if (!match) continue;
+    const triggerFrom = pos - 1 - match[0].length;
+    const math = inMathMode(state, triggerFrom);
+    const live =
+      entry.mode === "both"
+        ? true
+        : entry.mode === "math"
+          ? math
+          : !math;
+    if (!live) continue;
+    // Re-run the ENTRY's own pattern (its capture groups) against the matched
+    // text so `$1` references resolve to the entry's groups, not the wrapping
+    // anchor group.
+    const captureMatch = new RegExp(entry.trigger).exec(match[0]);
+    if (!captureMatch) continue;
+    const body = substituteCaptures(entry.body, captureMatch);
+    // Replace the matched token AND the space terminator with the body.
+    return { from: triggerFrom, to: pos, body };
   }
   return null;
 }

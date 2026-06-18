@@ -342,6 +342,14 @@
         typeAutotrigger: (text: string) => {
           editor.typeAutotrigger(text);
         },
+        // P79: feed text per-keystroke through the docChanged pipeline so the
+        // regex-trigger input handler observes it; a space terminator after a
+        // token matching a `regex` entry substitutes its captures into the body
+        // and expands it in place (no popup, no accept). UNLIKE typeInEditor, no
+        // startCompletion — a regex/postfix trigger fires WITHOUT a popup.
+        typeRegexTrigger: (text: string) => {
+          editor.typeRegexTrigger(text);
+        },
         // P52: accept the highlighted completion through CM6's real
         // acceptCompletion command, and read the cursor offset to prove the
         // snippet's tabstop landing after expansion.

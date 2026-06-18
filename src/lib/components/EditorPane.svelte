@@ -73,6 +73,7 @@
     snippetCompletionSource,
     runSnippet,
     findAutoExpansion,
+    findRegexExpansion,
     renderedSnippetLength,
     type SnippetMap,
   } from "../editor/snippets";
@@ -440,6 +441,49 @@
         selection: EditorSelection.cursor(pos + ch.length),
       });
       if (ch === " ") tryAutoExpand();
+    }
+    view.focus();
+  }
+
+  /** Regex/postfix input handler (P79 / B3): after a docChanged that inserted a
+   * space terminator, if the bare word token before the space matches a `regex`
+   * dictionary entry live at the cursor's zone (the SAME `inMathMode` gate the
+   * popup uses), substitute the match's capture groups into the entry body, then
+   * expand it IN PLACE with NO popup and NO accept — delete the literal matched
+   * token + space span, then run the capture-substituted body through the shared
+   * `runSnippet` path (the SAME expansion the popup-accept and insertion bar
+   * reuse). The matcher resolves captures FIRST; the residual `${N}` are tabstops
+   * the runSnippet path expands (LuaSnip regTrig / UltiSnips `r`). Returns true
+   * if an expansion fired. */
+  function tryRegexExpand(): boolean {
+    const pos = view.state.selection.main.head;
+    const hit = findRegexExpansion(snippetMap, view.state, pos);
+    if (!hit) return false;
+    view.dispatch({
+      changes: { from: hit.from, to: hit.to, insert: "" },
+      selection: EditorSelection.cursor(hit.from),
+    });
+    runSnippet(view, hit.body);
+    return true;
+  }
+
+  /** E2E (P79): feed `text` into the editor character-by-character through the
+   * SAME docChanged pipeline user typing fires, so the regex-trigger handler
+   * observes each keystroke and matches its pattern against the text before the
+   * cursor — and, UNLIKE `typeInEditor`, does NOT call `startCompletion` (a
+   * regex/postfix trigger fires WITHOUT a popup). After each inserted character
+   * the handler attempts a regex expansion: a space terminator after a token
+   * matching a `regex` entry substitutes its captures and expands the body in
+   * place. The deterministic stand-in for synthetic key events the bridge cannot
+   * send into CodeMirror's contentEditable. */
+  export function typeRegexTrigger(text: string) {
+    for (const ch of text) {
+      const pos = view.state.selection.main.head;
+      view.dispatch({
+        changes: { from: pos, insert: ch },
+        selection: EditorSelection.cursor(pos + ch.length),
+      });
+      if (ch === " ") tryRegexExpand();
     }
     view.focus();
   }
