@@ -881,6 +881,36 @@ EOF
 </svg>
 EOF
     ;;
+p107-vector-inclusion.spec.ts)
+    # P99 (Phase D / D-10): the SVG/PDF-vector inclusion path for external-editor
+    # figures — the non-tikz sibling of the clipboard-image path P62. An external-
+    # editor-produced vector asset (an Ipe/Inkscape-emitted SVG/PDF, NOT tikz) is
+    # written into the CONFIGURED GLOBAL figures dir and a markdown reference to it
+    # is inserted at the cursor, and the inserted render is REGISTERED in the D-7 /
+    # P96 dual-asset registry alongside its editable source.
+    #
+    # The canonical config above already set up the pandoc renderer + [plugins].dir
+    # + [directories].figures (the configured GLOBAL figures dir, $HOME/.pandoc/
+    # figures — the SAME ExistingDir P29/P62 write into) so the app boots. Here we
+    # stage the external vector asset OUTSIDE the figures dir, under the hermetic
+    # project (where an Ipe/Inkscape user's source file would live): the inclusion
+    # action must COPY it INTO the configured figures dir, which is the decisive
+    # on-disk move the spec asserts. The asset carries a distinctive marker in its
+    # bytes so the figures-dir copy can be proven byte-identical to THIS source — not
+    # some other file. The registry sidecar itself is NOT staged: the app writes it
+    # at runtime when the inclusion action registers the render (the host-FS XDG-state
+    # JSON p106 reads), so provisioning stages only the one real external asset file.
+    EXTERNAL_FIGURE="$PROJECT_DIR/external-figure.svg"
+    cat > "$EXTERNAL_FIGURE" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- external-editor-produced vector asset: the SVG an Inkscape/Ipe export emits (P99) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="72">
+  <rect x="0" y="0" width="96" height="72" fill="#2e8b57"/>
+  <circle cx="48" cy="36" r="20" fill="#ffd700"/>
+  <!-- __P107_EXTERNAL_VECTOR_SOURCE__ -->
+</svg>
+EOF
+    ;;
 p07-export-html.spec.ts)
     # P7 (export-as-plugin migration): HTML export is the shipped pandoc-html-export
     # export-category plugin, discovered from [plugins].dir and run BY ID through the

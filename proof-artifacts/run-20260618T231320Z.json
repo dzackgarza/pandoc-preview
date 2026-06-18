@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T231320Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p107-vector-inclusion.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p107-vector-inclusion.spec.ts",
+            "title": "the vector-figure-inclusion action writes the external SVG into the configured figures dir, references that exact file at the cursor, and registers it in the dual-asset registry",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 1344,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.registerAndInsertVectorFigure is not a function. (In 'window.__PPE_E2E__.registerAndInsertVectorFigure(\"/tmp/pandoc-preview-proof-runs/20260618T231320Z/p107-vector-inclusion/project/external-figure.svg\")', 'window.__PPE_E2E__.registerAndInsertVectorFigure' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
