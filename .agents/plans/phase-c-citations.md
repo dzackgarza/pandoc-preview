@@ -444,3 +444,37 @@ regresses.
   root" for the MVP scope. (4) C5 — reuse the preview's resolved `#refs` bibliography vs. a
   dedicated citeproc call for the sidebar. (5) C6 — standalone obligation vs. P51-subsumed
   refinement, and the macro-tier vocabulary SoT to read.
+
+- **2026-06-18: decisions RATIFIED (controller, under the standing "execute all phases,
+  no stops" directive); grounded in the CURRENT seam (re-inspected — the bib/CSL paths are
+  literals repeated across THREE command generators: `first-run.sh:112`,
+  `provision-proof.sh:119/133`, and the renderer plugin's `configure-wizard.sh:42`; the
+  renderer command is opaque and the core never parses it).**
+  - **(1) C1 = Shape B1 (render-context token, true OSOT).** Add `{bibliography}` and
+    `{csl}` as render-context placeholders the app substitutes (joining
+    `{base_dir}`/`{base_url}`/`{mathjax}` in `plugins.rs`), sourced from new **required
+    `editor.bibliography` + `editor.csl` config keys** (`ExistingFile`, load-validated,
+    fail-loud — mirroring `snippet_dictionary`/`spell_dictionary`). `render.sh` layers
+    `--bibliography`/`--csl` onto the command from those tokens (exactly as it layers
+    `--variable=figure-width` from `.style.figure_width` and `--mathjax` from the context).
+    The canonical pandoc command string **DROPS** the `--bibliography=`/`--csl=` literals.
+    The path then lives ONCE in `editor.bibliography`, read by BOTH the frontend AND every
+    render — no drift, no core-parsing of pandoc flags (the core substitutes a token it
+    owns, identical to `{mathjax}`). `first-run.sh`/`provision-proof.sh`/`configure-wizard.sh`
+    stop emitting the bib/csl literals and instead write the config keys.
+  - **P84 C1-observable (behavioral, not a tautology):** the configured bib drives the
+    preview's resolved `#refs` bibliography (rides p27); changing `editor.bibliography` to a
+    different bib changes the rendered references (fails on a leftover baked literal); a
+    missing bib path fails loud at config load (fails on a silent-accept). P1/P27 stay
+    green after the bib path moves from command-literal to config-key-injected token.
+  - **(2) C2 = `@`-trigger editor-only** (plan's primary; the bar "cite" control is a later
+    QoL, not Phase C). **(3) C3 = App-owned label index** built from the explorer's
+    `listTree`, MVP scope "every markdown file under the open project root" (no
+    main-document marker yet). **(4) C5 = reuse the preview's resolved `#refs`** (OSOT — no
+    JS CSL formatter). **(5) C6 = P51-subsumed refinement, LAST/deferred** (no standalone
+    obligation unless it earns one; the macro-tier SoT is the baked MathJax config asset,
+    read live — never a hardcoded JS list).
+  - Executed in worktree `phase-c-citations` (`/home/dzack/ppe-phase-c`); C1 is the
+    app-core-mutating risky seam (config.rs + plugins.rs + render.sh + 3 generators) →
+    isolation per the worktree policy. Blind-TDD via Workflow: obligation → RED → GREEN →
+    adversarial review, role-separated, RED committed before GREEN.
