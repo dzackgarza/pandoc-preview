@@ -253,29 +253,27 @@ function normalizeTabstops(body: string): string {
 }
 
 /** Build a {@link Completion} for one dictionary entry: its label is the trigger
- *  and its `apply` runs the snippet body via the same `snippetCompletion`
- *  machinery the LaTeX fenced-div completions use, so accepting expands the body
- *  and lands the cursor at the declared tabstop. Standard transform mirrors
- *  (`${N/regex/replace/flags}`, B7 / P83a) are stripped to plain `${N}` mirrors
- *  before CM6 instantiates the template, and armed afterwards so the dependent
- *  slot tracks its source field live on the popup-accept path too. */
-function snippetOption(entry: SnippetEntry): Completion {
-  const { body: template, transforms } = extractTransforms(entry.body);
-  const completion = snippetCompletion(normalizeTabstops(template), {
+ *  and its `apply` resolves the body's snippet VARIABLES (`$CLIPBOARD`,
+ *  `$CURRENT_DATE`, `$CURRENT_YEAR`) — through the SAME {@link resolveSnippetVariables}
+ *  the insertion-bar `runSnippet` path uses — and then expands the resolved body
+ *  via the same `snippetCompletion` machinery the LaTeX fenced-div completions
+ *  use, so accepting the popup completion (P52/P77) lands the resolved values and
+ *  the cursor at the declared tabstop. Variable resolution reads the system
+ *  clipboard asynchronously, so the apply resolves first and dispatches the
+ *  expansion after — replacing the trigger span `[from, to)` the popup matched.
+ *  Standard transform mirrors (`${N/regex/replace/flags}`, B7 / P83a) are armed
+ *  after expansion so the dependent slot tracks its source field live on the
+ *  popup-accept path too. */
+function snippetOption(
+  entry: SnippetEntry,
+  clipboard: ClipboardTextReader,
+): Completion {
+  return {
     label: entry.trigger,
     type: "snippet",
     detail: "snippet",
-  });
-  if (transforms.length === 0) return completion;
-  const cmApply = completion.apply;
-  if (typeof cmApply !== "function") {
-    throw new Error("snippetCompletion did not yield an apply function");
-  }
-  return {
-    ...completion,
-    apply: (view, completionArg, from, to) => {
-      cmApply(view, completionArg, from, to);
-      armTransforms(view, from, template, transforms);
+    apply: (view, _completionArg, from, to) => {
+      void expandSnippetBody(view, entry.body, from, to, clipboard);
     },
   };
 }
@@ -298,7 +296,10 @@ function entryLiveAt(entry: SnippetEntry, context: CompletionContext): boolean {
  *  `inMathMode` predicate the LaTeX completion uses. Composes with the other
  *  editor sources — it returns null when no live trigger matches, leaving the
  *  LaTeX completions to answer. */
-export function snippetCompletionSource(map: SnippetMap): CompletionSource {
+export function snippetCompletionSource(
+  map: SnippetMap,
+  clipboard: ClipboardTextReader,
+): CompletionSource {
   return (context: CompletionContext): CompletionResult | null => {
     const token = context.matchBefore(/\S+/);
     if (!token || token.from === token.to) return null;
@@ -310,7 +311,7 @@ export function snippetCompletionSource(map: SnippetMap): CompletionSource {
         (entry) =>
           entry.trigger.startsWith(token.text) && entryLiveAt(entry, context),
       )
-      .map(snippetOption);
+      .map((entry) => snippetOption(entry, clipboard));
     if (options.length === 0) return null;
     return { from: token.from, options };
   };
@@ -737,18 +738,17 @@ function armTransforms(
   view.dispatch({ effects: setTransformTrackers.of(trackers) });
 }
 
-/** Run a snippet body at the current cursor, expanding it through the SAME
- *  `snippetCompletion` apply path acceptance uses. Milestone G's insertion bar
- *  reuses this to insert a chosen snippet directly (no completion popup). The
- *  body's `$0` tabstop is honoured exactly as on accept. Standard snippet
- *  variables (`$CLIPBOARD`, `$CURRENT_DATE`, `$CURRENT_YEAR`) are resolved HERE,
- *  before `snippetCompletion`, so every expansion path (popup-accept P52/P77,
- *  insertion bar P59, autotrigger P78, regex P79) gets them. The standard
+/** Run a snippet body at the current cursor, expanding it through the SHARED
+ *  {@link expandSnippetBody} path (resolve variables → expand via
+ *  `snippetCompletion` → arm transforms). Milestone G's insertion bar, the
+ *  autotrigger (P78), and the regex/postfix (P79) paths reuse this to insert a
+ *  chosen snippet directly (no completion popup); the popup-accept path (P52/P77)
+ *  reaches the SAME {@link expandSnippetBody} through {@link snippetOption}'s
+ *  apply. The body's `$0` tabstop is honoured exactly as on accept. The standard
  *  UltiSnips `${VISUAL}` placeholder (B7 / P83b) wraps the CURRENT selection: it
- *  is resolved to the selected text, and the expansion REPLACES the selection
- *  (so `\emph{${VISUAL}}` over a selected `foo` yields `\emph{foo}`). Transform
- *  mirrors (B7 / P83a) are armed after expansion so the dependent slot tracks
- *  its source field live. */
+ *  is resolved to the selected text HERE (the popup path has no selection to
+ *  wrap), and the expansion REPLACES the selection (so `\emph{${VISUAL}}` over a
+ *  selected `foo` yields `\emph{foo}`). */
 export async function runSnippet(
   view: EditorView,
   body: string,
@@ -757,18 +757,35 @@ export async function runSnippet(
   const selection = view.state.selection.main;
   const selectedText = view.state.sliceDoc(selection.from, selection.to);
   const withVisual = resolveVisual(body, selectedText);
-  const resolved = await resolveSnippetVariables(withVisual, clipboard, new Date());
+  // `${VISUAL}` wraps the selection: expand OVER the selection range (CM6's
+  // snippet apply replaces `[from, to)`), so the selected text is consumed and
+  // re-emitted inside the body. A bare cursor (empty selection) expands in place.
+  await expandSnippetBody(view, withVisual, selection.from, selection.to, clipboard);
+}
+
+/** Resolve a snippet body's standard variables (`$CLIPBOARD`, `$CURRENT_DATE`,
+ *  `$CURRENT_YEAR`) — the SHARED resolution every expansion path runs through —
+ *  then expand the resolved body over `[from, to)` via the SAME
+ *  `snippetCompletion` apply both the popup-accept (P52/P77) and the
+ *  insertion-bar/autotrigger/regex (P59/P78/P79) paths use. Variable resolution
+ *  reads the clipboard asynchronously, so this awaits the resolution BEFORE it
+ *  dispatches the CM6 expansion (the CM6 apply itself is synchronous). Transform
+ *  mirrors (B7 / P83a) are armed after expansion so the dependent slot tracks its
+ *  source field live. The `$0` tabstop is honoured exactly as on a direct accept. */
+async function expandSnippetBody(
+  view: EditorView,
+  body: string,
+  from: number,
+  to: number,
+  clipboard: ClipboardTextReader,
+): Promise<void> {
+  const resolved = await resolveSnippetVariables(body, clipboard, new Date());
   const { body: template, transforms } = extractTransforms(resolved);
   const completion = snippetCompletion(normalizeTabstops(template), { label: "" });
   const apply = completion.apply;
   if (typeof apply !== "function") {
     throw new Error("snippetCompletion did not yield an apply function");
   }
-  // `${VISUAL}` wraps the selection: expand OVER the selection range (CM6's
-  // snippet apply replaces `[from, to)`), so the selected text is consumed and
-  // re-emitted inside the body. A bare cursor (empty selection) expands in place.
-  const from = selection.from;
-  const to = selection.to;
   apply(view, completion, from, to);
   armTransforms(view, from, template, transforms);
 }

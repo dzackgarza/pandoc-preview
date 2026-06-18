@@ -344,7 +344,7 @@
     // Retain the parsed map for the bar dropdown (P59) AND build the popup
     // completion source from it (P52) — one config-owned dictionary, two views.
     snippetMap = map;
-    appCompletionSources.push(snippetCompletionSource(map));
+    appCompletionSources.push(snippetCompletionSource(map, clipboardText));
     onSnippetsLoaded(snippetTriggers());
   }
 
