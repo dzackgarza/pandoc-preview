@@ -36,6 +36,7 @@
   import DimensionModal from "./lib/components/DimensionModal.svelte";
   import FootnoteModal from "./lib/components/FootnoteModal.svelte";
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
+  import ReferencesPanel from "./lib/components/ReferencesPanel.svelte";
   import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
   import { parseCompileLog, type LogEntry } from "./lib/editor/complog";
   import {
@@ -132,10 +133,14 @@
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M5 3 3 13"/><path d="M9 3l3 5-3 5"/></svg>';
   const FIGURES_ICON =
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><rect x="2.5" y="3.5" width="11" height="9" rx="1"/><circle cx="6" cy="6.5" r="1"/><path d="m3.5 11 3-3 2.5 2.5L11 8.5l1.5 1.5"/></svg>';
+  // References pane: an open-book glyph.
+  const REFERENCES_ICON =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 4v9"/><path d="M8 4C6.5 3 4 3 2.5 3.5v8C4 11 6.5 11 8 12"/><path d="M8 4c1.5-1 4-1 5.5-.5v8C12 11 9.5 11 8 12"/></svg>';
   const SIDEBAR_VIEWS: SidebarView[] = [
     { id: "explorer", title: "Explorer", icon: EXPLORER_ICON },
     { id: "macros", title: "Macros", icon: MACROS_ICON },
     { id: "figures", title: "Figures", icon: FIGURES_ICON },
+    { id: "references", title: "References", icon: REFERENCES_ICON },
   ];
   let activeView = $state<string | null>("explorer");
 
@@ -1622,6 +1627,11 @@
               onDelete={(n) => void deleteNode(n)}
               onOpenFolder={() => {}}
             />
+          {:else if activeView === "references"}
+            <!-- References pane: the cited bibliography entries, sourced from the
+                 preview's resolved #refs block (the SAME `html` the preview pane
+                 renders). It updates on the same render cadence as the preview. -->
+            <ReferencesPanel {html} />
           {:else}
             <div
               class="px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"

@@ -1,0 +1,44 @@
+{
+  "run_id": "20260618T162020Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p88-perfile-bib-override.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p88-perfile-bib-override.spec.ts",
+            "title": "a frontmatter `bibliography:` override file offers its file-local key while a file without the key still offers the global config bibliography key",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2006,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p88-perfile-bib-override.spec.ts",
+          "name": "perfile-bib-local-key",
+          "value": "LOCALONLY"
+        },
+        {
+          "spec": "p88-perfile-bib-override.spec.ts",
+          "name": "perfile-bib-global-key",
+          "value": "GLOBALKEY"
+        }
+      ]
+    }
+  ]
+}
