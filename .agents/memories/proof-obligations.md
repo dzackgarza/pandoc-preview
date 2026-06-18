@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P66)
+# Proof Obligations (P1–P74)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -164,6 +164,29 @@ Ratified rulings for the export-as-plugin-suite migration. Apply these; do not r
 4. **Output extension is a generic manifest field.** The output file extension is a generic manifest field on the export-category plugin, read by the menu populator.
 
 These map to the next spec families the obligations document already tracks: webview specs p45–p50 and doctor-class specs d17+. The spec design itself belongs to the test author and implementer, not to this obligations document.
+
+### Milestone — Phase A: lint fast-feedback (P70–P74; P75 HELD, P76 reserved)
+
+P70–P74 (added 2026-06-18) cover the Phase A "lint fast-feedback" milestone, authored from [[phase-a-lint-fast-feedback]]. The deliberate P67–P69 gap is intentional: the live contract above runs P1–P66, and the phase obligations were shifted to P70+ rather than reusing 67–69. Each obligation is an exact externally-observable happy-path state, driven by the real app via the `tauri-plugin-playwright` harness against the shared witness fixture, observing real CM6 `@codemirror/lint` diagnostics and real config. Each is admissible only if it FAILS on a plausibly broken app.
+
+- **P70 — Static delimiter & math-mode balance warns before compile.** With a buffer containing a real imbalance — e.g. a math line with two `\left` and one `\right`, and a separate `$`-opened math zone with no closing `$` — the editor surfaces, via the `@codemirror/lint` diagnostics field (observed through the `lintDiagnostics()` hook), at least one diagnostic whose marked range covers the surplus `\left`/the unterminated `$` and whose message names the imbalance; AND after the user balances them (append the missing `\right` and `$`), that diagnostic is gone. NO latex COMPILE / preview RENDER is the source — the diagnostic comes from the cheap real-ChkTeX lint pass on the emitted `.tex` (pandoc `md→tex` + `chktex`), not the full pandoc-HTML render, which is exactly "feedback faster than a compile."
+  Admissible because it fails on: no app lint source (the diagnostics field has only the fork's `\begin`/`\end` checks, the `\left`/`$` imbalance is never marked); a cursor-pair-highlighting-only implementation (highlighting shows the pair under the cursor, never a buffer-wide COUNT imbalance, so no diagnostic exists); and a stuck linter (the diagnostic persists after the user balances).
+
+- **P71 — Typographic lint fires only when its class is enabled, scoped to math.** With `[editor.lint]` enabling the operator-as-variable and sub/superscript-grouping classes, a math line containing `sin x` and `x^10` yields diagnostics marking `sin` (→ `\sin`) and `x^10` (→ `x^{10}`); the SAME tokens in PROSE (outside `$…$`) yield none; and with those classes disabled in config, the math-line diagnostics are absent.
+  Admissible because it fails on: a missing typographic layer (the math `sin`/`x^10` are never marked); a layer that ignores math scope (prose `sin` is wrongly marked); and a layer that ignores config (disabling the class in config still marks the tokens — the config is dead).
+
+- **P72 — User-defined regex lint rule surfaces as a diagnostic.** With a config-owned `lint_rules` entry `{pattern: "\\bTODO\\b", message: "resolve before submission"}`, typing `TODO` into the buffer yields a diagnostic whose range covers `TODO` and whose message is exactly `resolve before submission`; pointing config at a DIFFERENT rule set (a different pattern/message) makes the buffer surface THAT rule's diagnostic instead.
+  Admissible because it fails on: no user-regex engine (the config rule is ignored, `TODO` is never marked); a hardcoded rule list (a different config rule set produces the same diagnostics, proving config is not read); and a message mismatch (the diagnostic's message is not the config-declared string).
+
+- **P73 — In-document suppression silences a named lint on its line.** With a buffer line that triggers a known lint (e.g. an intentional `x^10` in math), adding the directive comment `<!-- ppe-lint-disable-line <ruleId> -->` for that line's rule removes the diagnostic on THAT line while the SAME construct on another (un-suppressed) line still warns; removing the directive restores the diagnostic.
+  Admissible because it fails on: no suppression scanner (the directive is inert, the diagnostic persists); an over-broad suppression (the directive on one line silences the construct everywhere); and a suppression that never restores (removing the directive leaves the line silent).
+
+- **P74 — Structured compile-log entries jump to source.** After a render whose real subprocess log contains a line-tagged message, the Compile Log pane presents a structured entry (observed via the `structuredLog()` hook) with a parsed `{line, severity, message}` matching that log line; activating the entry moves the editor cursor to exactly that source line (observed via `cursorOffset()`/`goToLine`). The RAW log (P11) is still present and unchanged.
+  Admissible because it fails on: a raw-only log (no structured entry exists, only the unparsed text — P11's surface); a parse that drops the line number (the entry has no jump-target, activation is a no-op); and a jump to the wrong line (the cursor lands somewhere other than the parsed line). It does NOT subsume or weaken P11 — P11's raw-log assertion runs unchanged alongside this.
+
+- **P75 — RESERVED, HELD.** Real-ChkTeX-on-transient-`.tex` with `.tex`→markdown line mapping. HELD pending the `sourcepos`/scroll-sync reader decision; not RED until that gate opens. Reserved here so the obligation number is not reused.
+
+- **P76 — RESERVED.** Spare within the Phase-A block (e.g. a buffer-wide diagnostic-count status indicator, or a delimiter-imbalance summary in the status cluster) if A.5 is promoted from consolidation to a first-class observable. Not specified until needed.
 
 ## Verification vehicle
 
