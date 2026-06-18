@@ -66,6 +66,25 @@ figures = "$ABS_SPEC_DIR/home/.pandoc/figures"
 EOF
 }
 
+# The [figures] table (Phase D / D-2 / P91, required schema field): the shared
+# figure palette every compiled figure \input's. Both paths are required,
+# load-validated ExistingFiles; without this table config-schema fails the
+# Figures/required-field check and the app never boots. The vendored starter
+# shared.tikzstyles + shared.tikzdefs are installed into the figures dir by
+# install-assets (run via emit_pandoc_renderer / install-assets.sh), so these
+# paths resolve to real files at config load. Every valid synthesized config
+# appends it (the canonical witness config, write_valid_config, d13, d15 all call
+# it); p101 swaps in its own red/blue .tikzstyles fixture at this same path.
+emit_figures() {
+    local out="$1"
+    cat >> "$out" <<EOF
+
+[figures]
+tikzstyles = "$ABS_SPEC_DIR/home/.pandoc/figures/shared.tikzstyles"
+tikzdefs = "$ABS_SPEC_DIR/home/.pandoc/figures/shared.tikzdefs"
+EOF
+}
+
 # Generic-plugin fixtures (Milestone A). The plugins dir is a core-config value
 # (render-rebuild-plan.md), not a constant: each spec copies the committed
 # fixtures into a hermetic plugins dir and wires [plugins].dir below.
@@ -180,6 +199,7 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 debounce_ms = 200
 EOF
         emit_directories "$CONFIG_PATH"
+        emit_figures "$CONFIG_PATH"
         # The pandoc renderer is the active renderer (its checks are the doctor's
         # pandoc-executable/pandoc-invocation rows; D1/D5 assert on them); it also
         # sets [plugins].dir = $PLUGINS_DIR, the dir the export plugins install into.
@@ -308,6 +328,7 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 debounce_ms = 200
 EOF
         emit_directories "$CONFIG_PATH"
+        emit_figures "$CONFIG_PATH"
         install_plugin_fixtures "$PLUGINS_DIR" pandoc-renderer
         env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
         cat >> "$CONFIG_PATH" <<EOF
@@ -365,6 +386,7 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 debounce_ms = 200
 EOF
         emit_directories "$CONFIG_PATH"
+        emit_figures "$CONFIG_PATH"
         # The filters/template must be installed so the command first-run.sh writes
         # during recovery is runnable (every recovery spec does this).
         env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
@@ -674,6 +696,7 @@ EOF
     # specs that exercise export (p07/p08/p17/p47/p66) install the relevant plugin
     # in their own case below. The default config carries no export config.
     emit_directories "$CONFIG_PATH"
+    emit_figures "$CONFIG_PATH"
     # Renderer setup (Milestone B): the core is renderer-agnostic and delegates the
     # preview to the active renderer plugin. Default = pandoc renderer (keeps the
     # preview byte-identical to the old core path); p20 swaps in the generic
@@ -1095,12 +1118,21 @@ p101-shared-tikzstyles.spec.ts)
     # wiring will read it (the configured global figures dir).
     FIGS_DIR="$ABS_SPEC_DIR/home/.pandoc/figures"
     mkdir -p "$FIGS_DIR"
+    # emit_pandoc_renderer (default config block above) ran install-assets, which
+    # symlinked the VENDORED starter shared.tikzstyles into FIGS_DIR. Writing
+    # through that symlink would corrupt the vendored starter, so replace it with a
+    # REAL file carrying THIS spec's red witness style (--remove-destination drops
+    # the symlink first). The config's [figures].tikzstyles already points here.
+    rm -f "$FIGS_DIR/shared.tikzstyles"
     cat > "$FIGS_DIR/shared.tikzstyles" <<'PPE_P101_RED_EOF'
 \tikzstyle{bigredbox}=[fill=red, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm]
 PPE_P101_RED_EOF
     cat > "$FIGS_DIR/shared-blue.tikzstyles" <<'PPE_P101_BLUE_EOF'
 \tikzstyle{bigredbox}=[fill=blue, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm]
 PPE_P101_BLUE_EOF
+    # The config's [figures].tikzdefs points at shared.tikzdefs; the vendored
+    # starter (symlinked by install-assets) suffices — the witness style needs no
+    # extra preamble. Leave it as the installed starter.
     ;;
 esac
 

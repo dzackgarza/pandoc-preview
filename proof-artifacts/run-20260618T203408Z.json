@@ -1,0 +1,63 @@
+{
+  "run_id": "20260618T203408Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p100-tikz-render.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p100-tikz-render.spec.ts",
+            "title": "a tikzpicture renders as an inline SVG figure in the live preview, not raw source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 6803,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p100-tikz-render.spec.ts",
+          "name": "tikz-svg-count",
+          "value": "3"
+        }
+      ]
+    },
+    {
+      "spec": "p84-bib-config-key.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p84-bib-config-key.spec.ts",
+            "title": "the configured bibliography is one frontend-readable value that governs the preview",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2504,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p84-bib-config-key.spec.ts",
+          "name": "frontend-bibliography-path",
+          "value": "/tmp/pandoc-preview-proof-runs/20260618T203408Z/p84-bib-config-key/home/.pandoc/bib/references.bib"
+        }
+      ]
+    }
+  ]
+}

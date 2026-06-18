@@ -55,6 +55,15 @@ export interface Config {
     styles: ExistingDir;
     figures: ExistingDir;
   };
+  // The shared figure palette (Phase D / D-2 / P91): the ONE `.tikzstyles` style
+  // file and ONE `.tikzdefs` preamble every compiled figure `\input`s. Each is an
+  // ExistingFile — Rust's config loader validates the path exists and is a file at
+  // load time (Figures in config.rs), failing loud otherwise. The renderer
+  // forwards them as render context the figure compile `\input`s.
+  figures: {
+    tikzstyles: ExistingFile;
+    tikzdefs: ExistingFile;
+  };
   // Plugin firewall + active renderer (Milestone A/B). Optional; absent when the
   // config declares no plugins/renderer. The UI does not edit these (they round-
   // trip verbatim through save), so per-plugin config is left opaque.

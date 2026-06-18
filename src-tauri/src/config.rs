@@ -20,6 +20,13 @@ pub struct Config {
     /// implicit `~/.pandoc` default); first-run generates them as
     /// `~/.pandoc/styles` and `~/.pandoc/figures`.
     pub directories: Directories,
+    /// The shared figure palette (Phase D / D-2 / P91): the ONE `.tikzstyles`
+    /// style file and ONE `.tikzdefs` preamble every compiled figure `\input`s.
+    /// Required — both are explicit config-declared, load-validated `ExistingFile`
+    /// paths; a missing shared style/defs file is a hard load error, never a
+    /// default. The renderer forwards them as render context (`{tikzstyles}` /
+    /// `{tikzdefs}`) the figure compile `\input`s.
+    pub figures: Figures,
     /// Plugin firewall (Milestone A). Optional capability: when the `[plugins]`
     /// table is present, `dir` is the directory the app discovers plugins from;
     /// when absent, the app has no plugins (a complete, valid state). Optional,
@@ -50,6 +57,27 @@ pub struct Directories {
     pub styles: ExistingDir,
     /// Root directory the figures explorer pane browses.
     pub figures: ExistingDir,
+}
+
+/// The `[figures]` table (Phase D / D-2 / P91): the shared figure palette every
+/// compiled figure `\input`s. Both paths are required, load-validated
+/// `ExistingFile`s — a config pointing at a missing shared `.tikzstyles` or
+/// `.tikzdefs` is a hard load error, never a default. Distinct from
+/// `[directories].figures` (the figures DIR the explorer browses): these are the
+/// two specific palette FILES the figure compile consumes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Figures {
+    /// The shared TikZ style palette in TikZiT's native `\tikzstyle{NAME}=[...]`
+    /// format. Every figure compile `\input`s it, so a style declared here is
+    /// available to every tikzpicture/tikzcd block by name. The renderer forwards
+    /// this path as the `{tikzstyles}` render-context placeholder.
+    pub tikzstyles: ExistingFile,
+    /// The shared TikZ preamble/definitions (`.tikzdefs`): arbitrary preamble
+    /// LaTeX (`\pgfdeclarelayer`, `\def`, `\usetikzlibrary`) shared by every
+    /// figure, `\input` before `\begin{document}`. The renderer forwards this path
+    /// as the `{tikzdefs}` render-context placeholder.
+    pub tikzdefs: ExistingFile,
 }
 
 /// A filesystem path that is required to exist and be a directory. The invariant

@@ -23,7 +23,11 @@ config_schema = "schema.json"
 # {bibliography}/{csl} are the config-owned citation sources (P84/C1) the app
 # forwards from config.editor.bibliography / .csl; render.sh layers them onto the
 # pandoc command as --bibliography / --csl (exactly as it layers --mathjax).
-command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}"]
+# {tikzstyles}/{tikzdefs} are the config-owned shared figure palette (Phase D /
+# D-2 / P91) the app forwards from config.figures.tikzstyles / .tikzdefs; render.sh
+# exports them as TIKZSTYLES_FILE / TIKZDEFS_FILE for tikzcd.lua to \input into
+# every compiled figure.
+command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}", "{tikzstyles}", "{tikzdefs}"]
 
 # The pandoc configurator (C3): the app spawns this (detached) as the "Configure"
 # action; it opens a kitty popup running a gum wizard that edits the raw pandoc

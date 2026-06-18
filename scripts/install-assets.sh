@@ -61,6 +61,11 @@ link_dir "$PANDOC_CONFIG/bib" "$HOME/.pandoc/bib"
 # The global figures directory the renderer searches via PANDOC_RESOURCE_PATH.
 # The app requires it to exist (the pandoc-resource-path doctor check fails the
 # startup gate otherwise); create it if absent. Figure CONTENT is user-owned and
-# never vendored, so this only ensures the directory is present, never clobbering
-# anything inside it.
+# never vendored.
 mkdir -p "$HOME/.pandoc/figures"
+# The SHARED figure palette (Phase D / D-2 / P91): the starter shared.tikzstyles +
+# shared.tikzdefs every compiled figure \input's. These ARE vendored starter data
+# assets (like csl/bib), symlinked in so a fresh machine has a config-declarable
+# palette; a user override (a real file where the symlink would go) is preserved,
+# never clobbered — so a user growing their own palette keeps it.
+link_dir "$PANDOC_CONFIG/figures" "$HOME/.pandoc/figures"

@@ -112,6 +112,11 @@ PREVIEW_TEMPLATE="$HOME/.pandoc/templates/pandoc_preview_template.html"
 BIBLIOGRAPHY="$HOME/.pandoc/bib/references.bib"
 # The shipped alphabetic citation style (hyperlinked [Label] citations).
 CSL="$HOME/.pandoc/csl/alpha-preview.csl"
+# The shared figure palette (Phase D / D-2 / P91): the ONE .tikzstyles + .tikzdefs
+# every compiled figure \input's. install-assets symlinks the vendored starters
+# into the figures dir; the [figures] table below points config at them.
+TIKZSTYLES="$FIGURES_DIR/shared.tikzstyles"
+TIKZDEFS="$FIGURES_DIR/shared.tikzdefs"
 # Obsidian fidelity: lists may follow a paragraph with no blank line in a vault;
 # the extension makes pandoc parse them as lists (Obsidian does). Citeproc resolves
 # [@key] citations against the installed bibliography (override it with your own).
@@ -186,6 +191,15 @@ debounce_ms = $DEBOUNCE_MS
 [directories]
 styles = "$STYLES_DIR"
 figures = "$FIGURES_DIR"
+
+# The shared figure palette (Phase D / D-2 / P91): the ONE TikZiT-native
+# .tikzstyles style file and ONE .tikzdefs preamble every compiled figure
+# \input's. Both are required, load-validated existing files; the renderer
+# forwards them to the figure compile. Edit the shared files (or open them in
+# TikZiT) to grow the palette shared by every figure.
+[figures]
+tikzstyles = "$TIKZSTYLES"
+tikzdefs = "$TIKZDEFS"
 
 # The app is renderer-agnostic: the preview is produced by a renderer plugin
 # discovered from the plugins directory below. The shipped pandoc renderer houses

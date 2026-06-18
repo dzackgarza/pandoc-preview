@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T202257Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p101-shared-tikzstyles.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p101-shared-tikzstyles.spec.ts",
+            "title": "a tikz style defined only in the shared .tikzstyles palette determines the rendered figure, and changing the shared file changes the render",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 33361,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: timeout (30s)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

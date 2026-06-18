@@ -19,6 +19,14 @@ mathjax="$3"
 # carries --citeproc and the citation metadata but NOT the bib/csl paths.
 bibliography="$4"
 csl="$5"
+# Phase D / D-2 / P91: the ONE config-declared shared figure palette
+# (config.figures.tikzstyles / .tikzdefs), forwarded by the app as render context
+# exactly as bibliography/csl are. The tikz compile (tikzcd.lua -> standalone-
+# tikz.tex) \input's these into every figure's preamble, so a style/def declared
+# in the shared file is in scope for every figure by name. Exported as
+# TIKZSTYLES_FILE / TIKZDEFS_FILE below (the env tikzcd.lua reads).
+tikzstyles="$6"
+tikzdefs="$7"
 
 # The core always sets PPE_PLUGIN_CONFIG; default to an empty object defensively.
 cfg="${PPE_PLUGIN_CONFIG:-}"
@@ -39,6 +47,16 @@ figure_width="$(printf '%s' "$cfg" | jq -r '.style.figure_width')"
 # doctor's check-invocation.sh so the filter sees the same env in both paths.
 # shellcheck source=tikz-env.sh
 . "$(dirname "${BASH_SOURCE[0]}")/tikz-env.sh"
+
+# Phase D / D-2 / P91: export the config-declared shared figure palette so
+# tikzcd.lua \input's it into every compiled figure. These are render context the
+# app forwards on argv (config.figures.tikzstyles / .tikzdefs), NOT derived from
+# PANDOC_RESOURCE_PATH, so they are exported here rather than in tikz-env.sh (the
+# doctor's empty-stdin invocation probe loads the filter but compiles no figure,
+# so it never reads these — the filter reads them lazily at figure-compile time).
+# A booted app always supplies both (required, config-validated ExistingFiles).
+export TIKZSTYLES_FILE="$tikzstyles"
+export TIKZDEFS_FILE="$tikzdefs"
 
 # Tokenize the raw command with a shlex-class parser (quotes respected, NO shell
 # expansion) — run it, do not interpret it. The first token is the executable.
