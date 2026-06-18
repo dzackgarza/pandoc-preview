@@ -412,6 +412,48 @@ export async function cursorOffset(page: EvaluatesScripts): Promise<number> {
   return raw;
 }
 
+// ── Static lint diagnostics (P70) ──────────────────────────────────────────
+// The editor's STATIC lint layer surfaces diagnostics through CM6's
+// `@codemirror/lint` field — the SAME field `lintGutter` renders. To observe the
+// produced diagnostics deterministically (and BLIND to how the lint source is
+// built), the implementer must expose two harness hooks that read the editor's
+// ACTUAL live lint state (the `lintState` field), flushed via `forceLinting`, NOT
+// a parallel JS array. A side-array hook would be inadmissible: it could pass
+// while the gutter shows nothing.
+//
+//   __PPE_E2E__.lintDiagnostics(): {from,to,severity,message,source}[]
+//     The live, forceLinting-flushed @codemirror/lint diagnostics: `from`/`to`
+//     are character offsets into the buffer (the range CM6 marks), `severity` is
+//     the CM6 severity string, `message` the human-readable text, `source` the
+//     producing linter / ChkTeX rule id.
+//   __PPE_E2E__.lintCount(): number — the count of currently-active diagnostics
+//     in that SAME flushed field.
+export interface LintDiagnostic {
+  from: number;
+  to: number;
+  severity: string;
+  message: string;
+  source: string;
+}
+
+export async function lintDiagnostics(page: EvaluatesScripts): Promise<LintDiagnostic[]> {
+  const raw = await page.evaluate(
+    `JSON.stringify(window.__PPE_E2E__.lintDiagnostics())`,
+  );
+  if (typeof raw !== 'string') {
+    throw new Error(`lintDiagnostics returned non-string: ${JSON.stringify(raw)}`);
+  }
+  return JSON.parse(raw) as LintDiagnostic[];
+}
+
+export async function lintCount(page: EvaluatesScripts): Promise<number> {
+  const raw = await page.evaluate(`window.__PPE_E2E__.lintCount()`);
+  if (typeof raw !== 'number') {
+    throw new Error(`lintCount returned non-number: ${JSON.stringify(raw)}`);
+  }
+  return raw;
+}
+
 // The set of completion-option labels currently shown in the live autocomplete
 // popup, read straight from the REAL rendered CM6 tooltip DOM
 // (`.cm-tooltip-autocomplete` → `.cm-completionLabel`). Returns [] when no
