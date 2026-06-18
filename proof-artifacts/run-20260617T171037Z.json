@@ -1,0 +1,87 @@
+{
+  "run_id": "20260617T171037Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d05-doctor-pandoc-nonexecutable.spec.ts",
+            "title": "--doctor with a non-executable pandoc path fails pandoc-executable and exits 1",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 637,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d09-plugin-doctor-check.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d09-plugin-doctor-check.spec.ts",
+            "title": "a discovered plugin contributes doctor checks that join the battery and reflect real conditions",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 997,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d09-plugin-doctor-check.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d11-doctor-required-filter.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d11-doctor-required-filter.spec.ts",
+            "title": "--doctor fails required-filter when a required filter is missing",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1054,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d11-doctor-required-filter.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

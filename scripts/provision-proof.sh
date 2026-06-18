@@ -115,12 +115,12 @@ emit_pandoc_renderer() {
     # The bibliography citeproc resolves against. install-assets just symlinked the
     # vendored starter here; replace that symlink with the fixture, which carries
     # the keys the citation proof (p27) cites. --remove-destination replaces the
-    # symlink instead of writing through it into the vendored starter.
+    # symlink instead of writing through it into the vendored starter. P84/C1: the
+    # bibliography + csl paths are NOT in the command below — they are the
+    # config-declared source (editor.bibliography / editor.csl, written into the
+    # [editor] block by the caller) the renderer layers on as render context.
     local bib="$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
     cp --remove-destination "$REPO_ROOT/tests/proof/fixtures/references.bib" "$bib"
-    # The shipped alphabetic CSL (hyperlinked [Label] citations); install-assets
-    # symlinked the vendored csl dir into $HOME/.pandoc/csl.
-    local csl="$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
     cat >> "$config_path" <<EOF
 
 [plugins]
@@ -130,7 +130,7 @@ dir = "$plugins_dir"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --bibliography=$bib --csl=$csl --metadata=link-citations:true --metadata=reference-section-title:References --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
+command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
 
 [plugin.pandoc-renderer.style]
 figure_width = "75%"
@@ -173,6 +173,8 @@ theme = "dark"
 font_size = 14
 line_wrapping = false
 line_numbers = true
+bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 
 [preview]
 debounce_ms = 200
@@ -299,6 +301,8 @@ theme = "dark"
 font_size = 14
 line_wrapping = false
 line_numbers = true
+bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 
 [preview]
 debounce_ms = 200
@@ -354,6 +358,8 @@ theme = "dark"
 font_size = 14
 line_wrapping = false
 line_numbers = true
+bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 
 [preview]
 debounce_ms = 200
@@ -656,6 +662,8 @@ theme = "dark"
 font_size = 14
 line_wrapping = false
 line_numbers = true
+bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 $EDITOR_EXTRA
 
 [preview]
@@ -673,6 +681,12 @@ EOF
     case "$SPEC" in
     p20-generic-renderer.spec.ts)
         install_plugin_fixtures "$PLUGINS_DIR" generic-renderer
+        # The [editor] block above declares the (required) bibliography/csl config
+        # keys (P84/C1); install the pandoc assets so those paths resolve to real
+        # files at config load even though the generic renderer ignores them.
+        env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
+        cp --remove-destination "$REPO_ROOT/tests/proof/fixtures/references.bib" \
+            "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
         cat >> "$CONFIG_PATH" <<EOF
 
 [plugins]
@@ -918,18 +932,17 @@ p49-session-restore.spec.ts)
 p84-bib-config-key.spec.ts)
     # P84/C1: the bibliography the app cites against is ONE config-declared
     # source the frontend can read AND the file the preview resolves citations
-    # from. emit_pandoc_renderer (run above) installed the renderer whose command
-    # bakes --bibliography=$HOME/.pandoc/bib/references.bib and copied the default
-    # references.bib there. Replace that bib with the p84 fixture, which carries a
-    # UNIQUE entry (key C1ONLY, authors Zariski/Voronoi) the default references.bib
-    # does NOT contain, so the preview's #refs for [@C1ONLY] can only come from a
-    # bibliography that holds C1ONLY. The spec reads the frontend-exposed
-    # bibliography path back and cross-checks (off disk, independent process) that
-    # the SAME file holds C1ONLY — proving the one config value governs both
-    # surfaces. NOTE: deliberately NOT a brand-new editor.bibliography config key —
-    # config.rs uses deny_unknown_fields, so provisioning one would crash config
-    # load; the RED is behavioral (no frontend-readable bibliography surface), not
-    # a boot crash.
+    # from. The canonical [editor] block (written above) declares the required
+    # editor.bibliography key pointing at $HOME/.pandoc/bib/references.bib; the
+    # renderer layers that SAME config value onto pandoc as --bibliography (render
+    # context, alongside --mathjax). Replace that bib with the p84 fixture, which
+    # carries a UNIQUE entry (key C1ONLY, authors Zariski/Voronoi) the default
+    # references.bib does NOT contain, so the preview's #refs for [@C1ONLY] can only
+    # come from a bibliography that holds C1ONLY. The spec reads the frontend-exposed
+    # bibliography path back (window.__PPE_E2E__.configBibliography(), the sibling of
+    # configFontSize, surfacing config.editor.bibliography) and cross-checks (off
+    # disk, independent process) that the SAME file holds C1ONLY — proving the one
+    # config value governs both surfaces.
     cp "$REPO_ROOT/tests/proof/fixtures/p84-bib.bib" "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
     ;;
 p29-global-figures-resource.spec.ts)

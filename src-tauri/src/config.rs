@@ -108,6 +108,14 @@ impl<'de> Deserialize<'de> for ExistingFile {
     }
 }
 
+impl ExistingFile {
+    /// The validated file path. The `ExistingFile` invariant (checked at
+    /// deserialize time) guarantees this names a real regular file.
+    pub fn path(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
 /// The `[renderer]` table: which renderer plugin is active.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -168,6 +176,18 @@ pub struct Editor {
     /// An absent value is never re-serialized.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub spell_dictionary: Option<ExistingFile>,
+    /// Config-owned path to the bibliography database the preview resolves
+    /// `@`-citations against (BibLaTeX/CSL-JSON/etc). The ONE source of truth for
+    /// the citation bibliography: the frontend reads it (to name which file governs
+    /// the app's citations) AND the renderer layers it onto the pandoc command as
+    /// `--bibliography`, sourced from this same value (P84/C1). Required and
+    /// load-validated (ExistingFile), so a config pointing at a missing bibliography
+    /// is a hard load error, never a silent default.
+    pub bibliography: ExistingFile,
+    /// Config-owned path to the CSL citation style the preview formats citations
+    /// with. Like `bibliography`, the renderer layers it onto the pandoc command as
+    /// `--csl`, sourced from this value. Required and load-validated (ExistingFile).
+    pub csl: ExistingFile,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

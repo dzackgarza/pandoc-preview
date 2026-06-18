@@ -119,10 +119,14 @@ FROM_FORMAT_EXT="$FROM_FORMAT+lists_without_preceding_blankline"
 # tikzcd.lua is intentionally NOT referenced yet: it errors at load without its
 # standalone-tikz.tex template + PANDOC_DIR/FIGURES_DIR env, which is the Milestone
 # F tikz pipeline. It is still vendored/installed; it joins the command in F.
-# Citations render preprint-style: --csl gives bracketed alphabetic labels,
-# --metadata link-citations hyperlinks them to the bibliography, and
+# Citations render preprint-style: --citeproc enables processing, --metadata
+# link-citations hyperlinks the labels to the bibliography, and
 # reference-section-title gives the bibliography a separated "References" heading.
-PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --bibliography=$BIBLIOGRAPHY --csl=$CSL --metadata=link-citations:true --metadata=reference-section-title:References --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
+# P84/C1: the --bibliography / --csl paths are NOT baked into this command — they
+# are the ONE config-declared source (editor.bibliography / editor.csl below), which
+# the renderer layers onto the command as render context. The path lives in exactly
+# one place (the config key); the canonical command carries no bib/csl literal.
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
 # Escape for a TOML basic string ("..."): backslash first, then double-quote.
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}
@@ -158,6 +162,14 @@ font_size = $FONT_SIZE
 line_wrapping = $LINE_WRAPPING
 # Show line numbers in the gutter.
 line_numbers = $LINE_NUMBERS
+# P84/C1: the ONE bibliography the preview resolves @-citations against. The
+# frontend reads this value to name which file governs the app's citations, and
+# the renderer layers it onto pandoc as --bibliography from this SAME value.
+# Required; the app refuses to start if the path is missing or not a file.
+bibliography = "$BIBLIOGRAPHY"
+# The CSL citation style the preview formats citations with (layered onto pandoc
+# as --csl from this value). Required; load-validated as an existing file.
+csl = "$CSL"
 
 [preview]
 # Editor idle time in ms before the preview re-renders (0–10000).

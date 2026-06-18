@@ -1,0 +1,72 @@
+{
+  "run_id": "20260617T133109Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p65-insertion-bar-modals.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar matrix builder modal inserts a pmatrix of exactly the chosen rows × cols at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1518,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar table builder modal inserts a pandoc pipe table of exactly the chosen cols × body-rows at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 504,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar footnote modal inserts a reference marker and a matching definition line carrying the exact typed body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1258,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-matrix-shape",
+          "value": "2x3"
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-table-body-rows",
+          "value": 2
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-footnote-id",
+          "value": "1"
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-footnote-body",
+          "value": "P65 distinctive footnote body sentinel 4d7e1b"
+        }
+      ]
+    }
+  ]
+}

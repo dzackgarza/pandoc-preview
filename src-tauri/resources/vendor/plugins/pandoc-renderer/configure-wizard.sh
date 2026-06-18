@@ -37,11 +37,15 @@ for f in "${required[@]}"; do
 done
 
 # Citation pipeline — LOCKED, like the filters: the preview renders preprint-style
-# citations (citeproc + the shipped alphabetic CSL, hyperlinked) with a separated
-# "References" bibliography. Always written so reconfiguring never silently drops it.
+# citations (citeproc, hyperlinked) with a separated "References" bibliography.
+# Always written so reconfiguring never silently drops it. P84/C1: the
+# --bibliography / --csl PATHS are NOT in the command — they are the config-owned
+# source (editor.bibliography / editor.csl, written below via the toml helper) the
+# renderer layers on as render context. The command carries only --citeproc and the
+# citation metadata, never a bib/csl literal — the path lives in exactly one place.
 bibliography="$HOME/.pandoc/bib/references.bib"
 csl="$HOME/.pandoc/csl/alpha-preview.csl"
-citation_args="--citeproc --bibliography=$bibliography --csl=$csl --metadata=link-citations:true --metadata=reference-section-title:References"
+citation_args="--citeproc --metadata=link-citations:true --metadata=reference-section-title:References"
 
 extra_args=""
 while IFS= read -r line; do
@@ -52,7 +56,9 @@ done <<<"$extra_raw"
 
 template="$HOME/.pandoc/templates/pandoc_preview_template.html"
 command="$exe --from $fmt --to html5 --standalone --embed-resources $citation_args --template=$template$filter_args$extra_args"
-"$toml" write "$config_path" "$command"
+# Write the renderer command AND the config-owned citation source keys
+# (editor.bibliography / editor.csl) — the ONE place the bib/csl paths live (P84/C1).
+"$toml" write "$config_path" "$command" "$bibliography" "$csl"
 
 gum style --bold --foreground 2 "Pandoc renderer command updated."
 echo "CONFIGURE_PANDOC_OK"

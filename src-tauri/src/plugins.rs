@@ -26,6 +26,8 @@ const PH_ARTIFACT: &str = "{artifact}";
 const PH_BASE_DIR: &str = "{base_dir}";
 const PH_BASE_URL: &str = "{base_url}";
 const PH_MATHJAX: &str = "{mathjax}";
+const PH_BIBLIOGRAPHY: &str = "{bibliography}";
+const PH_CSL: &str = "{csl}";
 
 /// Environment variable carrying the active plugin's `[plugin.<id>]` config as
 /// JSON, so a renderer/check script can read its own config (e.g. the pandoc
@@ -564,7 +566,7 @@ fn render_log(program: &str, args: &[String], output: &std::process::Output) -> 
 /// Render the editor buffer to preview HTML through the ACTIVE renderer plugin.
 /// The app core owns no renderer knowledge: it loads `[renderer].active`, finds
 /// that renderer plugin, supplies the render context as `{base_dir}`/`{base_url}`/
-/// `{mathjax}` placeholders and the plugin's own config on `PPE_PLUGIN_CONFIG`,
+/// `{mathjax}`/`{bibliography}`/`{csl}` placeholders and the plugin's own config on `PPE_PLUGIN_CONFIG`,
 /// feeds the buffer on stdin, and takes stdout as the standalone HTML. A missing
 /// `[renderer]` (no active renderer) or unknown renderer id is a loud error.
 pub fn render_active(
@@ -597,12 +599,22 @@ pub fn render_active(
             ))
         })?;
 
+    // P84/C1: the bibliography + CSL the preview cites against are render context
+    // sourced from the ONE config-declared source (config.editor.bibliography /
+    // .csl), substituted in alongside {mathjax}. The renderer plugin layers them
+    // onto its pandoc command; the app core holds no citation knowledge beyond
+    // forwarding these config-owned paths as context.
     let subs = [
         (PH_PLUGIN_DIR, plugin.dir.display().to_string()),
         (PH_CONFIG_DIR, config_dir.display().to_string()),
         (PH_BASE_DIR, base_dir.clone()),
         (PH_BASE_URL, base_url),
         (PH_MATHJAX, mathjax_url),
+        (
+            PH_BIBLIOGRAPHY,
+            cfg.editor.bibliography.path().display().to_string(),
+        ),
+        (PH_CSL, cfg.editor.csl.path().display().to_string()),
     ];
     let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
     let argv: Vec<String> = plugin

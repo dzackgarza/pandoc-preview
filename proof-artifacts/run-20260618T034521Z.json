@@ -1,0 +1,145 @@
+{
+  "run_id": "20260618T034521Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p51-composable-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p51-composable-completion.spec.ts",
+            "title": "A registered app completion source composes with the LaTeX source (both surface)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3428,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p51-composable-completion.spec.ts",
+          "name": "completion-sources-compose",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p54-spellcheck.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p54-spellcheck.spec.ts",
+            "title": "Spellcheck marks misspelled words while honoring a custom math dictionary",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2671,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p54-spellcheck.spec.ts",
+          "name": "spell-gibberish-marked",
+          "value": "zzxqwbgg"
+        },
+        {
+          "spec": "p54-spellcheck.spec.ts",
+          "name": "spell-mathterm-allowed",
+          "value": "cohomology"
+        }
+      ]
+    },
+    {
+      "spec": "p36-editor-math-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p36-editor-math-highlighting.spec.ts",
+            "title": "Inline $…$ math renders with LaTeX syntax highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2613,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p36-editor-math-highlighting.spec.ts",
+          "name": "inline-math-highlighted",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p38-editor-markdown-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p38-editor-markdown-highlighting.spec.ts",
+            "title": "Markdown constructs (heading, emphasis, strong) render highlighted",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2462,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p38-editor-markdown-highlighting.spec.ts",
+          "name": "markdown-prose-highlighted",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3320,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    }
+  ]
+}

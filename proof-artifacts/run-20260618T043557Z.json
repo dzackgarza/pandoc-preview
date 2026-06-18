@@ -1,0 +1,44 @@
+{
+  "run_id": "20260618T043557Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p71-typographic-lint.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p71-typographic-lint.spec.ts",
+            "title": "ChkTeX typographic classes (sin→\\sin, x^10→x^{10}) fire only when enabled in the lint plugin config, scoped to math",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 5917,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p71-typographic-lint.spec.ts",
+          "name": "math-operator-diagnostic-message",
+          "value": "You should perhaps use `\\sin' instead."
+        },
+        {
+          "spec": "p71-typographic-lint.spec.ts",
+          "name": "math-grouping-diagnostic-message",
+          "value": "You might wish to put this between a pair of `{}'"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "20260617T164922Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p47-save-gate.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p47-save-gate.spec.ts",
+            "title": "path-consuming actions are gated on a resolved durable destination",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 18689,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "identityless-recovery-backed",
+          "value": false
+        },
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "resolved-live-file-bytes",
+          "value": 100
+        }
+      ]
+    }
+  ]
+}

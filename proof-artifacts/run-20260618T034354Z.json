@@ -1,0 +1,49 @@
+{
+  "run_id": "20260618T034354Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p70-static-lint-balance.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p70-static-lint-balance.spec.ts",
+            "title": "A real \\left/$ imbalance surfaces a real @codemirror/lint diagnostic before any compile, and balancing clears it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 6140,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "baseline-lint-count",
+          "value": 0
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "imbalanced-lint-count",
+          "value": 1
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "imbalance-diagnostic-message",
+          "value": "unmatched delimiter: No match found for `('."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "run_id": "20260618T092700Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p77-math-mode-snippet.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p77-math-mode-snippet.spec.ts",
+            "title": "The SAME snippet trigger expands its prose body in prose and its math body in math; a math-only trigger is gated out of prose",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3823,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p77-math-mode-snippet.spec.ts",
+          "name": "p77-prose-body-count",
+          "value": 1
+        },
+        {
+          "spec": "p77-math-mode-snippet.spec.ts",
+          "name": "p77-math-only-gated-in-prose",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "spec": "p80-mirrored-tabstops.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p80-mirrored-tabstops.spec.ts",
+            "title": "A snippet whose body repeats a tabstop number mirrors the text typed into the first slot into the second slot live, without a second keystroke there",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3357,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p80-mirrored-tabstops.spec.ts",
+          "name": "p80-mirrored-begin",
+          "value": "\\begin{theorem}"
+        },
+        {
+          "spec": "p80-mirrored-tabstops.spec.ts",
+          "name": "p80-mirrored-end",
+          "value": "\\end{theorem}"
+        }
+      ]
+    },
+    {
+      "spec": "p52-snippet-dictionary.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p52-snippet-dictionary.spec.ts",
+            "title": "A config-declared snippet dictionary offers its trigger and expands the body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2530,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p52-snippet-dictionary.spec.ts",
+          "name": "snippet-trigger-offered",
+          "value": "mthm"
+        },
+        {
+          "spec": "p52-snippet-dictionary.spec.ts",
+          "name": "snippet-cursor-offset",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "spec": "p51-composable-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p51-composable-completion.spec.ts",
+            "title": "A registered app completion source composes with the LaTeX source (both surface)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3651,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p51-composable-completion.spec.ts",
+          "name": "completion-sources-compose",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2501,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    }
+  ]
+}

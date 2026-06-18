@@ -1,0 +1,63 @@
+{
+  "run_id": "20260617T170602Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d07-dev-routes-config-recovery.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d07-dev-routes-config-recovery.spec.ts",
+            "title": "just dev with an invalid config reconfigures it before starting tauri dev",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 40481,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d07-dev-routes-config-recovery.spec.ts",
+          "name": "dev-recovery-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d15-dev-recovers-plugins-failure.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d15-dev-recovers-plugins-failure.spec.ts",
+            "title": "just dev recovers a plugins-class doctor failure instead of dead-ending",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 40472,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d15-dev-recovers-plugins-failure.spec.ts",
+          "name": "dev-plugins-recovery-exit",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

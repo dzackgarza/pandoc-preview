@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T104821Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p82-snippet-variables.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p82-snippet-variables.spec.ts",
+            "title": "Expanding a snippet whose body contains $CLIPBOARD and $CURRENT_DATE resolves them to the real clipboard text and the host date, leaving no literal variable tokens",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 3215,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"PPE-CLIP-WITNESS-Zeta-7351-naïve-café\"\u001b[39m\nReceived string:    \u001b[31m\"<!-- PPE-SIG clip=$CLIPBOARD date=$CURRENT_DATE year=$CURRENT_YEAR -->\"\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

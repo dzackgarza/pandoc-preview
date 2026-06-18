@@ -1,0 +1,81 @@
+{
+  "run_id": "20260617T132343Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p63-insertion-bar-controls.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar amsthm theorem button inserts the theorem fenced div at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2925,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar tikzcd and tikz diagram buttons inserts the distinct scaffolds at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 506,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar snippet dropdown option expands the snippet body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1117,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar code-block dropdown option inserts a fence tagged with the chosen language",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 456,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-env-class",
+          "value": "theorem"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-tikzcd-cursor",
+          "value": 15
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-snippet-trigger",
+          "value": "mthm"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-codeblock-lang",
+          "value": "python"
+        }
+      ]
+    }
+  ]
+}

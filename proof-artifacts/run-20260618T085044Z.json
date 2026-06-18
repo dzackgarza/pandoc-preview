@@ -1,0 +1,44 @@
+{
+  "run_id": "20260618T085044Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p79-regex-trigger.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p79-regex-trigger.spec.ts",
+            "title": "Typing a regex trigger substitutes its capture group into the body and expands in place with no popup; the matched trigger text is gone and the capture is the real matched letter, not a literal $1",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2770,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p79-regex-trigger.spec.ts",
+          "name": "p79-expanded-body",
+          "value": "\\bar{p}"
+        },
+        {
+          "spec": "p79-regex-trigger.spec.ts",
+          "name": "p79-matched-trigger",
+          "value": "pbar"
+        }
+      ]
+    }
+  ]
+}

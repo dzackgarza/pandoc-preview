@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T050333Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p73-lint-suppression.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p73-lint-suppression.spec.ts",
+            "title": "An in-document ppe-lint-disable-line directive suppresses the named rule on its own line only, and removing it restores the diagnostic",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 21444,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (() => {\n      const fn = window.__PPE_E2E__ && window.__PPE_E2E__.lintDiagnostics;\n      if (!fn) return false;\n      const ds = fn();\n      const overlaps = (a,b,c,d) => a < d && c < b;\n      const isGrouping = (dg) => {\n        if (dg.source === 'chktex:25') return true;\n        const m = String(dg.message).toLowerCase();\n        return m.includes('{}') || m.includes('braces') || m.includes('superscript') ||\n               m.includes('subscript') || m.includes('group') || m.includes('pair of');\n      };\n      const directedHit = ds.some((dg) =>\n        overlaps(dg.from, dg.to, 404, 408) && isGrouping(dg));\n      const undirectedHit = ds.some((dg) =>\n        overlaps(dg.from, dg.to, 373, 377) && isGrouping(dg));\n      return undirectedHit && !directedHit;\n    })()"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "run_id": "20260618T091708Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p78-autotrigger.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p78-autotrigger.spec.ts",
+            "title": "Typing an autotrigger followed by a space expands its body in place with no popup and no accept; a second autotrigger immediately expands again (re-armed chain)",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 11461,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\tilde{}\")"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p79-regex-trigger.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p79-regex-trigger.spec.ts",
+            "title": "Typing a regex trigger substitutes its capture group into the body and expands in place with no popup; the matched trigger text is gone and the capture is the real matched letter, not a literal $1",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 12399,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\bar{p}\")"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

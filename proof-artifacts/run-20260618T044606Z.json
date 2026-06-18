@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T044606Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p72-user-regex-lint.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p72-user-regex-lint.spec.ts",
+            "title": "A config-owned user-regex lint rule surfaces a diagnostic with its declared message, and a different rule set surfaces that rule instead",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 22091,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (() => {\n      const fn = window.__PPE_E2E__ && window.__PPE_E2E__.lintDiagnostics;\n      if (!fn) return false;\n      const ds = fn();\n      const overlaps = (a,b,c,d) => a < d && c < b;\n      return ds.some((dg) =>\n        overlaps(dg.from, dg.to, 379, 383) &&\n        dg.message === \"resolve before submission\");\n    })()"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

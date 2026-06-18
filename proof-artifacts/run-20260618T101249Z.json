@@ -1,0 +1,44 @@
+{
+  "run_id": "20260618T101249Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p82-snippet-variables.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p82-snippet-variables.spec.ts",
+            "title": "Expanding a snippet whose body contains $CLIPBOARD and $CURRENT_DATE resolves them to the real clipboard text and the host date, leaving no literal variable tokens",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2718,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p82-snippet-variables.spec.ts",
+          "name": "p82-clipboard-sentinel",
+          "value": "PPE-CLIP-WITNESS-Zeta-7351-naïve-café"
+        },
+        {
+          "spec": "p82-snippet-variables.spec.ts",
+          "name": "p82-host-year",
+          "value": "2026"
+        }
+      ]
+    }
+  ]
+}

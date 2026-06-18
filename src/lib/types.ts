@@ -32,6 +32,17 @@ export interface Config {
     // to the spellchecker so those math terms are not flagged. The base English
     // dictionary always ships as a vendored bundle asset.
     spell_dictionary?: ExistingFile;
+    // Config-owned path to the bibliography database the preview resolves
+    // `@`-citations against (P84/C1). The ONE source of truth for the citation
+    // bibliography: the frontend reads it to name which file governs the app's
+    // citations, and the renderer layers it onto pandoc as --bibliography from the
+    // SAME value. Required; Rust's loader validates the path exists and is a file
+    // (ExistingFile in config.rs), so the frontend receives only a real path.
+    bibliography: ExistingFile;
+    // Config-owned path to the CSL citation style the preview formats citations
+    // with. Like `bibliography`, the renderer layers it onto pandoc as --csl from
+    // this value. Required; load-validated (ExistingFile in config.rs).
+    csl: ExistingFile;
   };
   preview: {
     debounce_ms: number;

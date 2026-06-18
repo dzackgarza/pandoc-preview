@@ -1,0 +1,63 @@
+{
+  "run_id": "20260617T171012Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d05-doctor-pandoc-not-executable.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": []
+      },
+      "observations": []
+    },
+    {
+      "spec": "d08-plugin-config-schema.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d08-plugin-config-schema.spec.ts",
+            "title": "the generic validator rejects a bad plugin section and accepts a good one, per declared schema",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1153,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d08-plugin-config-schema.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d09-plugin-doctor-checks.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": []
+      },
+      "observations": []
+    },
+    {
+      "spec": "d11-required-filter-check.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": []
+      },
+      "observations": []
+    }
+  ]
+}

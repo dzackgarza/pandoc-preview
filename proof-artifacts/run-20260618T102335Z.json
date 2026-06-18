@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T102335Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p83-transform-visual.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p83-transform-visual.spec.ts",
+            "title": "A transform-mirror entry derives the dependent slot from the source slot, and a ${VISUAL} entry wraps a real selection",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 13022,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\label{sec:INTRO}\")"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

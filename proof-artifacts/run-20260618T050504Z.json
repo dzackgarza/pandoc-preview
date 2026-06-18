@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T050504Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p73-lint-suppression.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p73-lint-suppression.spec.ts",
+            "title": "An in-document ppe-lint-disable-line directive suppresses the named rule on its own line only, and removing it restores the diagnostic",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 2393,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.setEditorText is not a function. (In 'window.__PPE_E2E__.setEditorText(\"# Geometry of Numbers — Café\\n\\nA *naïve* introduction to the geometry of numbers.\\n\\nThe lattice points are counted by the following steps:\\n\\n1. Choose a symmetric convex body.\\n2. Apply Minkowski's theorem.\\n3. Minkowski bound\\n\\nThe Basel sum is $\\\\zeta(2) = \\\\pi^2/6$.\\n\\n> [!NOTE] Lattice note\\n> \\n> Minkowski bounds the points.\\n\\n![scatter](fig/plot.png)\\n\\n\\nInline math undirected: $x^10$\\n\\n\\nInline math directed: $x^10$\\n\")', 'window.__PPE_E2E__.setEditorText' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

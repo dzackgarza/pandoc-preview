@@ -1,0 +1,323 @@
+{
+  "run_id": "20260617T172347Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p07-export-html.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p07-export-html.spec.ts",
+            "title": "Export HTML writes a self-contained artifact carrying the P1 witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3818,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p07-export-html.spec.ts",
+          "name": "export-bytes",
+          "value": 2010387
+        }
+      ]
+    },
+    {
+      "spec": "p08-export-pdf.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p08-export-pdf.spec.ts",
+            "title": "Export PDF runs the configured lualatex plugin and carries the witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 10387,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-producer",
+          "value": "Producer:        LuaTeX-1.17.0"
+        }
+      ]
+    },
+    {
+      "spec": "p12-export-custom-pipeline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p12-export-custom-pipeline.spec.ts",
+            "title": "A user-defined export-category plugin runs verbatim against the real source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3597,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p12-export-custom-pipeline.spec.ts",
+          "name": "witness-sha256",
+          "value": "685c99f9f2cf4d19cf16fd23e212367771f093d1b0f9250aebe5e8d0373f323b"
+        }
+      ]
+    },
+    {
+      "spec": "p66-export-plugin-discovery.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p66-export-plugin-discovery.spec.ts",
+            "title": "an export-category plugin is discovered, surfaced in the menu with its extension, and contributes a doctor row",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2427,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p66-export-plugin-discovery.spec.ts",
+          "name": "export-plugin-extension",
+          "value": "wexp"
+        }
+      ]
+    },
+    {
+      "spec": "p47-save-gate.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p47-save-gate.spec.ts",
+            "title": "path-consuming actions are gated on a resolved durable destination",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 17977,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "identityless-recovery-backed",
+          "value": false
+        },
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "resolved-live-file-bytes",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "spec": "p09-settings-roundtrip.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p09-settings-roundtrip.spec.ts",
+            "title": "Settings changes persist to config.toml and re-style the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2009,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p09-settings-roundtrip.spec.ts",
+          "name": "config-font-size",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "spec": "p10-first-run-bootable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p10-first-run-bootable.spec.ts",
+            "title": "first-run.sh config parses to the selected values and boots the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1621,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p10-first-run-bootable.spec.ts",
+          "name": "first-run-font-size",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1103,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.1.3"
+        }
+      ]
+    },
+    {
+      "spec": "d06-setup-reconfigure-existing.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d06-setup-reconfigure-existing.spec.ts",
+            "title": "just setup over an existing config reconfigures it to a valid config",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 38675,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d06-setup-reconfigure-existing.spec.ts",
+          "name": "setup-reconfigure-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d07-dev-routes-config-recovery.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d07-dev-routes-config-recovery.spec.ts",
+            "title": "just dev with an invalid config reconfigures it before starting tauri dev",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 40423,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d07-dev-routes-config-recovery.spec.ts",
+          "name": "dev-recovery-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d14-first-run-doctor-clean.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d14-first-run-doctor-clean.spec.ts",
+            "title": "the real first-run.sh leaves a system that passes --doctor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1497,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-doctor-exit",
+          "value": 0
+        },
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-plugins-count",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "spec": "d04-bare-binary-invalid-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d04-bare-binary-invalid-config.spec.ts",
+            "title": "bare binary with invalid config hard-fails on stderr naming config-schema, no window",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 114,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d04-bare-binary-invalid-config.spec.ts",
+          "name": "gate-exit-code",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

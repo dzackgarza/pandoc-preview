@@ -530,6 +530,12 @@
         },
         resolveCount: () => resolveCountState,
         configFontSize: () => config?.editor.font_size ?? null,
+        // P84/C1: the ONE config-declared bibliography the app cites against,
+        // surfaced frontend-side (sibling of configFontSize). This is the same
+        // config.editor.bibliography value the renderer layers onto pandoc as
+        // --bibliography, so the file the frontend names is the file the preview
+        // resolves citations from.
+        configBibliography: () => config?.editor.bibliography ?? null,
         renderStatus: () => status,
         statusHistory: () => [...statusHistory],
       };

@@ -1,0 +1,288 @@
+{
+  "run_id": "20260617T133511Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p63-insertion-bar-controls.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar amsthm theorem button inserts the theorem fenced div at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2462,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar tikzcd and tikz diagram buttons inserts the distinct scaffolds at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 440,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar snippet dropdown option expands the snippet body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1079,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar code-block dropdown option inserts a fence tagged with the chosen language",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 379,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-env-class",
+          "value": "theorem"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-tikzcd-cursor",
+          "value": 15
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-snippet-trigger",
+          "value": "mthm"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-codeblock-lang",
+          "value": "python"
+        }
+      ]
+    },
+    {
+      "spec": "p64-insertion-bar-paste-image.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p64-insertion-bar-paste-image.spec.ts",
+            "title": "Clicking the bar paste-image button writes the clipboard image into the configured figures dir and references it at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2402,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p64-insertion-bar-paste-image.spec.ts",
+          "name": "click-paste-written-file",
+          "value": "clipboard-1781703383352-415592585.png"
+        },
+        {
+          "spec": "p64-insertion-bar-paste-image.spec.ts",
+          "name": "click-paste-image-width",
+          "value": 7
+        },
+        {
+          "spec": "p64-insertion-bar-paste-image.spec.ts",
+          "name": "click-paste-image-height",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "spec": "p65-insertion-bar-modals.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar matrix builder modal inserts a pmatrix of exactly the chosen rows × cols at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2812,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar table builder modal inserts a pandoc pipe table of exactly the chosen cols × body-rows at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 472,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar footnote modal inserts a reference marker and a matching definition line carrying the exact typed body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 445,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-matrix-shape",
+          "value": "2x3"
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-table-body-rows",
+          "value": 2
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-footnote-id",
+          "value": "1"
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-footnote-body",
+          "value": "P65 distinctive footnote body sentinel 4d7e1b"
+        }
+      ]
+    },
+    {
+      "spec": "p55-insertion-bar-amsthm.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p55-insertion-bar-amsthm.spec.ts",
+            "title": "The insertion bar replaced the formatting toolbar and inserts the theorem amsthm environment at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2517,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p55-insertion-bar-amsthm.spec.ts",
+          "name": "inserted-env-class",
+          "value": "theorem"
+        },
+        {
+          "spec": "p55-insertion-bar-amsthm.spec.ts",
+          "name": "insert-cursor-offset",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "spec": "p57-matrix-builder.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p57-matrix-builder.spec.ts",
+            "title": "The insertion bar matrix builder inserts a pmatrix of exactly the chosen rows × cols at the cursor, cursor in the body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2450,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p57-matrix-builder.spec.ts",
+          "name": "matrix-row-separators",
+          "value": 1
+        },
+        {
+          "spec": "p57-matrix-builder.spec.ts",
+          "name": "matrix-cursor-offset",
+          "value": 16
+        }
+      ]
+    },
+    {
+      "spec": "p58-table-builder.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p58-table-builder.spec.ts",
+            "title": "The insertion bar table builder inserts a pandoc pipe table of exactly the chosen cols × body-rows at the cursor, cursor in the body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2895,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p58-table-builder.spec.ts",
+          "name": "table-body-rows",
+          "value": 2
+        },
+        {
+          "spec": "p58-table-builder.spec.ts",
+          "name": "table-cursor-offset",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p61-footnote-modal.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p61-footnote-modal.spec.ts",
+            "title": "The insertion bar footnote modal inserts a reference marker and a matching definition line carrying the exact typed body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2675,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p61-footnote-modal.spec.ts",
+          "name": "footnote-id",
+          "value": "1"
+        },
+        {
+          "spec": "p61-footnote-modal.spec.ts",
+          "name": "footnote-body",
+          "value": "P61 distinctive footnote body sentinel 8f3a2c"
+        }
+      ]
+    }
+  ]
+}

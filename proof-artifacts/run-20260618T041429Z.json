@@ -1,0 +1,169 @@
+{
+  "run_id": "20260618T041429Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p51-composable-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p51-composable-completion.spec.ts",
+            "title": "A registered app completion source composes with the LaTeX source (both surface)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3761,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p51-composable-completion.spec.ts",
+          "name": "completion-sources-compose",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p54-spellcheck.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p54-spellcheck.spec.ts",
+            "title": "Spellcheck marks misspelled words while honoring a custom math dictionary",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2154,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p54-spellcheck.spec.ts",
+          "name": "spell-gibberish-marked",
+          "value": "zzxqwbgg"
+        },
+        {
+          "spec": "p54-spellcheck.spec.ts",
+          "name": "spell-mathterm-allowed",
+          "value": "cohomology"
+        }
+      ]
+    },
+    {
+      "spec": "p19-plugin-run-by-id.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p19-plugin-run-by-id.spec.ts",
+            "title": "A generic plugin runs by id against the real buffer and returns a structured result",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3680,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p19-plugin-run-by-id.spec.ts",
+          "name": "plugin-witness-sha256",
+          "value": "685c99f9f2cf4d19cf16fd23e212367771f093d1b0f9250aebe5e8d0373f323b"
+        }
+      ]
+    },
+    {
+      "spec": "p66-export-plugin-discovery.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p66-export-plugin-discovery.spec.ts",
+            "title": "an export-category plugin is discovered, surfaced in the menu with its extension, and contributes a doctor row",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2162,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p66-export-plugin-discovery.spec.ts",
+          "name": "export-plugin-extension",
+          "value": "wexp"
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3168,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "d09-plugin-doctor-check.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d09-plugin-doctor-check.spec.ts",
+            "title": "a discovered plugin contributes doctor checks that join the battery and reflect real conditions",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 994,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d09-plugin-doctor-check.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

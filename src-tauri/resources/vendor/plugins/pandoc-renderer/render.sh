@@ -3,7 +3,8 @@
 # Milestone C: the plugin config is the RAW pandoc command STRING (canonical), on
 # PPE_PLUGIN_CONFIG as {"command": "..."}. render.sh shlex-tokenizes it ONLY to
 # exec it (run, not understand) and layers the volatile per-render context the app
-# supplies on argv ($1=base_dir, $2=base_url, $3=mathjax). The command itself
+# supplies on argv ($1=base_dir, $2=base_url, $3=mathjax, $4=bibliography,
+# $5=csl). The command itself
 # carries the document semantics: reader, writer (html5), --standalone, and
 # --embed-resources (so images inline as data: URIs and the webview resolves no
 # files). The core sets cwd = base_dir.
@@ -12,6 +13,12 @@ set -euo pipefail
 base_dir="$1"
 base_url="$2"
 mathjax="$3"
+# P84/C1: the ONE config-declared citation sources (config.editor.bibliography /
+# .csl), forwarded by the app as render context. Layered onto the command as
+# --bibliography / --csl exactly as --mathjax is — the canonical command string
+# carries --citeproc and the citation metadata but NOT the bib/csl paths.
+bibliography="$4"
+csl="$5"
 
 # The core always sets PPE_PLUGIN_CONFIG; default to an empty object defensively.
 cfg="${PPE_PLUGIN_CONFIG:-}"
@@ -44,6 +51,8 @@ mapfile -t cmd < <(printf '%s' "$command_str" \
 # doctor gate (pandoc-resource-path check) refuses to boot the app without it.
 exec "${cmd[@]}" \
     "--mathjax=$mathjax" \
+    "--bibliography=$bibliography" \
+    "--csl=$csl" \
     --resource-path "$base_dir:$PANDOC_RESOURCE_PATH" \
     "--metadata=pagetitle:$(basename "$base_dir")" \
     "--variable=figure-width:$figure_width" \

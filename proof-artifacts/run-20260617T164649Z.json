@@ -1,0 +1,88 @@
+{
+  "run_id": "20260617T164649Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p47-save-gate.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p47-save-gate.spec.ts",
+            "title": "path-consuming actions are gated on a resolved durable destination",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 17967,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "identityless-recovery-backed",
+          "value": false
+        },
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "resolved-live-file-bytes",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "spec": "p09-settings-roundtrip.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p09-settings-roundtrip.spec.ts",
+            "title": "Settings changes persist to config.toml and re-style the editor",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 2625,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"light\"\u001b[39m\nReceived: \u001b[31m\"dark\"\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p10-first-run-bootable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p10-first-run-bootable.spec.ts",
+            "title": "first-run.sh config parses to the selected values and boots the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1630,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p10-first-run-bootable.spec.ts",
+          "name": "first-run-font-size",
+          "value": 20
+        }
+      ]
+    }
+  ]
+}

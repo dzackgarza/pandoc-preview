@@ -1,0 +1,64 @@
+{
+  "run_id": "20260618T061421Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p52-snippet-dictionary.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p52-snippet-dictionary.spec.ts",
+            "title": "A config-declared snippet dictionary offers its trigger and expands the body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2072,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p52-snippet-dictionary.spec.ts",
+          "name": "snippet-trigger-offered",
+          "value": "mthm"
+        },
+        {
+          "spec": "p52-snippet-dictionary.spec.ts",
+          "name": "snippet-cursor-offset",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "spec": "p59-snippet-dropdown.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p59-snippet-dropdown.spec.ts",
+            "title": "The insertion bar surfaces the config dictionary triggers and choosing one expands its body at the tabstop",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 534,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected value: \u001b[32m\"mthm\"\u001b[39m\nReceived array: \u001b[31m[\"snippets\"]\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "20260618T094823Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p81-quicktex-native.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p81-quicktex-native.spec.ts",
+            "title": "The editor loads the user real two-map quicktex source directly: the same trigger expands its prose body in prose and its math body in math, and a multi-tabstop entry keeps its ordered slots",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3915,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p81-quicktex-native.spec.ts",
+          "name": "p81-prose-body-count",
+          "value": 1
+        },
+        {
+          "spec": "p81-quicktex-native.spec.ts",
+          "name": "p81-frac-denominator",
+          "value": "\\frac{PPEnumerator}{"
+        }
+      ]
+    }
+  ]
+}

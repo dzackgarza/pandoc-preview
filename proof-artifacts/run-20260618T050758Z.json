@@ -1,0 +1,112 @@
+{
+  "run_id": "20260618T050758Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p70-static-lint-balance.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p70-static-lint-balance.spec.ts",
+            "title": "A real \\left/$ imbalance surfaces a real @codemirror/lint diagnostic before any compile, and balancing clears it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4654,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "baseline-lint-count",
+          "value": 0
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "imbalanced-lint-count",
+          "value": 3
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "delimiter-diagnostic-message",
+          "value": "unmatched \\left: this \\left has no matching \\right (unbalanced delimiter)"
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "mathmode-diagnostic-message",
+          "value": "unterminated math mode: inline ($) opened here is never closed (dollar delimiter)"
+        }
+      ]
+    },
+    {
+      "spec": "p71-typographic-lint.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p71-typographic-lint.spec.ts",
+            "title": "ChkTeX typographic classes (sin→\\sin, x^10→x^{10}) fire only when enabled in the lint plugin config, scoped to math",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4870,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p71-typographic-lint.spec.ts",
+          "name": "math-operator-diagnostic-message",
+          "value": "You should perhaps use `\\sin' instead."
+        },
+        {
+          "spec": "p71-typographic-lint.spec.ts",
+          "name": "math-grouping-diagnostic-message",
+          "value": "You might wish to put this between a pair of `{}'"
+        }
+      ]
+    },
+    {
+      "spec": "p72-user-regex-lint.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p72-user-regex-lint.spec.ts",
+            "title": "A config-owned user-regex lint rule surfaces a diagnostic with its declared message, and a different rule set surfaces that rule instead",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4800,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p72-user-regex-lint.spec.ts",
+          "name": "rule-a-diagnostic-message",
+          "value": "resolve before submission"
+        },
+        {
+          "spec": "p72-user-regex-lint.spec.ts",
+          "name": "rule-b-diagnostic-message",
+          "value": "address this defect before merge"
+        }
+      ]
+    }
+  ]
+}
