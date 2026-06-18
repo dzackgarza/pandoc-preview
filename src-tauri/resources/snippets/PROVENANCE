@@ -1,47 +1,48 @@
-quicktex.json — vendored user snippet dictionary (migrated from quicktex)
-=========================================================================
+quicktex_dict.vim — vendored user snippet dictionary (NATIVE quicktex source)
+=============================================================================
 
 WHAT
-  A snippet dictionary in the format the editor consumes: a flat JSON object
-  mapping a TRIGGER token to a CM6 snippet BODY, where `$0` marks the final
-  tabstop (the cursor's landing position after the snippet expands). 262 entries.
+  The user's real two-map quicktex source, consumed DIRECTLY in its native
+  format: a vimscript file declaring two global dicts —
+    g:quicktex_prose  (prose-zone shortcuts)
+    g:quicktex_math   (math-zone shortcuts)
+  each a `{ \'trigger' : 'body', … }` literal whose bodies carry quicktex jump
+  markers (<+++> primary landing, <++> secondaries). No bespoke flattened
+  intermediate exists — the editor's loader (src/lib/editor/snippets.ts,
+  parseQuicktexSource) reads this source format directly.
 
 SOURCE
-  Migrated from the user's real quicktex dictionary in dzackgarza/dotfiles:
+  Byte-identical copy (sha256 8fdecd88fb52bee13d267924fa15baad93c71dcd24c1057712f9edc584b1eabf)
+  of the user's dict in dzackgarza/dotfiles:
     .config-sync/nvim/after/ftplugin/pandoc/quicktex_dict.vim
-  That file declares two vim quicktex dicts — g:quicktex_prose (prose-zone
-  shortcuts) and g:quicktex_math (math-zone shortcuts) — 278 entry lines total.
+  This is the maintained input format — bring the file as-is, no porting.
 
-CONVERSION (vim quicktex -> snippet-map JSON)
-  - Each `\'trigger' : 'body',` entry becomes a "trigger": "body" pair.
-  - Section dividers (`'... ' : 'COMMENT'`) are dropped.
-  - quicktex jump markers map to CM6 tabstops: <+++> (primary landing) -> $0;
-    <++> (secondary placeholders) are dropped (CM6 bodies use one final tabstop).
-  - vim string escapes in bodies are resolved: \<CR> -> newline, \\ -> \, \"/\' ->
-    the quote char.
-  - Pure vim-keystroke macros (entries whose body is a `:call`/`\<ESC>`
-    navigation command, e.g. the space-trigger jump) are dropped — they are not
-    insertable text.
-
-  262 < 278 because COMMENT dividers and the keystroke macros are dropped, and a
-  handful of triggers (e.g. `st`, `m`) appear in BOTH the prose and math dicts;
-  this feature consumes a SINGLE flat dict, so the later (math) definition wins.
-  The user's vim setup disambiguated by editor zone (prose vs math); a flat dict
-  cannot, so the math meaning is the kept one for colliding triggers.
-
-  Reproduce: fetch the .vim from dotfiles and run scripts/convert-quicktex.py.
+HOW THE EDITOR CONSUMES IT (no converter, no flattening)
+  - The TWO maps are kept SEPARATE: g:quicktex_prose entries are prose-mode,
+    g:quicktex_math entries are math-mode. The SAME short trigger resolves to its
+    prose body in prose and its math body in math (e.g. `st` -> "such that " in
+    prose, "\st " in math). The prose/math split is PRESERVED, not collapsed.
+  - quicktex jump markers map to the standard TextMate tabstop syntax the CM6
+    snippet engine consumes: <+++> (primary landing) -> the first field ${1};
+    each <++> secondary -> the next ordered field ${2}, ${3}, … — PRESERVED as
+    real slots, not deleted.
+  - vim string escapes in bodies are resolved: \<CR> -> newline, \\ -> \, \"/\'
+    -> the quote char.
+  - Section dividers (`… : 'COMMENT'`) and pure vim-keystroke macros (bodies that
+    are `\<ESC>`/`:call` navigation commands) are skipped — they carry no
+    insertable body. An unparseable source (neither map declared) fails loud.
 
 HOW CONFIG POINTS AT IT FOR REAL USE
-  The dictionary is config-owned (no hardcoded list in the app). To use these
-  snippets, point the editor config at this file:
+  The dictionary is config-owned (no hardcoded list in the app). Point the editor
+  config at this source file:
 
     [editor]
-    snippet_dictionary = "<abs path to this quicktex.json>"
+    snippet_dictionary = "<abs path to this quicktex_dict.vim>"
 
-  The path is validated to exist at config-load time (ExistingFile in
-  config.rs); the editor reads and parses it into composable completion snippets
-  that surface alongside the LaTeX command completions. Pointing the key at a
-  different dict offers different snippets — that is the config-owned property the
-  P52 obligation pins. The P52 PROOF uses its own committed fixture
-  (tests/proof/fixtures/snippets/p52-snippets.json) for determinism, NOT this
-  real dict.
+  The path is validated to exist at config-load time (ExistingFile in config.rs);
+  a `.vim` extension selects the native quicktex loader, any other extension the
+  mode-tagged JSON loader. Pointing the key at a different dict offers different
+  snippets — the config-owned property the P52 obligation pins. The P81 PROOF
+  uses its own committed fixture
+  (tests/proof/fixtures/snippets/p81-quicktex-dict.vim, the byte-identical copy)
+  for determinism.

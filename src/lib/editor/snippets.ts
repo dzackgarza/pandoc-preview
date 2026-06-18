@@ -130,6 +130,117 @@ export function parseSnippetDictionary(json: string): SnippetMap {
   return entries;
 }
 
+// ── Native quicktex source loader (B5 / P81) ─────────────────────────────────
+//
+// The user's REAL dictionary is a vimscript file declaring TWO global dicts:
+// `g:quicktex_prose` and `g:quicktex_math`, each a `{ \'trigger' : 'body', … }`
+// literal. We consume that source format DIRECTLY — no bespoke flattened
+// intermediate — so the user brings his existing file with zero porting and the
+// prose/math mode-split survives interop (the entry's `mode` is which map it came
+// from). The quicktex jump markers translate to the SAME TextMate tabstop syntax
+// the CM6 engine consumes: `<+++>` (the primary landing the cursor jumps to first)
+// becomes the first ordered field `${1}`, and each subsequent `<++>` secondary
+// becomes the next ordered field `${2}`, `${3}`, … — PRESERVED, not deleted (the
+// `body.replace("<++>", "")` data loss of the old converter is exactly what this
+// replaces). The match is fail-loud: a source declaring neither map is a hard
+// error (never a silently-empty source, never a silent flatten).
+
+/** A quicktex entry line: optional leading `\` continuation, a single- or
+ *  double-quoted trigger, `:`, then a single- or double-quoted body, optional
+ *  trailing comma. */
+const QUICKTEX_ENTRY = /^\s*\\?\s*(['"])(.*?)\1\s*:\s*(['"])(.*?)\3\s*,?\s*$/;
+
+/** Translate a quicktex body to a CM6 snippet body: resolve vim string escapes,
+ *  then map the jump markers to ordered TextMate tabstops. `<+++>` (the primary
+ *  landing) becomes `${1}` (the first field CM6 visits); each `<++>` secondary
+ *  becomes the next ordered field (`${2}`, `${3}`, …), preserved as a real slot. */
+function quicktexBodyToSnippet(body: string): string {
+  // vim string escapes that appear in bodies: `\<CR>` is a newline; `\\` is a
+  // literal backslash; `\"` / `\'` are the quote chars.
+  let out = body
+    .replace(/\\<CR>/g, "\n")
+    .replace(/\\"/g, '"')
+    .replace(/\\'/g, "'");
+  // `<+++>` is the primary landing (visited first). Subsequent `<++>` secondaries
+  // become the next ordered fields. Number them in source order starting at 1 so
+  // the cursor lands at the primary slot first, then tabs through the secondaries.
+  let next = 1;
+  out = out.replace(/<\+\+\+>/g, () => `\${${next++}}`);
+  out = out.replace(/<\+\+>/g, () => `\${${next++}}`);
+  return out;
+}
+
+/** Parse one `g:quicktex_<mode> = { … }` dict body (the text BETWEEN the braces)
+ *  into mode-tagged entries. Section dividers (`… : 'COMMENT'`) and pure
+ *  vim-keystroke macros (bodies that are `\<ESC>`/`:call` navigation commands,
+ *  not insertable text) are skipped — they carry no expandable body. */
+function parseQuicktexMap(block: string, mode: SnippetMode): SnippetEntry[] {
+  const entries: SnippetEntry[] = [];
+  for (const line of block.split("\n")) {
+    if (line.trim().length === 0) continue;
+    if (line.trimStart().startsWith('"')) continue; // vim comment line
+    const match = QUICKTEX_ENTRY.exec(line);
+    if (!match) continue;
+    const trigger = match[2];
+    const rawBody = match[4];
+    if (trigger.trim().length === 0) continue; // the space-key jump entry
+    if (rawBody === "COMMENT") continue; // a section divider
+    if (rawBody.includes("\\<ESC>") || rawBody.includes(":call")) continue; // keystroke macro
+    entries.push({
+      trigger,
+      body: quicktexBodyToSnippet(rawBody),
+      mode,
+      auto: false,
+      regex: false,
+    });
+  }
+  return entries;
+}
+
+/** Extract the dict-literal body (the entry lines between the opening `{` and the
+ *  closing `}`) that follows `let g:<name> = ` in a quicktex source, or null if
+ *  that map is absent. The dict literal closes with a vim line-continuation
+ *  `\}` on its own line (`    \}`); the many `}` characters INSIDE quoted bodies
+ *  (e.g. `\frac{<+++>}{<++>}`) are NOT the dict close, so we match the
+ *  continuation-`\}` line rather than the first raw `}`. */
+function extractQuicktexMap(source: string, name: string): string | null {
+  const marker = new RegExp(`g:${name}\\s*=\\s*\\{`);
+  const open = marker.exec(source);
+  if (!open) return null;
+  const start = open.index + open[0].length;
+  const close = /^\s*\\?\}\s*$/m;
+  close.lastIndex = start;
+  const rest = source.slice(start);
+  const closeMatch = close.exec(rest);
+  if (!closeMatch) {
+    throw new Error(
+      `quicktex source declares g:${name} but its dict literal is never closed with "}"`,
+    );
+  }
+  return rest.slice(0, closeMatch.index);
+}
+
+/** Parse a native quicktex source file (the user's real two-map vimscript dict)
+ *  into a {@link SnippetMap} consumed DIRECTLY — no flattened intermediate. The
+ *  `g:quicktex_prose` map yields `prose`-mode entries and `g:quicktex_math`
+ *  yields `math`-mode entries, so the SAME short trigger resolves to its prose
+ *  body in prose and its math body in math (the mode-split the old one-way
+ *  flattening destroyed). Fails loud on a source declaring neither map — never a
+ *  silent flatten, never a silently-empty source. */
+export function parseQuicktexSource(source: string): SnippetMap {
+  const prose = extractQuicktexMap(source, "quicktex_prose");
+  const math = extractQuicktexMap(source, "quicktex_math");
+  if (prose === null && math === null) {
+    throw new Error(
+      "quicktex source declares neither g:quicktex_prose nor g:quicktex_math",
+    );
+  }
+  const entries: SnippetEntry[] = [];
+  if (prose !== null) entries.push(...parseQuicktexMap(prose, "prose"));
+  if (math !== null) entries.push(...parseQuicktexMap(math, "math"));
+  return entries;
+}
+
 // CodeMirror's snippet-template parser only recognises a tabstop written with
 // braces (`${0}`, `${1}`, …); a bare `$0` is treated as literal text. Snippet
 // dictionaries author the final tabstop as the bare `$0` convention, so we

@@ -71,6 +71,7 @@
   import { readTextFile } from "../api";
   import {
     parseSnippetDictionary,
+    parseQuicktexSource,
     snippetCompletionSource,
     runSnippet,
     findAutoExpansion,
@@ -327,7 +328,13 @@
     const path = c.editor.snippet_dictionary;
     if (!path) return;
     const file = await readTextFile(path);
-    const map = parseSnippetDictionary(file.content);
+    // The dictionary is consumed in its NATIVE source format: a `.vim` file is the
+    // standard quicktex two-map source (g:quicktex_prose + g:quicktex_math), parsed
+    // directly into the mode-tagged map (P81); any other extension is the
+    // mode-tagged JSON document (P52/P59/P77/P78/P79/P80).
+    const map = path.endsWith(".vim")
+      ? parseQuicktexSource(file.content)
+      : parseSnippetDictionary(file.content);
     // Retain the parsed map for the bar dropdown (P59) AND build the popup
     // completion source from it (P52) — one config-owned dictionary, two views.
     snippetMap = map;
