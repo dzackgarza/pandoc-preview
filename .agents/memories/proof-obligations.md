@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P74)
+# Proof Obligations (P1–P83)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -187,6 +187,31 @@ P70–P74 (added 2026-06-18) cover the Phase A "lint fast-feedback" milestone, a
 - **P75 — RESERVED, HELD.** Real-ChkTeX-on-transient-`.tex` with `.tex`→markdown line mapping. HELD pending the `sourcepos`/scroll-sync reader decision; not RED until that gate opens. Reserved here so the obligation number is not reused.
 
 - **P76 — RESERVED.** Spare within the Phase-A block (e.g. a buffer-wide diagnostic-count status indicator, or a delimiter-imbalance summary in the status cluster) if A.5 is promoted from consolidation to a first-class observable. Not specified until needed.
+
+### Milestone — Phase B: snippet engine (P77–P83)
+
+P77–P83 (added 2026-06-18) cover the Phase B "snippet engine" milestone, authored from [[phase-b-snippet-engine]]. The engine wraps the existing P51/P52/P59 completion/popup/bar base — it must not displace the LaTeX completions or the insertion-bar path, which stay green every commit. Each obligation is an exact externally-observable happy-path state, driven by the real app via the `tauri-plugin-playwright` harness and the `EditorPane` harness methods (`typeInEditor`, `acceptCompletion`, `appendAtEnd`, `insertSnippetByTrigger`, plus new surfaces for autotrigger/visual-wrap), against real config and the user's real quicktex source. Each is admissible only if it FAILS on a plausibly broken app — a mode-blind, no-op, literal-token, or flattening engine. A declared-but-unparseable dictionary is a hard, loud failure (a toast), never a silent-empty engine.
+
+- **P77 — Math-mode-only expansion (keystone).** Config declares a dictionary with the SAME trigger mapped to a prose body and a math body (mode-tagged). With the cursor in prose, typing the trigger and accepting expands the PROSE body. With the cursor inside `$…$` (or a math environment), typing the SAME trigger and accepting expands the MATH body; the prose body never appears in math and vice versa. A math-only trigger is NOT offered at all in prose.
+  Admissible because it fails on a mode-blind engine (the same body expands in both zones, or a math-only trigger fires in prose), and on an engine that drops one mode entirely (the trigger is offered in neither zone).
+
+- **P78 — Autotrigger space-expansion, re-arming for chains.** Config declares an autotrigger entry. Typing the trigger followed by a space expands the body IN PLACE with no completion popup and no accept keypress (the trigger text is gone, the expansion is at the cursor). Immediately typing a SECOND autotrigger + space expands again (the engine re-armed).
+  Admissible because it fails on a popup-only engine (the trigger stays literal until an explicit accept), on a one-shot engine (the first autotrigger fires but the second does not, proving no re-arm), and on a no-op (the trigger + space leaves the literal trigger in the buffer).
+
+- **P79 — Regex/postfix trigger with capture group.** Config declares a regex entry whose body references a capture group (e.g. `([a-z])bar` → `\bar{$1}`). Typing `pbar` and triggering expansion yields `\bar{p}` at the cursor (the captured `p` substituted into the body), with the matched trigger text gone.
+  Admissible because it fails on a literal-trigger engine (no regex match, `pbar` stays in the buffer), on a capture-blind engine (the body inserts a literal `$1` instead of the captured `p`), and on a no-op.
+
+- **P80 — Mirrored tabstops.** Config declares an entry whose body repeats a tabstop number in two positions (e.g. an environment whose name is mirrored into its closing fence/`\end`). Expanding the entry and typing the environment name into the first slot makes the SAME text appear at the mirrored position live, without a second keystroke there.
+  Admissible because it fails on a single-tabstop engine (the second position stays empty or holds the literal `${N}`), and on a no-mirror engine (typing into the first slot does not update the second).
+
+- **P81 — Standard quicktex format consumed directly, mode-split + tabstops preserved.** The editor loads the user's real two-map quicktex source (`g:quicktex_prose` + `g:quicktex_math`) directly — no bespoke flattened intermediate. A short trigger present in BOTH maps offers its prose body in prose and its math body in math (the prose/math mode-split survived interop, i.e. the 281→262 flattening loss is gone), and a discriminating multi-tabstop entry (one that carried `<+++>` + `<++>` in the source) expands with its ordered tabstops intact (the secondary `<++>` is a real `${N}` slot, not deleted).
+  Admissible because it fails on a flattening loader (the mode-split is gone — the same body in both zones), on a loader that drops one source map, and on a lossy tabstop mapping (the multi-tabstop entry expands with its secondary slot deleted).
+
+- **P82 — Snippet variables resolve at expansion.** Config declares an entry whose body contains `$CLIPBOARD` and `$CURRENT_DATE`. With known text on the system clipboard, expanding the entry inserts a body where `$CLIPBOARD` is replaced by the real clipboard text and `$CURRENT_DATE` by the host date (not the literal tokens).
+  Admissible because it fails on a literal-token engine (`$CLIPBOARD` appears verbatim in the buffer), and on a no-op.
+
+- **P83 — Transform node + visual-selection wrap.** (a) An entry with a transform mirror (`${1/.../.../}`) derives the dependent slot from the source slot (typing into the source produces the transformed text in the dependent position). (b) With a real selection active, expanding a `${VISUAL}` entry wraps exactly the selected text in the expansion (select `foo`, trigger → `\emph{foo}`).
+  Admissible because it fails on a transform-blind engine (the dependent slot shows the untransformed source text or the literal `${1/.../.../}`), and on a wrap that discards the selection (the expansion appears but the selected text is gone or not wrapped).
 
 ## Verification vehicle
 
