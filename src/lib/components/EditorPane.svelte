@@ -85,6 +85,10 @@
     citationCompletionSource,
   } from "../editor/citations";
   import {
+    type LabelDef,
+    labelCompletionSource,
+  } from "../editor/labels";
+  import {
     parseWordlist,
     buildSpellChecker,
     spellcheckExtension,
@@ -141,6 +145,12 @@
   // the editor. CM6 consults sources in order and merges their results, so a new
   // source surfaces alongside the LaTeX completions instead of displacing them.
   const appCompletionSources: CompletionSource[] = [];
+
+  // The currently-registered project-wide label source (P87/C3). App rebuilds the
+  // cross-file label index on every project-open / file-tree refresh and calls
+  // registerLabelSource; retaining the source here lets the re-registration
+  // REPLACE it in-place rather than stacking a duplicate source per refresh.
+  let labelSource: CompletionSource | null = null;
 
   // The parsed config-owned snippet dictionary (P52), RETAINED so the insertion
   // bar can surface its triggers in a dropdown (P59). It is the SAME map the
@@ -455,6 +465,26 @@
       };
     };
     appCompletionSources.push(sentinel);
+  }
+
+  /** P87/C3: register the project-wide cross-file label index (harvested
+   * App-side from every project markdown file — pandoc `{#id}` heading attrs,
+   * `:::{#id}` fenced-div ids, and `\label{}` — once per project-open / file-tree
+   * refresh, never per keystroke) as a composable cross-reference completion
+   * source. It is ADDED to the delegating registry (P51) alongside the LaTeX,
+   * snippet, and citation sources — never an override — so a `\cref{` reference
+   * context offers a label defined in ANOTHER project file. App rebuilds the
+   * index and re-registers on refresh; this REPLACES the prior label source
+   * in-place (never stacking duplicates across refreshes), leaving every other
+   * registered source untouched. */
+  export function registerLabelSource(labels: LabelDef[]) {
+    const next = labelCompletionSource(labels);
+    if (labelSource) {
+      appCompletionSources[appCompletionSources.indexOf(labelSource)] = next;
+    } else {
+      appCompletionSources.push(next);
+    }
+    labelSource = next;
   }
 
   /** E2E (P51): insert `text` at the cursor through the real CM update pipeline

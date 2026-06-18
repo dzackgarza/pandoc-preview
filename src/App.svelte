@@ -38,6 +38,10 @@
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
   import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
   import { parseCompileLog, type LogEntry } from "./lib/editor/complog";
+  import {
+    buildLabelIndex,
+    type ProjectFile,
+  } from "./lib/editor/labels";
 
   let config = $state<Config | null>(null);
   let configPath = $state("");
@@ -786,6 +790,41 @@
     } catch (e) {
       toastError(String(e));
     }
+    await rebuildLabelIndex();
+  }
+
+  // P87/C3: build the project-wide cross-file label index (ported vimtex
+  // project-root harvest) from the SAME listTree the explorer is rooted at, then
+  // hand it to the editor. Read EVERY markdown file under the project root and
+  // harvest its anchor definitions (pandoc {#id} heading attrs, :::{#id}
+  // fenced-div ids, \label{}), so a label defined in file A is offered while
+  // editing file B. Built here — on project-open / file-tree refresh — NOT per
+  // keystroke, so completion latency never regresses on a large project. A read
+  // failure on a project file is a HARD visible error (the harvest must span the
+  // WHOLE project), never a silently-skipped file.
+  async function rebuildLabelIndex() {
+    const mdPaths = markdownFilesUnder(tree);
+    const files: ProjectFile[] = [];
+    for (const path of mdPaths) {
+      const read = await api.readTextFile(path);
+      files.push({ path, content: read.content });
+    }
+    editor.registerLabelSource(buildLabelIndex(files));
+  }
+
+  // Flatten the explorer tree to the absolute paths of every markdown file under
+  // the project root (the files a label can be defined in). Recurses into every
+  // directory node so the harvest spans the whole project, not the top level.
+  function markdownFilesUnder(nodes: FileNode[]): string[] {
+    const paths: string[] = [];
+    for (const node of nodes) {
+      if (node.is_dir) {
+        if (node.children) paths.push(...markdownFilesUnder(node.children));
+      } else if (node.path.endsWith(".md")) {
+        paths.push(node.path);
+      }
+    }
+    return paths;
   }
 
   // The macros (styles) and figures explorers point at fixed configured roots.

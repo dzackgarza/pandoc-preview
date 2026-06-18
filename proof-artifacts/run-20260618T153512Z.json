@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T153512Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p87-cross-file-labels.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p87-cross-file-labels.spec.ts",
+            "title": "a label defined in another project file is offered for a cross-reference trigger while editing a second file, and accepting inserts a reference to it",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 12075,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!document.querySelector('.cm-tooltip-autocomplete')"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
