@@ -47,23 +47,35 @@ export interface ProjectFile {
   readonly content: string;
 }
 
-// A pandoc `{#id}` heading attribute or a `:::{#id}` fenced-div id: an `#id`
-// token inside an attribute brace. The id is the pandoc identifier character set
-// (letters, digits, and `-_:.`), the SAME set a cross-reference key uses. Global
-// so a single line carrying several attribute blocks yields each id.
-const ATTR_ID = /[#]([A-Za-z][\w:.-]*)/g;
+// A pandoc attribute brace block `{...}`: the `{ }`-delimited attribute list a
+// heading attribute (`# H {#id}`) or a fenced-div opener (`::: {#id .cls}`) carry.
+// Brace contents are the pandoc attribute set — classes (`.cls`), the id (`#id`),
+// and key=val pairs — in any order. Global so a line with several blocks yields
+// each. Matched FIRST so the id is only harvested from WITHIN an attribute brace,
+// never from a bare `#id` in a markdown link fragment `](#frag)` or prose `#word`.
+const ATTR_BRACE = /\{([^{}]*)\}/g;
+// The `#id` token inside an attribute brace's contents. The id is the pandoc
+// identifier character set (letters, digits, and `-_:.`), the SAME set a
+// cross-reference key uses. A brace may carry classes/keys before or after the id,
+// so the `#` is found anywhere within the (already brace-scoped) contents.
+const ATTR_ID = /#([A-Za-z][\w:.-]*)/;
 // A LaTeX `\label{id}` definition. The id is the same identifier character set.
 const LABEL_CMD = /\\label\{([^}]+)\}/g;
 
 /** Harvest every anchor definition from one file's content: pandoc `{#id}`
  *  heading attributes, `:::{#id}` fenced-div ids, and `\label{id}` commands.
- *  Both attribute-id forms are the same `#id` token inside a brace, so one
- *  scan over the `#id` pattern covers headings and fenced divs alike. Returns
- *  the bare label keys (no leading `#`, no `\label{}` wrapper). */
+ *  Both attribute-id forms are an `#id` token inside an attribute brace `{...}`,
+ *  so we scan brace blocks and extract the id from WITHIN each — a bare `#id` in
+ *  a markdown link fragment `](#frag)` or in prose is NOT inside an attribute
+ *  brace and is therefore never harvested. Returns the bare label keys (no
+ *  leading `#`, no `{}`/`\label{}` wrapper). */
 export function harvestFileLabels(content: string): string[] {
   const keys: string[] = [];
-  for (const m of content.matchAll(ATTR_ID)) {
-    keys.push(m[1]);
+  for (const brace of content.matchAll(ATTR_BRACE)) {
+    const id = ATTR_ID.exec(brace[1]);
+    if (id) {
+      keys.push(id[1]);
+    }
   }
   for (const m of content.matchAll(LABEL_CMD)) {
     keys.push(m[1]);
