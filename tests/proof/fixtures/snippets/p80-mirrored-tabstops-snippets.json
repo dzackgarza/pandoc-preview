@@ -1,0 +1,9 @@
+{
+  "snippets": [
+    {
+      "trigger": "env",
+      "mode": "both",
+      "body": "\\begin{$1}\n$0\n\\end{$1}"
+    }
+  ]
+}

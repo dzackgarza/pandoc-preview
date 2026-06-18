@@ -517,6 +517,31 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p79-regex-trigger-snippets.json" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p80-mirrored-tabstops.spec.ts)
+        # P80 (mirrored tabstops, Phase-B B4) declares the SAME config-owned
+        # snippet-dictionary path P52/P59/P77/P78/P79 read. B4 OWNS no mirror
+        # engine: CM6's `snippetCompletion` ALREADY mirrors repeated `${N}`
+        # tabstops natively (the established TextMate mirror behaviour). This case
+        # PROVES that vendored behaviour and that the authoring/schema path EMITS
+        # repeated tabstop numbers for the env-name -> closing-fence case. The
+        # committed fixture (tests/proof/fixtures/snippets/p80-mirrored-tabstops-
+        # snippets.json) declares ONE entry whose body repeats the `$1` tabstop in
+        # two positions — `\begin{$1}\n$0\n\end{$1}` (the env name mirrored into
+        # its `\end`). normalizeTabstops converts each bare `$1` to the `${1}` form
+        # the CM6 snippet parser mirrors. Pointing config at it makes that mirrored
+        # entry the one the editor offers, so typing the env name into the FIRST
+        # `${1}` slot makes the SAME text appear at the mirrored `\end{...}` live,
+        # without a second keystroke there. RED today: there is no surface to type
+        # into an active snippet field (no __PPE_E2E__.typeIntoSnippetField), so
+        # the mirror cannot be driven; and the prior converter dropped `<++>`
+        # secondary tabstops, so the shipped dict carries no mirrored entry — the
+        # single-tabstop / no-mirror failure P80 names.
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p80-mirrored-tabstops-snippets.json"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p80-mirrored-tabstops-snippets.json" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
     p54-spellcheck.spec.ts)
         # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
         # hardcoded list. Provision a hermetic copy of the committed FIXTURE

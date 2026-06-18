@@ -457,6 +457,34 @@ export async function acceptCompletion(page: EvaluatesScripts): Promise<void> {
   );
 }
 
+// ── Type into the ACTIVE snippet field (P80) ───────────────────────────────
+// After a snippet expands and CM6 is in snippet-field mode (the first `${N}`
+// tabstop is the live, selected field), the user types the field's content
+// directly into that selected range. CM6's `snippetCompletion` machinery
+// MIRRORS every other occurrence of the same `${N}` live as the user types into
+// the active field (the established TextMate mirror behaviour). To drive that
+// in-harness, the spec types into the LIVE field through the SAME docChanged
+// pipeline real typing fires — and, UNLIKE typeInEditor, does NOT call
+// startCompletion, because typing into a snippet field is plain editing, not a
+// completion query (opening a popup would tear down the active field and defeat
+// the mirror). The observable afterwards is getEditorText(): the typed text
+// stands at BOTH the first slot and every mirrored occurrence, live, without a
+// second keystroke at the mirrored position.
+//
+// RED today: __PPE_E2E__.typeIntoSnippetField does not exist — there is no
+// surface to type into an active snippet field — so this evaluate throws. (And
+// even were the typed text inserted, the shipped dictionary carries no mirrored
+// entry, and the single-tabstop body would have no second `${N}` to mirror
+// into.) The faithful no-mirror RED state.
+export async function typeIntoSnippetField(
+  page: EvaluatesScripts,
+  text: string,
+): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.typeIntoSnippetField(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
 // The cursor's character offset in the editor buffer, read straight from the
 // REAL CM6 view state via the harness. Used by P52 to prove the snippet's
 // declared tabstop ($0) is where the cursor lands after the expansion — not the
