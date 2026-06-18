@@ -960,6 +960,44 @@ p87-cross-file-labels.spec.ts)
     # line-numbered outline/fold assertions over their OWN copies are untouched.
     printf '\n\nA cross-file lemma. \\label{lem:xyz-cross}\n' >> "$PROJECT_DIR/outline.md"
     ;;
+p88-perfile-bib-override.spec.ts)
+    # P88 (C4): per-file `bibliography:` YAML frontmatter override, with the global
+    # config bibliography as the source for files WITHOUT it. Two distinct
+    # bibliographies are provisioned:
+    #
+    #  (1) The GLOBAL config bibliography (editor.bibliography, the P84/C1 single
+    #      config-declared source the canonical [editor] block above points at
+    #      $HOME/.pandoc/bib/references.bib). Replace it with the p88 GLOBAL
+    #      fixture, whose sole entry has key GLOBALKEY (title word "Globally",
+    #      authors Hilbert/Noether). This file does NOT contain LOCALONLY.
+    #
+    #  (2) A sibling LOCAL .bib placed INSIDE this spec's hermetic project copy,
+    #      whose sole entry has key LOCALONLY (title word "Paperlocal", authors
+    #      Poincare/Lefschetz). This file does NOT contain GLOBALKEY.
+    #
+    # A new markdown file in the hermetic project copy declares, in its YAML
+    # frontmatter, `bibliography: ./p88-local.bib` (pandoc's own native per-file
+    # metadata key, resolved relative to the file's directory). The override file
+    # is added to the hermetic copy ONLY (like p87's outline.md append), so other
+    # specs' project-file expectations are untouched.
+    #
+    # The spec opens the override file and asserts citation completion offers
+    # LOCALONLY (the override is in effect) and not GLOBALKEY; then opens demo.md
+    # (no frontmatter `bibliography:`) and asserts it still offers GLOBALKEY (the
+    # global config bibliography remains the source for non-overriding files).
+    cp "$REPO_ROOT/tests/proof/fixtures/p88-global.bib" "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+    cp "$REPO_ROOT/tests/proof/fixtures/p88-local.bib" "$PROJECT_DIR/p88-local.bib"
+    cat > "$PROJECT_DIR/p88-override.md" <<'PPE_P88_EOF'
+---
+title: Per-file bibliography override witness
+bibliography: ./p88-local.bib
+---
+
+# Override document
+
+A document that ships its own bibliography.
+PPE_P88_EOF
+    ;;
 p85-citation-completion.spec.ts | p86-citation-tooltip.spec.ts)
     # P85/P86 (C2): citation completion sourced from the SINGLE config-declared
     # bibliography P84 established (editor.bibliography). The canonical [editor]
