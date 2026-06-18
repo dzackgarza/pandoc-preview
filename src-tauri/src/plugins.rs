@@ -154,7 +154,8 @@ pub fn discover(plugins_dir: &Path) -> Result<Vec<Plugin>> {
         if !manifest_path.is_file() {
             continue;
         }
-        let raw = std::fs::read_to_string(&manifest_path).map_err(|e| Error::io(&manifest_path, e))?;
+        let raw =
+            std::fs::read_to_string(&manifest_path).map_err(|e| Error::io(&manifest_path, e))?;
         let manifest: PluginManifest = toml::from_str(&raw).map_err(|e| Error::ConfigInvalid {
             path: manifest_path.display().to_string(),
             message: e.to_string(),
@@ -273,7 +274,9 @@ fn run_doctor_check(
             let first = stdout.lines().find(|l| !l.trim().is_empty());
             (
                 true,
-                first.map(|l| l.trim().to_string()).unwrap_or_else(|| check.description.clone()),
+                first
+                    .map(|l| l.trim().to_string())
+                    .unwrap_or_else(|| check.description.clone()),
             )
         }
         Ok(out) => {
@@ -339,9 +342,10 @@ fn run_plugin_sync(
     buffer: String,
 ) -> Result<PluginResult> {
     let cfg = config::load()?;
-    let plugins_cfg = cfg.plugins.as_ref().ok_or_else(|| {
-        Error::InvalidArgument("no [plugins] directory is configured".into())
-    })?;
+    let plugins_cfg = cfg
+        .plugins
+        .as_ref()
+        .ok_or_else(|| Error::InvalidArgument("no [plugins] directory is configured".into()))?;
     let config_path = config::config_path()?;
     let config_dir = config_path
         .parent()
@@ -353,7 +357,9 @@ fn run_plugin_sync(
         .iter()
         .find(|p| p.manifest.id == plugin_id)
         .ok_or_else(|| {
-            Error::InvalidArgument(format!("no plugin with id {plugin_id:?} in the plugins dir"))
+            Error::InvalidArgument(format!(
+                "no plugin with id {plugin_id:?} in the plugins dir"
+            ))
         })?;
 
     let source = PathBuf::from(&source_path);
@@ -376,9 +382,9 @@ fn run_plugin_sync(
         .iter()
         .map(|a| substitute(a, &subs))
         .collect();
-    let (program, args) = argv
-        .split_first()
-        .ok_or_else(|| Error::InvalidArgument(format!("plugin {plugin_id} has an empty command")))?;
+    let (program, args) = argv.split_first().ok_or_else(|| {
+        Error::InvalidArgument(format!("plugin {plugin_id} has an empty command"))
+    })?;
 
     // Deliver the plugin's own `[plugin.<id>]` config section on
     // PPE_PLUGIN_CONFIG, exactly as render_active does for the renderer. An export
@@ -460,7 +466,9 @@ fn configure_plugin_sync(plugin_id: String) -> Result<()> {
         .iter()
         .find(|p| p.manifest.id == plugin_id)
         .ok_or_else(|| {
-            Error::InvalidArgument(format!("no plugin with id {plugin_id:?} in the plugins dir"))
+            Error::InvalidArgument(format!(
+                "no plugin with id {plugin_id:?} in the plugins dir"
+            ))
         })?;
 
     let plugin_dir = plugin.dir.display().to_string();
@@ -580,7 +588,9 @@ pub fn render_active(
         Error::InvalidArgument("no [renderer] is configured (no active renderer)".into())
     })?;
     let plugins_cfg = cfg.plugins.as_ref().ok_or_else(|| {
-        Error::InvalidArgument("a [renderer] is active but no [plugins] directory is configured".into())
+        Error::InvalidArgument(
+            "a [renderer] is active but no [plugins] directory is configured".into(),
+        )
     })?;
     let config_path = config::config_path()?;
     let config_dir = config_path
@@ -625,7 +635,10 @@ pub fn render_active(
         .map(|a| substitute(a, &subs))
         .collect();
     let (program, args) = argv.split_first().ok_or_else(|| {
-        Error::InvalidArgument(format!("renderer {} has an empty command", renderer_cfg.active))
+        Error::InvalidArgument(format!(
+            "renderer {} has an empty command",
+            renderer_cfg.active
+        ))
     })?;
 
     let plugin_config = config_json(cfg.plugin.get(&renderer_cfg.active));

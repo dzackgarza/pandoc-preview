@@ -157,7 +157,6 @@ fn check_config_values(cfg: &Config) -> CheckResult {
     }
 }
 
-
 fn skip(name: &'static str, reason: &str) -> CheckResult {
     CheckResult {
         name: name.into(),
