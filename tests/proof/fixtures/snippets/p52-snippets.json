@@ -1,3 +1,9 @@
 {
-  "mthm": "::: {.theorem}\n$0\n:::"
+  "snippets": [
+    {
+      "trigger": "mthm",
+      "mode": "both",
+      "body": "::: {.theorem}\n$0\n:::"
+    }
+  ]
 }

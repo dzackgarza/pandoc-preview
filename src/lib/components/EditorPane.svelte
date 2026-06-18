@@ -138,7 +138,7 @@
   // so pointing config at a different dict changes both the popup completions and
   // the bar dropdown. Empty until the post-mount registration parses the dict
   // (absent path → stays empty).
-  let snippetMap: SnippetMap = {};
+  let snippetMap: SnippetMap = [];
 
   const delegatingCompletionSource: CompletionSource = (
     context: CompletionContext,
@@ -294,7 +294,7 @@
     // completion source from it (P52) — one config-owned dictionary, two views.
     snippetMap = map;
     appCompletionSources.push(snippetCompletionSource(map));
-    onSnippetsLoaded(Object.keys(map));
+    onSnippetsLoaded(snippetTriggers());
   }
 
   /** Build the spellchecker over the vendored English base dictionary plus the
@@ -472,7 +472,18 @@
    * completion source is built from). A different config dict surfaces a
    * different trigger set; an absent dict surfaces none. */
   export function snippetTriggers(): string[] {
-    return Object.keys(snippetMap);
+    // The distinct trigger tokens across all mode-tagged entries, in first-seen
+    // order. The SAME trigger may appear twice (prose + math, P77); the bar
+    // dropdown surfaces it once.
+    const seen = new Set<string>();
+    const triggers: string[] = [];
+    for (const entry of snippetMap) {
+      if (!seen.has(entry.trigger)) {
+        seen.add(entry.trigger);
+        triggers.push(entry.trigger);
+      }
+    }
+    return triggers;
   }
 
   /** Insert the expanded BODY of the dictionary entry named by `trigger` at the
@@ -481,11 +492,11 @@
    * the cursor in the body (P59). The choose-a-trigger action of the bar dropdown.
    * An unknown trigger is a hard error — the dropdown only offers retained keys. */
   export function insertSnippetByTrigger(trigger: string) {
-    const body = snippetMap[trigger];
-    if (typeof body !== "string") {
+    const entry = snippetMap.find((e) => e.trigger === trigger);
+    if (!entry) {
       throw new Error(`unknown snippet trigger: ${JSON.stringify(trigger)}`);
     }
-    insertSnippet(body);
+    insertSnippet(entry.body);
   }
 
   /** E2E introspection: the language-tree node names covering the first

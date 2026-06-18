@@ -121,7 +121,13 @@ test('The insertion bar surfaces the config dictionary triggers and choosing one
   if (typeof dictPath !== 'string' || dictPath.length === 0) {
     throw new Error('config.editor.snippet_dictionary is missing — the p59 run must point config at the fixture dict');
   }
-  const dictKeys = Object.keys(JSON.parse(readFileSync(dictPath, 'utf-8')) as Record<string, unknown>).sort();
+  // The dictionary is the mode-tagged `{ "snippets": [ { trigger, body, mode? } ] }`
+  // shape (B-DESIGN-0); the trigger set is the DISTINCT trigger tokens across its
+  // entries (the SAME trigger may appear twice — prose + math — and surfaces once).
+  const parsedDict = JSON.parse(readFileSync(dictPath, 'utf-8')) as {
+    snippets: Array<{ trigger: string }>;
+  };
+  const dictKeys = Array.from(new Set(parsedDict.snippets.map((e) => e.trigger))).sort();
   // Sanity: the shared fixture surfaces the mthm trigger this spec drives.
   expect(dictKeys).toContain(TRIGGER);
 

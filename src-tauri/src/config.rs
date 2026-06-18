@@ -150,11 +150,13 @@ pub struct Editor {
     pub line_wrapping: bool,
     /// Show line numbers in the gutter.
     pub line_numbers: bool,
-    /// Config-owned path to a user snippet dictionary: a JSON object mapping a
-    /// trigger token to a CM6 snippet body. Optional capability — when present,
-    /// the path is validated to be an existing file (ExistingFile), so the editor
-    /// reads a real dictionary; when absent, the editor offers no user snippets.
-    /// No implicit default path. An absent value is never re-serialized.
+    /// Config-owned path to a user snippet dictionary: a JSON document of the
+    /// form `{ "snippets": [ { "trigger", "body", "mode"? } ] }`, where `mode` is
+    /// `prose` | `math` | `both` (default `both`) so the SAME trigger can resolve
+    /// to a different body by editing zone (P77). Optional capability — when
+    /// present, the path is validated to be an existing file (ExistingFile), so
+    /// the editor reads a real dictionary; when absent, the editor offers no user
+    /// snippets. No implicit default path. An absent value is never re-serialized.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub snippet_dictionary: Option<ExistingFile>,
     /// Config-owned path to a user custom spelling dictionary: a plain wordlist,
