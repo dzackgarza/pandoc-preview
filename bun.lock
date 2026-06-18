@@ -23,6 +23,7 @@
         "codemirror-lang-latex": "file:vendor/codemirror-lang-latex",
         "dockview-core": "6.6.1",
         "nspell": "^2.1.5",
+        "yaml": "^2.9.0",
       },
       "devDependencies": {
         "@playwright/test": "^1.52.0",
@@ -496,6 +497,8 @@
     "wink-eng-lite-web-model": ["wink-eng-lite-web-model@1.8.1", "", {}, "sha512-M2tSOU/rVNkDj8AS8IoKJaM7apJJjS0cN+hE8CPazfnB4A/ojyc9+7RMPk18UOiIdSyWk7MR6w8z9lWix2l5tA=="],
 
     "wink-nlp": ["wink-nlp@2.4.0", "", {}, "sha512-d02inlNJL0LLNTLoYfkxZYGrqnYDSZV4HI4WpeuyIEfpu7UcUqUW1ZYWr+JTFm4ZR6dQdzOW/FtHEQRO+o/zzA=="],
+
+    "yaml": ["yaml@2.9.0", "", { "bin": { "yaml": "bin.mjs" } }, "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA=="],
 
     "zimmerframe": ["zimmerframe@1.1.4", "", {}, "sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ=="],
 

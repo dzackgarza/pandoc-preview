@@ -42,6 +42,10 @@
     buildLabelIndex,
     type ProjectFile,
   } from "./lib/editor/labels";
+  import {
+    frontmatterBibliography,
+    parseBibliography,
+  } from "./lib/editor/citations";
 
   let config = $state<Config | null>(null);
   let configPath = $state("");
@@ -812,6 +816,40 @@
     editor.registerLabelSource(buildLabelIndex(files));
   }
 
+  // P88/C4: resolve and register the @-citation source that governs the OPEN
+  // document, re-resolved on every file open (the active bibliography depends on
+  // the open file). pandoc's OWN native per-file model: a document whose YAML
+  // frontmatter declares `bibliography:` is governed by that bibliography
+  // (resolved RELATIVE TO THE DOCUMENT's directory, as pandoc resolves it),
+  // overriding the global config bibliography while the document is open; a
+  // document WITHOUT it is governed by the global config bibliography (no hole).
+  // The override target is the SAME .bib format the C2 source parses, so it reuses
+  // the SAME parser and re-selects the SAME citation source — no second parser, no
+  // second engine. A frontmatter `bibliography:` pointing at a non-existent path is
+  // a HARD visible error (toastError via the readTextFile failure), never a
+  // silently-empty source.
+  async function resolveCitationSource(path: string, content: string) {
+    const declared = frontmatterBibliography(content);
+    if (!declared) {
+      // No per-file override: the global config bibliography governs this file.
+      if (!config) return;
+      const file = await api.readTextFile(config.editor.bibliography);
+      editor.registerCitationSource(parseBibliography(file.content));
+      return;
+    }
+    // Per-file override: pandoc resolves each declared path relative to the
+    // document's directory. Read every declared .bib (a non-existent path fails
+    // loud here) and parse the concatenation with the SAME C2 parser.
+    const baseDir = dirOf(path);
+    const texts: string[] = [];
+    for (const rel of declared) {
+      const abs = rel.startsWith("/") ? rel : `${baseDir}/${rel}`;
+      const file = await api.readTextFile(abs);
+      texts.push(file.content);
+    }
+    editor.registerCitationSource(parseBibliography(texts.join("\n")));
+  }
+
   // Flatten the explorer tree to the absolute paths of every markdown file under
   // the project root (the files a label can be defined in). Recurses into every
   // directory node so the harvest spans the whole project, not the top level.
@@ -931,6 +969,10 @@
       currentFingerprint = fingerprint; // P48: baseline for conflict detection
       editor.setContent(content);
       editor.setFoldedRanges(foldState[path] ?? []); // restore this file's folds
+      // P88/C4: re-resolve the @-citation source for THIS file — its frontmatter
+      // `bibliography:` (if any) overrides the global config bibliography, else the
+      // global config bibliography governs. A non-existent override path fails loud.
+      await resolveCitationSource(path, content);
       outline = editor.getOutline();
       dirty = false;
       wordCount = content.split(/\s+/).filter(Boolean).length;

@@ -83,6 +83,7 @@
   import {
     parseBibliography,
     citationCompletionSource,
+    type CitationEntry,
   } from "../editor/citations";
   import {
     type LabelDef,
@@ -151,6 +152,16 @@
   // registerLabelSource; retaining the source here lets the re-registration
   // REPLACE it in-place rather than stacking a duplicate source per refresh.
   let labelSource: CompletionSource | null = null;
+
+  // The currently-registered @-citation source (P85/P86/C2, P88/C4). The active
+  // bibliography depends on the OPEN file: a document whose YAML frontmatter
+  // declares `bibliography:` overrides the global config bibliography for the
+  // duration it is open (pandoc's native per-file model), and a document without
+  // it falls back to the global config bibliography. App re-resolves the entries
+  // on every file open and calls registerCitationSource; retaining the source
+  // here lets the re-registration REPLACE it in-place (mirroring the C3 label
+  // source) rather than stacking a duplicate source per open.
+  let citationSource: CompletionSource | null = null;
 
   // The parsed config-owned snippet dictionary (P52), RETAINED so the insertion
   // bar can surface its triggers in a dropdown (P59). It is the SAME map the
@@ -357,13 +368,35 @@
   /** Read, parse, and register the config-owned bibliography as the @-citation
    *  completion source (P85/P86). editor.bibliography is a REQUIRED ExistingFile
    *  (P84/C1), so the path always resolves to a real file; the entries are parsed
-   *  once here and the synchronous source closes over them, composing through the
-   *  delegating registry alongside the LaTeX and snippet sources (P51). */
+   *  once here and registered as the active citation source, composing through the
+   *  delegating registry alongside the LaTeX and snippet sources (P51). This is the
+   *  GLOBAL bibliography (the source for files that declare no per-file override);
+   *  App re-resolves the active bibliography per open file (P88/C4) and calls
+   *  registerCitationSource directly when a document's frontmatter overrides it. */
   async function registerBibliography(c: Config) {
     const path = c.editor.bibliography;
     const file = await readTextFile(path);
-    const entries = parseBibliography(file.content);
-    appCompletionSources.push(citationCompletionSource(entries));
+    registerCitationSource(parseBibliography(file.content));
+  }
+
+  /** P88/C4: register the citation entries that govern the OPEN document as the
+   *  active @-citation source, REPLACING the previously-registered citation source
+   *  in-place (never stacking duplicates across file opens — mirrors the C3 label
+   *  source). The entries come from the bibliography that governs the open file:
+   *  the global config bibliography for a document without a per-file override, or
+   *  the document's frontmatter-declared `bibliography:` when it has one (App
+   *  resolves that path relative to the open file's directory, reads it, and parses
+   *  it with the SAME C2 parser, then calls here). ADDED to the delegating registry
+   *  (P51) alongside the LaTeX, snippet, and label sources — never an override of
+   *  the LaTeX source. */
+  export function registerCitationSource(entries: CitationEntry[]) {
+    const next = citationCompletionSource(entries);
+    if (citationSource) {
+      appCompletionSources[appCompletionSources.indexOf(citationSource)] = next;
+    } else {
+      appCompletionSources.push(next);
+    }
+    citationSource = next;
   }
 
   /** Read, parse, and register the config-owned snippet dictionary. */

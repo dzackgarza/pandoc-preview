@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T160453Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p88-perfile-bib-override.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p88-perfile-bib-override.spec.ts",
+            "title": "a frontmatter `bibliography:` override file offers its file-local key while a file without the key still offers the global config bibliography key",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 18438,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (window.__PPE_E2E__.currentFile() ?? '').endsWith('/demo.md')"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

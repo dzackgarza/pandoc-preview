@@ -30,6 +30,7 @@ import {
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import { parse } from "@retorquere/bibtex-parser";
+import { parse as parseYaml } from "yaml";
 
 /** One parsed bibliography entry, reduced to the fields the completion needs:
  *  the cite KEY (what pandoc syntax references) and the three METADATA fields
@@ -70,6 +71,39 @@ export function parseBibliography(bibtex: string): CitationEntry[] {
     const year = typeof entry.fields.year === "string" ? entry.fields.year : "";
     return { key: entry.key, authors, year, title };
   });
+}
+
+/** A document's leading pandoc YAML metadata block: the content fenced between a
+ *  `---` on the FIRST line and the next `---`/`...` line (pandoc's native
+ *  frontmatter). Captures the YAML body (group 1). A document with no leading
+ *  metadata block does not match. */
+const FRONTMATTER_BLOCK = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)\r?\n/;
+
+/** The per-file `bibliography:` declared in a document's YAML frontmatter
+ *  (pandoc's OWN native per-file metadata key, consumed as authored, P88/C4).
+ *  Returns the declared bibliography path(s) RELATIVE TO THE DOCUMENT — pandoc
+ *  accepts a single path or a list of paths — or null when the document has no
+ *  leading metadata block or the block declares no `bibliography:`. The YAML is
+ *  parsed with the maintained `yaml` parser (never hand-rolled); a malformed
+ *  metadata block, or a `bibliography:` whose value is neither a string nor a
+ *  list of strings, is a HARD error (fail loud, never a silent miss). */
+export function frontmatterBibliography(buffer: string): string[] | null {
+  const block = FRONTMATTER_BLOCK.exec(buffer);
+  if (!block) return null;
+  const meta = parseYaml(block[1]) as unknown;
+  if (meta === null || typeof meta !== "object") return null;
+  const declared = (meta as Record<string, unknown>).bibliography;
+  if (declared === undefined || declared === null) return null;
+  if (typeof declared === "string") return [declared];
+  if (
+    Array.isArray(declared) &&
+    declared.every((p): p is string => typeof p === "string")
+  ) {
+    return declared;
+  }
+  throw new Error(
+    `frontmatter bibliography must be a path or list of paths, got: ${JSON.stringify(declared)}`,
+  );
 }
 
 /** The match string CM6 fuzzy-filters a citation candidate against: the cite
