@@ -52,12 +52,22 @@ it.
 
 (Matches [[../render-rebuild-plan]] and the global TDD doctrine.)
 
+- **Interop-first / research-first governs every work item (AGENTS.md HARD RULE #0).** Each
+  sub-milestone BEGINS with the research step that answers "what already exists" and names the
+  concrete existing tool / library / binary / standard format / reference implementation it
+  leverages, supports, or ports — before any build step. Greenfield is rejected: a work item
+  whose first action is "write a new X" with no such research is sent back for the research step.
+  Phase C's interop anchors: support standard `.bib` / BibLaTeX / CSL-JSON bibliography files
+  directly (consume them, never flatten into a bespoke schema), embed an existing BibTeX/CSL
+  parser library rather than writing a parser, ride the existing CodeMirror 6
+  `@codemirror/autocomplete` infrastructure via the project's composable source registry (P51),
+  and port the APPROACH (not code) of vimtex's project-root label indexing.
 - TDD per sub-milestone: design → RED proof obligation (user-ratified) → commit RED →
   GREEN → commit. Each sub-milestone gates on its proof green before the next starts.
   RED must FAIL because the observed citation/label behaviour is absent, never because a
   guessed solution surface is missing — a proof that would still pass on a broken app is
   inadmissible ([[proof-obligations]] admissibility rule).
-- Existing obligations **P1–P62** (and D1–D17) stay green throughout. A sub-milestone that
+- Existing obligations **P1–P69** (and D1–D17) stay green throughout. A sub-milestone that
   would break one must be re-scoped. P51's composable-completion guarantee is load-bearing:
   every new completion source here is ADDED to `appCompletionSources`, never an override —
   P51 itself proves a new source must not displace the LaTeX backslash / `:::` completions.
@@ -71,9 +81,9 @@ it.
   untouched (Phase C adds no doctor checks — the bib-file existence guarantee rides the
   existing `ExistingFile` config newtype, which already fails loud at load).
 
-**Proof obligation numbering: RESERVED block P77–P82.** This plan PROPOSES P77–P82; it does
+**Proof obligation numbering: RESERVED block P84–P89.** This plan PROPOSES P84–P89; it does
 NOT edit [[proof-obligations]]. Ratify the obligations with the user before writing any RED
-spec. (P63–P76 are reserved by the Phase-A and Phase-B plans; Phase C owns P77–P82.)
+spec. (P70–P83 are reserved by the Phase-A and Phase-B plans; Phase C owns P84–P89.)
 
 ## Current code seams (what gets touched/extended)
 
@@ -135,7 +145,16 @@ sidebar component.
 Ordered so the data source (config bib key) lands first, then the high-relevance editor
 mechanisms, then the two net-new surfaces, then the macro-scoping refinement.
 
-### C1 — Bib as a config-declared, frontend-readable source  [FOUNDATION; proposes P77]
+### C1 — Bib as a config-declared, frontend-readable source  [FOUNDATION; proposes P84]
+
+**Research-first:** support standard bibliography files directly — a config-declared
+`.bib` / BibLaTeX / CSL-JSON file consumed as-is (the same native formats Zettlr and vimtex
+read — [[parity-research/zettlr]] "BibTeX, or BibLaTeX used directly"; [[parity-research/vimtex]]
+`.bib` backends), plus the existing CSL file the renderer already ships. No bespoke bib schema
+is introduced; the config key names the user's existing file and the existing `ExistingFile`
+config newtype (already load-validating `snippet_dictionary` / `spell_dictionary`) is the
+mechanism reused for fail-loud existence validation. Nothing new is parsed here — C1 only
+surfaces the already-shipped bib/CSL paths as first-class config keys.
 
 The data source for every other Phase-C item. Promote the bibliography from a literal
 buried in the renderer command to a *hard-required* `editor.bibliography` config key
@@ -151,7 +170,17 @@ parser.
 - Touches: `config.rs` (`Editor` struct + `validate`), `types.ts`, `api.ts`,
   `first-run.sh`, the renderer-plugin config/command reconciliation.
 
-### C2 — Citation completion: metadata fuzzy-match + tooltip preview + `@`-trigger  [proposes P78, P79]
+### C2 — Citation completion: metadata fuzzy-match + tooltip preview + `@`-trigger  [proposes P85, P86]
+
+**Research-first:** leverage an existing maintained BibTeX/CSL parser library (e.g. a
+well-regarded JS BibTeX/BibLaTeX parser, or a CSL-JSON reader for the CSL-JSON case) to read the
+C1 file into entries — do NOT hand-write a bib parser. Wire the `@`-trigger and the candidate
+list through the existing CodeMirror 6 `@codemirror/autocomplete` infrastructure via the
+project's composable source registry (P51, `appCompletionSources`) — no bespoke completion
+engine. The match-string and trigger-predicate DESIGN is ported from the reference
+implementations: the `key + author + year + title` formatted match string from vimtex's
+`match_str_fmt` ([[parity-research/vimtex]]), and the `@`-at-line-start/after-whitespace/after-`[`
+trigger plus tooltip-preview-before-Enter from Zettlr ([[parity-research/zettlr]]).
 
 The two High-relevance citation items, built as one composable source pushed to
 `appCompletionSources` (P51-shaped). Parse the C1 bib file into entries; for each, build a
@@ -165,14 +194,14 @@ formatted candidates; accepting inserts a pandoc citation. Support the full pand
 syntax surface — `[@Key]`, narrative `@Key`, and the locator form `[@Key, p. 45]` (locator
 typed after accept; the source completes the key, the syntax wrapper is the insert shape).
 
-- **P78 (`@`-trigger + metadata fuzzy-match):** typing `@` in a trigger position opens the
+- **P85 (`@`-trigger + metadata fuzzy-match):** typing `@` in a trigger position opens the
   completion tooltip; the offered candidates filter against author/year/title (a query
   matching a word in the title surfaces the entry whose KEY does not contain that word —
   proving the match string is metadata, not key-only); accepting inserts `[@<key>]` (or the
   narrative form) at the cursor. Admissible because it fails on a key-only matcher (a
   title-word query yields nothing), a no-trigger wiring (`@` does not open completion), and
   a literal-key insert that does not produce pandoc citation syntax.
-- **P79 (tooltip bib-entry preview):** the citation completion option carries an `info`
+- **P86 (tooltip bib-entry preview):** the citation completion option carries an `info`
   tooltip whose rendered content shows the bib entry's author + year + title (the fields
   the user verifies before insert), sourced from the configured bib file. Admissible
   because it fails on an option with no info tooltip (nothing previews before accept) and on
@@ -182,7 +211,15 @@ typed after accept; the source completes the key, the syntax wrapper is the inse
   (`registerCitationSource`, pushed alongside the snippet source); reuses the E2E
   `typeInEditor`/`acceptCompletion`/`cursorOffset` harness surfaces.
 
-### C3 — Cross-file label / `\cref` completion via project-root harvesting  [proposes P80]
+### C3 — Cross-file label / `\cref` completion via project-root harvesting  [proposes P87]
+
+**Research-first:** port the APPROACH of vimtex's multi-file project-root indexing
+([[parity-research/vimtex]]: harvest labels from ALL project files via main-document root
+detection, the index that powers cross-file completion) — port the indexing strategy, not vim
+code. Build the harvest on the existing `listTree` + `readTextFile` Tauri surfaces (both already
+in `api.ts`; no new command) and expose the result as another P51-composed
+`@codemirror/autocomplete` source, reusing the same `appCompletionSources` registry C2 uses. No
+greenfield indexer or completion engine.
 
 The workspace-aware `\cref` picker the catalogue already promises
 ([[feature-catalogue-and-implementation-status]]: "workspace-aware — scans across
@@ -196,7 +233,7 @@ Expose a `\cref{` / `[@...]`-class completion source over that index, composed i
 rooted at) is the index scope; a `main-document` marker is the vimtex analog but the MVP
 scope is "every file under the open project root" (the explorer's root).
 
-- **P80 (cross-file label completion):** with a project containing TWO markdown files where
+- **P87 (cross-file label completion):** with a project containing TWO markdown files where
   a label/anchor is defined in file A, open file B and trigger label completion — the label
   defined in the OTHER file is offered (proving the index spans the project, not the current
   buffer), and accepting inserts a reference to it at the cursor. Admissible because it
@@ -208,7 +245,14 @@ scope is "every file under the open project root" (the explorer's root).
   down — decide at design time, favouring App-owned index built from the same `listTree`
   the explorer uses); `EditorPane.svelte` (`registerLabelSource`).
 
-### C4 — Per-file `bibliography:` YAML frontmatter override  [net-new; proposes P81]
+### C4 — Per-file `bibliography:` YAML frontmatter override  [net-new; proposes P88]
+
+**Research-first:** support the standard pandoc/Zettlr per-file `bibliography:` YAML
+frontmatter key directly ([[parity-research/zettlr]] "per-file via YAML
+`bibliography: ./assets/references.json`"; [[parity-research/pandoc-editor]] frontmatter editor)
+— this is pandoc's own native metadata key, consumed as authored, not a bespoke override
+mechanism. It reuses the C2 parser library (the override file is the SAME `.bib`/CSL-JSON format)
+and re-selects the C2 citation source; nothing new is parsed or formatted.
 
 A paper that ships its own `.bib` declares `bibliography: ./refs.bib` in its YAML
 frontmatter; that override takes precedence over the C1 global config bib for citation
@@ -218,7 +262,7 @@ override is read from the open buffer's frontmatter (resolved relative to the fi
 directory) and, when present, supplies the citation source's entries instead of the global
 bib. Absent frontmatter key → the C1 global bib (no silent empty source).
 
-- **P81 (per-file override):** open a file whose frontmatter declares a `bibliography:`
+- **P88 (per-file override):** open a file whose frontmatter declares a `bibliography:`
   pointing at a sibling `.bib` containing a key absent from the global bib; citation
   completion offers that file-local key (proving the override is in effect), and a file
   WITHOUT the frontmatter key still offers the global bib's keys (proving the global remains
@@ -230,7 +274,15 @@ bib. Absent frontmatter key → the C1 global bib (no silent empty source).
   `EditorPane.svelte` / `App.svelte` (re-resolve the citation source on file open, since the
   active bib now depends on the open file's frontmatter).
 
-### C5 — References / bibliography preview sidebar tab  [net-new; proposes P82]
+### C5 — References / bibliography preview sidebar tab  [net-new; proposes P89]
+
+**Research-first:** reuse the existing pandoc `--citeproc` rendering path the preview already
+runs (the preview's `#refs` block already resolves the bibliography for cited keys — p27) to
+produce the CSL-styled references, rather than reimplementing CSL formatting in JS. The sidebar
+is the FOURTH entry on the existing `SIDEBAR_VIEWS` extension point (P44/P18 precedent), modeled
+on Zettlr's References sidebar ([[parity-research/zettlr]]) — no new render engine and no bespoke
+CSL formatter; the one source of truth for "what a key renders as" stays the real pandoc
+citeproc output.
 
 A live "what this doc cites so far" panel — a FOURTH `SIDEBAR_VIEWS` tab sibling to the
 planned figures tab (zettlr References sidebar — [[parity-research/zettlr]]; the roadmap
@@ -244,7 +296,7 @@ runs). The "rendered in a CSL style" requirement is satisfiable by the SAME pand
 bibliography for cited keys — p27); the sidebar can reuse the rendered bibliography rather
 than re-implementing CSL formatting in JS.
 
-- **P82 (references sidebar reflects cited keys):** with the references tab active, citing a
+- **P89 (references sidebar reflects cited keys):** with the references tab active, citing a
   key in the buffer makes that reference appear in the panel (author/year/title text, not
   the bare key), and a key that is NOT cited does not appear; rendering uses the configured
   CSL (the formatted label/entry matches the preview's bibliography for the same key).
@@ -256,6 +308,14 @@ than re-implementing CSL formatting in JS.
   resolved bibliography, e.g. from the preview render result or a dedicated citeproc call).
 
 ### C6 — Backslash completion scoped to available MathJax macro tiers  [refines P51; deferred-or-last]
+
+**Research-first:** port the APPROACH of vimtex's package-scoped command completion
+([[parity-research/vimtex]]: "command completion filtered by active packages") and reuse the
+EXISTING vendored `codemirror-lang-latex` completion source (`vendor/.../completion.ts`) plus the
+already-baked MathJax macro-tier vocabulary ([[mathjax-macro-system-tiers-and-injection]]) as the
+source of truth — FILTER/augment the existing source against a real read of the tier SoT, never
+greenfield a new command list or hardcode a JS macro array (that hardcode is the admissibility
+line below).
 
 Scope the LaTeX backslash command completion to the macros that will actually render —
 the injected MathJax macro tiers ([[mathjax-macro-system-tiers-and-injection]]) — so users
@@ -275,29 +335,29 @@ baked MathJax config / tier macro lists); it does not block C1–C5.
 - Touches: `EditorPane.svelte` (wrap/filter the LaTeX completion source against the
   macro-tier list); a reader for the macro-tier vocabulary (the baked config asset).
 
-## Proposed proof obligations (P77–P82)
+## Proposed proof obligations (P84–P89)
 
 PROPOSALS only — ratify with the user before writing RED. Do NOT edit [[proof-obligations]]
 until ratified. Each is an exact, externally observable happy-path state, admissible only if
 it would FAIL on a plausibly broken app.
 
-- **P77 — Bib file is a config-declared, load-validated source.** The bibliography path is a
+- **P84 — Bib file is a config-declared, load-validated source.** The bibliography path is a
   required `editor.bibliography` config key validated to exist at load (`ExistingFile`); the
   frontend reads it, and pointing config at a different bib file changes the citation
   candidates. Admissible because it fails when the bib path is not a config key (the
   frontend has no path to read), when a missing bib path is silently accepted (load must
   fail loud), and when the candidates ignore the configured file (a different bib offers the
   same candidates).
-- **P78 — `@`-trigger citation completion with metadata fuzzy-match.** (See C2.) Typing `@`
+- **P85 — `@`-trigger citation completion with metadata fuzzy-match.** (See C2.) Typing `@`
   in a trigger position offers candidates that filter on author/year/title; accepting
   inserts pandoc `[@key]` syntax.
-- **P79 — Citation tooltip previews the bib entry before insert.** (See C2.) The completion
+- **P86 — Citation tooltip previews the bib entry before insert.** (See C2.) The completion
   option's info tooltip shows the entry's author/year/title from the configured bib.
-- **P80 — Cross-file label completion.** (See C3.) A label defined in one project file is
+- **P87 — Cross-file label completion.** (See C3.) A label defined in one project file is
   offered while editing another, and accepting inserts a reference to it.
-- **P81 — Per-file `bibliography:` frontmatter override.** (See C4.) A file's frontmatter
+- **P88 — Per-file `bibliography:` frontmatter override.** (See C4.) A file's frontmatter
   bib takes precedence; a file without it falls back to the global config bib.
-- **P82 — References sidebar reflects the document's cited keys in CSL style.** (See C5.)
+- **P89 — References sidebar reflects the document's cited keys in CSL style.** (See C5.)
   The panel lists only the keys the buffer cites, rendered via the configured CSL.
 
 (C6 proposes no obligation yet — it refines P51; ratify separately if it earns one.)
@@ -309,19 +369,19 @@ it would FAIL on a plausibly broken app.
   `tests/proof/p77-*.spec.ts … p82-*.spec.ts`, precedent p51–p62.
 - Real bib/CSL files: each citation/label/sidebar spec ships a real `.bib` (precedent
   `tests/proof/fixtures/references.bib`, already carrying `@DM19`) and asserts behaviour
-  against its real entries — the metadata-match proof (P78) needs an entry whose
-  title/author word is absent from its key; the cross-file proof (P80) needs two real
-  markdown files; the per-file proof (P81) needs a sibling `.bib` with a key absent from the
+  against its real entries — the metadata-match proof (P85) needs an entry whose
+  title/author word is absent from its key; the cross-file proof (P87) needs two real
+  markdown files; the per-file proof (P88) needs a sibling `.bib` with a key absent from the
   global.
 - Editor-side proofs drive the real CM6 pipeline through the existing E2E surfaces
   (`typeInEditor`, `acceptCompletion`, `cursorOffset`, `appendAtEnd`); citation/label
   insertion is asserted by reading the buffer, and the tooltip preview by reading the
-  rendered completion `info` DOM. The references sidebar (P82) is asserted by reading the
+  rendered completion `info` DOM. The references sidebar (P89) is asserted by reading the
   `data-pane="sidebar"` references panel DOM against the cited keys.
-- The CSL-rendered reference text (P79/P82) is cross-checked against the preview's resolved
+- The CSL-rendered reference text (P86/P89) is cross-checked against the preview's resolved
   bibliography (`#refs`, p27) for the same key — one source of truth for "what this key
   renders as", so the sidebar cannot drift from the preview.
-- Regression gate: P1–P62 stay green. P51 specifically guards that the new citation/label
+- Regression gate: P1–P69 stay green. P51 specifically guards that the new citation/label
   sources compose (LaTeX backslash + `:::` completions still surface); run p51 after each of
   C2/C3/C6.
 
@@ -367,15 +427,15 @@ regresses.
 
 ## Status / resume here
 
-- **2026-06-16:** Plan authored. Six sub-milestones C1–C6; proposed obligations P77–P82
+- **2026-06-16:** Plan authored. Six sub-milestones C1–C6; proposed obligations P84–P89
   (RESERVED block; PROPOSALS only — [[proof-obligations]] NOT edited). Nothing implemented.
-- Prerequisite green baseline: P1–P62 green (insertion bar P55–P62 landed; HEAD at plan
-  time `9452cd4`, the P62 RED — confirm P55–P62 GREEN before starting). Phase A (P63–P69?)
-  and Phase B (P70–P76?) precede Phase C in roadmap order but do not block it technically;
+- Prerequisite green baseline: P1–P69 green (insertion bar P55–P62 landed; HEAD at plan
+  time `9452cd4`, the P62 RED — confirm P55–P62 GREEN before starting). Phase A (P70–P76?)
+  and Phase B (P77–P83?) precede Phase C in roadmap order but do not block it technically;
   Phase C rides surfaces already green (P51 completion registry, P18 sidebar, P44 explorer).
 - **NEXT:** ratify the C1 bib-config-key seam with the user (the biggest risk — how the bib
   path becomes a config key without the core parsing the renderer command), then ratify
-  P77–P82, then C1 RED.
+  P84–P89, then C1 RED.
 - Open decisions to settle before RED: (1) C1 — exact config shape (`editor.bibliography`
   + `editor.csl`, both required `ExistingFile`?) and how `first-run.sh` reconciles the one
   path between the config key and the renderer command. (2) C2 — `@`-trigger editor-only vs.

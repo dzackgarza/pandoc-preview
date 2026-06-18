@@ -28,6 +28,14 @@ human-verified before any phase here starts ([[product-destination-what-done-loo
 Nothing here re-opens a banned non-goal; the per-program Dispositions sections record every
 exclusion.
 
+**Governing principle — interop-first, never reinvent (see `AGENTS.md` HARD RULE #0):** every
+item below is a request to *support* what an existing tool/format/standard already does, NOT to
+reimplement it. Default disposition: run the real binary, embed the maintained library, support
+the tool's native file format so users bring their existing work with zero porting. Each phase
+plan must open every work item with the "what already exists" research step and name the tool /
+format / reference implementation it leverages, supports, or ports. Greenfield is never the
+answer; a "converter that flattens an existing format into a bespoke shape" is a red flag.
+
 ---
 
 ## Phase A — Feedback faster than a compile (static lint + structured logs)
@@ -67,7 +75,7 @@ Source: [[parity-research/snippet-and-lint-ecosystem]] (LuaSnip/UltiSnips), [[pa
 | Autotrigger / space-trigger auto-expansion (expand on next space, no accept keypress, re-arms for chained expansion) — quicktex's defining "as fast as the blackboard" ergonomic | net-new gap | High |
 | Regex / postfix triggers with capture groups (`phat`→`\hat{p}`, `([a-z])bar`→`\bar{$1}`) | net-new gap | High |
 | Mirrored tabstops (type env name once → mirrored into the closing fence/`\end`) | refines P52 (single tabstop only) | High |
-| Canonical 281-entry quicktex dict as a versioned data asset + a vim-dict→config converter; pin provenance (OSOT) — the catalogue says "migrated" but never pins WHERE or "verbatim" | net-new gap | High |
+| Support **standard quicktex definition files directly** (read the user's existing quicktex dict format — zero porting, no bespoke schema); the prose/math mode-awareness, autotrigger, and jump-points come from leveraging or porting an existing snippet engine/format, never a custom one. The shipped flat `quicktex.json` is a degraded one-way flattening (the prose/math mode-split was lost, 281→262) and is to be replaced by direct interop with the source format, not maintained as a fork | net-new gap (interop) | High |
 | Snippet variables (`$CLIPBOARD`, `$CURRENT_DATE`, TextMate dynamic vars) | refines P52/P59 | Med |
 | Transform/function nodes (derive a label from a title; case transforms) | net-new gap | Med |
 | Visual-selection wrap (`${VISUAL}`: select → wrap in `\emph{}`/environment) | net-new gap | Med |
