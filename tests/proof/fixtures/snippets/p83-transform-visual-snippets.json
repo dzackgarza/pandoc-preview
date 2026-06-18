@@ -1,0 +1,14 @@
+{
+  "snippets": [
+    {
+      "trigger": "sec",
+      "mode": "both",
+      "body": "## ${1:title}\n\n\\label{sec:${1/(.*)/\\U$1/}}\n\n$0"
+    },
+    {
+      "trigger": "emph",
+      "mode": "both",
+      "body": "\\emph{${VISUAL}}"
+    }
+  ]
+}

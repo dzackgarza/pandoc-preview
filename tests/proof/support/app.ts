@@ -404,6 +404,29 @@ export async function seedClipboardText(page: EvaluatesScripts, text: string): P
   );
 }
 
+// ── Establish a REAL non-empty selection in the editor (P83 visual-wrap) ───
+// UltiSnips' `${VISUAL}` placeholder wraps the text the user had SELECTED at the
+// moment the snippet expands (select `foo`, trigger an `\emph{${VISUAL}}` entry →
+// `\emph{foo}`, the selected `foo` substituted into the body and the original
+// selection consumed). To drive that deterministically the harness must put a
+// REAL, non-empty selection on the live CM6 view — the SAME selection state a
+// user dragging/shift-selecting produces — so the subsequent expansion sees a
+// selection to wrap. `seedSelection(text)` selects the FIRST occurrence of
+// `text` already present in the buffer (appended via appendAtEnd), through a real
+// CM6 selection dispatch (EditorSelection.range over that text's span), so the
+// editor's selection.main is non-empty and spans exactly `text`. Fire-and-forget;
+// the observable afterwards is the buffer (getEditorText) after the visual-wrap
+// expansion: `text` survives, WRAPPED by the body, not discarded.
+//
+// RED today: __PPE_E2E__.seedSelection does not exist (there is no `${VISUAL}`
+// visual-wrap support and so no need to seed a selection), so this evaluate
+// throws — there is no surface to establish a real selection for `${VISUAL}`.
+export async function seedSelection(page: EvaluatesScripts, text: string): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.seedSelection(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
 // ── REAL editor input driver (P78/P79) ─────────────────────────────────────
 // `insertChars(text)` feeds `text` into the editor character-by-character
 // through the editor's REAL input dispatch — a CM6 `view.dispatch` per-character

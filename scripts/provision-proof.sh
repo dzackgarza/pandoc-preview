@@ -600,6 +600,36 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p82-variables-snippets.json" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p83-transform-visual.spec.ts)
+        # P83 (transform node + visual-selection wrap, Phase-B B7) declares the
+        # SAME config-owned snippet-dictionary path P52/P59/P77/P78/P79/P80/P81/
+        # P82 read. It carries TWO entries using the STANDARD TextMate/UltiSnips
+        # body grammar verbatim (HARD RULE #0 — adopt, never invent):
+        #   - `sec` — a TRANSFORM MIRROR. Its body repeats the `${1}` tabstop in
+        #     two positions, but the SECOND occurrence carries a standard TextMate
+        #     mirror transform `${1/(.*)/\U$1/}` (uppercase the source slot). The
+        #     dependent `\label{sec:...}` slot must show the TRANSFORMED (uppercase)
+        #     text of what the user typed into the `## ...` source slot.
+        #   - `emph` — a VISUAL-WRAP entry. Its body `\emph{${VISUAL}}` is UltiSnips'
+        #     `${VISUAL}` selection placeholder: with a real selection active,
+        #     expanding it must WRAP exactly the selected text.
+        #
+        # RED today: normalizeTabstops (snippets.ts) rewrites only bare `$<digits>`
+        # to `${N}` — the transform mirror `${1/(.*)/\U$1/}` and the `${VISUAL}`
+        # placeholder pass through VERBATIM to CM6's snippetCompletion, whose
+        # vendored TextMate parser implements NEITHER the mirror transform NOR
+        # `${VISUAL}`. So the dependent slot shows the UNTRANSFORMED source (or a
+        # literal `${1/.../.../}`), and runSnippet applies at the bare cursor
+        # ([pos, pos] — the selection is discarded), so a `${VISUAL}` wrap drops the
+        # selected text. There is also no surface to establish a real selection
+        # (__PPE_E2E__.seedSelection does not exist), so the visual-wrap driver
+        # throws — the faithful no-transform / no-visual-wrap RED state.
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p83-transform-visual-snippets.json"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p83-transform-visual-snippets.json" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
     p54-spellcheck.spec.ts)
         # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
         # hardcoded list. Provision a hermetic copy of the committed FIXTURE
