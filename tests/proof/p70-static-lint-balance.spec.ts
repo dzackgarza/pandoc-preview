@@ -84,33 +84,62 @@ import {
 // `$` — so the imbalance diagnostics must disappear (a STUCK linter that keeps
 // the diagnostic after balancing fails (D)).
 //
+// ── WHY THE DOLLAR HALF IS A REAL (CURRENTLY-UNMET) BURDEN, NOT AN OR-FILLER ───
+// The earlier form of this proof asked only for a diagnostic covering EITHER the
+// `\left` span OR the `$` span. That disjunction was satisfiable by the `\left`
+// arm ALONE, leaving the math-mode `$`-balance half INERT: it could pass while the
+// editor surfaced NOTHING for an unterminated markdown `$`. That is precisely the
+// state the current chktex-on-`.tex` bridge is in. Pandoc's md→latex writer
+// ESCAPES a lone markdown `$` to a literal `\$` (verified: the markdown line
+// `The value $x + y is undefined here.` emits `The value \$x + y ...`), so the
+// `.tex` chktex sees has NO open math zone — chktex's "Mathmode still on at end of
+// LaTeX file" (warning 16) NEVER fires for a pandoc-escaped lone `$`. A bridge
+// that lints only the pandoc-emitted `.tex` therefore CANNOT catch an unterminated
+// markdown inline-`$` (or an unterminated `$$` display block); that is a
+// markdown-native balance check chktex-on-`.tex` structurally cannot do. P70's
+// stated obligation REQUIRES this check, so the `$`-balance assertion is made
+// REQUIRED and SEPARATE here — not OR-ed with the delimiter span.
+//
 // ── WHAT EACH ASSERTION KILLS ─────────────────────────────────────────────────
-//   (A) After appending the imbalance, at least ONE diagnostic's range covers
-//       either the surplus `\left` or the unterminated `$`.
+//   DELIMITER ARM (the `\left`/`\right` imbalance, which DOES survive pandoc):
+//   (A) After appending the imbalance, at least ONE diagnostic's range covers the
+//       surplus `\left`.
 //       KILLS "no app lint source": with only the fork's `{}`/`\begin`-`\end`
-//       checks, the `\left`/$ imbalance is NEVER marked, so no diagnostic covers
-//       those spans and this fails. (RED today: lintDiagnostics() does not exist,
-//       so the evaluate throws first — there is no app lint surface at all.)
-//   (B) That diagnostic's message NAMES the imbalance (mentions left/right or
-//       math/dollar, case-insensitively).
+//       checks, the `\left` imbalance is NEVER marked, so no diagnostic covers
+//       that span and this fails.
+//   (B) That delimiter diagnostic's message NAMES the imbalance (mentions
+//       left/right or unmatched/unbalanced, case-insensitively).
 //       KILLS a cursor-pair-HIGHLIGHT-only impl: matched-delimiter highlighting
 //       paints the pair under the cursor but emits NO buffer-wide diagnostic with
 //       a message — so there is no message naming the imbalance, and this fails.
+//
+//   MATH-MODE `$`-BALANCE ARM (REQUIRED, the markdown-native check):
+//   (M1) After appending the unterminated markdown inline-`$`, at least ONE
+//        diagnostic's range covers the unterminated `$` AND its message names the
+//        unterminated math (mentions math/dollar/`$`/unterminated/unbalanced).
+//        KILLS a bridge that only lints the pandoc-emitted `.tex`: pandoc escapes
+//        the lone `$` to `\$`, so chktex emits no warning 16 and NO diagnostic
+//        covers the `$` span — this fails. It passes only when the lint layer owns
+//        a markdown-native math-mode `$`-balance check (the .tex chktex pass cannot
+//        provide it). This is the assertion that is RED today.
 //   (C) The witness produced MORE diagnostics than the demo baseline had.
 //       KILLS a source that ignores the appended imbalance entirely (the count
 //       is unchanged by introducing two real imbalances).
-//   (D) After appending the missing `\right)` and closing `$` (balancing both),
-//       NO diagnostic covers the (now-balanced) imbalance spans, and the imbalance
-//       message is gone from the active set.
-//       KILLS a STUCK linter: a source that computed once and never re-ran (or a
-//       parallel array never invalidated) keeps the imbalance diagnostic after the
-//       buffer is balanced — this fails; it passes only when the live lint field
-//       re-runs and clears the resolved imbalance.
+//   (D) After appending the missing `\right)` (balancing the delimiter pair), NO
+//       diagnostic covers the (now-balanced) `\left` span with a delimiter message.
+//       KILLS a STUCK linter on the delimiter arm: a source that computed once and
+//       never re-ran keeps the diagnostic after the buffer is balanced.
+//   (M2) After appending the closing `$` (balancing the inline math zone), NO
+//        diagnostic covers the (now-balanced) `$` span with a math-mode message.
+//        KILLS a STUCK markdown math-mode check that keeps the unterminated-`$`
+//        diagnostic after the zone is closed.
 //
-// Together: a real `\left`/$ imbalance produces a real `@codemirror/lint`
-// diagnostic that NAMES it (A,B,C), and balancing the buffer clears it (D) —
-// proving a live, buffer-wide, real-ChkTeX-sourced static balance check, not a
-// cursor highlight and not a stuck one-shot, all without a compile.
+// Together: a real `\left` imbalance AND a real unterminated markdown `$` each
+// produce a real `@codemirror/lint` diagnostic that NAMES it (A,B,M1,C), and
+// balancing each clears its own diagnostic (D,M2) — proving a live, buffer-wide
+// static balance check that covers BOTH the delimiter class (chktex-on-`.tex`) and
+// the markdown-native math-mode `$` class (which chktex-on-`.tex` cannot), all
+// without a compile.
 
 // A display-math line: two `\left(` openers, one `\right)` closer → surplus left.
 const MATH_IMBALANCED = '\n\n$$\n\\left( a + \\left( b \\right) + c\n$$\n';
@@ -126,17 +155,30 @@ function rangesOverlap(a: number, b: number, c: number, d: number): boolean {
   return a < d && c < b;
 }
 
-function namesImbalance(message: string): boolean {
+// Names the DELIMITER imbalance: a `\left`/`\right` (or generic unmatched/unclosed)
+// diagnostic. Used only for the delimiter arm.
+function namesDelimiter(message: string): boolean {
   const m = message.toLowerCase();
   return (
     m.includes('left') ||
     m.includes('right') ||
-    m.includes('math') ||
-    m.includes('$') ||
-    m.includes('dollar') ||
     m.includes('unmatched') ||
-    m.includes('unterminated') ||
+    m.includes('unbalanced') ||
     m.includes('unclosed')
+  );
+}
+
+// Names the MATH-MODE `$`-balance imbalance SPECIFICALLY: the message must speak
+// to math mode / a dollar / an unterminated zone. A delimiter-only message that
+// merely says "unmatched `(`" does NOT satisfy this — the markdown-native
+// math-mode check must produce a message that NAMES the unterminated math.
+function namesMathMode(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes('math') ||
+    m.includes('dollar') ||
+    m.includes('$') ||
+    m.includes('unterminated')
   );
 }
 
@@ -166,51 +208,78 @@ test('A real \\left/$ imbalance surfaces a real @codemirror/lint diagnostic befo
   const withImbalance = await editorText(tauriPage);
   // The surplus `\left(` span: the SECOND `\left(` is the one with no matching
   // `\right)`. We locate the first `\left(` occurrence's start as the math-line
-  // anchor; the diagnostic must cover the `\left`/`\right` region or the
-  // unterminated `$`.
+  // anchor; the DELIMITER arm's diagnostic must cover the `\left` region. The `$`
+  // span is the lone markdown inline-math `$` the MATH-MODE arm requires covered.
   const leftIdx = withImbalance.indexOf('\\left(');
   expect(leftIdx).toBeGreaterThanOrEqual(0);
   const leftEnd = withImbalance.lastIndexOf('\\left(') + '\\left('.length;
   const dollarIdx = withImbalance.indexOf('The value $x + y') + 'The value '.length;
   const dollarEnd = dollarIdx + 1;
 
-  // Wait for the lint pass to produce at least one diagnostic that COVERS the
-  // imbalance span and NAMES it. Polling the live field (forceLinting-flushed)
-  // is the deterministic signal the pass completed (the real-ChkTeX call is
-  // async).
+  // Wait for the lint pass to produce, for the DELIMITER arm, a diagnostic that
+  // COVERS the surplus `\left` span and NAMES the delimiter imbalance. Polling the
+  // live field (forceLinting-flushed) is the deterministic signal the pass
+  // completed (the real-ChkTeX call is async). The delimiter arm survives pandoc
+  // unchanged, so this settles on the current bridge.
   await tauriPage.waitForFunction(
     `(() => {
       const fn = window.__PPE_E2E__ && window.__PPE_E2E__.lintDiagnostics;
       if (!fn) return false;
       const ds = fn();
-      const namesIt = (msg) => {
+      const namesDelim = (msg) => {
         const m = String(msg).toLowerCase();
-        return m.includes('left') || m.includes('right') || m.includes('math') ||
-               m.includes('$') || m.includes('dollar') || m.includes('unmatched') ||
-               m.includes('unterminated') || m.includes('unclosed');
+        return m.includes('left') || m.includes('right') ||
+               m.includes('unmatched') || m.includes('unbalanced') ||
+               m.includes('unclosed');
       };
       const overlaps = (a,b,c,d) => a < d && c < b;
       return ds.some((dg) =>
-        (overlaps(dg.from, dg.to, ${leftIdx}, ${leftEnd}) ||
-         overlaps(dg.from, dg.to, ${dollarIdx}, ${dollarEnd})) &&
-        namesIt(dg.message));
+        overlaps(dg.from, dg.to, ${leftIdx}, ${leftEnd}) && namesDelim(dg.message));
     })()`,
     20_000,
   );
 
   const imbalanced: LintDiagnostic[] = await lintDiagnostics(tauriPage);
 
-  // (A) At least one diagnostic's range covers the surplus `\left` or the
-  // unterminated `$`.
-  const covering = imbalanced.filter(
-    (d) =>
-      rangesOverlap(d.from, d.to, leftIdx, leftEnd) ||
-      rangesOverlap(d.from, d.to, dollarIdx, dollarEnd),
+  // (A) At least one diagnostic's range covers the surplus `\left`.
+  const coveringLeft = imbalanced.filter((d) =>
+    rangesOverlap(d.from, d.to, leftIdx, leftEnd),
   );
-  expect(covering.length).toBeGreaterThan(0);
+  expect(coveringLeft.length).toBeGreaterThan(0);
 
-  // (B) Its message NAMES the imbalance.
-  expect(covering.some((d) => namesImbalance(d.message))).toBe(true);
+  // (B) Its message NAMES the delimiter imbalance.
+  expect(coveringLeft.some((d) => namesDelimiter(d.message))).toBe(true);
+
+  // ── MATH-MODE `$`-BALANCE ARM (REQUIRED) ────────────────────────────────────
+  // (M1) A diagnostic's range covers the unterminated markdown inline-`$` AND its
+  //      message NAMES the unterminated math. This is the markdown-native check
+  //      chktex-on-`.tex` CANNOT provide: pandoc escapes the lone `$` to `\$`, so
+  //      the emitted `.tex` carries no open math zone and chktex emits no warning
+  //      16. RED today: no diagnostic ever covers the `$` span with a math-mode
+  //      message, so this poll times out / the assertion below fails.
+  await tauriPage.waitForFunction(
+    `(() => {
+      const fn = window.__PPE_E2E__ && window.__PPE_E2E__.lintDiagnostics;
+      if (!fn) return false;
+      const ds = fn();
+      const namesMath = (msg) => {
+        const m = String(msg).toLowerCase();
+        return m.includes('math') || m.includes('dollar') ||
+               m.includes('$') || m.includes('unterminated');
+      };
+      const overlaps = (a,b,c,d) => a < d && c < b;
+      return ds.some((dg) =>
+        overlaps(dg.from, dg.to, ${dollarIdx}, ${dollarEnd}) && namesMath(dg.message));
+    })()`,
+    20_000,
+  );
+
+  const withDollar: LintDiagnostic[] = await lintDiagnostics(tauriPage);
+  const coveringDollar = withDollar.filter(
+    (d) =>
+      rangesOverlap(d.from, d.to, dollarIdx, dollarEnd) && namesMathMode(d.message),
+  );
+  expect(coveringDollar.length).toBeGreaterThan(0);
 
   // (C) The imbalance ADDED diagnostics over the clean-demo baseline.
   const imbalancedCount = await lintCount(tauriPage);
@@ -223,41 +292,60 @@ test('A real \\left/$ imbalance surfaces a real @codemirror/lint diagnostic befo
   await appendAtEnd(tauriPage, BALANCE_RIGHT);
   await appendAtEnd(tauriPage, BALANCE_DOLLAR);
 
-  // (D) After balancing, NO diagnostic covers the imbalance spans with a message
-  // naming the imbalance — the linter re-ran and cleared the resolved imbalance
-  // (a STUCK linter keeps it and this never settles).
+  // (D)+(M2) After balancing, NO diagnostic covers EITHER imbalance span with its
+  // naming message — both the delimiter check (D) and the markdown-native
+  // math-mode check (M2) re-ran and cleared their resolved imbalance (a STUCK
+  // linter on either arm keeps its diagnostic and this never settles).
   await tauriPage.waitForFunction(
     `(() => {
       const ds = window.__PPE_E2E__.lintDiagnostics();
-      const namesIt = (msg) => {
+      const namesDelim = (msg) => {
         const m = String(msg).toLowerCase();
-        return m.includes('left') || m.includes('right') || m.includes('math') ||
-               m.includes('$') || m.includes('dollar') || m.includes('unmatched') ||
-               m.includes('unterminated') || m.includes('unclosed');
+        return m.includes('left') || m.includes('right') ||
+               m.includes('unmatched') || m.includes('unbalanced') ||
+               m.includes('unclosed');
+      };
+      const namesMath = (msg) => {
+        const m = String(msg).toLowerCase();
+        return m.includes('math') || m.includes('dollar') ||
+               m.includes('$') || m.includes('unterminated');
       };
       const overlaps = (a,b,c,d) => a < d && c < b;
-      return !ds.some((dg) =>
-        (overlaps(dg.from, dg.to, ${leftIdx}, ${leftEnd}) ||
-         overlaps(dg.from, dg.to, ${dollarIdx}, ${dollarEnd})) &&
-        namesIt(dg.message));
+      const delimStuck = ds.some((dg) =>
+        overlaps(dg.from, dg.to, ${leftIdx}, ${leftEnd}) && namesDelim(dg.message));
+      const mathStuck = ds.some((dg) =>
+        overlaps(dg.from, dg.to, ${dollarIdx}, ${dollarEnd}) && namesMath(dg.message));
+      return !delimStuck && !mathStuck;
     })()`,
     20_000,
   );
 
   const balanced: LintDiagnostic[] = await lintDiagnostics(tauriPage);
-  const stillCovering = balanced.filter(
+
+  // (D) The delimiter diagnostic on the `\left` span is gone.
+  const delimStillCovering = balanced.filter(
     (d) =>
-      (rangesOverlap(d.from, d.to, leftIdx, leftEnd) ||
-        rangesOverlap(d.from, d.to, dollarIdx, dollarEnd)) &&
-      namesImbalance(d.message),
+      rangesOverlap(d.from, d.to, leftIdx, leftEnd) && namesDelimiter(d.message),
   );
-  expect(stillCovering.length).toBe(0);
+  expect(delimStillCovering.length).toBe(0);
+
+  // (M2) The math-mode diagnostic on the `$` span is gone.
+  const mathStillCovering = balanced.filter(
+    (d) =>
+      rangesOverlap(d.from, d.to, dollarIdx, dollarEnd) && namesMathMode(d.message),
+  );
+  expect(mathStillCovering.length).toBe(0);
 
   recordObservation({ spec: manifest.spec, name: 'baseline-lint-count', value: baselineCount });
   recordObservation({ spec: manifest.spec, name: 'imbalanced-lint-count', value: imbalancedCount });
   recordObservation({
     spec: manifest.spec,
-    name: 'imbalance-diagnostic-message',
-    value: covering.find((d) => namesImbalance(d.message))?.message ?? '',
+    name: 'delimiter-diagnostic-message',
+    value: coveringLeft.find((d) => namesDelimiter(d.message))?.message ?? '',
+  });
+  recordObservation({
+    spec: manifest.spec,
+    name: 'mathmode-diagnostic-message',
+    value: coveringDollar.find((d) => namesMathMode(d.message))?.message ?? '',
   });
 });
