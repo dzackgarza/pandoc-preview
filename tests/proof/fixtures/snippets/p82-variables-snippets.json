@@ -1,0 +1,9 @@
+{
+  "snippets": [
+    {
+      "trigger": "sig",
+      "mode": "both",
+      "body": "<!-- PPE-SIG clip=$CLIPBOARD date=$CURRENT_DATE year=$CURRENT_YEAR -->"
+    }
+  ]
+}

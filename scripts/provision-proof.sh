@@ -572,6 +572,34 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p81-quicktex-dict.vim" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p82-snippet-variables.spec.ts)
+        # P82 (snippet variables, Phase-B B6) declares the SAME config-owned
+        # snippet-dictionary path P52/P59/P77/P78/P79/P80/P81 read. Its one entry
+        # `sig` carries a body containing the STANDARD TextMate/VSCode snippet
+        # variables — `$CLIPBOARD`, `$CURRENT_DATE`, `$CURRENT_YEAR` (B6 adopts the
+        # established `$NAME` names, not bespoke tokens). The variables resolve AT
+        # EXPANSION TIME in the shared runSnippet body before snippetCompletion:
+        # `$CLIPBOARD` → the real system-clipboard text (via the SAME clipboard
+        # backend the P62 paste-image path owns), `$CURRENT_DATE`/`$CURRENT_YEAR` →
+        # the host date. Pointing config at this dict makes `sig` the variable
+        # entry the editor expands; the spec seeds a KNOWN clipboard string, expands
+        # `sig` through the shared insertion-bar path (insertSnippetByTrigger →
+        # insertSnippet → runSnippet), and reads the buffer back.
+        #
+        # RED today: runSnippet (snippets.ts) expands its body through
+        # snippetCompletion(normalizeTabstops(body), …) with NO variable
+        # resolution — normalizeTabstops only rewrites bare `$<digits>` tabstops, so
+        # the NON-digit variable tokens `$CLIPBOARD`/`$CURRENT_DATE`/`$CURRENT_YEAR`
+        # survive VERBATIM in the buffer. That literal-token state is exactly the
+        # failure P82 KILLS. (There is also no clipboard-text seed hook yet — the
+        # spec's seedClipboardText evaluate throws — the faithful no-variable-engine
+        # RED.)
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p82-variables-snippets.json"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p82-variables-snippets.json" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
     p54-spellcheck.spec.ts)
         # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
         # hardcoded list. Provision a hermetic copy of the committed FIXTURE

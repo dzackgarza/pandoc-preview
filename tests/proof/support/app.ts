@@ -383,6 +383,27 @@ export async function typeInEditor(page: EvaluatesScripts, text: string): Promis
   );
 }
 
+// ── Seed KNOWN text on the system clipboard (P82) ──────────────────────────
+// A SNIPPET VARIABLE entry resolves the standard TextMate/VSCode variable
+// `$CLIPBOARD` to the real system-clipboard text AT EXPANSION TIME — through the
+// SAME clipboard backend the P62 paste-image path owns. To drive that
+// deterministically the harness must put a KNOWN string on the REAL system
+// clipboard (the SAME clipboard a user's copy lands on), the sibling of P62's
+// seedClipboardImage. `seedClipboardText(text)` writes `text` through the
+// clipboard-manager plugin's writeText path; the app's variable resolution later
+// reads this exact string back off the clipboard. Fire-and-forget; the seed's
+// async work outlives this call (like seedClipboardImage), so the implementer
+// parks the in-flight promise where the expansion awaits it.
+//
+// RED today: __PPE_E2E__.seedClipboardText does not exist (there is no snippet
+// variable resolution and so no need to seed clipboard text), so this evaluate
+// throws — there is no surface to seed known clipboard text for $CLIPBOARD.
+export async function seedClipboardText(page: EvaluatesScripts, text: string): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.seedClipboardText(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
 // ── REAL editor input driver (P78/P79) ─────────────────────────────────────
 // `insertChars(text)` feeds `text` into the editor character-by-character
 // through the editor's REAL input dispatch — a CM6 `view.dispatch` per-character
@@ -499,6 +520,26 @@ export async function typeIntoSnippetField(
 ): Promise<void> {
   await page.evaluate(
     `(() => { window.__PPE_E2E__.typeIntoSnippetField(${JSON.stringify(text)}); return null; })()`,
+  );
+}
+
+// ── Expand a dictionary entry by trigger through the shared path (P59/P82) ──
+// `insertSnippetByTrigger(trigger)` expands the BODY of the named dictionary
+// entry at the cursor through the SAME shared expansion path the insertion-bar
+// dropdown and completion-accept use (insertSnippet → runSnippet →
+// snippetCompletion). P82 drives this path because B6 places snippet-variable
+// resolution INSIDE that shared runSnippet body (so both the popup-accept path
+// and the insertion-bar path get variables) — expanding `sig` here therefore
+// exercises exactly the seam variable resolution must live in. Fire-and-forget;
+// the observable afterwards is the editor buffer (getEditorText): the resolved
+// body, with `$CLIPBOARD`/`$CURRENT_DATE` replaced by real values, sits at the
+// cursor — never the literal tokens.
+export async function insertSnippetByTrigger(
+  page: EvaluatesScripts,
+  trigger: string,
+): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.insertSnippetByTrigger(${JSON.stringify(trigger)}); return null; })()`,
   );
 }
 
