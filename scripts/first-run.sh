@@ -117,6 +117,11 @@ CSL="$HOME/.pandoc/csl/alpha-preview.csl"
 # into the figures dir; the [figures] table below points config at them.
 TIKZSTYLES="$FIGURES_DIR/shared.tikzstyles"
 TIKZDEFS="$FIGURES_DIR/shared.tikzdefs"
+# The per-figure preamble template (Phase D / D-3 / P92): the standalone LaTeX
+# document each compiled figure body is wrapped in, with the QTikz `<>` source
+# marker. install-assets symlinks the vendored starter standalone-tikz.tex into
+# the templates dir; the [figures] table below points config at it.
+FIGURE_TEMPLATE="$HOME/.pandoc/templates/standalone-tikz.tex"
 # Obsidian fidelity: lists may follow a paragraph with no blank line in a vault;
 # the extension makes pandoc parse them as lists (Obsidian does). Citeproc resolves
 # [@key] citations against the installed bibliography (override it with your own).
@@ -200,6 +205,11 @@ figures = "$FIGURES_DIR"
 [figures]
 tikzstyles = "$TIKZSTYLES"
 tikzdefs = "$TIKZDEFS"
+# The per-figure preamble template (Phase D / D-3 / P92): the standalone LaTeX
+# document each figure body is wrapped in, with the QTikz `<>` source marker.
+# Required, load-validated existing file; swap it (or edit its content) to change
+# the preamble every figure compiles under.
+template = "$FIGURE_TEMPLATE"
 
 # The app is renderer-agnostic: the preview is produced by a renderer plugin
 # discovered from the plugins directory below. The shipped pandoc renderer houses

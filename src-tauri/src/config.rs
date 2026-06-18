@@ -78,6 +78,16 @@ pub struct Figures {
     /// figure, `\input` before `\begin{document}`. The renderer forwards this path
     /// as the `{tikzdefs}` render-context placeholder.
     pub tikzdefs: ExistingFile,
+    /// The per-figure PREAMBLE TEMPLATE (Phase D / D-3 / P92): the standalone
+    /// LaTeX document the figure compile wraps each tikz figure body in, with the
+    /// QTikz `.pgs` `<>` `TemplateReplaceText` marker where the figure source is
+    /// substituted. Config-declared and load-validated as an `ExistingFile` — a
+    /// missing template is a hard load error, never a baked-in default. Swapping
+    /// this path (or its content) swaps the preamble every figure compiles under,
+    /// so a `\usetikzlibrary`/macro present only here governs whether a figure
+    /// requiring it compiles. The renderer forwards this path as the
+    /// `{figure_template}` render-context placeholder.
+    pub template: ExistingFile,
 }
 
 /// A filesystem path that is required to exist and be a directory. The invariant

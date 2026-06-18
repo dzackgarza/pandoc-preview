@@ -27,7 +27,11 @@ config_schema = "schema.json"
 # D-2 / P91) the app forwards from config.figures.tikzstyles / .tikzdefs; render.sh
 # exports them as TIKZSTYLES_FILE / TIKZDEFS_FILE for tikzcd.lua to \input into
 # every compiled figure.
-command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}", "{tikzstyles}", "{tikzdefs}"]
+# {figure_template} is the config-owned per-figure preamble template (Phase D /
+# D-3 / P92) the app forwards from config.figures.template; render.sh exports it as
+# FIGURE_TEMPLATE_FILE for tikzcd.lua to wrap each figure body in (the QTikz `<>`
+# marker is where the figure source is substituted).
+command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}", "{tikzstyles}", "{tikzdefs}", "{figure_template}"]
 
 # The pandoc configurator (C3): the app spawns this (detached) as the "Configure"
 # action; it opens a kitty popup running a gum wizard that edits the raw pandoc

@@ -33,6 +33,11 @@ const PH_CSL: &str = "{csl}";
 /// context, exactly as `{bibliography}`/`{csl}`. The figure compile `\input`s them.
 const PH_TIKZSTYLES: &str = "{tikzstyles}";
 const PH_TIKZDEFS: &str = "{tikzdefs}";
+/// Phase D / D-3 / P92: the config-declared per-figure preamble template
+/// (`config.figures.template`) the renderer forwards as render context, exactly
+/// as `{tikzstyles}`/`{tikzdefs}`. The figure compile wraps each tikz body in it,
+/// substituting the source at the template's QTikz `<>` marker.
+const PH_FIGURE_TEMPLATE: &str = "{figure_template}";
 
 /// Environment variable carrying the active plugin's `[plugin.<id>]` config as
 /// JSON, so a renderer/check script can read its own config (e.g. the pandoc
@@ -639,6 +644,12 @@ pub fn render_active(
         (
             PH_TIKZDEFS,
             cfg.figures.tikzdefs.path().display().to_string(),
+        ),
+        // P92: the config-declared per-figure preamble template the figure compile
+        // wraps each tikz body in, sourced from the ONE place ([figures].template).
+        (
+            PH_FIGURE_TEMPLATE,
+            cfg.figures.template.path().display().to_string(),
         ),
     ];
     let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();

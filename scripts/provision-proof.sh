@@ -77,11 +77,19 @@ EOF
 # it); p101 swaps in its own red/blue .tikzstyles fixture at this same path.
 emit_figures() {
     local out="$1"
+    # Phase D / D-3 / P92: the per-figure preamble template ([figures].template,
+    # required load-validated ExistingFile). Defaults to the vendored starter
+    # standalone-tikz.tex install-assets symlinks into the templates dir (it
+    # carries the QTikz `<>` source marker plus the $tikzstyles$/$tikzdefs$ palette
+    # markers). p102 overrides it to its own per-figure .tikztemplate fixture (arg
+    # 2) so the spec can swap the active template's content on disk.
+    local template="${2:-$ABS_SPEC_DIR/home/.pandoc/templates/standalone-tikz.tex}"
     cat >> "$out" <<EOF
 
 [figures]
 tikzstyles = "$ABS_SPEC_DIR/home/.pandoc/figures/shared.tikzstyles"
 tikzdefs = "$ABS_SPEC_DIR/home/.pandoc/figures/shared.tikzdefs"
+template = "$template"
 EOF
 }
 
@@ -696,7 +704,17 @@ EOF
     # specs that exercise export (p07/p08/p17/p47/p66) install the relevant plugin
     # in their own case below. The default config carries no export config.
     emit_directories "$CONFIG_PATH"
-    emit_figures "$CONFIG_PATH"
+    # Phase D / D-3 / P92: p102 points [figures].template at its OWN per-figure
+    # .tikztemplate fixture (the spy-carrying template the spec swaps on disk for
+    # the discriminator leg) instead of the default starter standalone-tikz.tex.
+    case "$SPEC" in
+    p102-perfigure-template.spec.ts)
+        emit_figures "$CONFIG_PATH" "$ABS_SPEC_DIR/home/.pandoc/figures/perfigure-spy.tikztemplate"
+        ;;
+    *)
+        emit_figures "$CONFIG_PATH"
+        ;;
+    esac
     # Renderer setup (Milestone B): the core is renderer-agnostic and delegates the
     # preview to the active renderer plugin. Default = pandoc renderer (keeps the
     # preview byte-identical to the old core path); p20 swaps in the generic

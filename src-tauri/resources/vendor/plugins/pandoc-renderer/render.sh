@@ -27,6 +27,12 @@ csl="$5"
 # TIKZSTYLES_FILE / TIKZDEFS_FILE below (the env tikzcd.lua reads).
 tikzstyles="$6"
 tikzdefs="$7"
+# Phase D / D-3 / P92: the ONE config-declared per-figure preamble template
+# (config.figures.template), forwarded by the app as render context. The tikz
+# compile (tikzcd.lua) wraps each figure body in this template, substituting the
+# source at the template's QTikz `<>` marker. Exported as FIGURE_TEMPLATE_FILE
+# below (the env tikzcd.lua reads).
+figure_template="$8"
 
 # The core always sets PPE_PLUGIN_CONFIG; default to an empty object defensively.
 cfg="${PPE_PLUGIN_CONFIG:-}"
@@ -57,6 +63,13 @@ figure_width="$(printf '%s' "$cfg" | jq -r '.style.figure_width')"
 # A booted app always supplies both (required, config-validated ExistingFiles).
 export TIKZSTYLES_FILE="$tikzstyles"
 export TIKZDEFS_FILE="$tikzdefs"
+# Phase D / D-3 / P92: export the config-declared per-figure preamble template so
+# tikzcd.lua wraps each figure body in it (substituting the source at the QTikz
+# `<>` marker) INSTEAD of the baked standalone-tikz.tex. Render context the app
+# forwards on argv (config.figures.template), read lazily at figure-compile time
+# (the doctor's empty-stdin probe loads the filter but compiles no figure). A
+# booted app always supplies it (required, config-validated ExistingFile).
+export FIGURE_TEMPLATE_FILE="$figure_template"
 
 # Tokenize the raw command with a shlex-class parser (quotes respected, NO shell
 # expansion) — run it, do not interpret it. The first token is the executable.

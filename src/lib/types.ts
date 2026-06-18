@@ -63,6 +63,12 @@ export interface Config {
   figures: {
     tikzstyles: ExistingFile;
     tikzdefs: ExistingFile;
+    // The per-figure preamble template (Phase D / D-3 / P92): the standalone
+    // LaTeX document the figure compile wraps each tikz body in, carrying the
+    // QTikz `<>` marker where the figure source is substituted. An ExistingFile —
+    // Rust validates the path at load (Figures in config.rs), failing loud
+    // otherwise. The renderer forwards it as the {figure_template} render context.
+    template: ExistingFile;
   };
   // Plugin firewall + active renderer (Milestone A/B). Optional; absent when the
   // config declares no plugins/renderer. The UI does not edit these (they round-
