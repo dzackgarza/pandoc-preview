@@ -6,7 +6,8 @@
   "required": [
     "command",
     "operator_as_variable",
-    "script_grouping"
+    "script_grouping",
+    "lint_rules"
   ],
   "properties": {
     "command": {
@@ -20,6 +21,40 @@
     "script_grouping": {
       "type": "boolean",
       "description": "Enable ChkTeX warning 25 (sub/superscript grouping: 'x^10' should be 'x^{10}'). When false, the plugin passes -n 25 to chktex so the class never fires."
+    },
+    "lint_rules": {
+      "type": "array",
+      "description": "House-style user-regex rules rendered into ChkTeX UserWarnRegex entries (warning 44). Each rule's pattern is a PCRE regex fed to the real chktex; its message is the verbatim text surfaced on the diagnostic. The plugin generates a chktexrc with one UserWarnRegex per rule \u2014 there is NO app-owned regex engine.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pattern",
+          "message"
+        ],
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A PCRE regular expression compiled by the real chktex (UserWarnRegex). A pattern chktex cannot compile is a LOUD plugin error."
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The verbatim diagnostic message surfaced for a match."
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "hint"
+            ],
+            "description": "Optional diagnostic severity. Defaults to warning when omitted."
+          }
+        }
+      }
     }
   }
 }

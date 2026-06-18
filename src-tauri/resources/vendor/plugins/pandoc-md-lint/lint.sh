@@ -45,6 +45,53 @@ command_str="$(printf '%s' "$cfg" | jq -r '.command')"
 operator_as_variable="$(printf '%s' "$cfg" | jq -e -r '.operator_as_variable | if type == "boolean" then tostring else error("operator_as_variable must be a boolean") end')"
 script_grouping="$(printf '%s' "$cfg" | jq -e -r '.script_grouping | if type == "boolean" then tostring else error("script_grouping must be a boolean") end')"
 
+# The config-owned house-style user-regex rules (schema REQUIRED `lint_rules`, an
+# array of {pattern, message, severity?}). Each rule is rendered into ONE ChkTeX
+# `UserWarnRegex` entry (warning 44) in a generated chktexrc — the regex engine is
+# ChkTeX's PCRE, NOT a re-authored matcher. A non-array `lint_rules`, or a rule
+# missing a string `pattern`/`message`, is a LOUD config error (jq -e), never a
+# silent default. The rules are surfaced as a compact JSON array for the renderer.
+lint_rules_json="$(printf '%s' "$cfg" | jq -e -c '
+  .lint_rules
+  | if type != "array" then error("lint_rules must be an array") else . end
+  | map(
+      if (.pattern | type) != "string" or (.pattern | length) == 0 then error("each lint rule needs a non-empty string pattern")
+      elif (.message | type) != "string" or (.message | length) == 0 then error("each lint rule needs a non-empty string message")
+      else {pattern: .pattern, message: .message, severity: (.severity // "warning")}
+      end
+    )')"
+
+# Render the user-regex rules into a chktexrc UserWarnRegex block. ChkTeX's custom
+# message is embedded in the pattern as `(?!#<message>)` with the characters
+# `"#!=`, spaces, and `{}[]` (when space-adjacent) escaped by `!` per chktexrc(5);
+# the PCRE flavor is selected with a `PCRE:` prefix. ChkTeX echoes the message
+# verbatim between a fixed `User Regex: ` prefix and a `.` suffix in `%m` (warning
+# 44), which the anchoring step below strips back to the declared message. A rule
+# whose pattern ChkTeX cannot compile makes chktex print a regex-compilation
+# WARNING to stderr; that stderr is inspected after the run and is a LOUD failure.
+chktexrc="$(mktemp --suffix=.chktexrc)"
+trap 'rm -f "$chktexrc"' EXIT
+LINT_RULES_JSON="$lint_rules_json" python3 > "$chktexrc" <<'PY'
+import json, os
+
+rules = json.loads(os.environ["LINT_RULES_JSON"])
+
+def escape_message(msg):
+    # chktexrc requires `"#!=`, spaces, and `{}[]` to be escaped by a leading `!`.
+    out = []
+    for ch in msg:
+        if ch in '"#!= {}[]':
+            out.append("!")
+        out.append(ch)
+    return "".join(out)
+
+print("UserWarnRegex")
+print("{")
+for r in rules:
+    print(f"    (?!#{escape_message(r['message'])})PCRE:{r['pattern']}")
+print("}")
+PY
+
 # Build the chktex disable flags for the gated typographic classes. ChkTeX has both
 # warnings on by default, so only a `false` toggle contributes a `-n` flag.
 chktex_class_flags=()
@@ -86,11 +133,22 @@ command -v lacheck > /dev/null || {
 # the message cannot break the split. ChkTeX exits nonzero when it FINDS warnings
 # (the count) — that is success for us; `|| true` keeps only that expected nonzero
 # from aborting set -e (a genuine spawn failure was already caught by command -v).
+# `-l "$chktexrc"` LOADS the generated rc carrying the user-regex UserWarnRegex
+# block (warning 44). ChkTeX's stderr is captured separately: a user pattern it
+# cannot compile is reported there (and chktex still exits 0), so a non-empty
+# regex-compilation line in stderr is a LOUD plugin failure — never a silent drop.
 chktex_fmt='%l:%c:%d:%k:%n:%m'$'\035'
-chktex_records="$(printf '%s' "$tex" | chktex -q -v0 "${chktex_class_flags[@]}" -f "$chktex_fmt" || true)"
+chktex_stderr="$(mktemp)"
+trap 'rm -f "$chktexrc" "$chktex_stderr"' EXIT
+chktex_records="$(printf '%s' "$tex" | chktex -q -v0 -l "$chktexrc" "${chktex_class_flags[@]}" -f "$chktex_fmt" 2> "$chktex_stderr" || true)"
+if grep -qi 'Compilation of regular expression' "$chktex_stderr"; then
+    echo "pandoc-md-lint: a lint_rules pattern failed to compile in the real chktex:" >&2
+    cat "$chktex_stderr" >&2
+    exit 7
+fi
 # lacheck reads a FILE, not stdin: write the .tex to a temp file and lint it.
 lacheck_tex="$(mktemp --suffix=.tex)"
-trap 'rm -f "$lacheck_tex"' EXIT
+trap 'rm -f "$chktexrc" "$chktex_stderr" "$lacheck_tex"' EXIT
 printf '%s' "$tex" > "$lacheck_tex"
 lacheck_records="$(lacheck "$lacheck_tex" || true)"
 
@@ -100,7 +158,7 @@ lacheck_records="$(lacheck "$lacheck_tex" || true)"
 # line back to the markdown line by verbatim content re-derivation (math/delimiter
 # content passes through pandoc unchanged) and merged.
 BUFFER="$buffer" TEX="$tex" CHKTEX="$chktex_records" \
-LACHECK="$lacheck_records" LACHECK_TEX="$lacheck_tex" python3 <<'PY'
+LACHECK="$lacheck_records" LACHECK_TEX="$lacheck_tex" LINT_RULES_JSON="$lint_rules_json" python3 <<'PY'
 import json, os, re, sys
 
 buffer = os.environ["BUFFER"]
@@ -290,6 +348,15 @@ def tex_col_to_md_col(anchored, tex_col):
 
 CHKTEX_KIND_SEVERITY = {"Error": "error", "Warning": "warning", "Message": "info"}
 
+# The config-owned user-regex rules, keyed by declared message. ChkTeX warning 44
+# (UserWarnRegex) echoes the embedded message between a fixed `User Regex: ` prefix
+# and a `.` suffix in `%m`; stripping that wrapper recovers the DECLARED message
+# verbatim, which carries the rule's chosen severity. A warning-44 record whose
+# recovered message matches no declared rule means our rc-wrapping assumption broke
+# — a LOUD failure, never a guessed message.
+USER_RULES_BY_MESSAGE = {r["message"]: r for r in json.loads(os.environ["LINT_RULES_JSON"])}
+USER_REGEX_PREFIX = "User Regex: "
+
 for raw in os.environ["CHKTEX"].split("\035"):
     raw = raw.strip("\n")
     if not raw.strip():
@@ -307,6 +374,20 @@ for raw in os.environ["CHKTEX"].split("\035"):
     if severity is None:
         sys.stderr.write(f"unknown chktex kind: {kind!r}\n")
         sys.exit(6)
+    # Warning 44 is a UserWarnRegex hit: recover the DECLARED message (strip the
+    # fixed `User Regex: ` prefix and the single `.` chktex appends) and surface it
+    # verbatim with the rule's declared severity, not chktex's boilerplate.
+    if number == "44":
+        if not (message.startswith(USER_REGEX_PREFIX) and message.endswith(".")):
+            sys.stderr.write(f"unexpected UserWarnRegex message shape: {message!r}\n")
+            sys.exit(8)
+        declared = message[len(USER_REGEX_PREFIX):-1]
+        rule = USER_RULES_BY_MESSAGE.get(declared)
+        if rule is None:
+            sys.stderr.write(f"UserWarnRegex hit matched no declared lint rule: {declared!r}\n")
+            sys.exit(9)
+        message = declared
+        severity = rule["severity"]
     diagnostics.append({
         "line": line,
         "col": tex_col_to_md_col(anchored, int(tc)),

@@ -147,6 +147,7 @@ EOF
 command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to latex"
 operator_as_variable = true
 script_grouping = true
+lint_rules = []
 EOF
 }
 
