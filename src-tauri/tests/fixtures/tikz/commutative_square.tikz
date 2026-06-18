@@ -1,0 +1,15 @@
+\begin{tikzpicture}
+	\path [use as bounding box] (-1, -1) rectangle (3, 3);
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=object] (0) at (0, 2) {$A$};
+		\node [style=object] (1) at (2, 2) {$B$};
+		\node [style=object] (2) at (0, 0) {$C$};
+		\node [style=object] (3) at (2, 0) {$D$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=arrow] (0) to (1);
+		\draw [style=arrow] (0) to (2);
+		\draw [style=arrow] (1) to (3);
+		\draw [style=arrow] (2) to (3);
+	\end{pgfonlayer}
+\end{tikzpicture}
