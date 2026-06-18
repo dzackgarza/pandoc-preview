@@ -235,6 +235,7 @@ command = "$PANDOC_PATH --from markdown --standalone --pdf-engine=lualatex"
 command = "$PANDOC_PATH --from markdown --to latex"
 operator_as_variable = true
 script_grouping = true
+lint_rules = []
 EOF
 
 # Install the shipped pandoc filters the command references (Milestone D):
