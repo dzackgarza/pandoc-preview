@@ -680,10 +680,17 @@
     // its recovery store is ahead of disk, surface a restore offer. Done last,
     // after the editor is mounted, so reopening can populate the live buffer.
     await restoreLastSession();
+
+    // P98 / D-9: watch the open file for EXTERNAL on-disk rewrites and reload the
+    // preview when the P48 fingerprint diverges. A single steady-cadence poll
+    // (the file under watch is whichever is currently open; pollWatchedFile no-ops
+    // when nothing is open or the fingerprint is unchanged).
+    watchTimer = setInterval(() => void pollWatchedFile(), WATCH_POLL_MS);
   });
 
   onDestroy(() => {
     clearTimeout(recoveryTimer); // stop the pending recovery autosave (F1 nit)
+    clearInterval(watchTimer); // stop the watch-file reload poll (P98 / D-9)
     split?.dispose();
   });
 
@@ -700,6 +707,52 @@
 
   let renderTimer: ReturnType<typeof setTimeout> | undefined;
   let renderSeq = 0;
+
+  // ---- watch-file reload of the open owned file (P98 / D-9) ----------------
+  //
+  // When an EXTERNAL process (e.g. the diagram editor D-7/P96 launches on an
+  // owned figure source) REWRITES the open file on disk, the in-app preview must
+  // RELOAD to reflect the new content. Detection reuses the EXACT P48 fingerprint
+  // (the FNV-1a content hash + nanosecond mtime fsops.rs captures on read): each
+  // tick re-reads the open file's on-disk fingerprint (the same field the P48
+  // conflict gate compares) and reloads ONLY when it DIVERGES from the one stored
+  // when the file was opened / last loaded. An UNCHANGED file (identical
+  // fingerprint) triggers NO reload — an unsaved in-app buffer edit never touches
+  // disk, so its fingerprint never diverges and the dirty buffer is preserved.
+  // There is NO separate change-detection scheme: the poll reuses the same
+  // readTextFile fingerprint primitive P48 already relies on.
+  const WATCH_POLL_MS = 1000;
+  let watchTimer: ReturnType<typeof setInterval> | undefined;
+
+  // Re-read the open file's on-disk fingerprint and, if it DIVERGED from the
+  // stored one, reload the new on-disk content into the editor and re-render.
+  // readTextFile returns the SAME Fingerprint the P48 conflict gate compares, so
+  // the divergence test here is byte-identical to P48's. Same fingerprint ⇒ no
+  // reload (LEG B: an unsaved buffer edit leaves disk — and thus the fingerprint
+  // — unchanged, so the buffer survives).
+  async function pollWatchedFile(): Promise<void> {
+    if (!currentFile || !currentFingerprint) return;
+    const watched = currentFile;
+    const { content, fingerprint } = await api.readTextFile(watched);
+    // Guard against a file switch racing the await: only act if the file we read
+    // is still the open one and its baseline fingerprint is unchanged in state.
+    if (currentFile !== watched || !currentFingerprint) return;
+    if (
+      fingerprint.hash === currentFingerprint.hash &&
+      fingerprint.mtime_ns === currentFingerprint.mtime_ns
+    ) {
+      return; // no divergence — no reload
+    }
+    // External rewrite: adopt the new on-disk content as the live buffer, refresh
+    // the P48 baseline to the just-read fingerprint, and re-render so the preview
+    // reflects the new content.
+    currentFingerprint = fingerprint;
+    editor.setContent(content);
+    outline = editor.getOutline();
+    dirty = false;
+    wordCount = content.split(/\s+/).filter(Boolean).length;
+    void doRender(content);
+  }
 
   function onEditorChange(content: string) {
     dirty = true;

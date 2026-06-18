@@ -1,0 +1,41 @@
+{
+  "run_id": "20260618T233909Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p108-watch-file-reload.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p108-watch-file-reload.spec.ts",
+            "title": "an external rewrite of the open owned figure reloads the preview to the new content, and an unchanged file triggers no spurious reload",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 32889,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: timeout (30s)"
+            ]
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p108-watch-file-reload.spec.ts",
+          "name": "initial-render-red",
+          "value": "present"
+        }
+      ]
+    }
+  ]
+}
