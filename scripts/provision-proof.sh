@@ -915,6 +915,23 @@ p49-session-restore.spec.ts)
         '{project: $project, file: $file, sessionId: $sessionId}' \
         > "$SESSION_STATE_DIR/session.json"
     ;;
+p84-bib-config-key.spec.ts)
+    # P84/C1: the bibliography the app cites against is ONE config-declared
+    # source the frontend can read AND the file the preview resolves citations
+    # from. emit_pandoc_renderer (run above) installed the renderer whose command
+    # bakes --bibliography=$HOME/.pandoc/bib/references.bib and copied the default
+    # references.bib there. Replace that bib with the p84 fixture, which carries a
+    # UNIQUE entry (key C1ONLY, authors Zariski/Voronoi) the default references.bib
+    # does NOT contain, so the preview's #refs for [@C1ONLY] can only come from a
+    # bibliography that holds C1ONLY. The spec reads the frontend-exposed
+    # bibliography path back and cross-checks (off disk, independent process) that
+    # the SAME file holds C1ONLY — proving the one config value governs both
+    # surfaces. NOTE: deliberately NOT a brand-new editor.bibliography config key —
+    # config.rs uses deny_unknown_fields, so provisioning one would crash config
+    # load; the RED is behavioral (no frontend-readable bibliography surface), not
+    # a boot crash.
+    cp "$REPO_ROOT/tests/proof/fixtures/p84-bib.bib" "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
+    ;;
 p29-global-figures-resource.spec.ts)
     # P29: a figure that exists ONLY in the global figures dir
     # ($HOME/.pandoc/figures), referenced relative to that dir (rendered/global.png).
