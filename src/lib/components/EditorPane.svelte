@@ -12,6 +12,7 @@
     crosshairCursor,
     highlightActiveLine,
   } from "@codemirror/view";
+  import type { ViewUpdate } from "@codemirror/view";
   import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
   import {
     foldGutter,
@@ -72,6 +73,9 @@
     parseSnippetDictionary,
     snippetCompletionSource,
     runSnippet,
+    findAutoExpansion,
+    findRegexExpansion,
+    renderedSnippetLength,
     type SnippetMap,
   } from "../editor/snippets";
   import {
@@ -139,6 +143,16 @@
   // the bar dropdown. Empty until the post-mount registration parses the dict
   // (absent path → stays empty).
   let snippetMap: SnippetMap = [];
+
+  // Re-entrancy guard for the on-input snippet expansion (P78/P79). The
+  // updateListener observes the REAL input transaction (a user-typed space) and
+  // schedules the expansion; the expansion is itself a dispatch (delete the
+  // trigger + run the body), which re-enters the updateListener. This flag stops
+  // that follow-up dispatch from being treated as a fresh trigger keystroke, so
+  // one space fires exactly one expansion (never a loop). CM6 forbids dispatching
+  // synchronously inside an update, so the expansion is deferred to a microtask —
+  // this flag spans that deferral.
+  let expanding = false;
 
   const delegatingCompletionSource: CompletionSource = (
     context: CompletionContext,
@@ -259,6 +273,30 @@
               const head = u.state.selection.main.head;
               const line = u.state.doc.lineAt(head);
               onCursor(line.number, head - line.from + 1);
+            }
+            // The REAL on-type snippet-expansion observer (P78/P79). A genuine
+            // user input — a typed character flowing through view.dispatch, the
+            // same path real keystrokes and the insertChars driver take — that
+            // inserted a space terminator arms the autotrigger / regex trigger.
+            // CM6 forbids dispatching synchronously inside an update, so the
+            // expansion is queued to a microtask and fires AFTER this update
+            // settles (it re-reads the live state). This is the production wiring
+            // that turns a typed `tii ` into `\tilde{}` with no popup and no
+            // accept — not the test driver, which only produces the input.
+            if (
+              !expanding &&
+              u.docChanged &&
+              u.transactions.some((t) => t.isUserEvent("input")) &&
+              insertedTerminatingSpace(u)
+            ) {
+              expanding = true;
+              queueMicrotask(() => {
+                try {
+                  tryOnTypeExpansion();
+                } finally {
+                  expanding = false;
+                }
+              });
             }
           }),
         ],
@@ -394,31 +432,99 @@
   }
 
   /** E2E (P78/P79): the REAL editor input driver. Feed `text` into the editor
-   * character-by-character through `view.dispatch` — the SAME docChanged path a
-   * real keystroke fires — and NOTHING ELSE. It does NOT call `tryAutoExpand` /
-   * `tryRegexExpand` (the previous self-driving drivers DID: they invoked the
-   * expansion directly on the space, so the harness WAS the handler and the
-   * production input path was never exercised — the defect this driver exposes),
-   * and — UNLIKE `typeInEditor` — does NOT call `startCompletion` (an
-   * autotrigger / regex trigger fires WITHOUT a popup).
+   * character-by-character through `view.dispatch`, each character carrying the
+   * `userEvent: "input.type"` annotation a genuine keystroke flowing through CM6's
+   * contentEditable input pipeline carries — so each dispatch IS, byte-for-byte
+   * and annotation-for-annotation, the transaction a real keypress produces. It
+   * does NOT call `tryAutoExpand` / `tryRegexExpand` itself, and — UNLIKE
+   * `typeInEditor` — does NOT call `startCompletion` (an autotrigger / regex
+   * trigger fires WITHOUT a popup).
    *
-   * For the expansion to fire, a REAL CM6 input observer the editor REGISTERS —
-   * an `EditorView.inputHandler`, a `transactionFilter`, or the existing
-   * `updateListener` — must see each inserted character (the terminating space in
-   * particular) and invoke `findAutoExpansion` / `findRegexExpansion` +
-   * `runSnippet`. This driver only produces the genuine user input; the wiring
-   * that observes it and fires the expansion is the production behaviour under
-   * test. This is the deterministic stand-in for synthetic key events the bridge
-   * cannot send into CodeMirror's contentEditable. */
+   * The expansion fires because the production `updateListener` (the on-type
+   * observer registered in `onMount`) sees each user-input transaction — the
+   * terminating space in particular — and schedules `tryOnTypeExpansion`
+   * (`findAutoExpansion` / `findRegexExpansion` + `runSnippet`) on a microtask
+   * (CM6 forbids dispatching synchronously inside an update). This driver only
+   * produces the genuine keystroke input; the wiring that observes it and fires
+   * the expansion is the production behaviour under test. The deterministic
+   * stand-in for synthetic key events the bridge cannot send into CodeMirror's
+   * contentEditable. */
   export function insertChars(text: string) {
     for (const ch of text) {
       const pos = view.state.selection.main.head;
       view.dispatch({
         changes: { from: pos, insert: ch },
         selection: EditorSelection.cursor(pos + ch.length),
+        userEvent: "input.type",
       });
     }
     view.focus();
+  }
+
+  /** Did this update's user-input transaction(s) insert a space terminator?
+   * Scans the inserted text of every change in the update; the on-type expansion
+   * observer keys on the trailing space the autotrigger / regex trigger needs.
+   * Cheap pre-filter so the microtask is only scheduled for space insertions. */
+  function insertedTerminatingSpace(u: ViewUpdate): boolean {
+    let sawSpace = false;
+    u.changes.iterChanges((_fa, _ta, _fb, _tb, inserted) => {
+      if (inserted.toString().includes(" ")) sawSpace = true;
+    });
+    return sawSpace;
+  }
+
+  /** The on-type snippet expansion (P78/P79), fired from the production
+   * `updateListener` after a user-typed space, on a microtask (CM6 forbids
+   * dispatching inside an update). Re-reads the LIVE state and tries the
+   * autotrigger first, then the regex trigger — each gated by the fork's
+   * `inMathMode` zone check inside `findAutoExpansion` / `findRegexExpansion`. The
+   * first match wins; expansion routes through the shared `runSnippet` path the
+   * popup-accept and insertion bar reuse. No popup, no accept. */
+  function tryOnTypeExpansion() {
+    if (tryAutoExpand()) return;
+    tryRegexExpand();
+  }
+
+  /** Autotrigger expansion (P78 / B2): if the bare word token before the just-typed
+   * space is an `auto` dictionary entry live at the cursor's zone (the SAME
+   * `inMathMode` gate the popup uses), expand its body IN PLACE with NO popup and
+   * NO accept — delete the literal `trigger ` span, then run the body through the
+   * shared `runSnippet` path. The expansion lands the cursor at the END of the
+   * rendered body (not at `$0`), so the engine RE-ARMS outside the snippet field
+   * and a chained autotrigger typed immediately after expands SEQUENTIALLY rather
+   * than nesting inside the prior body's tabstop. Returns true if it fired. */
+  function tryAutoExpand(): boolean {
+    const pos = view.state.selection.main.head;
+    const hit = findAutoExpansion(snippetMap, view.state, pos);
+    if (!hit) return false;
+    view.dispatch({
+      changes: { from: hit.from, to: hit.to, insert: "" },
+      selection: EditorSelection.cursor(hit.from),
+    });
+    runSnippet(view, hit.body);
+    view.dispatch({
+      selection: EditorSelection.cursor(hit.from + renderedSnippetLength(hit.body)),
+    });
+    return true;
+  }
+
+  /** Regex / postfix expansion (P79 / B3): if the bare token before the just-typed
+   * space matches a `regex` dictionary entry's pattern live at the cursor's zone,
+   * substitute the entry's capture groups into the body (`findRegexExpansion` does
+   * the capture resolution — the LuaSnip `regTrig` / UltiSnips `r` model), delete
+   * the literal matched-trigger span, and run the capture-substituted body through
+   * the shared `runSnippet` path — IN PLACE, no popup, no accept. Returns true if
+   * it fired. */
+  function tryRegexExpand(): boolean {
+    const pos = view.state.selection.main.head;
+    const hit = findRegexExpansion(snippetMap, view.state, pos);
+    if (!hit) return false;
+    view.dispatch({
+      changes: { from: hit.from, to: hit.to, insert: "" },
+      selection: EditorSelection.cursor(hit.from),
+    });
+    runSnippet(view, hit.body);
+    return true;
   }
 
   /** E2E (P52): accept the currently-highlighted completion through CM6's REAL

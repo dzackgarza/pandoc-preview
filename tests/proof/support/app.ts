@@ -386,22 +386,22 @@ export async function typeInEditor(page: EvaluatesScripts, text: string): Promis
 // ── REAL editor input driver (P78/P79) ─────────────────────────────────────
 // `insertChars(text)` feeds `text` into the editor character-by-character
 // through the editor's REAL input dispatch — a CM6 `view.dispatch` per-character
-// text-insert transaction, the SAME docChanged path a real keystroke fires — and
-// NOTHING ELSE. It does NOT itself call the snippet-expansion functions
-// (`tryAutoExpand` / `tryRegexExpand`) and — UNLIKE typeInEditor — does NOT call
-// startCompletion (an autotrigger / regex trigger fires WITHOUT a popup). This is
-// the deterministic stand-in for synthetic key events the bridge cannot send
-// into CodeMirror's contentEditable, but a real `view.dispatch` insert flows
-// through whatever input observer the editor registers
-// (EditorView.inputHandler / transactionFilter / updateListener) — the REAL
-// production path. Fire-and-forget; returns null.
+// text-insert transaction annotated `userEvent: "input.type"`, the SAME
+// transaction (changes + annotation) a real keystroke flowing through CM6's
+// contentEditable input pipeline produces — and NOTHING ELSE. It does NOT itself
+// call the snippet-expansion functions (`tryAutoExpand` / `tryRegexExpand`) and —
+// UNLIKE typeInEditor — does NOT call startCompletion (an autotrigger / regex
+// trigger fires WITHOUT a popup). This is the deterministic stand-in for
+// synthetic key events the bridge cannot send into CodeMirror's contentEditable.
+// Fire-and-forget; returns null.
 //
-// The point: the spec drives GENUINE editor input here, never a self-executing
-// expansion. For the body to expand, the PRODUCTION editor must register an
-// input observer that sees these inserted characters (the terminating space in
-// particular) and invokes the expansion. If the expansion is wired ONLY into a
-// harness function that calls `tryAutoExpand`/`tryRegexExpand` directly (the
-// inadmissible state this driver exposes), nothing expands here.
+// The point: the spec drives GENUINE keystroke input here, never a self-executing
+// expansion. The body expands because the PRODUCTION editor registers an on-type
+// observer — the `updateListener` in EditorPane onMount — that sees each
+// user-input transaction (the terminating space in particular) and schedules the
+// expansion (`findAutoExpansion`/`findRegexExpansion` + `runSnippet`) on a
+// microtask. The driver exercises that real production path; it never calls the
+// expansion itself.
 export async function insertChars(page: EvaluatesScripts, text: string): Promise<void> {
   await page.evaluate(
     `(() => { window.__PPE_E2E__.insertChars(${JSON.stringify(text)}); return null; })()`,
@@ -420,14 +420,14 @@ export async function insertChars(page: EvaluatesScripts, text: string): Promise
 // expansion).
 //
 // `typeAutotrigger` drives the trigger through the REAL input driver
-// (`insertChars`): per-character `view.dispatch` insert transactions, including
-// the terminating space, flowing through the editor's real input path — it does
-// NOT call any expansion function itself. The observable afterwards is the editor
-// buffer (getEditorText): the literal trigger text is GONE and the expanded body
-// sits at the cursor. RED on the current code: the expansion is invoked ONLY from
-// a self-driving harness function, so when the trigger arrives through the real
-// input path NOTHING fires — the literal `tii ` stays inert and the expanded body
-// never appears (the missing real-wiring this spec exposes).
+// (`insertChars`): per-character `view.dispatch` insert transactions annotated
+// `userEvent: "input.type"`, including the terminating space, flowing through the
+// editor's real input path — it does NOT call any expansion function itself. The
+// observable afterwards is the editor buffer (getEditorText): the literal trigger
+// text is GONE and the expanded body sits at the cursor. The production
+// `updateListener` observes the user-input space and schedules the autotrigger
+// expansion (`findAutoExpansion` + `runSnippet`) on a microtask — the real wiring
+// this spec exercises.
 export async function typeAutotrigger(page: EvaluatesScripts, text: string): Promise<void> {
   await insertChars(page, text);
 }
@@ -444,15 +444,15 @@ export async function typeAutotrigger(page: EvaluatesScripts, text: string): Pro
 // registers, NOT by the test driver.
 //
 // `typeRegexTrigger` drives the regex-matching token through the REAL input
-// driver (`insertChars`): per-character `view.dispatch` insert transactions,
-// including the terminating space, flowing through the editor's real input path —
-// it does NOT call any expansion function itself. The observable afterwards is
-// the editor buffer (getEditorText): the literal matched trigger text is GONE and
-// the capture-substituted body sits at the cursor (`pbar` → `\bar{p}`, the
-// captured `p` in the body, NOT a literal `$1`). RED on the current code: the
-// regex expansion is invoked ONLY from a self-driving harness function, so when
-// the token arrives through the real input path NOTHING fires — `pbar` stays
-// inert and `\bar{p}` never appears (the missing real-wiring this spec exposes).
+// driver (`insertChars`): per-character `view.dispatch` insert transactions
+// annotated `userEvent: "input.type"`, including the terminating space, flowing
+// through the editor's real input path — it does NOT call any expansion function
+// itself. The observable afterwards is the editor buffer (getEditorText): the
+// literal matched trigger text is GONE and the capture-substituted body sits at
+// the cursor (`pbar` → `\bar{p}`, the captured `p` in the body, NOT a literal
+// `$1`). The production `updateListener` observes the user-input space and
+// schedules the regex expansion (`findRegexExpansion` + `runSnippet`) on a
+// microtask — the real wiring this spec exercises.
 export async function typeRegexTrigger(page: EvaluatesScripts, text: string): Promise<void> {
   await insertChars(page, text);
 }

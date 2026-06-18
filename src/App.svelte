@@ -335,13 +335,14 @@
           editor.typeInEditor(text);
         },
         // P78/P79: the REAL editor input driver — feed text per-keystroke
-        // through view.dispatch (the SAME docChanged path real typing fires) and
-        // NOTHING ELSE. It does NOT itself fire the snippet expansion (the prior
-        // typeAutotrigger/typeRegexTrigger DID — the harness was the handler);
-        // the expansion must fire because a real CM6 input observer the editor
-        // registers sees the inserted characters (the terminating space in
-        // particular). UNLIKE typeInEditor, no startCompletion — an autotrigger /
-        // regex trigger fires WITHOUT a popup.
+        // through view.dispatch, each character annotated userEvent "input.type"
+        // exactly as a genuine keypress is. It does NOT itself fire the snippet
+        // expansion. The expansion fires because the editor's production on-type
+        // observer (the updateListener registered in EditorPane onMount) sees each
+        // user-input transaction — the terminating space in particular — and
+        // schedules tryOnTypeExpansion on a microtask (findAutoExpansion /
+        // findRegexExpansion + runSnippet). UNLIKE typeInEditor, no
+        // startCompletion — an autotrigger / regex trigger fires WITHOUT a popup.
         insertChars: (text: string) => {
           editor.insertChars(text);
         },
