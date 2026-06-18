@@ -37,11 +37,16 @@ import type { EditorView } from "@codemirror/view";
  *  different body per zone (P77). */
 export type SnippetMode = "prose" | "math" | "both";
 
-/** One mode-tagged snippet dictionary entry. */
+/** One mode-tagged snippet dictionary entry. An `auto` entry is an AUTOTRIGGER
+ *  (B-DESIGN-0): it expands the instant the user types the trigger followed by
+ *  its terminator (a space), in place, with no completion popup and no accept
+ *  keypress (LuaSnip autosnippet / UltiSnips `A`). A non-`auto` entry expands
+ *  only through the popup-accept path (P52) or the insertion bar (P59). */
 export interface SnippetEntry {
   readonly trigger: string;
   readonly body: string;
   readonly mode: SnippetMode;
+  readonly auto: boolean;
 }
 
 /** The parsed shape of a snippet dictionary: an ordered list of mode-tagged
@@ -97,7 +102,14 @@ export function parseSnippetDictionary(json: string): SnippetMap {
       );
     }
     const mode: SnippetMode = rawMode ?? "both";
-    entries.push({ trigger, body, mode });
+    const rawAuto = entry.auto;
+    if (rawAuto !== undefined && typeof rawAuto !== "boolean") {
+      throw new Error(
+        `snippet dictionary entry ${JSON.stringify(trigger)} auto must be a boolean`,
+      );
+    }
+    const auto: boolean = rawAuto ?? false;
+    entries.push({ trigger, body, mode, auto });
   }
   return entries;
 }
@@ -157,6 +169,71 @@ export function snippetCompletionSource(map: SnippetMap): CompletionSource {
     if (options.length === 0) return null;
     return { from: token.from, options };
   };
+}
+
+/** Resolve the AUTOTRIGGER body to expand when a space terminator has just been
+ *  typed at `pos` (the offset immediately AFTER the space). Reads the word token
+ *  ending right before the space and, if it exactly matches an `auto` entry live
+ *  at the cursor's zone (the SAME `inMathMode` predicate the popup gates on),
+ *  returns the trigger span to replace and the body to expand; otherwise null.
+ *  The caller (EditorPane's input handler) replaces `[from, to)` with the body
+ *  via `runSnippet`, then re-arms — so a subsequent autotrigger fires the same
+ *  way. The trigger span is the bare word before the space (`to` is the space
+ *  position); the space itself is consumed by the expansion (it does not survive
+ *  in the buffer, so the literal `trigger ` token is gone). */
+export function findAutoExpansion(
+  map: SnippetMap,
+  state: EditorView["state"],
+  pos: number,
+): { from: number; to: number; body: string } | null {
+  // The character just before `pos` must be the space terminator the user typed.
+  if (pos <= 0) return null;
+  const before = state.doc.sliceString(pos - 1, pos);
+  if (before !== " ") return null;
+  // The non-space run immediately before the space. The autotrigger keys on the
+  // BARE trigger token — but after a prior expansion the cursor sits inside a
+  // body (e.g. `\tilde{|}`), so the typed trigger trails non-trigger text with
+  // no separating space (`\tilde{hii`). Match an `auto` entry whose trigger is
+  // the SUFFIX of that run (the bare word the user just typed), so the chained
+  // autotrigger fires inside the prior expansion (the re-arm).
+  const line = state.doc.lineAt(pos - 1);
+  const runText = state.doc.sliceString(line.from, pos - 1);
+  const runMatch = /(\S+)$/.exec(runText);
+  if (!runMatch) return null;
+  const run = runMatch[1];
+  for (const entry of map) {
+    if (!entry.auto) continue;
+    if (!run.endsWith(entry.trigger)) continue;
+    const triggerFrom = pos - 1 - entry.trigger.length;
+    const math = inMathMode(state, triggerFrom);
+    const live =
+      entry.mode === "both"
+        ? true
+        : entry.mode === "math"
+          ? math
+          : !math;
+    if (!live) continue;
+    // Replace the bare trigger token AND the space terminator with the body.
+    return { from: triggerFrom, to: pos, body: entry.body };
+  }
+  return null;
+}
+
+/** The number of characters a snippet body RENDERS to once expanded — its
+ *  literal text with every tabstop marker removed (a bare `${N}` contributes
+ *  nothing; a `${N:placeholder}` contributes its placeholder text). An
+ *  autotrigger expansion uses this to land the cursor at the END of the rendered
+ *  body rather than at the `$0` tabstop, so the engine re-arms OUTSIDE the field
+ *  and a chained autotrigger expands sequentially (not nested inside the prior
+ *  body's tabstop). */
+export function renderedSnippetLength(body: string): number {
+  const normalized = normalizeTabstops(body);
+  // `${N}` → "" ; `${N:placeholder}` → "placeholder".
+  const rendered = normalized.replace(
+    /\$\{(\d+)(?::([^}]*))?\}/g,
+    (_m, _n, placeholder) => placeholder ?? "",
+  );
+  return rendered.length;
 }
 
 /** Run a snippet body at the current cursor, expanding it through the SAME

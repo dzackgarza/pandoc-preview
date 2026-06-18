@@ -72,6 +72,8 @@
     parseSnippetDictionary,
     snippetCompletionSource,
     runSnippet,
+    findAutoExpansion,
+    renderedSnippetLength,
     type SnippetMap,
   } from "../editor/snippets";
   import {
@@ -391,6 +393,55 @@
     });
     view.focus();
     startCompletion(view);
+  }
+
+  /** Autotrigger input handler (P78 / B2): after a docChanged that inserted a
+   * space terminator, if the bare word token before the space is an `auto`
+   * dictionary entry live at the cursor's zone (the SAME `inMathMode` gate the
+   * popup uses), expand its body IN PLACE with NO popup and NO accept — delete
+   * the literal `trigger ` span, then run the body through the shared `runSnippet`
+   * path (the SAME expansion the popup-accept and insertion bar reuse). The
+   * delete + expansion leave the engine RE-ARMED: the next autotrigger + space
+   * fires the same way (chained expansion). Returns true if an expansion fired. */
+  function tryAutoExpand(): boolean {
+    const pos = view.state.selection.main.head;
+    const hit = findAutoExpansion(snippetMap, view.state, pos);
+    if (!hit) return false;
+    // Remove the literal `trigger ` token, dropping the cursor where the body
+    // expands; then run the body through the shared snippetCompletion path.
+    view.dispatch({
+      changes: { from: hit.from, to: hit.to, insert: "" },
+      selection: EditorSelection.cursor(hit.from),
+    });
+    runSnippet(view, hit.body);
+    // RE-ARM outside the snippet field: an autotrigger fires WITHOUT entering its
+    // tabstop, so land the cursor at the END of the rendered body (not at `$0`).
+    // This way a chained autotrigger typed immediately after expands SEQUENTIALLY
+    // (`\tilde{}\hat{}`) rather than nesting inside the prior body's tabstop.
+    view.dispatch({
+      selection: EditorSelection.cursor(hit.from + renderedSnippetLength(hit.body)),
+    });
+    return true;
+  }
+
+  /** E2E (P78): feed `text` into the editor character-by-character through the
+   * SAME docChanged pipeline user typing fires, so the autotrigger handler
+   * observes each keystroke — and, UNLIKE `typeInEditor`, does NOT call
+   * `startCompletion` (an autotrigger fires WITHOUT a popup). After each inserted
+   * character the handler attempts an auto-expansion: a space terminator after an
+   * `auto` trigger expands the body in place and re-arms for the next. The
+   * deterministic stand-in for synthetic key events the bridge cannot send into
+   * CodeMirror's contentEditable. */
+  export function typeAutotrigger(text: string) {
+    for (const ch of text) {
+      const pos = view.state.selection.main.head;
+      view.dispatch({
+        changes: { from: pos, insert: ch },
+        selection: EditorSelection.cursor(pos + ch.length),
+      });
+      if (ch === " ") tryAutoExpand();
+    }
+    view.focus();
   }
 
   /** E2E (P52): accept the currently-highlighted completion through CM6's REAL

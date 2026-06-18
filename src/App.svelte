@@ -334,6 +334,14 @@
         typeInEditor: (text: string) => {
           editor.typeInEditor(text);
         },
+        // P78: feed text per-keystroke through the docChanged pipeline so the
+        // autotrigger input handler observes it; a space terminator after an
+        // `auto` trigger expands the body in place (no popup, no accept) and
+        // re-arms for a chained autotrigger. UNLIKE typeInEditor, no
+        // startCompletion — an autotrigger fires WITHOUT a popup.
+        typeAutotrigger: (text: string) => {
+          editor.typeAutotrigger(text);
+        },
         // P52: accept the highlighted completion through CM6's real
         // acceptCompletion command, and read the cursor offset to prove the
         // snippet's tabstop landing after expansion.
