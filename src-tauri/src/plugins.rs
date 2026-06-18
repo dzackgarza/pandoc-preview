@@ -521,6 +521,93 @@ pub async fn configure_plugin(plugin_id: String) -> Result<()> {
         .expect("configure_plugin task panicked")
 }
 
+/// The plugin category whose member launches an external diagram editor (Ipe /
+/// Inkscape) on a figure's editable source (P96 / D-7). The app core holds NO
+/// diagram-tool argv: it only knows the GENERIC category name and routes the
+/// figure's source into the discovered plugin's own `[exec]` command. A real
+/// diagram tool's launch argv lives entirely in its plugin.toml.
+const CATEGORY_DIAGRAM_TOOL: &str = "diagram-tool";
+
+/// Launch the diagram-tool editor on a figure's editable SOURCE (P96 / D-7). The
+/// "edit this figure" action resolves a render to its tracked source via the
+/// dual-asset registry, then calls this with that SOURCE path. The launch is
+/// configure_plugin-shaped: the app finds the single discovered `diagram-tool`
+/// category plugin, substitutes the SOURCE into its `[exec]` command's `{file}`
+/// (plus `{plugin_dir}`/`{config_dir}`), and SPAWNS it DETACHED — the editor owns
+/// its own GUI and the app never blocks on it. The app core holds no diagram-tool
+/// argv (only the generic category). A missing/empty source path, a
+/// configured-but-missing plugins dir, or no discovered diagram-tool plugin is a
+/// LOUD error — never a silent fall-through to launching on the render.
+fn launch_diagram_tool_sync(source_path: String) -> Result<()> {
+    if source_path.is_empty() {
+        return Err(Error::InvalidArgument(
+            "cannot launch the diagram-tool editor: the figure resolved to an empty source path"
+                .into(),
+        ));
+    }
+    let cfg = config::load()?;
+    let plugins_cfg = cfg
+        .plugins
+        .as_ref()
+        .ok_or_else(|| Error::InvalidArgument("no [plugins] directory is configured".into()))?;
+    let config_path = config::config_path()?;
+    let config_dir = config_path
+        .parent()
+        .expect("config path always has a parent")
+        .to_path_buf();
+
+    let plugins = discover(Path::new(&plugins_cfg.dir))?;
+    let plugin = plugins
+        .iter()
+        .find(|p| p.manifest.category == CATEGORY_DIAGRAM_TOOL)
+        .ok_or_else(|| {
+            Error::InvalidArgument(format!(
+                "no plugin in the {CATEGORY_DIAGRAM_TOOL:?} category is discoverable in the plugins dir"
+            ))
+        })?;
+
+    let plugin_dir = plugin.dir.display().to_string();
+    let config_dir_s = config_dir.display().to_string();
+    let subs = [
+        (PH_PLUGIN_DIR, plugin_dir.as_str()),
+        (PH_CONFIG_DIR, config_dir_s.as_str()),
+        (PH_FILE, source_path.as_str()),
+    ];
+    let argv: Vec<String> = plugin
+        .manifest
+        .exec
+        .command
+        .iter()
+        .map(|a| substitute(a, &subs))
+        .collect();
+    let (program, args) = argv.split_first().ok_or_else(|| {
+        Error::InvalidArgument(format!(
+            "diagram-tool plugin {} has an empty command",
+            plugin.manifest.id
+        ))
+    })?;
+
+    let plugin_config = config_json(cfg.plugin.get(&plugin.manifest.id));
+    // Spawn detached: the editor owns its UI and the app never blocks on it.
+    Command::new(program)
+        .args(args)
+        .current_dir(&config_dir)
+        .env(ENV_PLUGIN_CONFIG, plugin_config)
+        .spawn()
+        .map_err(|e| Error::ProcessSpawn(program.clone(), e))?;
+    Ok(())
+}
+
+/// Launch the diagram-tool editor on a figure's editable source (P96 / D-7). See
+/// `launch_diagram_tool_sync`. Returns once the editor has been spawned; it runs
+/// independently (the app does not wait).
+#[tauri::command]
+pub async fn launch_diagram_tool(source_path: String) -> Result<()> {
+    tauri::async_runtime::spawn_blocking(move || launch_diagram_tool_sync(source_path))
+        .await
+        .expect("launch_diagram_tool task panicked")
+}
+
 /// List every discovered plugin's identity ({id, name, category, extension}) for
 /// the webview, in discover()'s stable (sorted) order. The category-aware menu/
 /// command-palette populator filters these by `category` (e.g. "export") and

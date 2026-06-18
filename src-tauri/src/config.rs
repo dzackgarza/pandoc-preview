@@ -443,3 +443,59 @@ pub fn save_session_state(state: SessionState) -> Result<()> {
     })?;
     std::fs::write(&path, raw).map_err(|e| Error::io(&path, e))
 }
+
+/// The dual-asset figure registry (P96 / D-7): for each NON-tikz figure, the
+/// included RENDER (the asset embedded in the document) paired with its editable
+/// SOURCE (the .ipe/.svg an external diagram editor opens). The "edit this
+/// figure" action resolves a render to its tracked source through this registry
+/// and launches the diagram-tool editor on the SOURCE, never the render.
+///
+/// Held on the HOST FILESYSTEM under `$XDG_STATE_HOME/pandoc-preview/
+/// figure-registry.json` (the session.json/fold-state.json read-/save-state
+/// pattern), NOT browser storage, so the source↔render pairing survives an app
+/// restart. The on-disk JSON maps each absolute render path to its absolute
+/// source path. A parse error is LOUD; a missing file is a legitimate first-run
+/// empty registry.
+pub type FigureRegistry = HashMap<String, String>;
+
+fn figure_registry_path() -> Result<PathBuf> {
+    // dirs::state_dir honors $XDG_STATE_HOME on Linux, matching the hermetic
+    // XDG_STATE_HOME the proof harness launches the app with — the same place
+    // session.json lives, the place a restarted app reads.
+    let base = dirs::state_dir().ok_or_else(|| {
+        Error::InvalidArgument("no XDG state directory could be determined".into())
+    })?;
+    Ok(base.join("pandoc-preview").join("figure-registry.json"))
+}
+
+/// Read the dual-asset figure registry, or an empty map on a clean first run (no
+/// file). IO/parse errors fail loud.
+#[tauri::command]
+pub fn read_figure_registry() -> Result<FigureRegistry> {
+    let path = figure_registry_path()?;
+    if !path.is_file() {
+        return Ok(HashMap::new());
+    }
+    let raw = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    serde_json::from_str(&raw).map_err(|e| Error::ConfigInvalid {
+        path: path.display().to_string(),
+        message: e.to_string(),
+    })
+}
+
+/// Persist the dual-asset figure registry so a relaunched app resolves the SAME
+/// render to the SAME editable source. Mirrors session-state/fold-state
+/// persistence.
+#[tauri::command]
+pub fn save_figure_registry(registry: FigureRegistry) -> Result<()> {
+    let path = figure_registry_path()?;
+    let parent = path
+        .parent()
+        .expect("figure-registry path always has a parent");
+    std::fs::create_dir_all(parent).map_err(|e| Error::io(parent, e))?;
+    let raw = serde_json::to_string_pretty(&registry).map_err(|e| Error::ConfigInvalid {
+        path: path.display().to_string(),
+        message: e.to_string(),
+    })?;
+    std::fs::write(&path, raw).map_err(|e| Error::io(&path, e))
+}

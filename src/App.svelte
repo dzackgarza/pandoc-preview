@@ -169,6 +169,11 @@
   let outlineHeight = $state(220);
   // Per-file collapsed fold ranges, loaded on mount and persisted on file switch.
   let foldState = $state<FoldState>({});
+  // Dual-asset figure registry (P96 / D-7): each non-tikz figure's included
+  // RENDER path -> its editable SOURCE path. Loaded on mount from the host-fs
+  // sidecar (figure-registry.json) so a restarted app resolves the SAME render to
+  // the SAME source; persisted whenever a pairing is registered.
+  let figureRegistry = $state<Record<string, string>>({});
   let prompt = $state<{
     title: string;
     initial: string;
@@ -626,11 +631,30 @@
         configBibliography: () => config?.editor.bibliography ?? null,
         renderStatus: () => status,
         statusHistory: () => [...statusHistory],
+        // P96 / D-7: register a non-tikz figure's dual-asset pairing (included
+        // RENDER + editable SOURCE) through the SAME registerFigureAssets the
+        // figure surface uses, persisting it to the host-fs registry sidecar.
+        // Fire-and-forget; the decisive observable is the sidecar JSON on disk.
+        registerFigureAssets: (render: string, source: string) => {
+          void registerFigureAssets(render, source);
+        },
+        // P96 / D-7: the figure's "edit this figure" action through the SAME
+        // editFigure path the figure surface invokes — resolve the render to its
+        // tracked SOURCE via the registry, then launch the diagram-tool editor on
+        // the SOURCE via the firewall. Fire-and-forget; the decisive observable is
+        // the recording plugin's sentinel on disk (the SOURCE path it was given).
+        editFigure: (render: string) => {
+          void editFigure(render);
+        },
       };
     }
 
     // Load any persisted per-file fold state so reopening a file restores folds.
     foldState = await api.readFoldState();
+
+    // Load the persisted dual-asset figure registry so the "edit this figure"
+    // action resolves each render to its tracked editable source across restarts.
+    figureRegistry = await api.readFigureRegistry();
 
     // Build the editor|preview splitview now that the container is in the DOM.
     // The portal action mounts the editor/preview wrappers into the pane
@@ -1527,6 +1551,31 @@
         `paste image: backend wrote ${written} but the reference names ${path}`,
       );
     }
+  }
+
+  // P96 / D-7: register a NON-tikz figure's dual-asset pairing — the included
+  // RENDER path alongside its editable SOURCE path. Updates the in-memory mirror
+  // and persists it to the host-fs registry sidecar (figure-registry.json) so a
+  // restarted app resolves the SAME render to the SAME source.
+  async function registerFigureAssets(render: string, source: string) {
+    figureRegistry = { ...figureRegistry, [render]: source };
+    await api.saveFigureRegistry(figureRegistry);
+  }
+
+  // P96 / D-7: the "edit this figure" action for the figure whose included render
+  // is `render`. Resolves the render to its tracked editable SOURCE via the
+  // registry, then launches the diagram-tool editor on the SOURCE through the
+  // plugin firewall (configure_plugin-shaped detached spawn) — NOT the render. No
+  // tikz extraction is attempted (the figure is non-tikz). A render with no
+  // tracked source is a LOUD error, never a silent fall-through to the render.
+  async function editFigure(render: string) {
+    const source = figureRegistry[render];
+    if (!source) {
+      throw new Error(
+        `edit figure: no editable source is tracked for the render ${render}`,
+      );
+    }
+    await api.launchDiagramTool(source);
   }
 
   function handleMenu(id: string) {

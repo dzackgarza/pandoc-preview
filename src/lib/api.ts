@@ -38,6 +38,26 @@ export const readSessionState = () => invoke<SessionState | null>("read_session_
 export const saveSessionState = (state: SessionState) =>
   invoke<void>("save_session_state", { state });
 
+// Dual-asset figure registry (P96 / D-7), persisted on the host fs under
+// $XDG_STATE_HOME/pandoc-preview/figure-registry.json (the session.json pattern,
+// NOT browser storage). Maps each NON-tikz figure's included RENDER path to its
+// editable SOURCE path, so a restarted app resolves the SAME render to the SAME
+// source. Read on register; the "edit this figure" action resolves through it.
+// Returns an empty map on a clean first run; IO/parse errors fail loud.
+export const readFigureRegistry = () =>
+  invoke<Record<string, string>>("read_figure_registry");
+export const saveFigureRegistry = (registry: Record<string, string>) =>
+  invoke<void>("save_figure_registry", { registry });
+
+// P96 / D-7: launch the diagram-tool editor on a figure's editable SOURCE through
+// the plugin firewall (configure_plugin-shaped detached spawn). The app core
+// holds no diagram-tool argv: the backend finds the single discovered
+// `diagram-tool` category plugin and substitutes `sourcePath` into its own
+// [exec] command's {file}. Fails LOUDLY on a missing source / no diagram-tool
+// plugin — never a silent fall-through to the render.
+export const launchDiagramTool = (sourcePath: string) =>
+  invoke<void>("launch_diagram_tool", { sourcePath });
+
 // The session's last-captured recovery buffer: the bytes under the recovery
 // store's HEAD `buffer` blob for `sessionId` (P49). null when that session has
 // no recovery repo/commit. On launch the app compares this against the on-disk
