@@ -396,3 +396,24 @@ happy-path state, admissible only if it FAILS on a plausibly broken app. Do NOT 
   `mode`/`auto`/`regex` metadata; the leading option is an object-valued entry schema (breaking
   change, fail loud on the old shape — fine pre-launch). Settle before B1 RED.
 - **NEXT:** ratify B-DESIGN-0 schema + P77 (math-mode keystone) with the user, then RED for B1.
+
+- **2026-06-18: Phase B COMPLETE — shipped to main.** All obligations green and
+  adversarially reviewed (independent reviewer per role; controller review for B7/P83 and
+  B6/P82-fix after session-limit cutovers):
+  - **P77 (B1)** math-mode-only expansion via the fork's exported `isInMathMode`;
+    mode-tagged object entry schema (fail-loud on the old flat shape). B-DESIGN-0 resolved
+    as the object-valued schema.
+  - **P78 (B2)** autotrigger space-expansion + re-arm, **P79 (B3)** regex/postfix
+    capture-group triggers — both rewired to the **real** CM6 `updateListener` input
+    pipeline (REJECTED at first as hook-only no-ops, then fixed in cc6a06f).
+  - **P80 (B4)** mirrored tabstops via CM6 native repeated-`${N}`.
+  - **P81 (B5)** native quicktex interop: consume `g:quicktex_prose`/`g:quicktex_math`
+    directly; deleted the bespoke `convert-quicktex.py` + flat `quicktex.json` (HARD RULE
+    #0 red flag eliminated; mode-split + `<++>` recovered).
+  - **P82 (B6)** snippet variables (`$CLIPBOARD`/`$CURRENT_DATE`/`$CURRENT_YEAR`) via one
+    shared `expandSnippetBody` resolver on BOTH insertion-bar and popup-accept paths
+    (popup-path gap REJECTED + fixed in 9bcc192).
+  - **P83 (B7)** transform nodes `${N/regex/repl/flags}` (ported standard rule via a live
+    `transformMirrorExtension` — CM6 parser doesn't cover transforms and the
+    jonschlinkert/tabstops release failed to load) + `${VISUAL}` real-selection wrap.
+  - Consolidated gate green together: p77–p83 + regressions p52/p59/p51 (10/10).
