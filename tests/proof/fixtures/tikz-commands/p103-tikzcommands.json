@@ -1,0 +1,10 @@
+[
+  {
+    "name": "dzgTestArrow",
+    "description": "P103 witness arrow — present ONLY in this DB, not a built-in tikz/tikzcd scaffold",
+    "insert": "\\draw[->] (dzgSRC) to (dzgTGT);",
+    "dx": 18,
+    "dy": 0,
+    "type": 0
+  }
+]

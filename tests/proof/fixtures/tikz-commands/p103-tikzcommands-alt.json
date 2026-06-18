@@ -1,0 +1,10 @@
+[
+  {
+    "name": "dzgAltNode",
+    "description": "P103 discriminator command — present ONLY in the ALT DB; surfaced instead of dzgTestArrow when config points here",
+    "insert": "\\node[draw] (dzgALT) {dzgLABEL};",
+    "dx": 12,
+    "dy": 0,
+    "type": 0
+  }
+]

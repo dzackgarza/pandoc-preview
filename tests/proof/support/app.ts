@@ -586,6 +586,68 @@ export async function insertSnippetByTrigger(
   );
 }
 
+// ── Config-declared tikz-command DB → bar palette + completion (P94 / D-5) ──
+// The insertion-bar tikz surface and the CM6 editor completion are SEEDED from a
+// config-declared, load-validated vendored tikz-command DB (the QTikz
+// `tikzcommands.json` `{name, description, insert, dx, dy, type}` model), NOT
+// from a hardcoded tikz/tikzcd scaffold list. Per the milestone-G discipline
+// (P55–P59 drive bar controls through harness hooks, not flaky webview button
+// clicks), the implementer must expose — BLIND to how the DB is loaded and the
+// surfaces seeded — these stable, click-free observables:
+//
+//   __PPE_E2E__.tikzCommandNames(): string[]  [NEW for P94]
+//     The array of tikz-command NAMES the insertion bar's tikz palette surfaces,
+//     sourced from the RETAINED parsed config DB (the same corpus the CM6
+//     completion source is built from). Synchronous; an array of strings. Empty
+//     ([]) iff the palette is not seeded from the DB.
+//
+//   __PPE_E2E__.insertTikzCommandByName(name: string)  [NEW for P94]
+//     Inserts, at the cursor, the DB-declared INSERT BODY of the command named by
+//     `name` (the multi-character `insert` text, NOT the bare command name),
+//     routing through the editor's EXISTING insertSnippet surface (insertSnippet →
+//     runSnippet → snippetCompletion). The command's declared cursor OFFSET
+//     (QTikz `dx`/`dy`) is honoured exactly as a `$0` tabstop is on a completion
+//     accept, so the cursor lands at the declared offset within the inserted body.
+//     Fire-and-forget; returns null. This is the bar palette's choose-a-command
+//     action, click-free.
+//
+//   __PPE_E2E__.reloadTikzCommands()  [NEW for P94]
+//     Re-reads the config-declared tikz-command DB path from disk and re-seeds
+//     BOTH surfaces from it (the same load the app performs at startup). Lets the
+//     spec swap the configured DB file on disk and prove the surfaces are
+//     DATA-DRIVEN — pointing config at a different DB surfaces THAT DB's commands.
+//     Fire-and-forget; returns null. A malformed/unreadable DB on reload is a HARD
+//     VISIBLE error, never a silently-empty palette.
+//
+//   __PPE_E2E__.getEditorText() [reused] / cursorOffset() [reused].
+//
+// The bar MAY also render a real DOM palette; the hooks are the stable, click-free
+// surface this spec asserts against, the same choice P55–P59 made for bar controls.
+export async function tikzCommandNames(page: EvaluatesScripts): Promise<string[]> {
+  const raw = await page.evaluate(
+    `JSON.stringify(window.__PPE_E2E__.tikzCommandNames())`,
+  );
+  if (typeof raw !== 'string') {
+    throw new Error(`tikzCommandNames returned non-string: ${JSON.stringify(raw)}`);
+  }
+  return JSON.parse(raw) as string[];
+}
+
+export async function insertTikzCommandByName(
+  page: EvaluatesScripts,
+  name: string,
+): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.insertTikzCommandByName(${JSON.stringify(name)}); return null; })()`,
+  );
+}
+
+export async function reloadTikzCommands(page: EvaluatesScripts): Promise<void> {
+  await page.evaluate(
+    `(() => { window.__PPE_E2E__.reloadTikzCommands(); return null; })()`,
+  );
+}
+
 // The cursor's character offset in the editor buffer, read straight from the
 // REAL CM6 view state via the harness. Used by P52 to prove the snippet's
 // declared tabstop ($0) is where the cursor lands after the expansion — not the
