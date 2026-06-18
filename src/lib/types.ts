@@ -32,6 +32,15 @@ export interface Config {
     // to the spellchecker so those math terms are not flagged. The base English
     // dictionary always ships as a vendored bundle asset.
     spell_dictionary?: ExistingFile;
+    // Config-owned path to the vendored QTikz tikz-command DB (P94 / D-5): a JSON
+    // array of { name, description, insert, dx, dy, type } command objects (the
+    // QTikz tikzcommands.json model). Optional: absent when no DB is configured.
+    // When present, Rust's loader validates the path exists and is a file
+    // (ExistingFile in config.rs), so the editor receives only a real path; the
+    // editor reads it and seeds BOTH the insertion-bar tikz palette AND a composable
+    // CM6 completion source from it. Pointing the key at a different DB surfaces
+    // that DB's commands.
+    tikz_commands?: ExistingFile;
     // Config-owned path to the bibliography database the preview resolves
     // `@`-citations against (P84/C1). The ONE source of truth for the citation
     // bibliography: the frontend reads it to name which file governs the app's

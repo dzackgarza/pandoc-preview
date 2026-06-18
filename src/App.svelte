@@ -219,6 +219,11 @@
   // bar's snippet dropdown (P59). Populated once EditorPane parses the dict.
   let snippetTriggers = $state<string[]>([]);
 
+  // The config-owned vendored QTikz tikz-command DB's command names, surfaced by
+  // the insertion bar's tikz palette (P94). Populated once EditorPane parses the
+  // DB; the SAME list the CM6 completion source is built from.
+  let tikzCommandNames = $state<string[]>([]);
+
   // dockview split layout (editor | preview). Built on mount once the
   // container element exists; the sidebar is a sibling OUTSIDE this splitview.
   let splitContainer = $state<HTMLDivElement | undefined>(undefined);
@@ -459,6 +464,24 @@
         snippetTriggers: () => editor.snippetTriggers(),
         insertSnippetByTrigger: (trigger: string) => {
           editor.insertSnippetByTrigger(trigger);
+        },
+        // P94: the bar's tikz-command palette. tikzCommandNames returns the names
+        // the palette surfaces — the names of the RETAINED config-owned vendored
+        // QTikz tikz-command DB (the SAME list P94's popup completion source is
+        // built from), so a different config DB surfaces a different set.
+        // insertTikzCommandByName is the choose-a-command action: it inserts that
+        // command's BODY at the cursor through the SAME editor.insertSnippet path
+        // the env/diagram/matrix/table/snippet controls use (→ runSnippet →
+        // snippetCompletion), with the cursor landing at the declared dx/dy offset
+        // (the injected ${0} tabstop). reloadTikzCommands re-reads the configured
+        // DB from disk and re-seeds both surfaces — the data-driven leg.
+        // Fire-and-forget.
+        tikzCommandNames: () => editor.tikzCommandNames(),
+        insertTikzCommandByName: (name: string) => {
+          editor.insertTikzCommandByName(name);
+        },
+        reloadTikzCommands: () => {
+          editor.reloadTikzCommands();
         },
         // P82: seed KNOWN text onto the REAL system clipboard through the SAME
         // clipboard-manager writeText backend (the sibling of seedClipboardImage),
@@ -1545,9 +1568,11 @@
       onOpenFootnote={() => (footnoteModalOpen = true)}
       onInsertSnippet={(trigger) => editor.insertSnippetByTrigger(trigger)}
       onInsertCodeBlock={insertCodeBlock}
+      onInsertTikzCommand={(name) => editor.insertTikzCommandByName(name)}
       onPasteImage={() => void pasteImage()}
       {snippetTriggers}
       codeBlockLanguages={codeBlockLanguages}
+      {tikzCommandNames}
       fileOpen={currentFile !== null}
     />
 
@@ -1673,6 +1698,9 @@
               }}
               onSnippetsLoaded={(triggers) => {
                 snippetTriggers = triggers;
+              }}
+              onTikzCommandsLoaded={(names) => {
+                tikzCommandNames = names;
               }}
               sourcePath={() => currentFile}
             />

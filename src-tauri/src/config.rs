@@ -214,6 +214,17 @@ pub struct Editor {
     /// An absent value is never re-serialized.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub spell_dictionary: Option<ExistingFile>,
+    /// Config-owned path to the vendored QTikz tikz-command DB (P94 / D-5): a JSON
+    /// array of `{ name, description, insert, dx, dy, type }` command objects (the
+    /// QTikz `tikzcommands.json` model) the editor surfaces on the insertion-bar
+    /// tikz palette AND as a composable CM6 completion source. Optional capability —
+    /// when present, the path is validated to be an existing file (ExistingFile), so
+    /// the editor reads a real DB; when absent, no tikz-command palette is offered.
+    /// No implicit default path. Pointing the key at a different DB surfaces that
+    /// DB's commands (the data-driven property P94 pins). An absent value is never
+    /// re-serialized.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tikz_commands: Option<ExistingFile>,
     /// Config-owned path to the bibliography database the preview resolves
     /// `@`-citations against (BibLaTeX/CSL-JSON/etc). The ONE source of truth for
     /// the citation bibliography: the frontend reads it (to name which file governs

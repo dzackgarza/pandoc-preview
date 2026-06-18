@@ -506,25 +506,27 @@ else
         # `dzgAltNode` instead of `dzgTestArrow`, proving the surfaces are
         # DATA-DRIVEN, not baked-in.
         #
-        # NOTE (the RED today, exactly as P101/P102 handle the same constraint):
-        # there is no `[editor].tikz_commands` config key — the config schema is
-        # deny_unknown_fields (it accepts only font_size/line_wrapping/line_numbers/
-        # snippet_dictionary/spell_dictionary/bibliography/csl), so declaring an
-        # undefined `tikz_commands` key here would be a BOOT failure (config-schema
-        # rejects the unknown field), NOT the missing DB-driven-surface behavior this
-        # obligation targets. So the DB fixtures sit on disk UNCONSUMED and the bar/
-        # completion use their hardcoded P56 scaffolds regardless — the DB-only
-        # command is never surfaced. The spec reads the DB from this known on-disk
-        # path (manifest.runDir-relative), not from config.toml. The GREEN wiring
-        # (D-5) adds the config-declared, load-validated [editor].tikz_commands path
-        # and seeds both surfaces from it; this provisioning places the DBs where
-        # that wiring will read them.
+        # The GREEN wiring (D-5) adds the config-declared, load-validated
+        # [editor].tikz_commands key; this case points it at the ACTIVE DB
+        # (EDITOR_EXTRA below) and provisions both DBs into the hermetic tikz-commands
+        # dir. The editor reads tikz_commands at mount, seeds the bar palette AND the
+        # CM6 completion source from it, and reloadTikzCommands() re-reads it on
+        # demand (the data-driven leg: the spec swaps the discriminator onto the
+        # ACTIVE path on disk and reloads). The spec reads the DB from the known
+        # manifest.runDir-relative path (not from config.toml) so a hardcoded/ignored
+        # palette cannot pass. (P101/P102 idiom for the same load-validated config-
+        # owned-path constraint.)
         TIKZCMDS_DIR="$ABS_SPEC_DIR/home/.pandoc/tikz-commands"
         mkdir -p "$TIKZCMDS_DIR"
         cp "$REPO_ROOT/tests/proof/fixtures/tikz-commands/p103-tikzcommands.json" \
             "$TIKZCMDS_DIR/p103-tikzcommands.json"
         cp "$REPO_ROOT/tests/proof/fixtures/tikz-commands/p103-tikzcommands-alt.json" \
             "$TIKZCMDS_DIR/p103-tikzcommands-alt.json"
+        # The GREEN wiring (D-5) adds the config-declared, load-validated
+        # [editor].tikz_commands key. Point it at the ACTIVE DB so both surfaces
+        # seed from it; the spec swaps the discriminator onto this same path on disk
+        # and reloads for the data-driven leg.
+        EDITOR_EXTRA="tikz_commands = \"$TIKZCMDS_DIR/p103-tikzcommands.json\""
         ;;
     p77-math-mode-snippet.spec.ts)
         # P77 (math-mode-only expansion, the Phase-B keystone) declares the SAME

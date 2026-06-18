@@ -1,0 +1,69 @@
+tikzcommands.json — vendored QTikz TikZ command corpus (P94 / D-5)
+==================================================================
+
+WHAT
+  A categorized, cursor-aware corpus of TikZ commands the editor surfaces on the
+  insertion bar AND in the CM6 completion. Each entry is the QTikz native command
+  shape:
+    name        the command's bare label (Qt `&` menu mnemonics stripped)
+    description the completion-popup / status-bar text
+    insert      the multi-character string inserted when the command is chosen
+    dx, dy      where the editing cursor is placed AFTER insertion, relative to
+                the start of the inserted string (the QTikz cursor-placement
+                convention; for a single-line insert, dy=0 and dx is the column
+                offset within the inserted body). Absent upstream => 0.
+    type        the highlighting class (0 plain, 1 command, 2 draw-to, 3 option).
+
+SOURCE
+  Derived from QTikz / KtikZ's maintained native command file
+  tikzcommands.xml, copied verbatim alongside this file:
+    SOURCE REPO: fhackenberger/ktikz  (app/tikzcommands.xml, master)
+    URL: https://raw.githubusercontent.com/fhackenberger/ktikz/master/app/tikzcommands.xml
+    tikzcommands.xml sha256:
+      256f0f4cee7567a1c06945030ebdcfc1da1f335ac0b6815539d3039a39bd355e
+  Upstream comment: "This file should only contain the commands and options
+  defined in Part III 'TikZ ist kein Zeichenprogramm' in the PGF Manual." It is
+  a maintained, categorized corpus — bring it as-is; do not author a snippet list.
+  License: QTikz is GPL-2.0 (see the upstream repo's COPYING).
+
+HOW THE JSON IS PRODUCED (a committed converter — interop reshaping only)
+  convert-tikzcommands.py (in this dir, stdlib only) reads tikzcommands.xml and
+  flattens its `<section>`-grouped `<item>` elements into a JSON array of
+  `{name, description, insert, dx, dy, type}` objects — the SAME shape the app
+  consumes and the SAME shape the P94/p103 fixture DB uses. The reshaping is a
+  pure transcription of the native XML; no command list is authored and no field
+  is invented. The only transforms applied are EXACTLY QTikz's own
+  (tikzcommandinserter.cpp), so the stored corpus is the literal text QTikz
+  inserts:
+    - strip the Qt `&` menu mnemonic from `name`/`description` (an `&&` is a
+      literal `&`);
+    - `restoreNewLines`: a standalone `\n` (not preceded by a backslash, so a
+      `\\node` is untouched) becomes a real newline;
+    - then `\\` -> `\` collapse, applied AFTER restoreNewLines (QTikz's order);
+    - an item with no `name` falls back to its `description` (QTikz's menu
+      fallback). Items with no `insert`/`type`, and `<separator/>`/`<section>`
+      grouping, carry no command and fail loud / are skipped respectively.
+  Reproduce: from this directory, `python3 convert-tikzcommands.py` (rewrites
+  tikzcommands.json from tikzcommands.xml). Re-run after refreshing the XML.
+
+HOW THE APP CONSUMES IT
+  The corpus is config-owned (no hardcoded command list in the app). Point the
+  editor config at this JSON file:
+
+    [editor]
+    tikz_commands = "<abs path to this tikzcommands.json>"
+
+  The path is validated to exist at config-load time (ExistingFile in config.rs);
+  a config pointing at a missing/non-file path is a hard load error. The editor
+  (src/lib/editor/tikz-commands.ts) reads and parses it into the command list and
+  builds TWO views of the SAME corpus: the insertion-bar tikz palette (the command
+  names) AND a composable CM6 completion source (PUSHED onto the app completion
+  registry, composing with the LaTeX/snippet/citation sources — never overriding,
+  the P51 lesson). Choosing a command inserts its `insert` body with the cursor
+  placed at the declared `dx`/`dy` offset, reusing the shared snippet `$0`-tabstop
+  mechanism (src/lib/editor/snippets.ts runSnippet). Pointing the key at a
+  different DB surfaces that DB's commands instead — the data-driven property the
+  P94 obligation pins. A malformed/unreadable DB raises a visible toastError,
+  never a silently-empty palette. The P94 PROOF (p103-tikzcommands-db.spec.ts)
+  uses its own committed fixture DBs (tests/proof/fixtures/tikz-commands/) for
+  determinism.

@@ -81,6 +81,12 @@
     type SnippetMap,
   } from "../editor/snippets";
   import {
+    parseTikzCommandDb,
+    tikzCommandCompletionSource,
+    tikzCommandSnippetBody,
+    type TikzCommand,
+  } from "../editor/tikz-commands";
+  import {
     parseBibliography,
     citationCompletionSource,
     type CitationEntry,
@@ -101,6 +107,7 @@
     onChange,
     onCursor,
     onSnippetsLoaded,
+    onTikzCommandsLoaded,
     sourcePath,
   }: {
     config: Config;
@@ -109,6 +116,10 @@
     // Fired once the config-owned snippet dictionary is parsed, handing the bar
     // its triggers so the dropdown can surface them (P59).
     onSnippetsLoaded: (triggers: string[]) => void;
+    // Fired once the config-owned vendored QTikz tikz-command DB is parsed (P94),
+    // handing the bar the command names so its tikz palette can surface them. The
+    // SAME parsed list the CM6 completion source is built from.
+    onTikzCommandsLoaded: (names: string[]) => void;
     // The real on-disk path of the open buffer (or null for an identity-less
     // buffer). The static-lint source needs it to run the pandoc-md-lint plugin
     // through the generic firewall (which resolves the run's working directory
@@ -170,6 +181,20 @@
   // the bar dropdown. Empty until the post-mount registration parses the dict
   // (absent path → stays empty).
   let snippetMap: SnippetMap = [];
+
+  // The parsed config-owned vendored QTikz tikz-command DB (P94), RETAINED so the
+  // insertion bar can surface its command names AND a choose-a-command action can
+  // insert a named command's body. It is the SAME list the completion source is
+  // built from — both views of one config-owned DB, so pointing config at a
+  // different DB changes both the popup completions and the bar palette. Empty
+  // until the post-mount registration parses the DB (absent path → stays empty).
+  let tikzCommands: TikzCommand[] = [];
+
+  // The currently-registered tikz-command completion source (P94). reloadTikzCommands
+  // re-reads the DB from disk and REPLACES this source in-place (mirroring the
+  // citation/label sources) rather than stacking a duplicate per reload, leaving
+  // every other registered source untouched (P51 compose-don't-override).
+  let tikzCommandSource: CompletionSource | null = null;
 
   // Re-entrancy guard for the on-input snippet expansion (P78/P79). The
   // updateListener observes the REAL input transaction (a user-typed space) and
@@ -345,6 +370,15 @@
       toastError(`Snippet dictionary failed to load: ${e}`),
     );
 
+    // Register the config-owned vendored QTikz tikz-command DB (P94). The path is
+    // optional but, when declared, load-validated to exist by Rust; here we read,
+    // parse, and seed BOTH the bar palette (via onTikzCommandsLoaded) and a
+    // composable CM6 completion source. A declared-but-unreadable or parse-failing
+    // DB fails loud (toast), never a silently-empty palette.
+    registerTikzCommands(config).catch((e) =>
+      toastError(`Tikz command DB failed to load: ${e}`),
+    );
+
     // Register the config-owned bibliography as a composable @-citation
     // completion source (P85/P86). The path is required and validated to exist by
     // Rust; here we read and parse it (via the maintained @retorquere/bibtex-
@@ -416,6 +450,30 @@
     snippetMap = map;
     appCompletionSources.push(snippetCompletionSource(map, clipboardText));
     onSnippetsLoaded(snippetTriggers());
+  }
+
+  /** Read, parse, and register the config-owned vendored QTikz tikz-command DB
+   *  (P94). Reads the config-declared, load-validated DB file, parses it into the
+   *  command list, RETAINS it for the insertion-bar palette, and ADDS (or, on a
+   *  reload, REPLACES in-place) a composable CM6 completion source built from the
+   *  SAME list — alongside the LaTeX/snippet/citation sources, never an override
+   *  (P51). Absent path → no tikz palette. A declared-but-unreadable or
+   *  parse-failing DB fails loud (the caller surfaces a toast), never a
+   *  silently-empty palette. */
+  async function registerTikzCommands(c: Config) {
+    const path = c.editor.tikz_commands;
+    if (!path) return;
+    const file = await readTextFile(path);
+    const commands = parseTikzCommandDb(file.content);
+    tikzCommands = commands;
+    const next = tikzCommandCompletionSource(commands);
+    if (tikzCommandSource) {
+      appCompletionSources[appCompletionSources.indexOf(tikzCommandSource)] = next;
+    } else {
+      appCompletionSources.push(next);
+    }
+    tikzCommandSource = next;
+    onTikzCommandsLoaded(tikzCommands.map((cmd) => cmd.name));
   }
 
   /** Build the spellchecker over the vendored English base dictionary plus the
@@ -815,6 +873,56 @@
       throw new Error(`unknown snippet trigger: ${JSON.stringify(trigger)}`);
     }
     insertSnippet(entry.body);
+  }
+
+  /** The command names the insertion bar's tikz palette surfaces (P94): the names
+   * of the RETAINED config-owned vendored QTikz tikz-command DB (the SAME list the
+   * popup completion source is built from). A different config DB surfaces a
+   * different name set; an absent DB surfaces none. */
+  export function tikzCommandNames(): string[] {
+    return tikzCommands.map((cmd) => cmd.name);
+  }
+
+  /** Insert the BODY of the tikz command named `name` at the cursor, routing
+   * through the SAME insertSnippet → runSnippet → snippetCompletion path the
+   * env/diagram/matrix/table/snippet bar controls use. The body carries the
+   * `${0}` tabstop injected at the command's declared `dx`/`dy` cursor offset
+   * (tikzCommandSnippetBody), so the cursor lands strictly inside the inserted
+   * body at the QTikz-declared offset — not a dumb paste at the body end (P94).
+   * The choose-a-command action of the bar palette. An unknown name is a hard
+   * error — the palette only offers retained command names. */
+  export function insertTikzCommandByName(name: string) {
+    const cmd = tikzCommands.find((c) => c.name === name);
+    if (!cmd) {
+      throw new Error(`unknown tikz command: ${JSON.stringify(name)}`);
+    }
+    // If the user has typed the command name immediately before the cursor (the
+    // bar palette choose-after-type path), select that typed name so the
+    // expansion REPLACES it — the chosen command does not leave its bare name in
+    // the buffer alongside the inserted body. With no such prefix the body
+    // expands in place at the cursor. Either way the expansion routes through the
+    // SAME runSnippet path, honouring the injected ${0} cursor offset.
+    const head = view.state.selection.main.head;
+    const before = view.state.doc.sliceString(Math.max(0, head - name.length), head);
+    if (before === name) {
+      view.dispatch({
+        selection: EditorSelection.range(head - name.length, head),
+      });
+    }
+    insertSnippet(tikzCommandSnippetBody(cmd));
+  }
+
+  /** Re-read the config-owned tikz-command DB from disk and re-seed BOTH surfaces
+   * (P94): the bar palette (via onTikzCommandsLoaded) and the CM6 completion
+   * source (replaced in-place). The data-driven reload — pointing the configured
+   * DB path at a different DB on disk and calling this surfaces THAT DB's
+   * commands, proving the surfaces track the configured DB rather than a baked-in
+   * list. A now-unreadable/malformed DB fails loud (toast), never a silent empty
+   * palette. */
+  export function reloadTikzCommands() {
+    registerTikzCommands(config).catch((e) =>
+      toastError(`Tikz command DB failed to reload: ${e}`),
+    );
   }
 
   /** E2E introspection: the language-tree node names covering the first

@@ -9,9 +9,11 @@
     onOpenFootnote,
     onInsertSnippet,
     onInsertCodeBlock,
+    onInsertTikzCommand,
     onPasteImage,
     snippetTriggers,
     codeBlockLanguages,
+    tikzCommandNames,
     fileOpen,
   }: {
     onInsertEnvironment: (env: string) => void;
@@ -27,6 +29,9 @@
     // Choose a language from the code-block-type dropdown (P60): inserts a
     // fenced code block tagged with that language at the cursor.
     onInsertCodeBlock: (lang: string) => void;
+    // Choose a command from the vendored QTikz tikz-command palette (P94): inserts
+    // that command's body at the cursor, cursor at the declared dx/dy offset.
+    onInsertTikzCommand: (name: string) => void;
     // Paste the system clipboard's image: write it into the configured figures
     // dir and insert a markdown image reference at the cursor (P62).
     onPasteImage: () => void;
@@ -34,6 +39,9 @@
     snippetTriggers: readonly string[];
     // The languages the code-block-type dropdown offers (P60).
     codeBlockLanguages: readonly string[];
+    // The config-owned vendored QTikz tikz-command DB's names the palette surfaces
+    // (P94). Seeded from the DB — a different config DB surfaces a different set.
+    tikzCommandNames: readonly string[];
     fileOpen: boolean;
   } = $props();
 
@@ -145,6 +153,27 @@
       <option value="" disabled>code</option>
       {#each codeBlockLanguages as lang (lang)}
         <option value={lang}>{lang}</option>
+      {/each}
+    </select>
+  {/if}
+  {#if tikzCommandNames.length > 0}
+    <span class="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-600"></span>
+    <select
+      class="rounded px-2 py-0.5 text-sm text-zinc-700 hover:bg-zinc-200 disabled:opacity-40 dark:text-zinc-200 dark:hover:bg-zinc-700"
+      title="Insert a TikZ command from the configured QTikz command DB"
+      data-insert-tikz-command
+      disabled={!fileOpen}
+      value=""
+      onchange={(e) => {
+        const name = e.currentTarget.value;
+        if (name.length === 0) return;
+        onInsertTikzCommand(name);
+        e.currentTarget.value = "";
+      }}
+    >
+      <option value="" disabled>tikz</option>
+      {#each tikzCommandNames as name, i (i)}
+        <option value={name}>{name}</option>
       {/each}
     </select>
   {/if}

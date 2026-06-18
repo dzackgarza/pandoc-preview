@@ -1,0 +1,3530 @@
+[
+  {
+    "name": "TikZ picture environment",
+    "description": "\\begin{tikzpicture}[<options>]",
+    "insert": "\\begin{tikzpicture}\n\n\\end{tikzpicture}",
+    "dx": 0,
+    "dy": 1,
+    "type": 0
+  },
+  {
+    "name": "Close TikZ picture environment",
+    "description": "\\end{tikzpicture}",
+    "insert": "\\end{tikzpicture}",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Set baseline",
+    "description": "baseline=<coordinate/dimension>",
+    "insert": "baseline=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Install code to be executed at begin of picture",
+    "description": "execute at begin picture=<code>",
+    "insert": "execute at begin picture=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Install code to be executed at end of picture",
+    "description": "execute at end picture=<code>",
+    "insert": "execute at end picture=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every picture",
+    "description": "every picture/.style={<style>}",
+    "insert": "every picture/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every picture",
+    "description": "every picture/append .style={<style>}",
+    "insert": "every picture/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Scope environment",
+    "description": "\\begin{scope}[<options>]",
+    "insert": "\\begin{scope}\n\n\\end{scope}",
+    "dx": 0,
+    "dy": 1,
+    "type": 0
+  },
+  {
+    "name": "Close scope environment",
+    "description": "\\end{scope}",
+    "insert": "\\end{scope}",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Install code to be executed at begin of scope",
+    "description": "execute at begin scope=<code>",
+    "insert": "execute at begin scope=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Install code to be executed at end of scope",
+    "description": "execute at end scope=<code>",
+    "insert": "execute at end scope=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every scope",
+    "description": "every scope/.style={<style>}",
+    "insert": "every scope/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every scope",
+    "description": "every scope/append .style={<style>}",
+    "insert": "every scope/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set definition",
+    "description": "\\tikzset{<variable>=<value>}",
+    "insert": "\\tikzset{•=•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define color",
+    "description": "\\colorlet{<name>}{<value>}",
+    "insert": "\\colorlet{•}{•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define style",
+    "description": "\\tikzstyle{<name>}=[<options>]",
+    "insert": "\\tikzstyle{•}=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Add to style",
+    "description": "\\tikzstyle{<name>}+=[<options>]",
+    "insert": "\\tikzstyle{•}+=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define style (as option)",
+    "description": "<name>/.style={<style>}",
+    "insert": "•/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style (as option)",
+    "description": "<name>/append .style={<style>}",
+    "insert": "•/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Load tikz library",
+    "description": "\\usetikzlibrary{<library name>}",
+    "insert": "\\usetikzlibrary{•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "For-loop",
+    "description": "\\foreach <variable> in {<list>}",
+    "insert": "\\foreach • in {•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "For-loop with iteration",
+    "description": "\\foreach \\x in {<first>,<first+step>,...,<last>}",
+    "insert": "\\foreach \\x in {•,•,...,•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "For-loop with custom text",
+    "description": "\\foreach \\x/\\xtext in {<value1>/<text1>,<value2>/<text2>}",
+    "insert": "\\foreach \\x/\\xtext in {•/•,•/•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Break out from for-loop",
+    "description": "\\breakforeach",
+    "insert": "\\breakforeach",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "\\ifnum",
+    "description": "\\ifnum",
+    "insert": "\\ifnum",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Absolute point",
+    "description": "(<xcoord>,<ycoord>)",
+    "insert": "(•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Point relative to reference point (keep reference point)",
+    "description": "+(<xcoord>,<ycoord>)",
+    "insert": "+(•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Point relative to reference point (update reference point)",
+    "description": "++(<xcoord>,<ycoord>)",
+    "insert": "++(•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Polar coordinates",
+    "description": "(<degree>:<radius>)",
+    "insert": "(•:•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Intersection of two lines",
+    "description": "(intersection of <x1>,<y1>--<x2>,<y2> and <x3>,<y3>--<x4>,<y4>)",
+    "insert": "(intersection of •,•--•,• and •,•--•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Define path",
+    "description": "\\path",
+    "insert": "\\path ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define style for every path (standalone)",
+    "description": "\\tikzstyle{every path}=[<options>]",
+    "insert": "\\tikzstyle{every path}=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define style for every path (as option)",
+    "description": "every path/.style={<style>}",
+    "insert": "every path/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every path (standalone)",
+    "description": "\\tikzstyle{every path}+=[<options>]",
+    "insert": "\\tikzstyle{every path}+=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Add to style for every path (as option)",
+    "description": "every path/append .style={<style>}",
+    "insert": "every path/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Move to point",
+    "description": "<end point>",
+    "insert": " (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Move to relative point (keep reference point)",
+    "description": "+<end point>",
+    "insert": " +(•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Move to relative point (update reference point)",
+    "description": "++<end point>",
+    "insert": " ++(•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Line to",
+    "description": "-- <end point>",
+    "insert": " -- (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Line to relative point (keep reference point)",
+    "description": "-- +<end point>",
+    "insert": " -- +(•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Line to relative point (update reference point)",
+    "description": "-- ++<end point>",
+    "insert": " -- ++(•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Line to node",
+    "description": "-- (<label>)",
+    "insert": " -- (•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Line to node with anchor",
+    "description": "-- (<label>.<north/south/...>) ",
+    "insert": " -- (•.•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Edge to (\"to\" with its own options)",
+    "description": "edge[<options>] <end point>",
+    "insert": " edge[•] (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Cycle",
+    "description": "-- cycle",
+    "insert": " -- cycle",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "First horizontal, then vertical",
+    "description": "-| <end point>",
+    "insert": " -| •,•",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "First vertical, then horizontal",
+    "description": "|- <end point>",
+    "insert": " |- •,•",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Curve to (specify angles)",
+    "description": "to[out=<degree>,in=<degree>] <end point>",
+    "insert": " to[out=•,in=•] (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Curve to (specify control points)",
+    "description": ".. controls <ctrl1> and <ctrl2> .. <end point>",
+    "insert": " .. controls (•,•) and (•,•) .. (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Rectangle",
+    "description": "rectangle <corner>",
+    "insert": " rectangle (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Define style for every rectangle (standalone)",
+    "description": "\\tikzstyle{every rectangle}=[<options>]",
+    "insert": "\\tikzstyle{every rectangle}=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define style for every rectangle (as option)",
+    "description": "every rectangle/.style={<style>}",
+    "insert": "every rectangle/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every rectangle (standalone)",
+    "description": "\\tikzstyle{every rectangle}+=[<options>]",
+    "insert": "\\tikzstyle{every rectangle}+=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Add to style for every rectangle (as option)",
+    "description": "every rectangle/append .style={<style>}",
+    "insert": "every rectangle/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Rounded corners",
+    "description": "rounded corners",
+    "insert": "rounded corners",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Rounded corners (specify size)",
+    "description": "rounded corners=<inset>",
+    "insert": "rounded corners=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Sharp corners",
+    "description": "sharp corners",
+    "insert": "sharp corners",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Draw circle",
+    "description": "circle [radius=<value>]",
+    "insert": " circle [radius=•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Draw ellipse",
+    "description": "ellipse [x radius=<value>,y radius=<value>]",
+    "insert": " ellipse [x radius=•,y radius=•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Set radius",
+    "description": "radius=<dimension>",
+    "insert": "radius=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set horizontal radius",
+    "description": "x radius=<dimension>",
+    "insert": "x radius=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set vertical radius",
+    "description": "y radius=<dimension>",
+    "insert": "y radius=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set center",
+    "description": "at=<coordinate>",
+    "insert": "at={(•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every circle (standalone)",
+    "description": "\\tikzstyle{every circle}=[<options>]",
+    "insert": "\\tikzstyle{every circle}=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define style for every circle (as option)",
+    "description": "every circle/.style={<style>}",
+    "insert": "every circle/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every circle (standalone)",
+    "description": "\\tikzstyle{every circle}+=[<options>]",
+    "insert": "\\tikzstyle{every circle}+=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Add to style for every circle (as option)",
+    "description": "every circle/append .style={<style>}",
+    "insert": "every circle/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Draw arc (part of ellipse)",
+    "description": "arc [start angle=<degrees>,end angle=<degrees>,x radius=<dimension>,y radius=<dimension>]",
+    "insert": " arc [start angle=•,end angle=•,x radius=•,y radius=•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Set horizontal radius",
+    "description": "x radius=<dimension>",
+    "insert": "x radius=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set vertical radius",
+    "description": "y radius=<dimension>",
+    "insert": "y radius=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set start angle",
+    "description": "start angle=<degree>",
+    "insert": "start angle=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set end angle",
+    "description": "end angle=<degree>",
+    "insert": "end angle=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set delta angle",
+    "description": "delta angle=<degree>",
+    "insert": "delta angle=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Draw grid",
+    "description": "grid <end point>",
+    "insert": " grid (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Set step in both directions",
+    "description": "step=<number or dimension or coordinate>",
+    "insert": "step=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set step using polar coordinates",
+    "description": "step=(<degree>:<radius>)",
+    "insert": "step=(•:•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set step in x-direction",
+    "description": "xstep=<number or dimension>",
+    "insert": "xstep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set step in y-direction",
+    "description": "ystep=<number or dimension>",
+    "insert": "ystep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Make lines of grid \"subdued\"",
+    "description": "style=help lines",
+    "insert": "style=help lines",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Draw \"subdued\" grid with specified step",
+    "description": "\\draw[style=help lines] (<x1>,<y1>) grid[step=(<dx>:<dy>)] (<x2>,<y2>);",
+    "insert": "\\draw[style=help lines] (•,•) grid[step=(•:•)] (•,•);",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Draw parabola",
+    "description": "parabola[<options>] bend <bend coord> <end point>",
+    "insert": " parabola (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Set absolute bend position",
+    "description": "bend=<coordinate>",
+    "insert": "bend=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set parabola height",
+    "description": "parabola height=<dimension>",
+    "insert": "parabola height=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Place bend at start of parabola",
+    "description": "style=bend at start",
+    "insert": "style=bend at start",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Place bend at end of parabola",
+    "description": "style=bend at end",
+    "insert": "style=bend at end",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Parabola with relative bend position",
+    "description": " parabola[bend pos=<fraction>] bend +(<x1>,<y1>) (<x2>,<y2>)",
+    "insert": " parabola[bend pos=•] bend +(•,•) (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Parabola with specified width and height",
+    "description": " parabola bend +(0,<height>) +(<width>,0)",
+    "insert": " parabola bend +(0,•) +(•,0)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Draw sine curve in [0, pi/2]",
+    "description": "sin <end point>",
+    "insert": " sin (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Draw cosine curve in [0, pi/2]",
+    "description": "cos <end point>",
+    "insert": " cos (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Draw to",
+    "description": "to <end point>",
+    "insert": " to (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Set outgoing angle",
+    "description": "out=<degree>",
+    "insert": "out=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set incoming angle",
+    "description": "in=<degree>",
+    "insert": "in=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify path to be drawn",
+    "description": "to path=<path>",
+    "insert": "to path={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "\\tikztostart",
+    "description": "\\tikztostart",
+    "insert": "\\tikztostart",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "\\tikztotarget",
+    "description": "\\tikztotarget",
+    "insert": "\\tikztotarget",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "\\tikztonodes",
+    "description": "\\tikztonodes",
+    "insert": "\\tikztonodes",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "execute at begin to=<code>",
+    "description": "execute at begin to=<code>",
+    "insert": "execute at begin to=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "execute at end to=<code>",
+    "description": "execute at end to=<code>",
+    "insert": "execute at end to=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Curve to (specify angles and label)",
+    "description": "to[out=<degree>,in=<degree>] node {<label>} <end point>",
+    "insert": " to[out=•,in=•] node[sloped,above] {•} (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Curve to (specify arbitrary path)",
+    "description": "to[to path=<path>] <end point>",
+    "insert": " to[to path={.. controls +(•,•) and +(•,•) .. (\\tikztotarget) \\tikztonodes}] (•,•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define style for every to",
+    "description": "\\tikzstyle{every to}=[<options>]",
+    "insert": "\\tikzstyle{every to}=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define style for every to path",
+    "description": "every to/.style={<style>}",
+    "insert": "every to/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every to",
+    "description": "\\tikzstyle{every to}+=[<options>]",
+    "insert": "\\tikzstyle{every to}+=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Add to style for every to path",
+    "description": "every to/append .style={<style>}",
+    "insert": "every to/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Let",
+    "description": "",
+    "insert": " let ",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Let number",
+    "description": "let \\n{<name>} = <math expression> in ",
+    "insert": " let \\n{•} = • in •",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Let point",
+    "description": "let \\p{<name>} = (<x>,<y>) in ",
+    "insert": " let \\p{•} = (•,•) in •",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Path with let number",
+    "description": "\\path let \\n{<name>} = <math expression> in ",
+    "insert": "\\path let \\n{•} = • in •",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Path with let point",
+    "description": "\\path let \\p{<name>} = (<x>,<y>) in ",
+    "insert": "\\path let \\p{•} = (•,•) in •",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Define coordinate using let",
+    "description": "\\path let \\p{<name>} = (<x>,<y>) in coordinate (p) at (\\p{<name>});",
+    "insert": "\\path let \\p{•} = (•,•) in coordinate (p) at (\\p{•})",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Draw path",
+    "description": "\\draw",
+    "insert": "\\draw ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Fill path",
+    "description": "\\fill[<color>]",
+    "insert": "\\fill ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Draw and fill path",
+    "description": "\\filldraw[fill=<color>, draw=<color>]",
+    "insert": "\\filldraw[fill=•, draw=•] •;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Fill path with a pattern",
+    "description": "\\pattern",
+    "insert": "\\pattern ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Shade path",
+    "description": "\\shade",
+    "insert": "\\shade ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Shade and draw path",
+    "description": "\\shadedraw",
+    "insert": "\\shadedraw ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define clipping area",
+    "description": "\\clip",
+    "insert": "\\clip ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Specify coordinate",
+    "description": "\\coordinate (<name>) at (<x>,<y>)",
+    "insert": "\\coordinate (•) at (•,•);",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Node",
+    "description": "\\node (<name>) at (<x>,<y>) {<text>}",
+    "insert": "\\node (•) at (•,•) {•};",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define bounding box for picture",
+    "description": "\\useasboundingbox",
+    "insert": "\\useasboundingbox ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Clip and draw the clipping contours",
+    "description": "",
+    "insert": "\\clip[draw] ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Draw line between two points",
+    "description": "\\draw (<x1>,<y1>) -- (<x2>,<y2>);",
+    "insert": "\\draw (•,•) -- (•,•);",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Draw polygon",
+    "description": "\\draw (<x1>,<y1>) -- (<x2>,<y2>) -- (<x3>,<y3>) -- cycle;",
+    "insert": "\\draw (•,•) -- (•,•) -- (•,•) -- cycle;",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Clip rectangle",
+    "description": "\\clip (<x>,<y>) rectangle +(<width>,<height>);",
+    "insert": "\\clip (•,•) rectangle +(•,•);",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Draw current path",
+    "description": "draw",
+    "insert": "draw",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Draw current path (specify color)",
+    "description": "draw=<color>",
+    "insert": "draw=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fill current path",
+    "description": "fill",
+    "insert": "fill",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fill current path with color",
+    "description": "fill=<color>",
+    "insert": "fill=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fill current path with pattern",
+    "description": "pattern=<name>",
+    "insert": "pattern=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fill current path with shading",
+    "description": "shading=<axis/radial/ball/...>",
+    "insert": "shading=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use current path as clipping area",
+    "description": "clip",
+    "insert": "clip",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use current path as bounding box for picture",
+    "description": "use as bounding box",
+    "insert": "use as bounding box",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set color of path or fill",
+    "description": "color=<color name>",
+    "insert": "color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify line width",
+    "description": "line width=<dimension>",
+    "insert": "line width=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Ultra thin",
+    "description": "ultra thin",
+    "insert": "ultra thin",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Very thin",
+    "description": "very thin",
+    "insert": "very thin",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Thin",
+    "description": "thin",
+    "insert": "thin",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Semi-thick",
+    "description": "semithick",
+    "insert": "semithick",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Thick",
+    "description": "thick",
+    "insert": "thick",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Very thick",
+    "description": "very thick",
+    "insert": "very thick",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Ultra thick",
+    "description": "ultra thick",
+    "insert": "ultra thick",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Double line",
+    "description": "double",
+    "insert": "double",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Double line (specify core color)",
+    "description": "double=<core color>",
+    "insert": "double=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Distance between the two lines of a double line",
+    "description": "double distance=<dimension>",
+    "insert": "double distance=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Distance between the centers of the two lines of a double line",
+    "description": "double distance between line centers=<dimension>",
+    "insert": "double distance between line centers=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify shape of line end",
+    "description": "line cap=<round/rect/butt>",
+    "insert": "line cap=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify shape of line joins",
+    "description": "line join=<round/bevel/miter>",
+    "insert": "line join=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Maximal length of miter join",
+    "description": "miter limit=<factor>",
+    "insert": "miter limit=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set dash pattern",
+    "description": "dash pattern=<dash pattern>",
+    "insert": "dash pattern=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Equal lines",
+    "description": "on <dimension> off <dimension>",
+    "insert": "on • off •",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Alternating lines",
+    "description": "on <dim> off <dim> on <dim> off <dim>",
+    "insert": "on • off • on • off •",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Shift dash start",
+    "description": "dash phase=<dash phase>",
+    "insert": "dash phase=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Solid",
+    "description": "",
+    "insert": "solid",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dotted",
+    "description": "",
+    "insert": "dotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Densely dotted",
+    "description": "",
+    "insert": "densely dotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Loosely dotted",
+    "description": "",
+    "insert": "loosely dotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dashed",
+    "description": "",
+    "insert": "dashed",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Densely dashed",
+    "description": "",
+    "insert": "densely dashed",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Loosely dashed",
+    "description": "",
+    "insert": "loosely dashed",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dash followed by one dot",
+    "description": "",
+    "insert": "dashdotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dash followed by one dot (dense)",
+    "description": "",
+    "insert": "densely dashdotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dash followed by one dot (loose)",
+    "description": "",
+    "insert": "loosely dashdotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dash followed by two dots",
+    "description": "",
+    "insert": "dashdotdotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dash followed by two dots (dense)",
+    "description": "",
+    "insert": "densely dashdotdotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Dash followed by two dots (loose)",
+    "description": "",
+    "insert": "loosely dashdotdotted",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set the start and end arrow tips",
+    "description": "arrows=<arrow tip kind>-<arrow tip kind>",
+    "insert": "arrows=•-•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use standard arrow tip",
+    "description": "",
+    "insert": "<-",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use double standard arrow tip",
+    "description": "",
+    "insert": "<<-",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use standard arrow tip with vertical line",
+    "description": "",
+    "insert": "|<-",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use TeX's arrow tip",
+    "description": "",
+    "insert": "to-",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use LaTeX's arrow tip",
+    "description": "",
+    "insert": "latex-",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use PSTricks' arrow tip",
+    "description": "",
+    "insert": "stealth-",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use standard arrow tip",
+    "description": "",
+    "insert": "->",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use double standard arrow tip",
+    "description": "",
+    "insert": "->>",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use standard arrow tip with vertical line",
+    "description": "",
+    "insert": "->|",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use TeX's arrow tip",
+    "description": "",
+    "insert": "-to",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use LaTeX's arrow tip",
+    "description": "",
+    "insert": "-latex",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use PSTricks' arrow tip",
+    "description": "",
+    "insert": "-stealth",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use standard arrow tip",
+    "description": "",
+    "insert": "<->",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use double standard arrow tip",
+    "description": "",
+    "insert": "<<->>",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use standard arrow tip with vertical line",
+    "description": "",
+    "insert": "|<->|",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use TeX's arrow tip",
+    "description": "",
+    "insert": "to-to",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use LaTeX's arrow tip",
+    "description": "",
+    "insert": "latex-latex",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use PSTricks' arrow tip",
+    "description": "",
+    "insert": "stealth-stealth",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Redefine \"standard\" arrow tip",
+    "description": ">=<arrow tip kind>",
+    "insert": ">=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Shorten start of line",
+    "description": "shorten <=<dimension>",
+    "insert": "shorten <=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Shorten end of line",
+    "description": "shorten >=<dimension>",
+    "insert": "shorten >=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fill path",
+    "description": "\\fill[<color>]",
+    "insert": "\\fill ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Draw and fill path",
+    "description": "\\filldraw[fill=<color>, draw=<color>]",
+    "insert": "\\filldraw[fill=•, draw=•] •;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Fill path with a pattern (standalone)",
+    "description": "\\pattern",
+    "insert": "\\pattern ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Fill path with a pattern (as option)",
+    "description": "pattern=<name>",
+    "insert": "pattern=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set color of form-only patterns",
+    "description": "pattern color=<color name>",
+    "insert": "pattern color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fill paths using nonzero rule",
+    "description": "nonzero rule",
+    "insert": "nonzero rule",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fill paths using even odd rule",
+    "description": "even odd rule",
+    "insert": "even odd rule",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Shade path",
+    "description": "\\shade",
+    "insert": "\\shade ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Shade and draw path",
+    "description": "\\shadedraw",
+    "insert": "\\shadedraw ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Fill current path with shading",
+    "description": "shading=<axis/radial/ball/...>",
+    "insert": "shading=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Rotate shading (specify angle)",
+    "description": "shading angle=<degree>",
+    "insert": "shading angle=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Draw path with color",
+    "description": "draw=<color name>",
+    "insert": "draw=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify top color of axis shading",
+    "description": "top color=<color name>",
+    "insert": "top color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify middle color of axis shading",
+    "description": "middle color=<color name>",
+    "insert": "middle color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify bottom color of axis shading",
+    "description": "bottom color=<color name>",
+    "insert": "bottom color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify left color of axis shading",
+    "description": "left color=<color name>",
+    "insert": "left color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify right color of axis shading",
+    "description": "right color=<color name>",
+    "insert": "right color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify inner color of radial shading",
+    "description": "inner color=<color name>",
+    "insert": "inner color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify outer color of radial shading",
+    "description": "outer color=<color name>",
+    "insert": "outer color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify color for ball shading",
+    "description": "ball color=<color name>",
+    "insert": "ball color=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define bounding box for picture",
+    "description": "\\useasboundingbox",
+    "insert": "\\useasboundingbox ;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define as bounding box (as option)",
+    "description": "use as bounding box",
+    "insert": "use as bounding box",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Exclude everything to the left of a coordinate",
+    "description": "trim left=<coordinate/dimension>",
+    "insert": "trim left=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Exclude everything to the right of a coordinate",
+    "description": "trim right=<coordinate/dimension>",
+    "insert": "trim right=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define preactions",
+    "description": "preaction={<options>}",
+    "insert": "preaction={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define postactions",
+    "description": "postaction={<options>}",
+    "insert": "postaction={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Node",
+    "description": "\\node (<name>) at (<coordinate>) {<text>}",
+    "insert": "\\node (•) at (•,•) {•};",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Node in path",
+    "description": "node {<text>}",
+    "insert": "node {•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Node in path (with options and name)",
+    "description": "node [<options>] (<name>) {<text>}",
+    "insert": "node [•] (•) {•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Coordinate",
+    "description": "\\coordinate (<name>) at (<coordinate>)",
+    "insert": "\\coordinate (•) at (•,•);",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Coordinate in path",
+    "description": "coordinate (<name>)",
+    "insert": "coordinate (•)",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Define node name",
+    "description": "name={<node name>}",
+    "insert": "name=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define node alias",
+    "description": "alias={<another node name>}",
+    "insert": "alias=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set absolute position of node",
+    "description": "at=<coordinate>",
+    "insert": "at={(•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set shape of node",
+    "description": "shape=<rectangle/circle/coordinate>",
+    "insert": "shape=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every node (standalone)",
+    "description": "\\tikzstyle{every node}=[<options>]",
+    "insert": "\\tikzstyle{every node}=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define style for every node (as option)",
+    "description": "every node/.style={<style>}",
+    "insert": "every node/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every node with a certain shape (standalone)",
+    "description": "\\tikzstyle{every <rectangle/circle/...> node}=[<options>]",
+    "insert": "\\tikzstyle{every • node}=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define style for every node with a certain shape (as option)",
+    "description": "every <rectangle/circle/...> node/.style={<style>}",
+    "insert": "every • node/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every node (standalone)",
+    "description": "\\tikzstyle{every node}+=[<options>]",
+    "insert": "\\tikzstyle{every node}+=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Add to style for every node (as option)",
+    "description": "every node/append .style={<style>}",
+    "insert": "every node/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every node with a certain shape (standalone)",
+    "description": "\\tikzstyle{every <rectangle/circle/...> node}+=[<options>]",
+    "insert": "\\tikzstyle{every • node}+=[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Add to style for every node with a certain shape (as option)",
+    "description": "every <rectangle/circle/...> node/append .style={<style>}",
+    "insert": "every • node/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set separation between text and node shape",
+    "description": "inner sep=<dimension>",
+    "insert": "inner sep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set inner separation in the x-direction",
+    "description": "inner xsep=<dimension>",
+    "insert": "inner xsep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set inner separation in the y-direction",
+    "description": "inner ysep=<dimension>",
+    "insert": "inner ysep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set separation outside node shape",
+    "description": "outer sep=<dimension>",
+    "insert": "outer sep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set outer separation in the x-direction",
+    "description": "outer xsep=<dimension>",
+    "insert": "outer xsep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set outer separation in the y-direction",
+    "description": "outer ysep=<dimension>",
+    "insert": "outer ysep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set minimum height of node",
+    "description": "minimum height=<dimension>",
+    "insert": "minimum height=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set minimum width of node",
+    "description": "minimum width=<dimension>",
+    "insert": "minimum width=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set minimum size of node",
+    "description": "minimum size=<dimension>",
+    "insert": "minimum size=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set aspect ratio for the node shape",
+    "description": "shape aspect=<aspect ratio>",
+    "insert": "shape aspect=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Rotate border of shape",
+    "description": "shape border rotate=<angle>",
+    "insert": "shape border rotate=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Allow non-integer rotation",
+    "description": "shape border uses incircle=<boolean>",
+    "insert": "shape border uses incircle=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Node part",
+    "description": "\\nodepart{<part name>}",
+    "insert": "\\nodepart{•};",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define style for every node part",
+    "description": "every <part name> node part/.style={<style>}",
+    "insert": "every • node part/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every node part",
+    "description": "every <part name> node part/append .style={<style>}",
+    "insert": "every • node part/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set text color in node",
+    "description": "text=<color>",
+    "insert": "text=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set text font in node",
+    "description": "font=<font>",
+    "insert": "font=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Align text in node to the left",
+    "description": "align=left",
+    "insert": "align=left",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Align text to the left without hyphenation",
+    "description": "align=flushleft",
+    "insert": "align=flushleft",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Align text in node to the right",
+    "description": "align=right",
+    "insert": "align=right",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Align text to the right without hyphenation",
+    "description": "align=flushright",
+    "insert": "align=flushright",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Center text in node",
+    "description": "align=center",
+    "insert": "align=center",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Center text without hyphenation",
+    "description": "align=flushcenter",
+    "insert": "align=flushcenter",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set text in node justified",
+    "description": "align=justify",
+    "insert": "align=justify",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Disable all alignments",
+    "description": "align=none",
+    "insert": "align=none",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set text width in node",
+    "description": "text width=<dimension>",
+    "insert": "text width=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set text height in node",
+    "description": "text height=<dimension>",
+    "insert": "text height=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set text depth in node",
+    "description": "text depth=<dimension>",
+    "insert": "text depth=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify anchor position",
+    "description": "anchor=<north/south/...>",
+    "insert": "anchor=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Left",
+    "description": "left",
+    "insert": "left",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Right",
+    "description": "right",
+    "insert": "right",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Below",
+    "description": "below",
+    "insert": "below",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Below left",
+    "description": "below left",
+    "insert": "below left",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Below right",
+    "description": "below right",
+    "insert": "below right",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Above",
+    "description": "above",
+    "insert": "above",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Above left",
+    "description": "above left",
+    "insert": "above left",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Above right",
+    "description": "above right",
+    "insert": "above right",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Left (specify distance)",
+    "description": "left=<dimension>",
+    "insert": "left=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Right (specify distance)",
+    "description": "right=<dimension>",
+    "insert": "right=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Below (specify distance)",
+    "description": "below=<dimension>",
+    "insert": "below=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Below left (specify distance)",
+    "description": "below left=<dimension>",
+    "insert": "below left=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Below right (specify distance)",
+    "description": "below right=<dimension>",
+    "insert": "below right=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Above (specify distance)",
+    "description": "above=<dimension>",
+    "insert": "above=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Above left (specify distance)",
+    "description": "above left=<dimension>",
+    "insert": "above left=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Above right (specify distance)",
+    "description": "above right=<dimension>",
+    "insert": "above right=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set distance between nodes",
+    "description": "node distance=<dimension>",
+    "insert": "node distance=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node at start of path",
+    "description": "at start",
+    "insert": "at start",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node very near start of path",
+    "description": "very near start",
+    "insert": "very near start",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node near start of path",
+    "description": "near start",
+    "insert": "near start",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node midway path",
+    "description": "midway",
+    "insert": "midway",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node near end of path",
+    "description": "near end",
+    "insert": "near end",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node very near end of path",
+    "description": "very near end",
+    "insert": "very near end",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node at end of path",
+    "description": "at end",
+    "insert": "at end",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set relative position of node on path",
+    "description": "pos=<fraction>",
+    "insert": "pos=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Automatically calculate anchor position",
+    "description": "auto=<left/right>",
+    "insert": "auto=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Swap automatic anchor placement",
+    "description": "swap",
+    "insert": "swap",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node baseline along the path",
+    "description": "sloped",
+    "insert": "sloped",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Allow node to be upside down",
+    "description": "allow upside down",
+    "insert": "allow upside down",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set label",
+    "description": "label={[<options>]<angle>:<text>}",
+    "insert": "label={[•]•:•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set pin (label with connecting edge)",
+    "description": "pin={[<options>]<angle>:<text>}",
+    "insert": "pin={[•]•:•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set label position",
+    "description": "label position=<angle>",
+    "insert": "label position=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set pin position",
+    "description": "pin position=<angle>",
+    "insert": "pin position=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use absolute position",
+    "description": "absolute=<boolean>",
+    "insert": "absolute=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set distance between node and its label",
+    "description": "label distance=<dimension>",
+    "insert": "label distance=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set distance between node and its pin label",
+    "description": "pin distance=<dimension>",
+    "insert": "pin distance=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set pin edge options",
+    "description": "pin edge=<options>",
+    "insert": "pin edge=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every node label",
+    "description": "every label/.style={<style>}",
+    "insert": "every label/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every node pin label",
+    "description": "every pin/.style={<style>}",
+    "insert": "every pin/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every node pin edge",
+    "description": "every pin edge/.style={<style>}",
+    "insert": "every pin edge/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every edge",
+    "description": "every edge/.style={<style>}",
+    "insert": "every edge/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every node label",
+    "description": "every label/append .style={<style>}",
+    "insert": "every label/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every node pin label",
+    "description": "every pin/append .style={<style>}",
+    "insert": "every pin/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every node pin edge",
+    "description": "every pin edge/append .style={<style>}",
+    "insert": "every pin edge/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every edge",
+    "description": "every edge/append .style={<style>}",
+    "insert": "every edge/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Remember current position of picture",
+    "description": "remember picture=<boolean>",
+    "insert": "remember picture=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Do not add current scope to bounding box",
+    "description": "overlay",
+    "insert": "overlay",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Matrix",
+    "description": "\\matrix",
+    "insert": "\\matrix •;",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Matrix with nodes",
+    "description": "\\matrix { \\node{<text>};  \\node{<text>}; \\\\ };",
+    "insert": "\\matrix\n{\n  \\node{•}; & \\node{•}; \\\\ \n  \\node{•}; & \\node{•}; \\\\ \n};",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Matrix (as option)",
+    "description": "matrix",
+    "insert": "matrix",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Align cells vertically on base line",
+    "description": "anchor=base",
+    "insert": "anchor=base",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Align matrix using anchor",
+    "description": "matrix anchor=<north/south/...>",
+    "insert": "matrix anchor=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify distance between columns",
+    "description": "column sep=<dimension>",
+    "insert": "column sep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Specify distance between rows",
+    "description": "row sep=<dimension>",
+    "insert": "row sep=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Cell separation between borders",
+    "description": "between borders",
+    "insert": "between borders",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Cell separation between origins",
+    "description": "between origins",
+    "insert": "between origins",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Execute code at begin cell",
+    "description": "execute at begin cell=<code>",
+    "insert": "execute at begin cell=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Execute code at end cell",
+    "description": "execute at end cell=<code>",
+    "insert": "execute at end cell=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Execute code in empty cell",
+    "description": "execute at empty cell=<code>",
+    "insert": "execute at empty cell=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use macro instead of ampersand",
+    "description": "ampersand replacement=<macro name>",
+    "insert": "ampersand replacement=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every cell",
+    "description": "every cell/.style={<style>}",
+    "insert": "every cell/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every cell",
+    "description": "every cell/append .style={<style>}",
+    "insert": "every cell/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for specified column",
+    "description": "column <number>/.style={<style>}",
+    "insert": "column •/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every even column",
+    "description": "every even column/.style={<style>}",
+    "insert": "every even column/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every odd column",
+    "description": "every odd column/.style={<style>}",
+    "insert": "every odd column/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for specified row",
+    "description": "row <number>/.style={<style>}",
+    "insert": "row •/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every even row",
+    "description": "every even row/.style={<style>}",
+    "insert": "every even row/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every odd row",
+    "description": "every odd row/.style={<style>}",
+    "insert": "every odd row/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for specified cell",
+    "description": "row <number> column <number>/.style={<style>}",
+    "insert": "row • column •/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every cell",
+    "description": "cells={<style>}",
+    "insert": "cells={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every node",
+    "description": "nodes={<style>}",
+    "insert": "nodes={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Child",
+    "description": "",
+    "insert": "child ",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Child node",
+    "description": "child [<options>] {node {<text>}}",
+    "insert": "child [•] {node {•}}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Child node with loop",
+    "description": "child [<options>] foreach <variables> in {<values>} {node {<text>}}",
+    "insert": "child [•] foreach • in {•} {node {•}}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Set distance between children",
+    "description": "sibling distance=<dimension>",
+    "insert": "sibling distance=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set distance between levels",
+    "description": "level distance=<dimension>",
+    "insert": "level distance=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set node tree grow direction",
+    "description": "grow=<north/south/...>",
+    "insert": "grow=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set child node as missing",
+    "description": "missing",
+    "insert": "missing",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every child",
+    "description": "every child/.style={<style>}",
+    "insert": "every child/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every child node",
+    "description": "every child node/.style={<style>}",
+    "insert": "every child node/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every level",
+    "description": "level/.style={<style>}",
+    "insert": "level/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for a certain level",
+    "description": "level <number>/.style={<style>}",
+    "insert": "level •/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every child",
+    "description": "every child/append .style={<style>}",
+    "insert": "every child/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every child node",
+    "description": "every child node/append .style={<style>}",
+    "insert": "every child node/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every level",
+    "description": "level/append .style={<style>}",
+    "insert": "level/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for a certain level",
+    "description": "level <number>/append .style={<style>}",
+    "insert": "level •/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set parent anchor",
+    "description": "parent anchor=<north/south/...>",
+    "insert": "parent anchor=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set child anchor",
+    "description": "child anchor=<north/south/...>",
+    "insert": "child anchor=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define edge from parent path",
+    "description": "edge from parent path={<path>}",
+    "insert": "edge from parent path={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Parent node (in edge from parent path)",
+    "description": "",
+    "insert": "\\tikzparentnode",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Child node (in edge from parent path)",
+    "description": "",
+    "insert": "\\tikzchildnode",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Define style for edges from parent",
+    "description": "edge from parent/.style={<style>}",
+    "insert": "edge from parent/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for edges from parent",
+    "description": "edge from parent/append .style={<style>}",
+    "insert": "edge from parent/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Plot",
+    "description": "plot [<options>]",
+    "insert": "plot [•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Coordinates",
+    "description": "coordinates {(<x1>,<y1>) (<x2>,<y2>) (<x3>,<y3>)}",
+    "insert": "coordinates {(•,•) (•,•) (•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "File (with table of coordinates)",
+    "description": "file {<file name>}",
+    "insert": "file {•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Function (using Gnuplot)",
+    "description": "function {<function>}",
+    "insert": "function {•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Plot coordinates",
+    "description": "plot [<options>] coordinates {(<x1>,<y1>) (<x2>,<y2>) (<x3>,<y3>)}",
+    "insert": "plot [•] coordinates {(•,•) (•,•) (•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Plot coordinate expression",
+    "description": "plot [variable=\\x,<options>] (\\x,{<y>})",
+    "insert": "plot [variable=\\x,•] (\\x,{•})",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Plot file (with table of coordinates)",
+    "description": "plot [<options>] file {<file name>}",
+    "insert": "plot [•] file {•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Plot function (using Gnuplot)",
+    "description": "plot [<options>] function {<function>}",
+    "insert": "plot [•] function {•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Set plotting domain",
+    "description": "domain=<start>:<end>",
+    "insert": "domain=•:•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set identity",
+    "description": "id=<name>",
+    "insert": "id=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Number of samples",
+    "description": "samples=<number>",
+    "insert": "samples=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use samples at specified positions",
+    "description": "samples at={<x1>,<x2>,...,<x3>}",
+    "insert": "samples at={•,•,...,•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Variable (in coordinate expressions)",
+    "description": "variable=<name>",
+    "insert": "variable=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Use parametric coordinates",
+    "description": "parametric",
+    "insert": "parametric",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define style for every plot",
+    "description": "every plot/.style={<style>}",
+    "insert": "every plot/.style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Add to style for every plot",
+    "description": "every plot/append .style={<style>}",
+    "insert": "every plot/append .style={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define mark",
+    "description": "mark=<name>",
+    "insert": "mark=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define mark repeat interval",
+    "description": "mark repeat=<number>",
+    "insert": "mark repeat=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define mark phase",
+    "description": "mark phase=<number>",
+    "insert": "mark phase=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define mark indices",
+    "description": "mark indices={<list>}",
+    "insert": "mark indices={•,•,...,•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define mark size",
+    "description": "mark size=<dimension>",
+    "insert": "mark size=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define mark options",
+    "description": "mark options=<options>",
+    "insert": "mark options=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Disable marks",
+    "description": "no marks",
+    "insert": "no marks",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Connect points using smooth curve",
+    "description": "smooth",
+    "insert": "smooth",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define smoothness (tension)",
+    "description": "tension=<value>",
+    "insert": "tension=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Connect points using closed smooth curve",
+    "description": "smooth cycle",
+    "insert": "smooth cycle",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Connect points using connected piecewise constant functions",
+    "description": "const plot",
+    "insert": "const plot",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Piecewise constant function with left marks (connected)",
+    "description": "const plot mark left",
+    "insert": "const plot mark left",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Piecewise constant function with right marks (connected)",
+    "description": "const plot mark right",
+    "insert": "const plot mark right",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Piecewise constant function with left marks (disconnected)",
+    "description": "jump mark left",
+    "insert": "jump mark left",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Piecewise constant function with right marks (disconnected)",
+    "description": "jump mark right",
+    "insert": "jump mark right",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Horizontal comb plot",
+    "description": "xcomb",
+    "insert": "xcomb",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Vertical comb plot",
+    "description": "ycomb",
+    "insert": "ycomb",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Polar comb plot",
+    "description": "polar comb",
+    "insert": "polar comb",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Horizontal bar plot",
+    "description": "xbar",
+    "insert": "xbar",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Vertical bar plot",
+    "description": "ybar",
+    "insert": "ybar",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Show only marks",
+    "description": "only marks",
+    "insert": "only marks",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set both drawing and filling opacity",
+    "description": "opacity=<degree>",
+    "insert": "opacity=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set drawing opacity",
+    "description": "draw opacity=<value>",
+    "insert": "draw opacity=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set filling opacity",
+    "description": "fill opacity=<value>",
+    "insert": "fill opacity=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set opacity of text labels",
+    "description": "text opacity=<value>",
+    "insert": "text opacity=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Totally transparent",
+    "description": "",
+    "insert": "transparent",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Ultra nearly transparent",
+    "description": "",
+    "insert": "ultra nearly transparent",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Very nearly transparent",
+    "description": "",
+    "insert": "very nearly transparent",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Nearly transparent",
+    "description": "",
+    "insert": "nearly transparent",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Semi-transparent",
+    "description": "",
+    "insert": "semitransparent",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Nearly opaque",
+    "description": "",
+    "insert": "nearly opaque",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Very nearly opaque",
+    "description": "",
+    "insert": "very nearly opaque",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Ultra nearly opaque",
+    "description": "",
+    "insert": "ultra nearly opaque",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Opaque",
+    "description": "",
+    "insert": "opaque",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Load fadings library",
+    "description": "",
+    "insert": "\\usetikzlibrary{fadings}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Fading picture environment",
+    "description": "\\begin{tikzfadingfrompicture}[name=<name>]",
+    "insert": "\\begin{tikzfadingfrompicture}[name=•]\n\n\\end{tikzfadingfrompicture}",
+    "dx": 0,
+    "dy": 1,
+    "type": 0
+  },
+  {
+    "name": "Close fading picture environment",
+    "description": "\\end{tikzfadingfrompicture}",
+    "insert": "\\end{tikzfadingfrompicture}",
+    "dx": 0,
+    "dy": 0,
+    "type": 0
+  },
+  {
+    "name": "Define fading",
+    "description": "\\tikzfading[<options>]",
+    "insert": "\\tikzfading[•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Set fading for current path",
+    "description": "path fading=<name>",
+    "insert": "path fading=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Fit fading",
+    "description": "fit fading=<boolean>",
+    "insert": "fit fading=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set fading transformations",
+    "description": "fading transform={<transformation options>}",
+    "insert": "fading transform={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Rotate fading (specify angle)",
+    "description": "fading angle=<degree>",
+    "insert": "fading angle=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set fading for all subsequent paths",
+    "description": "scope fading=<name>",
+    "insert": "scope fading=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Define transparence group",
+    "description": "transparency group",
+    "insert": "transparency group",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Load decorations library",
+    "description": "",
+    "insert": "\\usetikzlibrary{decorations}",
+    "dx": 0,
+    "dy": 0,
+    "type": 1
+  },
+  {
+    "name": "Decorate",
+    "description": "decorate [<options>]",
+    "insert": "decorate [•]",
+    "dx": 0,
+    "dy": 0,
+    "type": 2
+  },
+  {
+    "name": "Decorate (as option)",
+    "description": "decorate",
+    "insert": "decorate",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set decoration options",
+    "description": "decoration={<decoration options>}",
+    "insert": "decoration={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Raise decoration relative to path",
+    "description": "raise=<dimension>",
+    "insert": "raise=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Mirror decoration along path",
+    "description": "mirror",
+    "insert": "mirror",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Transformations on segments of a decoration",
+    "description": "transform={<transformations>}",
+    "insert": "transform={•}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set decoration used before main decoration",
+    "description": "pre=<decoration>",
+    "insert": "pre=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set decoration used after main decoration",
+    "description": "post=<decoration>",
+    "insert": "post=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set length of pre-decoration",
+    "description": "pre length=<dimension>",
+    "insert": "pre length=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set length of post-decoration",
+    "description": "post length=<dimension>",
+    "insert": "post length=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set unit length in horizontal direction",
+    "description": "x=<dimension>",
+    "insert": "x=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set unit length in vertical direction",
+    "description": "y=<dimension>",
+    "insert": "y=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Set unit length in third direction (only 3D)",
+    "description": "z=<dimension>",
+    "insert": "z=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Shift horizontally",
+    "description": "xshift=<dimension>",
+    "insert": "xshift=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Shift vertically",
+    "description": "yshift=<dimension>",
+    "insert": "yshift=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Shift to a point",
+    "description": "shift={(<xcoord>,<ycoord>)}",
+    "insert": "shift={(•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Cancel all transformations except shift",
+    "description": "shift only",
+    "insert": "shift only",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Rotate by angle",
+    "description": "rotate=<degree>",
+    "insert": "rotate=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Rotate around a point",
+    "description": "rotate around={<angle>:(<xcoord>,<ycoord>)}",
+    "insert": "rotate around={•:(•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Scale horizontally",
+    "description": "xscale=<factor>",
+    "insert": "xscale=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Scale vertically",
+    "description": "yscale=<factor>",
+    "insert": "yscale=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Scale in both directions",
+    "description": "scale=<factor>",
+    "insert": "scale=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Scale around a point",
+    "description": "scale around={<angle>:(<xcoord>,<ycoord>)}",
+    "insert": "scale around={•:(•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Flip horizontally",
+    "description": "xscale=-1",
+    "insert": "xscale=-1",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Flip vertically",
+    "description": "yscale=-1",
+    "insert": "yscale=-1",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Slant horizontally",
+    "description": "xslant=<factor>",
+    "insert": "xslant=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Slant vertically",
+    "description": "yslant=<factor>",
+    "insert": "yslant=•",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  },
+  {
+    "name": "Coordinate transformation",
+    "description": "cm={<a11>,<a12>,<a21>,<a22>,(<x0>,<y0>)}",
+    "insert": "cm={•,•,•,•,(•,•)}",
+    "dx": 0,
+    "dy": 0,
+    "type": 3
+  }
+]
