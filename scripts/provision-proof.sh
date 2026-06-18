@@ -542,6 +542,36 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/snippets/p80-mirrored-tabstops-snippets.json" "$SNIPPET_DICT"
         EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
         ;;
+    p81-quicktex-native.spec.ts)
+        # P81 (native quicktex format consumed directly, Phase-B B5) declares the
+        # SAME config-owned snippet-dictionary path P52/P59/P77/P78/P79/P80 read,
+        # but points it at the user's REAL two-map quicktex SOURCE — a vimscript
+        # file declaring g:quicktex_prose + g:quicktex_math dict literals — NOT a
+        # bespoke flattened JSON. The committed fixture
+        # (tests/proof/fixtures/snippets/p81-quicktex-dict.vim) is a BYTE-IDENTICAL
+        # copy of the user's real dict in dzackgarza/dotfiles
+        # (.config-sync/nvim/after/ftplugin/pandoc/quicktex_dict.vim, sha256
+        # 8fdecd88…): the prose map maps `st` -> "such that " and the math map maps
+        # the SAME `st` -> "\st " and `frac` -> "\frac{<+++>}{<++>} <++>" (a
+        # multi-tabstop entry carrying a `<+++>` primary AND `<++>` secondaries).
+        # Pointing config at the SOURCE file makes the editor's snippets exactly
+        # those two maps' entries, gated per-zone by the prose/math split the source
+        # itself carries.
+        #
+        # RED today: the loader (snippets.ts::parseSnippetDictionary) is a JSON
+        # parser; JSON.parse on the vimscript source throws (Bad control character)
+        # -> hard toast -> NO snippet source registers -> `st`/`frac` are offered in
+        # NEITHER zone. That is the faithful "no native-vim loader; current path is
+        # flat json" RED state. (Even the shipped flattened quicktex.json, were it
+        # pointed at here, would offer the SAME math body for `st` in BOTH zones —
+        # math wins the collision — and `frac` with its `<++>` secondaries DELETED,
+        # the exact flattening losses P81 KILLS.)
+        SNIPPETS_DIR="$ABS_SPEC_DIR/home/.pandoc/snippets"
+        mkdir -p "$SNIPPETS_DIR"
+        SNIPPET_DICT="$SNIPPETS_DIR/p81-quicktex-dict.vim"
+        cp "$REPO_ROOT/tests/proof/fixtures/snippets/p81-quicktex-dict.vim" "$SNIPPET_DICT"
+        EDITOR_EXTRA="snippet_dictionary = \"$SNIPPET_DICT\""
+        ;;
     p54-spellcheck.spec.ts)
         # P54 declares the custom math dictionary by a CONFIG-OWNED path, not a
         # hardcoded list. Provision a hermetic copy of the committed FIXTURE
