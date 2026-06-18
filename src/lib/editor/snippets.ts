@@ -30,7 +30,9 @@ import {
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import { inMathMode } from "codemirror-lang-latex";
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
+import { StateField, StateEffect, type Extension } from "@codemirror/state";
+import type { ChangeDesc } from "@codemirror/state";
 
 /** The editing zone an entry is live in. `both` is offered in every zone; the
  *  same trigger may appear once as `prose` and once as `math` to resolve to a
@@ -253,13 +255,29 @@ function normalizeTabstops(body: string): string {
 /** Build a {@link Completion} for one dictionary entry: its label is the trigger
  *  and its `apply` runs the snippet body via the same `snippetCompletion`
  *  machinery the LaTeX fenced-div completions use, so accepting expands the body
- *  and lands the cursor at the declared tabstop. */
+ *  and lands the cursor at the declared tabstop. Standard transform mirrors
+ *  (`${N/regex/replace/flags}`, B7 / P83a) are stripped to plain `${N}` mirrors
+ *  before CM6 instantiates the template, and armed afterwards so the dependent
+ *  slot tracks its source field live on the popup-accept path too. */
 function snippetOption(entry: SnippetEntry): Completion {
-  return snippetCompletion(normalizeTabstops(entry.body), {
+  const { body: template, transforms } = extractTransforms(entry.body);
+  const completion = snippetCompletion(normalizeTabstops(template), {
     label: entry.trigger,
     type: "snippet",
     detail: "snippet",
   });
+  if (transforms.length === 0) return completion;
+  const cmApply = completion.apply;
+  if (typeof cmApply !== "function") {
+    throw new Error("snippetCompletion did not yield an apply function");
+  }
+  return {
+    ...completion,
+    apply: (view, completionArg, from, to) => {
+      cmApply(view, completionArg, from, to);
+      armTransforms(view, from, template, transforms);
+    },
+  };
 }
 
 /** Whether an entry is live at the cursor's editing zone. A `both` entry is
@@ -485,24 +503,282 @@ export async function resolveSnippetVariables(
   });
 }
 
+// ── Transform mirrors (B7 / P83a) ────────────────────────────────────────────
+//
+// The STANDARD TextMate/VSCode/UltiSnips mirror-transform `${N/regex/replace/flags}`
+// derives a dependent slot from a source tabstop by running a regex substitution
+// over the source field's current text (e.g. `${1/(.*)/\U$1/}` upper-cases the
+// `${1}` field into the dependent position). CM6's vendored snippet parser
+// covers tabstops, placeholders, and mirrors NATIVELY (P80) but NOT this
+// transform: its field regex would mis-read `${1/(.*)/\U$1/}` as a NAMED field,
+// never applying the substitution. The jonschlinkert/tabstops library is the
+// named PORT candidate for this grammar, but its sole published release
+// (0.1.2, a WIP) fails to load (`Cannot find module './location'`), so the
+// standard transform RULE is ported here — the established TextMate semantics,
+// no bespoke token.
+//
+// We LEVERAGE CM6's native mirror for the live wiring: a transform target is
+// emitted into the CM6 template as a PLAIN mirror `${N}` of its source, so CM6
+// keeps it textually identical to the source field as the user types. A small
+// CM6 extension ({@link transformMirrorExtension}) then rewrites only that
+// target range with the TRANSFORMED text, so the dependent slot shows the
+// transform live (no second keystroke), exactly as the standard editors do.
+
+/** A `${N/regex/replace/flags}` transform extracted from a snippet body: the
+ *  source tabstop number it mirrors, the compiled matcher, the replacement
+ *  format string (with capture refs `$1`/`${1}` and the `\U`/`\L`/`\E` case
+ *  modifiers the standard transform supports), and `markerIndex` — the character
+ *  offset, within the STRIPPED template, of the plain `${N}` mirror this
+ *  transform was rewritten to. {@link armTransforms} renders the stripped
+ *  template prefix up to that marker to derive the dependent slot's absolute
+ *  document offset. */
+interface SnippetTransform {
+  readonly field: number;
+  readonly regex: RegExp;
+  readonly replacement: string;
+  readonly markerIndex: number;
+}
+
+/** Match one standard transform mirror `${N/regex/replace/flags}` in a body. The
+ *  regex and replacement are delimited by `/`; a `\/` inside either is a literal
+ *  slash, not a delimiter. Flags are the trailing regex flags (`g`, `i`, `m`, …). */
+const TRANSFORM_TOKEN =
+  /\$\{(\d+)\/((?:\\.|[^/\\])*)\/((?:\\.|[^/\\])*)\/([a-z]*)\}/;
+
+/** Apply a parsed transform to a source field's text, producing the dependent
+ *  slot's text. Implements the STANDARD TextMate format-string semantics: each
+ *  match is replaced by the replacement, in which `$n`/`${n}` are the match's
+ *  capture groups and `\U`/`\L` switch subsequent output to upper/lower case
+ *  until `\E` (or the end of the replacement). */
+function applyTransform(text: string, t: SnippetTransform): string {
+  return text.replace(t.regex, (...args: unknown[]) => {
+    // String.replace passes (match, p1, p2, …, offset, string[, groups]); the
+    // captures are the args between the match and the trailing offset/string.
+    const groups = args.slice(0, -2) as string[];
+    return expandReplacement(t.replacement, groups);
+  });
+}
+
+/** Expand a transform replacement format string against the match's capture
+ *  groups: substitute `$n`/`${n}`, and honour the `\U`/`\L`/`\E` case modifiers
+ *  (the standard TextMate format-string case folding). */
+function expandReplacement(replacement: string, groups: string[]): string {
+  let out = "";
+  let caseMode: "upper" | "lower" | null = null;
+  const emit = (s: string): void => {
+    out += caseMode === "upper" ? s.toUpperCase() : caseMode === "lower" ? s.toLowerCase() : s;
+  };
+  for (let i = 0; i < replacement.length; i++) {
+    const ch = replacement[i];
+    if (ch === "\\") {
+      const next = replacement[i + 1];
+      if (next === "U") { caseMode = "upper"; i++; continue; }
+      if (next === "L") { caseMode = "lower"; i++; continue; }
+      if (next === "E") { caseMode = null; i++; continue; }
+      if (next !== undefined) { emit(next); i++; continue; }
+      emit("\\");
+      continue;
+    }
+    if (ch === "$") {
+      const braced = /^\$\{(\d+)\}/.exec(replacement.slice(i));
+      const bare = /^\$(\d+)/.exec(replacement.slice(i));
+      const m = braced ?? bare;
+      if (m) {
+        emit(groups[Number(m[1])] ?? "");
+        i += m[0].length - 1;
+        continue;
+      }
+    }
+    emit(ch);
+  }
+  return out;
+}
+
+/** Replace each standard transform mirror `${N/regex/replace/flags}` in a body
+ *  with a PLAIN mirror `${N}` (so CM6 instantiates and live-mirrors it from
+ *  source field N), and return the rewritten body together with the parsed
+ *  transforms. The bodies CM6 then expands carry only the tabstop/mirror syntax
+ *  its parser covers; the transform substitution is applied live by
+ *  {@link transformMirrorExtension}. */
+export function extractTransforms(body: string): {
+  body: string;
+  transforms: SnippetTransform[];
+} {
+  const transforms: SnippetTransform[] = [];
+  let out = body;
+  let match: RegExpExecArray | null;
+  while ((match = TRANSFORM_TOKEN.exec(out)) !== null) {
+    const field = Number(match[1]);
+    const regex = new RegExp(unescapeSlash(match[2]), match[4]);
+    const replacement = unescapeSlash(match[3]);
+    const mirror = `\${${field}}`;
+    transforms.push({ field, regex, replacement, markerIndex: match.index });
+    out = out.slice(0, match.index) + mirror + out.slice(match.index + match[0].length);
+  }
+  return { body: out, transforms };
+}
+
+/** Resolve `\/` (an escaped delimiter slash) to a literal `/` inside a transform
+ *  regex or replacement segment; other escapes are left for the regex engine /
+ *  the replacement expander. */
+function unescapeSlash(segment: string): string {
+  return segment.replace(/\\\//g, "/");
+}
+
+/** One armed transform tracker: the live document range holding the dependent
+ *  (mirror) occurrence of field N, and the transform to apply to the source
+ *  field's text. The range is the CM6-mirrored occurrence we OVERWRITE with the
+ *  transformed text; the source field's current text is read from that SAME
+ *  range (it is a mirror, so CM6 keeps it equal to the source field). */
+interface TransformTracker {
+  from: number;
+  to: number;
+  readonly transform: SnippetTransform;
+}
+
+/** Effect that arms a set of transform trackers for a just-expanded snippet
+ *  body (the dependent mirror ranges + their transforms), or clears them. */
+const setTransformTrackers = StateEffect.define<TransformTracker[]>();
+
+/** Map a tracker's range forward through a document change. The dependent
+ *  occurrence may be entirely rewritten (delete + insert) by this very field's
+ *  own transform pass, so map `from` back and `to` forward to keep the range
+ *  spanning the dependent slot. */
+function mapTracker(tracker: TransformTracker, changes: ChangeDesc): TransformTracker {
+  return {
+    from: changes.mapPos(tracker.from, -1),
+    to: changes.mapPos(tracker.to, 1),
+    transform: tracker.transform,
+  };
+}
+
+/** The armed transform trackers for the active snippet, mapped through every
+ *  document change so each dependent range keeps spanning its mirror occurrence. */
+const transformTrackerField = StateField.define<TransformTracker[]>({
+  create() {
+    return [];
+  },
+  update(value, tr) {
+    let next = value;
+    for (const effect of tr.effects) {
+      if (effect.is(setTransformTrackers)) next = effect.value;
+    }
+    if (next.length && tr.docChanged) {
+      next = next.map((t) => mapTracker(t, tr.changes));
+    }
+    return next;
+  },
+});
+
+/** A user-event annotation marking the transform field's OWN rewrite dispatch,
+ *  so the updateListener does not treat its own write as a source-field edit and
+ *  loop. */
+const TRANSFORM_REWRITE_EVENT = "snippet.transform";
+
+/** The CM6 extension that realises transform mirrors live (B7 / P83a): it tracks
+ *  each dependent mirror range and, whenever the source field changes (CM6 has
+ *  mirrored the raw source text into the dependent range), overwrites that range
+ *  with the TRANSFORMED text. Reads the source field's text from the dependent
+ *  range itself — it is a CM6 mirror, so CM6 keeps it equal to the source field —
+ *  so no access to CM6's private snippet field state is needed. */
+export const transformMirrorExtension: Extension = [
+  transformTrackerField,
+  EditorView.updateListener.of((update) => {
+    if (!update.docChanged) return;
+    const trackers = update.state.field(transformTrackerField);
+    if (trackers.length === 0) return;
+    // Do not react to our own rewrite (avoid a feedback loop).
+    if (update.transactions.some((t) => t.isUserEvent(TRANSFORM_REWRITE_EVENT))) {
+      return;
+    }
+    const doc = update.state.doc;
+    const changes: { from: number; to: number; insert: string }[] = [];
+    for (const { from, to, transform } of trackers) {
+      // The dependent range currently holds the raw source-field text (CM6
+      // mirrored it). Transform that text and overwrite the range when it differs.
+      const sourceText = doc.sliceString(from, to);
+      const transformed = applyTransform(sourceText, transform);
+      if (transformed !== sourceText) {
+        changes.push({ from, to, insert: transformed });
+      }
+    }
+    if (changes.length === 0) return;
+    queueMicrotask(() => {
+      update.view.dispatch({
+        changes,
+        userEvent: TRANSFORM_REWRITE_EVENT,
+      });
+    });
+  }),
+];
+
+/** Arm the transform trackers for a body just expanded at `from`. Each
+ *  transform's dependent mirror was rewritten to a plain `${N}` at `markerIndex`
+ *  in the stripped template; CM6 renders a bare `${N}` as a ZERO-WIDTH position
+ *  (its rawName is empty). The dependent slot's absolute document offset is
+ *  therefore `from` plus the RENDERED length of the stripped-template prefix up
+ *  to that marker, so each tracker starts as the zero-width range there. CM6's
+ *  field-mirror selection later fills it as the user types the source field, and
+ *  {@link transformMirrorExtension} rewrites it with the transformed text. */
+function armTransforms(
+  view: EditorView,
+  from: number,
+  template: string,
+  transforms: SnippetTransform[],
+): void {
+  if (transforms.length === 0) return;
+  const trackers: TransformTracker[] = transforms.map((transform) => {
+    const renderedPrefixLen = renderedSnippetLength(
+      template.slice(0, transform.markerIndex),
+    );
+    const pos = from + renderedPrefixLen;
+    return { from: pos, to: pos, transform };
+  });
+  view.dispatch({ effects: setTransformTrackers.of(trackers) });
+}
+
 /** Run a snippet body at the current cursor, expanding it through the SAME
  *  `snippetCompletion` apply path acceptance uses. Milestone G's insertion bar
  *  reuses this to insert a chosen snippet directly (no completion popup). The
  *  body's `$0` tabstop is honoured exactly as on accept. Standard snippet
  *  variables (`$CLIPBOARD`, `$CURRENT_DATE`, `$CURRENT_YEAR`) are resolved HERE,
  *  before `snippetCompletion`, so every expansion path (popup-accept P52/P77,
- *  insertion bar P59, autotrigger P78, regex P79) gets them. */
+ *  insertion bar P59, autotrigger P78, regex P79) gets them. The standard
+ *  UltiSnips `${VISUAL}` placeholder (B7 / P83b) wraps the CURRENT selection: it
+ *  is resolved to the selected text, and the expansion REPLACES the selection
+ *  (so `\emph{${VISUAL}}` over a selected `foo` yields `\emph{foo}`). Transform
+ *  mirrors (B7 / P83a) are armed after expansion so the dependent slot tracks
+ *  its source field live. */
 export async function runSnippet(
   view: EditorView,
   body: string,
   clipboard: ClipboardTextReader,
 ): Promise<void> {
-  const resolved = await resolveSnippetVariables(body, clipboard, new Date());
-  const completion = snippetCompletion(normalizeTabstops(resolved), { label: "" });
+  const selection = view.state.selection.main;
+  const selectedText = view.state.sliceDoc(selection.from, selection.to);
+  const withVisual = resolveVisual(body, selectedText);
+  const resolved = await resolveSnippetVariables(withVisual, clipboard, new Date());
+  const { body: template, transforms } = extractTransforms(resolved);
+  const completion = snippetCompletion(normalizeTabstops(template), { label: "" });
   const apply = completion.apply;
   if (typeof apply !== "function") {
     throw new Error("snippetCompletion did not yield an apply function");
   }
-  const pos = view.state.selection.main.head;
-  apply(view, completion, pos, pos);
+  // `${VISUAL}` wraps the selection: expand OVER the selection range (CM6's
+  // snippet apply replaces `[from, to)`), so the selected text is consumed and
+  // re-emitted inside the body. A bare cursor (empty selection) expands in place.
+  const from = selection.from;
+  const to = selection.to;
+  apply(view, completion, from, to);
+  armTransforms(view, from, template, transforms);
+}
+
+/** The standard UltiSnips selection placeholder. */
+const VISUAL_TOKEN = /\$\{VISUAL\}|\$VISUAL\b/g;
+
+/** Resolve the standard UltiSnips `${VISUAL}` placeholder to the text that was
+ *  selected when the snippet expands, so an entry like `\emph{${VISUAL}}` WRAPS
+ *  the selection. A body without `${VISUAL}` is returned unchanged. */
+function resolveVisual(body: string, selectedText: string): string {
+  return body.replace(VISUAL_TOKEN, () => selectedText);
 }

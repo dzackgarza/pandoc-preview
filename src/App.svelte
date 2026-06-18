@@ -455,6 +455,14 @@
         seedClipboardText: (text: string) => {
           editor.seedClipboardText(text);
         },
+        // P83: establish a REAL non-empty selection over the first occurrence of
+        // `text` in the buffer (the SAME selection state a user's drag /
+        // shift-select produces), so the subsequent `${VISUAL}` expansion has a
+        // selection to wrap. Fire-and-forget; the observable is the wrapped text
+        // after the visual-wrap expansion.
+        seedSelection: (text: string) => {
+          editor.seedSelection(text);
+        },
         cursorOffset: () => editor.cursorOffset(),
         // P70: the live @codemirror/lint diagnostics (forceLinting-flushed) and
         // their count, read from the SAME field the gutter renders.

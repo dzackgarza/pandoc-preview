@@ -77,6 +77,7 @@
     findAutoExpansion,
     findRegexExpansion,
     renderedSnippetLength,
+    transformMirrorExtension,
     type SnippetMap,
   } from "../editor/snippets";
   import {
@@ -244,6 +245,11 @@
           latexLanguage.data.of({
             commentTokens: { block: { open: "<!--", close: "-->" } },
           }),
+          // Standard transform mirrors `${N/regex/replace/flags}` (B7 / P83a):
+          // tracks each dependent mirror range and rewrites it with the
+          // transformed source-field text live, the substitution CM6's vendored
+          // snippet parser does not cover.
+          transformMirrorExtension,
           keymap.of([
             { key: "Mod-b", run: () => (wrapSelection("**", "**"), true) },
             { key: "Mod-i", run: () => (wrapSelection("*", "*"), true) },
@@ -559,6 +565,26 @@
    * contentEditable, so this is the in-harness surface for typing into a field. */
   export function typeIntoSnippetField(text: string) {
     view.dispatch(view.state.replaceSelection(text));
+    view.focus();
+  }
+
+  /** E2E (P83): establish a REAL non-empty selection over the FIRST occurrence of
+   * `text` already present in the buffer (appended via appendAtEnd) — the SAME
+   * selection state a user's drag / shift-select produces — so the subsequent
+   * `${VISUAL}` expansion has a selection to wrap. Dispatches a CM6
+   * EditorSelection.range over that text's span, leaving selection.main non-empty
+   * and spanning exactly `text`. The bridge cannot synthesize a drag selection
+   * into CodeMirror's contentEditable, so this is the in-harness surface for a
+   * real visual selection; it adds no behaviour beyond placing the selection. */
+  export function seedSelection(text: string) {
+    const doc = view.state.doc.toString();
+    const idx = doc.indexOf(text);
+    if (idx < 0) {
+      throw new Error(`seedSelection: text not present in buffer: ${text}`);
+    }
+    view.dispatch({
+      selection: EditorSelection.range(idx, idx + text.length),
+    });
     view.focus();
   }
 
