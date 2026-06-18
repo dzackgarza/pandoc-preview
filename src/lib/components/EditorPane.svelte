@@ -508,9 +508,12 @@
       changes: { from: hit.from, to: hit.to, insert: "" },
       selection: EditorSelection.cursor(hit.from),
     });
-    runSnippet(view, hit.body);
-    view.dispatch({
-      selection: EditorSelection.cursor(hit.from + renderedSnippetLength(hit.body)),
+    void runSnippet(view, hit.body, clipboardText).then(() => {
+      view.dispatch({
+        selection: EditorSelection.cursor(
+          hit.from + renderedSnippetLength(hit.body),
+        ),
+      });
     });
     return true;
   }
@@ -530,7 +533,7 @@
       changes: { from: hit.from, to: hit.to, insert: "" },
       selection: EditorSelection.cursor(hit.from),
     });
-    runSnippet(view, hit.body);
+    void runSnippet(view, hit.body, clipboardText);
     return true;
   }
 
@@ -615,12 +618,54 @@
     return diagnosticCount(view.state);
   }
 
+  /** The clipboard backend's documented "no text on the clipboard" signal:
+   * arboard reports an empty / non-text clipboard as `ContentNotAvailable`,
+   * surfaced through the clipboard-manager plugin as this exact Display string
+   * (arboard 3.x). An empty clipboard is a VALID state — VSCode resolves
+   * `$CLIPBOARD` to "" then — not a fault, so the reader maps THIS specific
+   * documented signal (and ONLY this one) to empty text; any other clipboard
+   * failure propagates loudly. */
+  const CLIPBOARD_EMPTY_SIGNAL =
+    "The clipboard contents were not available in the requested format or the clipboard is empty.";
+
+  /** Read the system-clipboard text the snippet-variable `$CLIPBOARD` resolves
+   * to (B6 / P82) — the SAME `readText` backend the P62 paste path reads images
+   * through. If a clipboard text seed is in flight (E2E: `seedClipboardText`
+   * fired just before this in a separate evaluate round-trip), await it first so
+   * the read sees the seeded text — the sibling of P62's `__PPE_SEED__` await.
+   * No-op wait in a user session (no seed promise is ever parked). An EMPTY
+   * clipboard (the backend's documented `ContentNotAvailable` signal) resolves
+   * to "" (the VSCode `$CLIPBOARD` semantic); any other read failure propagates. */
+  async function clipboardText(): Promise<string> {
+    const seed = (window as unknown as { __PPE_TEXT_SEED__?: Promise<void> })
+      .__PPE_TEXT_SEED__;
+    if (seed) await seed;
+    try {
+      return await readText();
+    } catch (e) {
+      if (String(e).includes(CLIPBOARD_EMPTY_SIGNAL)) return "";
+      throw e;
+    }
+  }
+
+  /** E2E (P82): seed KNOWN text onto the REAL system clipboard through the SAME
+   * clipboard-manager `writeText` backend a user's copy lands on (the sibling of
+   * P62's `seedClipboardImage`). Fire-and-forget: the seed's async write outlives
+   * this call, so park the in-flight promise on a window global that
+   * `clipboardText` awaits before reading — so `$CLIPBOARD` resolves to this exact
+   * seeded text even though the seed and the expansion fire in separate evaluate
+   * round-trips. */
+  export function seedClipboardText(text: string) {
+    (window as unknown as { __PPE_TEXT_SEED__: Promise<void> }).__PPE_TEXT_SEED__ =
+      writeText(text);
+  }
+
   /** Insert a snippet body at the cursor, expanding it through the SAME
    * snippetCompletion apply path completion acceptance uses (Milestone G's
    * insertion bar reuses this). The body's `$0` tabstop is honoured exactly as
    * on accept. */
-  export function insertSnippet(body: string) {
-    runSnippet(view, body);
+  export async function insertSnippet(body: string) {
+    await runSnippet(view, body, clipboardText);
     view.focus();
   }
 

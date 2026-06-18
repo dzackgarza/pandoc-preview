@@ -447,6 +447,14 @@
         insertSnippetByTrigger: (trigger: string) => {
           editor.insertSnippetByTrigger(trigger);
         },
+        // P82: seed KNOWN text onto the REAL system clipboard through the SAME
+        // clipboard-manager writeText backend (the sibling of seedClipboardImage),
+        // so the snippet-variable resolution reads it back for $CLIPBOARD.
+        // Fire-and-forget; the in-flight write is parked where the expansion's
+        // clipboard read awaits it.
+        seedClipboardText: (text: string) => {
+          editor.seedClipboardText(text);
+        },
         cursorOffset: () => editor.cursorOffset(),
         // P70: the live @codemirror/lint diagnostics (forceLinting-flushed) and
         // their count, read from the SAME field the gutter renders.

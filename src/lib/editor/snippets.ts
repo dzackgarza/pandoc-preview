@@ -434,12 +434,71 @@ export function renderedSnippetLength(body: string): number {
   return rendered.length;
 }
 
+/** Reads the system clipboard's current text — the SAME backend the P62
+ *  paste-image path reads through. Injected into {@link runSnippet} so the pure
+ *  snippet module never imports the Tauri clipboard plugin directly; the editor
+ *  wires the real `readText`. Awaited only when a body actually references
+ *  `$CLIPBOARD`. */
+export type ClipboardTextReader = () => Promise<string>;
+
+/** The standard TextMate/VSCode snippet-variable NAME grammar: a leading letter
+ *  or underscore, then letters/digits/underscores. This is what distinguishes a
+ *  VARIABLE (`$CLIPBOARD`, `$CURRENT_DATE`) from a TABSTOP/CAPTURE (`$1`, `${2}`):
+ *  a variable name is alphabetic, a tabstop/capture is purely numeric. The
+ *  numeric forms are left UNTOUCHED here for the subsequent `snippetCompletion`
+ *  tabstop expansion. */
+const SNIPPET_VARIABLE = /\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))/g;
+
+/** Resolve the STANDARD TextMate/VSCode snippet variables in a body to their
+ *  host values, AT EXPANSION TIME, BEFORE the body reaches `snippetCompletion`.
+ *  Both the bare `$NAME` and braced `${NAME}` forms resolve. Adopted names (no
+ *  bespoke tokens): `CLIPBOARD` → the system-clipboard text (read through the
+ *  injected reader, the SAME backend P62 owns); `CURRENT_DATE` → the host day of
+ *  the month; `CURRENT_YEAR` → the host 4-digit year (the established VSCode
+ *  semantics). A `$NAME` whose NAME is not a recognised variable is a hard error
+ *  — never a silent passthrough that would leave a literal token in the buffer.
+ *  Numeric `$N` / `${N}` tabstops and captures are not matched here. */
+export async function resolveSnippetVariables(
+  body: string,
+  clipboard: ClipboardTextReader,
+  now: Date,
+): Promise<string> {
+  // The clipboard read is async and may be costly; perform it once, and only
+  // when the body actually references $CLIPBOARD.
+  const needsClipboard = /\$(?:\{CLIPBOARD\}|CLIPBOARD\b)/.test(body);
+  const clipboardText = needsClipboard ? await clipboard() : "";
+  const year = String(now.getFullYear());
+  // The day of the month, zero-padded to two digits (VSCode CURRENT_DATE).
+  const date = String(now.getDate()).padStart(2, "0");
+  return body.replace(SNIPPET_VARIABLE, (_match, braced?: string, bare?: string) => {
+    const name = braced ?? bare;
+    switch (name) {
+      case "CLIPBOARD":
+        return clipboardText;
+      case "CURRENT_DATE":
+        return date;
+      case "CURRENT_YEAR":
+        return year;
+      default:
+        throw new Error(`unknown snippet variable: $${name}`);
+    }
+  });
+}
+
 /** Run a snippet body at the current cursor, expanding it through the SAME
  *  `snippetCompletion` apply path acceptance uses. Milestone G's insertion bar
  *  reuses this to insert a chosen snippet directly (no completion popup). The
- *  body's `$0` tabstop is honoured exactly as on accept. */
-export function runSnippet(view: EditorView, body: string): void {
-  const completion = snippetCompletion(normalizeTabstops(body), { label: "" });
+ *  body's `$0` tabstop is honoured exactly as on accept. Standard snippet
+ *  variables (`$CLIPBOARD`, `$CURRENT_DATE`, `$CURRENT_YEAR`) are resolved HERE,
+ *  before `snippetCompletion`, so every expansion path (popup-accept P52/P77,
+ *  insertion bar P59, autotrigger P78, regex P79) gets them. */
+export async function runSnippet(
+  view: EditorView,
+  body: string,
+  clipboard: ClipboardTextReader,
+): Promise<void> {
+  const resolved = await resolveSnippetVariables(body, clipboard, new Date());
+  const completion = snippetCompletion(normalizeTabstops(resolved), { label: "" });
   const apply = completion.apply;
   if (typeof apply !== "function") {
     throw new Error("snippetCompletion did not yield an apply function");
