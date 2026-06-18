@@ -16,7 +16,7 @@
         "@emmetio/codemirror6-plugin": "0.4.1",
         "@lezer/common": "^1",
         "@replit/codemirror-indentation-markers": "^6.5.3",
-        "@retorquere/bibtex-parser": "^10.0.0",
+        "@retorquere/bibtex-parser": "9.0.29",
         "@tauri-apps/api": "^2",
         "@tauri-apps/plugin-clipboard-manager": "^2",
         "@tauri-apps/plugin-dialog": "^2",
@@ -159,7 +159,7 @@
 
     "@replit/codemirror-indentation-markers": ["@replit/codemirror-indentation-markers@6.5.3", "", { "peerDependencies": { "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" } }, "sha512-hL5Sfvw3C1vgg7GolLe/uxX5T3tmgOA3ZzqlMv47zjU1ON51pzNWiVbS22oh6crYhtVhv8b3gdXwoYp++2ilHw=="],
 
-    "@retorquere/bibtex-parser": ["@retorquere/bibtex-parser@10.0.0", "", { "dependencies": { "@unified-latex/unified-latex-util-pegjs": "^1.8.4", "@unified-latex/unified-latex-util-print-raw": "^1.8.4", "@unified-latex/unified-latex-util-replace": "^1.8.4", "@unified-latex/unified-latex-util-visit": "^1.8.4", "i": "^0.3.7", "lodash.merge": "^4.6.2", "moo": "^0.5.3", "nearley": "^2.20.1", "unicode2latex": "^7.0.30", "wink-eng-lite-web-model": "^1.8.1", "wink-nlp": "^2.4.0" } }, "sha512-1rAGZ1RcgLJN5f6m8utgNJWlahmbiUEJuVZ2ILsQRCtNldDNE9/hdsXWhe25czHpyORjvVefImJeZJPqD8LZEQ=="],
+    "@retorquere/bibtex-parser": ["@retorquere/bibtex-parser@9.0.29", "", { "dependencies": { "@unified-latex/unified-latex-util-pegjs": "^1.8.1", "@unified-latex/unified-latex-util-print-raw": "^1.8.0", "@unified-latex/unified-latex-util-replace": "^1.8.3", "@unified-latex/unified-latex-util-visit": "^1.8.3", "i": "^0.3.7", "lodash.merge": "^4.6.2", "moo": "^0.5.3", "nearley": "^2.20.1", "unicode2latex": "^7.0.30", "wink-eng-lite-web-model": "^1.8.1", "wink-nlp": "^2.4.0" } }, "sha512-lXB+5WrbcL3Q1yX7/D5MhQa8RzJPWSwpBti2iVn2yDLZ7iPfrxiKPEI8UTLRY682+zWckHIyrt+xKG0s8Zh6/Q=="],
 
     "@rollup/plugin-typescript": ["@rollup/plugin-typescript@12.3.0", "", { "dependencies": { "@rollup/pluginutils": "^5.1.0", "resolve": "^1.22.1" }, "peerDependencies": { "rollup": "^2.14.0||^3.0.0||^4.0.0", "tslib": "*", "typescript": ">=3.7.0" }, "optionalPeers": ["rollup", "tslib"] }, "sha512-7DP0/p7y3t67+NabT9f8oTBFE6gGkto4SA6Np2oudYmZE/m1dt8RB0SjL1msMxFpLo631qjRCcBlAbq1ml/Big=="],
 

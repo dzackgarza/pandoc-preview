@@ -81,6 +81,10 @@
     type SnippetMap,
   } from "../editor/snippets";
   import {
+    parseBibliography,
+    citationCompletionSource,
+  } from "../editor/citations";
+  import {
     parseWordlist,
     buildSpellChecker,
     spellcheckExtension,
@@ -320,6 +324,17 @@
       toastError(`Snippet dictionary failed to load: ${e}`),
     );
 
+    // Register the config-owned bibliography as a composable @-citation
+    // completion source (P85/P86). The path is required and validated to exist by
+    // Rust; here we read and parse it (via the maintained @retorquere/bibtex-
+    // parser) into citation entries and ADD the source to the delegating registry
+    // — alongside the LaTeX and snippet sources, never as an override (P51). A
+    // declared-but-unreadable or parse-failing bibliography fails loud (toast),
+    // never a silently-empty source.
+    registerBibliography(config).catch((e) =>
+      toastError(`Bibliography failed to load: ${e}`),
+    );
+
     // Build the spellchecker (vendored English base dictionary + the config-owned
     // custom math wordlist) and reconfigure it into the editor. A declared-but-
     // unreadable custom dictionary fails loud (toast); an absent path means only
@@ -328,6 +343,18 @@
       toastError(`Spellcheck failed to load: ${e}`),
     );
   });
+
+  /** Read, parse, and register the config-owned bibliography as the @-citation
+   *  completion source (P85/P86). editor.bibliography is a REQUIRED ExistingFile
+   *  (P84/C1), so the path always resolves to a real file; the entries are parsed
+   *  once here and the synchronous source closes over them, composing through the
+   *  delegating registry alongside the LaTeX and snippet sources (P51). */
+  async function registerBibliography(c: Config) {
+    const path = c.editor.bibliography;
+    const file = await readTextFile(path);
+    const entries = parseBibliography(file.content);
+    appCompletionSources.push(citationCompletionSource(entries));
+  }
 
   /** Read, parse, and register the config-owned snippet dictionary. */
   async function registerSnippetDictionary(c: Config) {
