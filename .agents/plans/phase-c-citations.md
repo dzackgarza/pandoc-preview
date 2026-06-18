@@ -478,3 +478,39 @@ regresses.
     app-core-mutating risky seam (config.rs + plugins.rs + render.sh + 3 generators) →
     isolation per the worktree policy. Blind-TDD via Workflow: obligation → RED → GREEN →
     adversarial review, role-separated, RED committed before GREEN.
+
+- **2026-06-18: Phase C C1–C5 COMPLETE on branch `phase-c-citations`** (blind-TDD via
+  Workflow, role-separated, each independently adversarially reviewed; controller
+  re-verified every audit trail + re-ran each gate serially):
+  - **C1/P84** bibliography + CSL as OSOT render-context config keys (`editor.bibliography`
+    / `editor.csl`, required `ExistingFile`); `{bibliography}`/`{csl}` substituted in
+    `plugins.rs` alongside `{mathjax}`; `render.sh` layers `--bibliography`/`--csl`; the
+    `--bibliography=`/`--csl=` literals DELETED from all three generators. p84+p27+p01 green.
+  - **C2/P85+P86** `@`-trigger citation completion, metadata fuzzy-match + bib-entry tooltip
+    via `@retorquere/bibtex-parser@9.0.29` (Better-BibTeX's parser; pinned to dodge the
+    10.0.0 missing-`.d.ts` regression). Composes with P51 (pushed, not override). p85+p86+p51 green.
+  - **C3/P87** cross-file label completion: App-owned index from the explorer's `listTree`
+    (built on project-open/save/create/rename/delete, NOT per-keystroke), harvesting
+    `{#id}` / `:::{#id}` / `\label{}`; pushed to `appCompletionSources`. p87+p51+p44 green.
+    (Follow-up: `labels.ts` `ATTR_ID` over-harvests bare `#id` tokens — tighten to brace
+    context before merge.)
+  - **C4/P88** per-file `bibliography:` YAML frontmatter override (pandoc-native key, `yaml`
+    parser, resolved relative to the file dir; global config bib as the no-hole fallback;
+    fail-loud on a missing override path); reuses the C2 parser + source. p88 proves both
+    legs headlessly (save-before-dirty-switch to avoid the native `ask()` dialog). p88+p85+p51+p03 green.
+  - **C5/P89** references sidebar: 4th `SIDEBAR_VIEWS` tab + `ReferencesPanel.svelte`
+    reusing the preview's `--citeproc` resolved `#refs` (the `html` `$state`) — cited-only
+    and CSL-rendered for free (citeproc emits `#ref-<key>` only for cited keys); live via
+    `$derived`. No second citeproc, no JS CSL formatter. p89+p27+p44 green.
+
+- **2026-06-18: C6 DEFERRED to its own milestone (per this plan's design-time discretion).**
+  C6 (backslash completion scoped to the injected MathJax macro tiers) is explicitly the
+  optional/last refinement here ("does not block C1–C5", "no new obligation proposed yet",
+  "decide at design time"). The macro-tier SoT IS clean (`pandoc-config`
+  `templates/css/mathjax-macros.ts` exports a generated `macros: Record<name,repl>` map),
+  but the app reads NO macro asset frontend-side today — so C6 requires a new
+  macro-SoT→frontend-completion pipeline (non-trivial integration), and it is math-macro
+  scoping, not a citation feature. Deferring it (tracked) keeps "Citations Done Right"
+  (P84–P89) shippable now; C6 belongs with the macro/MathJax tooling, filtering the vendored
+  `codemirror-lang-latex` completion against a LIVE read of the `macros` map (never a
+  hardcoded list — the admissibility line).
