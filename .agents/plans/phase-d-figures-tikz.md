@@ -456,3 +456,23 @@ mocks, no skips, no forced error modes.
     dir is `~/.pandoc/figures`, [[plugins-diagrams-figures-requirements]]).
   - Whether the dual-asset registry is a single XDG-state sidecar JSON or per-figure
     metadata — the `session.json`/`fold-state.json` host-FS pattern is the default.
+
+- **2026-06-18: decisions RATIFIED (controller, under the standing "execute all phases, no
+  stops" directive); Phase A/B/C shipped to main.** Executing on branch `phase-d-figures-tikz`.
+  - **Parser library:** research-first per D-1 — the GREEN agent first surveys existing
+    tikz/pgf parser crates/published grammars to LEVERAGE; only if none round-trips cleanly
+    does it PORT TikzIt's grammar via a combinator/PEG crate (`chumsky`/`pest`/`nom`),
+    choosing the one with the cleanest serialization story. Held to the P90 round-trip proof
+    (parse→serialize→reparse structurally equal; drops content → fail).
+  - **Config shape:** a new `[figures]` table (groups `tikzstyles`/`tikzdefs`/per-figure
+    `template`, each a required `ExistingFile`, fail-loud) — keeps the figures-compile config
+    cohesive and distinct from `[directories].figures` (the dir itself stays `~/.pandoc/figures`).
+  - **Dual-asset registry:** a single XDG-state sidecar JSON (the `session.json`/`fold-state.json`
+    host-FS pattern, fail-loud parse), not per-figure metadata.
+  - **Sequencing:** D-1 (P90, pure-Rust round-trip, proven via `cargo test` over real
+    TikzIt-format `.tikz` fixtures — the plan's unit-testable seam) lands FIRST as the
+    keystone. Then D-2/D-3 (shared style + per-figure template), then the UX (D-4/D-6) that
+    rides them; D-5 (snippet DB) and D-7/D-10 (non-tikz external launches) are
+    parser-independent. **Upstream-dependency check pending:** D-7/D-10 external launches
+    require the diagram-tool-as-plugin firewall model — verify it exists before D-7; if not,
+    surface it as a blocker (do NOT hardcode a tool launch in core).
