@@ -1,0 +1,44 @@
+{
+  "run_id": "20260619T232950Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p123-arxiv-bbl.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p123-arxiv-bbl.spec.ts",
+            "title": "the arXiv bundle bakes a `.bbl` named to the main `.tex` carrying the cited reference, with no `.bib` present",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 7725,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p123-arxiv-bbl.spec.ts",
+          "name": "arxiv-bbl-name",
+          "value": "main.bbl"
+        },
+        {
+          "spec": "p123-arxiv-bbl.spec.ts",
+          "name": "arxiv-bbl-bytes",
+          "value": 481
+        }
+      ]
+    }
+  ]
+}

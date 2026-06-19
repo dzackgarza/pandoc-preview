@@ -1,0 +1,35 @@
+{
+  "run_id": "20260619T234515Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p124-arxiv-tikz.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p124-arxiv-tikz.spec.ts",
+            "title": "the arXiv bundle externalizes every tikz diagram to a precompiled PDF figure, with no tikz source remaining",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 5720,
+            "errors": [
+              "Error: Inline tikz source survives in 1 bundled .tex file(s) — the diagrams were NOT externalized to PDF figures, so the bundle ships the tikz toolchain dependency to arXiv (which does no tikz compilation). Offenders: arxiv-bundle/main.tex [\\begin{tikzpicture}, \\begin{tikzcd}]."
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
