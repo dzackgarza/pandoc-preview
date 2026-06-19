@@ -1663,6 +1663,67 @@ selection_file = "picker-selection"
 EOF
     printf 'unfold_all\n' > "$CONFIG_DIR/picker-selection"
     ;;
+p115-frontmatter-editor.spec.ts)
+    # P106 (Phase E / E5): the structured YAML frontmatter editor MODAL (the sibling
+    # shape of PromptModal / SettingsModal) for the document's Pandoc YAML
+    # frontmatter — the leading `---` … `---` block at the buffer head — mapping the
+    # known fields title / author / date / bibliography / csl to form inputs. The
+    # keystone guarantee is BLOCK-LOCALITY: on confirm ONLY the frontmatter block is
+    # rewritten (the document BODY is byte-for-byte unchanged), and a document with
+    # NO frontmatter gains a well-formed `---` block on confirm.
+    #
+    # The proof needs TWO witnesses, so this case writes BOTH into the shared
+    # project (the explorer lists both; the spec opens each by sidebar label):
+    #
+    #   frontmatter.md  — a document whose buffer BEGINS with a `---` … `---` YAML
+    #     frontmatter block carrying `title:` and `author:`, followed by a
+    #     DISTINCTIVE body. Leg 1 opens this, changes the title and ADDS a
+    #     `bibliography:` value through the modal, confirms, and asserts the leading
+    #     `---` block parses (via the `yaml` package, the SAME dependency the editor
+    #     re-emits with) to the NEW title + the ADDED bibliography, AND that every
+    #     byte AFTER the closing `---` is unchanged from the on-disk pre-edit body.
+    #   nofrontmatter.md — a document with NO frontmatter (the buffer begins
+    #     DIRECTLY with body content). Leg 2 opens this, sets a field, confirms, and
+    #     asserts the buffer GAINS a well-formed leading `---` … `---` block carrying
+    #     that field, with the original body preserved below it.
+    #
+    # The DISTINCTIVE body marker on each file lets the spec locate the body region
+    # independently and byte-compare it across the confirm. The `bibliography:`
+    # value the modal adds need NOT resolve on disk for this obligation: P106 asserts
+    # the buffer's `---` block parses to the value (it is the Phase-C wiring, P88,
+    # that consumes the path — explicitly NOT re-implemented here), so no .bib is
+    # staged.
+    #
+    # RED today: there is no frontmatter-editor modal — no FrontmatterModal
+    # component, no `frontmatter` menu/command surface to open it, no field mapping,
+    # and no block-splice on confirm. The spec opens the editor through the modal's
+    # advertised surface (the `frontmatter` menu event, the sibling of the
+    # `settings` event p09 drives) and that surface never renders a Frontmatter
+    # modal, so the spec's wait for the modal's `<h2>` times out. The failure is the
+    # MISSING editor, not a boot/setup error: the app, project, editor, and both
+    # witness buffers are all brought up FIRST (the spec confirms the with-block
+    # buffer holds its `---` frontmatter before invoking the editor).
+    cat > "$PROJECT_DIR/frontmatter.md" <<'PPE_P115_FM_EOF'
+---
+title: Old Title
+author: A. Tikhonov
+---
+
+# Discriminant note
+
+The body distinctive marker DELTA-163 is the discriminant of the witness field.
+
+Body paragraph two carries unicode − and must survive byte-for-byte.
+PPE_P115_FM_EOF
+    cat > "$PROJECT_DIR/nofrontmatter.md" <<'PPE_P115_NF_EOF'
+# A document with no frontmatter
+
+The body distinctive marker OMEGA-577 opens this file with no leading block.
+
+A second paragraph below, also part of the preserved body.
+PPE_P115_NF_EOF
+    DEMO_FILE="$PROJECT_DIR/frontmatter.md"
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────
