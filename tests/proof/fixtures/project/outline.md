@@ -4,12 +4,14 @@ Some introductory text.
 
 ## Subsection
 
-:::{.remark}
+::: {.remark}
 
 A remark here.
+
 :::
 
-:::{.theorem title="Main Result"}
+::: {.theorem title="Main Result"}
 
 The theorem statement.
+
 :::
