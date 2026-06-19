@@ -1483,6 +1483,50 @@ An unrelated chapter, also written in a Café elsewhere.
 PPE_P111_CH2_EOF
     DEMO_FILE="$PROJECT_DIR/sections/intro.md"
     ;;
+p112-structural-motions.spec.ts)
+    # P103 (Phase E / E2): section / environment / math-zone keyboard MOTIONS —
+    # structural cursor jumps relative to the cursor's position. The witness is a
+    # single buffer carrying, in order, TWO headings, a `:::{.theorem}` FENCED DIV,
+    # and TWO `$…$` math spans, interleaved with plain paragraphs so a motion that
+    # lands on the WRONG structure kind (heading vs div vs math) lands on a line
+    # the spec can tell apart from the requested structure. The default fixture's
+    # demo.md/outline.md do not lay out these structures on the known distinct
+    # lines this spec walks, so motions.md is written fresh below; the spec
+    # recomputes every target line off disk (never hardcoding), so the layout here
+    # cannot silently desync the assertions.
+    #
+    #   #  A          — heading 1 (the FIRST section)
+    #   ## B          — heading 2 (the SECOND section; next-section's target from
+    #                   the top, prev-section's reverse-from-it target is heading 1)
+    #   :::{.theorem} — the FENCED DIV (next/prev-environment's target)
+    #   $a + b$       — math span 1 (next-math-zone's target from the top; the
+    #                   reverse target of prev-math-zone from math span 2)
+    #   $c + d$       — math span 2 (the start point for prev-math-zone)
+    #
+    # RED today: there are no structural motion commands, no E2 keymap block, and
+    # no named-command surface (runEditorCommand) to fire them — so the spec's
+    # first motion throws and the cursor never leaves its placed start. The failure
+    # is the MISSING motions, not a boot/setup error: the app, project, editor, and
+    # witness buffer are all brought up and the cursor placed FIRST.
+    cat > "$PROJECT_DIR/motions.md" <<'PPE_P112_EOF'
+# A
+
+Opening prose for the first section.
+
+## B
+
+Prose under the second section heading.
+
+:::{.theorem}
+A theorem body inside a fenced div.
+:::
+
+A paragraph carrying the first math span $a + b$ in the line.
+
+A later paragraph carrying the second math span $c + d$ here.
+PPE_P112_EOF
+    DEMO_FILE="$PROJECT_DIR/motions.md"
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────
