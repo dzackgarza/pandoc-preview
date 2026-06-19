@@ -12,7 +12,7 @@
     crosshairCursor,
     highlightActiveLine,
   } from "@codemirror/view";
-  import type { ViewUpdate } from "@codemirror/view";
+  import type { ViewUpdate, Command } from "@codemirror/view";
   import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
   import {
     foldGutter,
@@ -328,6 +328,21 @@
             // harness hooks jumpSourceToPreview / resyncPreviewFromSource fire.
             { key: "Ctrl-j", run: () => (onJumpToPreview(), true) },
             { key: "Ctrl-t", run: () => (onResyncPreview(), true) },
+          ]),
+          // P103 / Phase E (E2): the structural-motion keymap, COMPOSED alongside
+          // the bindings above (a SEPARATE keymap.of, never replacing them). Each
+          // binding fires the SAME named Command runStructuralCommand exposes for
+          // E3's palette. The chords are Ctrl-Alt-<letter> — clear of the CM6
+          // defaults (defaultKeymap's Ctrl-Alt-h is the only Ctrl-Alt binding) and
+          // of the app bindings above (Mod-b/i/k, Ctrl-e/j/t), the SAME
+          // conflict-avoidance discipline the Ctrl-e Emmet note follows.
+          keymap.of([
+            { key: "Ctrl-Alt-n", run: structuralCommands["next-section"] },
+            { key: "Ctrl-Alt-p", run: structuralCommands["prev-section"] },
+            { key: "Ctrl-Alt-e", run: structuralCommands["next-environment"] },
+            { key: "Ctrl-Alt-b", run: structuralCommands["prev-environment"] },
+            { key: "Ctrl-Alt-m", run: structuralCommands["next-math-zone"] },
+            { key: "Ctrl-Alt-w", run: structuralCommands["prev-math-zone"] },
           ]),
           themeCompartment.of(init.theme),
           wrapCompartment.of(init.wrap),
@@ -1203,15 +1218,144 @@
     return markdownOutline(view.state.doc.toString());
   }
 
-  /** Move the cursor to (and scroll to) the start of a 1-based line. */
-  export function goToLine(line: number) {
-    const n = Math.max(1, Math.min(line, view.state.doc.lines));
-    const pos = view.state.doc.line(n).from;
+  // ── P103 / Phase E (E2): structural section / environment / math-zone MOTIONS ──
+  // vimtex's `]]`/`[[` (section), `]m`/`[m` (env), and math-zone jumps, PORTED onto
+  // the editor's existing structure primitives: markdownOutline (kind:heading →
+  // section, kind:div → environment) for the prose structure, and the latexLanguage
+  // syntax tree (DollarMath / DisplayMath via $…$, ParenMath via \(…\), BracketMath
+  // via \[…\]) for math zones. Each motion is a CM6 `Command` ((view) => boolean)
+  // computed RELATIVE to the cursor: next-* lands on the nearest matching structure
+  // strictly after the cursor, prev-* on the nearest strictly before it — so prev-*
+  // and next-* move in opposite directions from the same point (never a fixed
+  // first/last jump). The commands are bound in a keymap block composed ALONGSIDE
+  // the existing app bindings (below) AND exposed by name (runStructuralCommand) so
+  // E3's command palette can invoke the SAME command the keybinding fires.
+
+  /** The 1-based lines of the outline entries of `kind` (heading = section, div =
+   * environment), in document order — the SAME markdownOutline the outline panel
+   * (getOutline) renders, so a motion lands exactly on a panel-listed structure. */
+  function outlineLines(kind: OutlineItem["kind"]): number[] {
+    return markdownOutline(view.state.doc.toString())
+      .filter((item) => item.kind === kind)
+      .map((item) => item.line);
+  }
+
+  /** Move the cursor to the start of `line` (1-based) and scroll it into view —
+   * the SAME dispatch goToLine performs, factored so the section/environment
+   * motions and goToLine share one cursor-move primitive. */
+  function moveCursorToLine(line: number) {
+    const pos = view.state.doc.line(line).from;
     view.dispatch({
       selection: EditorSelection.cursor(pos),
       effects: EditorView.scrollIntoView(pos, { y: "center" }),
     });
     view.focus();
+  }
+
+  /** Move the cursor to character offset `pos` and scroll it into view — the
+   * math-zone motions land the cursor INSIDE a span (an offset, not a line start),
+   * so they dispatch through this rather than moveCursorToLine. */
+  function moveCursorToOffset(pos: number) {
+    view.dispatch({
+      selection: EditorSelection.cursor(pos),
+      effects: EditorView.scrollIntoView(pos, { y: "center" }),
+    });
+    view.focus();
+  }
+
+  /** A section/environment motion as a CM6 Command: jump to the nearest outline
+   * entry of `kind` strictly after (forward) / before (backward) the cursor's
+   * current line. Returns false (no-op, motion not consumed) when there is no such
+   * entry in that direction, so the keypress falls through rather than silently
+   * swallowing. */
+  function outlineMotion(kind: OutlineItem["kind"], forward: boolean): Command {
+    return (v: EditorView): boolean => {
+      const cursorLine = v.state.doc.lineAt(v.state.selection.main.head).number;
+      const lines = outlineLines(kind);
+      const target = forward
+        ? lines.find((l) => l > cursorLine)
+        : [...lines].reverse().find((l) => l < cursorLine);
+      if (target === undefined) return false;
+      moveCursorToLine(target);
+      return true;
+    };
+  }
+
+  /** The math-zone spans in document order, each as the {from,to} char offsets of
+   * a top-level math node in the latexLanguage syntax tree: DollarMath (`$…$` /
+   * `$$…$$`), ParenMath (`\(…\)`), BracketMath (`\[…\]`). ensureSyntaxTree drives
+   * the (mixed-language) parse across the whole buffer first — the SAME parse
+   * syntaxAncestryAt reads — so a zone late in the buffer is not missed by a cached
+   * partial tree; the tree is then iterated and every math container collected. */
+  function mathZones(): Array<{ from: number; to: number }> {
+    const tree = ensureSyntaxTree(view.state, view.state.doc.length, 5000);
+    if (!tree) throw new Error("mathZones: parse did not complete");
+    const zones: Array<{ from: number; to: number }> = [];
+    tree.iterate({
+      enter: (node) => {
+        if (
+          node.name === "DollarMath" ||
+          node.name === "ParenMath" ||
+          node.name === "BracketMath"
+        ) {
+          zones.push({ from: node.from, to: node.to });
+        }
+      },
+    });
+    return zones.sort((a, b) => a.from - b.from);
+  }
+
+  /** A math-zone motion as a CM6 Command: jump the cursor INSIDE the nearest math
+   * span strictly after (forward) / before (backward) the cursor's current offset.
+   * "Strictly after/before the cursor's span" so that, with the cursor inside one
+   * span, prev/next move to the adjacent span rather than re-landing in place: a
+   * forward zone is one whose open delimiter is past the cursor; a backward zone is
+   * one whose close delimiter is before it. The cursor lands at zone.from + 1 — the
+   * first character INSIDE the opening delimiter, not on it. Returns false when no
+   * span lies in that direction. */
+  function mathMotion(forward: boolean): Command {
+    return (v: EditorView): boolean => {
+      const head = v.state.selection.main.head;
+      const zones = mathZones();
+      const target = forward
+        ? zones.find((z) => z.from > head)
+        : [...zones].reverse().find((z) => z.to < head);
+      if (!target) return false;
+      moveCursorToOffset(target.from + 1);
+      return true;
+    };
+  }
+
+  /** The six named structural-motion commands (P103). The map is the single source
+   * of truth for both the keymap block (below) and the named-command surface
+   * (runStructuralCommand): each binding fires the SAME Command the palette would
+   * invoke. */
+  const structuralCommands: Record<string, Command> = {
+    "next-section": outlineMotion("heading", true),
+    "prev-section": outlineMotion("heading", false),
+    "next-environment": outlineMotion("div", true),
+    "prev-environment": outlineMotion("div", false),
+    "next-math-zone": mathMotion(true),
+    "prev-math-zone": mathMotion(false),
+  };
+
+  /** E2E (P112) / E3 command-palette surface: run the named structural-motion
+   * command against the live view — the SAME CM6 Command ((view) => boolean) the
+   * motion's keybinding fires. An unknown name is a hard error (the palette and the
+   * keymap are both built from structuralCommands, so a name here that is not a
+   * command is a wiring bug, never a user-reachable state). */
+  export function runStructuralCommand(name: string) {
+    const command = structuralCommands[name];
+    if (!command) {
+      throw new Error(`unknown structural-motion command: ${JSON.stringify(name)}`);
+    }
+    command(view);
+  }
+
+  /** Move the cursor to (and scroll to) the start of a 1-based line. */
+  export function goToLine(line: number) {
+    const n = Math.max(1, Math.min(line, view.state.doc.lines));
+    moveCursorToLine(n);
   }
 
   /** The currently-collapsed fold ranges (char offsets), for persistence. */
