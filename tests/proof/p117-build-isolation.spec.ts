@@ -41,7 +41,8 @@ import {
 //   (1) NO-LITTER: an INDEPENDENT process (Node fs, not the app) lists D before
 //       and after the compile; the set of files NEWLY created in D contains NO
 //       *.aux, *.log, *.fls, *.out, *.fdb_latexmk, or build *.pdf — the
-//       intermediates live in the isolated build/temp directory, not beside the
+//       intermediates live in the isolated build directory (app-supplied
+//       {builddir}, written there by latexmk -output-directory), not beside the
 //       thesis source.
 //   (2) P8 PRESERVED: the user-chosen one-shot export {output} (placed OUTSIDE D)
 //       still lands at EXACTLY its chosen path — read off disk by INDEPENDENT
@@ -49,6 +50,13 @@ import {
 //       "Geometry of Numbers" + "Minkowski bound"). The isolation moves the
 //       INTERMEDIATES only; it never relocates or drops the user-requested
 //       artifact.
+//   (3) RIGHT MECHANISM: the produced PDF carries the sibling relinput.tex's
+//       sentence, proving a RELATIVE raw-LaTeX \input resolved at the lualatex
+//       stage — which only happens when the build engine ran with cwd = the
+//       SOURCE dir (the mandated cwd=source + latexmk -output-directory=<builddir>
+//       shape). The REJECTED cwd=temp shortcut would not find relinput.tex, the
+//       compile would fail, and no PDF would be produced — so this clause FAILS
+//       the wrong mechanism even though it would also satisfy clause (1).
 //
 // ADMISSIBLE because it FAILS on a plausibly broken app:
 //   - the CURRENT current_dir = source-parent behavior, where the latexmk driver
@@ -77,6 +85,17 @@ import {
 
 const WITNESS_TITLE = 'Geometry of Numbers';
 const WITNESS_BOUND = 'Minkowski bound';
+// F2 MECHANISM WITNESS: the spec's demo.md copy ends with a RELATIVE raw-LaTeX
+// \input{relinput.tex} (provisioned by scripts/provision-proof.sh, p117 case)
+// referencing a sibling .tex in the SOURCE dir whose body is this sentence. The
+// produced PDF can only carry it if lualatex resolved that relative \input — which
+// only happens when the build engine ran with cwd = the SOURCE dir. The
+// doctrine-correct fix (cwd = source + latexmk -output-directory=<builddir>)
+// resolves it; the REJECTED cwd=temp shortcut would NOT find relinput.tex, the
+// compile would fail, and no PDF would be produced. So this witness FAILS the
+// rejected mechanism while passing the mandated one — it pins the RIGHT mechanism,
+// not merely "no litter on a single-file demo".
+const WITNESS_REL_INPUT = 'Relative input resolved at compile time';
 
 // LaTeX build intermediates a driver scatters into its working directory. The
 // build .pdf is included: the build driver's PDF lands beside the source too (the
@@ -172,6 +191,15 @@ test('PDF build does not litter the source tree; the one-shot export still lands
   const textOut = execFileSync('pdftotext', [output, '-'], { encoding: 'utf-8' });
   expect(textOut.includes(WITNESS_TITLE)).toBe(true);
   expect(textOut.includes(WITNESS_BOUND)).toBe(true);
+
+  // ── Mechanism clause: the RELATIVE \input resolved at compile time ──────────
+  // The produced PDF carries the sibling relinput.tex's sentence ONLY if lualatex
+  // resolved a RELATIVE \input against the source dir — i.e. the build engine ran
+  // with cwd = the SOURCE dir (the mandated -output-directory mechanism), NOT
+  // cwd'd into a temp build dir (the rejected shortcut, under which relinput.tex
+  // is unfindable, the compile fails, and no PDF is produced). This pins the RIGHT
+  // isolation mechanism.
+  expect(textOut.includes(WITNESS_REL_INPUT)).toBe(true);
 
   recordObservation({
     spec: manifest.spec,

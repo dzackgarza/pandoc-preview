@@ -293,6 +293,40 @@ pub fn validate(config: &Config) -> Result<()> {
     Ok(())
 }
 
+/// The canonical app-substituted build-directory placeholder (F2 / P108). A
+/// plugin whose driver scatters intermediates references `{builddir}` in its
+/// argv; the app substitutes a per-run isolated build directory it supplies, and
+/// the DRIVER's own native output-directing flag routes its intermediates there
+/// instead of beside the source. The app neither knows nor names what those
+/// intermediates are.
+///
+/// This is the OSOT for the token: the plugin firewall substitutes it exactly as
+/// it substitutes `{file}`/`{artifact}`, and the resolver below supplies the
+/// value. The app core stays build-engine-agnostic — it names no engine concept
+/// and exports no engine env var; it only owns "a per-run build directory exists,
+/// here is its path." How a driver uses that path is entirely the plugin's.
+pub const PLACEHOLDER_BUILDDIR: &str = "{builddir}";
+
+/// Monotonic counter making each supplied build directory unique within a
+/// process, so concurrent or repeated runs never collide in the OS temp root.
+static BUILD_DIR_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Resolve a per-run isolated build directory the app SUPPLIES to a plugin via
+/// the `{builddir}` placeholder. Created eagerly so substitution can never hand
+/// a plugin a path that does not exist; a directory that cannot be created is a
+/// LOUD error (no fallback to the source tree, no silent skip). The app neither
+/// `cwd`s into this directory nor exports any engine-specific env var — the
+/// plugin's own driver flag does the isolation with this path.
+pub fn resolve_build_dir() -> Result<PathBuf> {
+    let dir = std::env::temp_dir().join(format!(
+        "pandoc-preview-build-{}-{}",
+        std::process::id(),
+        BUILD_DIR_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    ));
+    std::fs::create_dir_all(&dir).map_err(|e| Error::io(&dir, e))?;
+    Ok(dir)
+}
+
 pub fn config_path() -> Result<PathBuf> {
     // dirs::config_dir honors $XDG_CONFIG_HOME on Linux.
     let base = dirs::config_dir().ok_or_else(|| {

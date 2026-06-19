@@ -23,6 +23,12 @@ const PH_PLUGIN_DIR: &str = "{plugin_dir}";
 const PH_CONFIG_DIR: &str = "{config_dir}";
 const PH_FILE: &str = "{file}";
 const PH_ARTIFACT: &str = "{artifact}";
+/// F2 / P108 — the app-substituted per-run build directory. Sourced from the ONE
+/// canonical token in `config` (OSOT). A plugin whose driver scatters
+/// intermediates references `{builddir}` and routes them there with its OWN
+/// native output-directing flag; the app core supplies only the path, staying
+/// build-engine-agnostic.
+const PH_BUILDDIR: &str = config::PLACEHOLDER_BUILDDIR;
 const PH_BASE_DIR: &str = "{base_dir}";
 const PH_BASE_URL: &str = "{base_url}";
 const PH_MATHJAX: &str = "{mathjax}";
@@ -43,11 +49,6 @@ const PH_FIGURE_TEMPLATE: &str = "{figure_template}";
 /// JSON, so a renderer/check script can read its own config (e.g. the pandoc
 /// renderer's `from_format`). Set for renderer runs and doctor-check runs.
 const ENV_PLUGIN_CONFIG: &str = "PPE_PLUGIN_CONFIG";
-
-/// Monotonic counter making each isolated export build directory unique within a
-/// process (F2/P108 temp-directory build isolation), so concurrent or repeated
-/// exports never collide in the OS temp root.
-static BUILD_DIR_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 /// A plugin manifest (`plugin.toml`). The Milestone A plugin contract. Every
 /// field is required: `deny_unknown_fields` + no `#[serde(default)]` means a
@@ -383,38 +384,24 @@ fn run_plugin_sync(
         .ok_or_else(|| Error::InvalidArgument(format!("{source_path} has no parent directory")))?
         .to_path_buf();
 
-    // F2 (P108) — TEMP-DIRECTORY BUILD ISOLATION. An export driver that runs a
-    // LaTeX engine (latexmk -lualatex) writes its .aux/.fls/.log/.out/.fdb_latexmk
-    // and build .pdf intermediates into its WORKING directory. Spawning with the
-    // source-file parent as cwd would scatter that litter beside the user's
-    // thesis. Instead, route the build into an isolated per-run directory under the
-    // OS temp root (latexmk's native build-isolation lever is the working/output
-    // directory; the app supplies the path). The user-chosen one-shot export
-    // {artifact} is an ABSOLUTE path written OUTSIDE this dir, so it still lands at
-    // its chosen location — only the intermediates move. An unresolvable build dir
-    // is a LOUD error (no fallback to the source tree).
-    let build_dir = std::env::temp_dir().join(format!(
-        "pandoc-preview-build-{}-{}",
-        std::process::id(),
-        BUILD_DIR_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-    ));
-    std::fs::create_dir_all(&build_dir).map_err(|e| Error::io(&build_dir, e))?;
-    // RAII guard: remove the isolated build directory (and its intermediates) when
-    // this run returns, by any path. Cleanup failures are non-fatal — the build
-    // artifact already lives at the absolute {artifact} outside this tree.
-    struct BuildDirGuard(PathBuf);
-    impl Drop for BuildDirGuard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.0);
-        }
-    }
-    let _build_guard = BuildDirGuard(build_dir.clone());
+    // F2 (P108) — BUILD ISOLATION via an APP-SUPPLIED build directory. A build
+    // driver may scatter its intermediates unless told otherwise. The app core
+    // stays build-engine-agnostic: it SUPPLIES a per-run isolated build directory
+    // through the `{builddir}` placeholder (config::resolve_build_dir, a LOUD error
+    // if it cannot be created — no fallback to the source tree) and substitutes it
+    // into the plugin argv. The PLUGIN's own driver flag does the isolation with
+    // that path; the core does NOT cwd into it and exports NO engine env var. The
+    // spawn cwd stays the SOURCE file's parent (below), so the document's relative
+    // resources resolve natively — only the build's intermediates are routed into
+    // {builddir}.
+    let build_dir = config::resolve_build_dir()?;
 
     let subs = [
         (PH_PLUGIN_DIR, plugin.dir.display().to_string()),
         (PH_CONFIG_DIR, config_dir.display().to_string()),
         (PH_FILE, source_path.clone()),
         (PH_ARTIFACT, output_path.clone()),
+        (PH_BUILDDIR, build_dir.display().to_string()),
     ];
     let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
     let argv: Vec<String> = plugin
@@ -435,28 +422,15 @@ fn run_plugin_sync(
     // {file} simply ignore the env var.
     let plugin_config = config_json(cfg.plugin.get(&plugin_id));
 
-    // TeX resolves a document's relative resources (e.g. \includegraphics of
-    // fig/plot.png) against its search path. With the build running in the
-    // isolated temp dir (not the source dir), prepend the SOURCE directory to
-    // TEXINPUTS so the build driver's engine still finds those resources — the
-    // intermediates land in the isolated dir while the source's relative assets
-    // resolve regardless of cwd. The trailing "//" recurses; the trailing ":"
-    // appends the system default path.
-    let texinputs = {
-        let mut p = format!("{}//", dir.display());
-        if let Some(existing) = std::env::var_os("TEXINPUTS") {
-            p.push(':');
-            p.push_str(&existing.to_string_lossy());
-        }
-        p.push(':');
-        p
-    };
-
+    // Spawn with cwd = the SOURCE file's parent directory, so a build driver
+    // resolves the document's relative resources natively — exactly as it would if
+    // the user ran it by hand beside the source. Build isolation is the plugin's
+    // concern via the substituted {builddir} (its driver routes its intermediates
+    // there); the core injects NO build-engine env var.
     let mut child = Command::new(program)
         .args(args)
-        .current_dir(&build_dir)
+        .current_dir(&dir)
         .env(ENV_PLUGIN_CONFIG, plugin_config)
-        .env("TEXINPUTS", texinputs)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

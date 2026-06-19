@@ -1054,6 +1054,26 @@ p117-build-isolation.spec.ts)
 [plugin.latexmk-pdf-export]
 command = "$PANDOC_BIN --from markdown --standalone --to latex"
 EOF
+    # STRENGTHEN P108's mechanism proof: the build must resolve the source's
+    # document-relative resources at the LaTeX (lualatex) stage, which only happens
+    # when the engine runs with cwd = the source dir. The doctrine-correct fix
+    # (cwd = source dir + latexmk -output-directory=<builddir>) resolves them; the
+    # REJECTED shortcut (cwd = an OS-temp build dir) would NOT — the relative input
+    # would be unresolvable there and the compile would fail, producing no PDF, so
+    # clause (2) (artifact present, witnesses) would fail. We provision a RELATIVE
+    # \input of a sibling .tex (raw LaTeX, passed through by pandoc --to latex) into
+    # THIS spec's hermetic project copy, with a witness sentence the produced PDF
+    # must carry. A relative \input that resolves PROVES the engine ran against the
+    # source dir, not a temp cwd — the exact mechanism P108 mandates.
+    REL_WITNESS="Relative input resolved at compile time"
+    cat > "$PROJECT_DIR/relinput.tex" <<EOF
+$REL_WITNESS.
+EOF
+    # Append a raw-LaTeX \input{relinput.tex} (a RELATIVE path, no directory) to the
+    # spec's demo.md copy. pandoc --from markdown --to latex passes the raw TeX
+    # through verbatim, so lualatex must resolve relinput.tex against its cwd. The
+    # shared fixture demo.md is untouched; only this spec's copy gains the input.
+    printf '\n\n\\input{relinput.tex}\n' >> "$DEMO_FILE"
     ;;
 p47-save-gate.spec.ts)
     # P47 A2 proves the save-gate blocks a REAL plugin export on an identity-less

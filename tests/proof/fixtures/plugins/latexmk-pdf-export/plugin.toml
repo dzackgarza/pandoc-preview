@@ -4,20 +4,24 @@
 # Phase F plan calls swapping the PDF command to a latexmk driver a "config swap,
 # not new core code"). It is required HERE because the obligation's observable —
 # latex INTERMEDIATES scattering beside the source — is only visible with a driver
-# that writes its aux files into its working directory. Bare pandoc self-isolates
-# (it runs the engine in pandoc's OWN private temp dir), so the shipped
-# pandoc-pdf-export plugin NEVER litters the source tree and would make the
-# litter-clause unobservable. latexmk writes .aux/.fls/.log/.out/.pdf into its CWD,
-# so it surfaces the EXACT app-core seam P108 targets: render.rs export_sync /
-# plugins.rs spawning the build with current_dir = the source file's PARENT dir.
+# that writes its aux files into a directory. Bare pandoc self-isolates (it runs
+# the engine in pandoc's OWN private temp dir), so the shipped pandoc-pdf-export
+# plugin NEVER litters the source tree and would make the litter-clause
+# unobservable. latexmk writes .aux/.fls/.log/.out/.pdf into its WORKING dir unless
+# pointed elsewhere, so it surfaces the EXACT seam P108 targets — and the
+# doctrine-correct fix is latexmk's OWN native -output-directory flag (the engine
+# isolation lever lives in THIS plugin, not in the build-engine-agnostic core).
 #
 # Cloned from the shipped pandoc-pdf-export shape (id/name/description/category/
 # kind/extension, a JSON Schema referenced not inlined, an [exec] command with
-# {file}/{artifact} substitution, a self-owned [configure], a contributed doctor
-# check). It carries its OWN raw pandoc (markdown -> standalone latex) command on
-# PPE_PLUGIN_CONFIG, exactly as the shipped plugin does; export.sh runs that to
-# produce a .tex, then drives latexmk -lualatex over it and copies the produced
-# PDF to the app-chosen {artifact}.
+# {file}/{artifact}/{builddir} substitution, a self-owned [configure], a
+# contributed doctor check). It carries its OWN raw pandoc (markdown -> standalone
+# latex) command on PPE_PLUGIN_CONFIG, exactly as the shipped plugin does. With cwd
+# = the source dir (the core spawns it there) export.sh runs pandoc to produce the
+# .tex, drives latexmk -lualatex -output-directory=<{builddir}> over it (so EVERY
+# intermediate lands in the app-supplied build dir, while the source's relative
+# resources resolve against cwd), then copies the produced PDF from the build dir
+# to the app-chosen {artifact}.
 id = "latexmk-pdf-export"
 name = "PDF (latexmk)"
 description = "Exports the document to PDF via pandoc (markdown->latex) then latexmk -lualatex; the F2 build-isolation witness driver."
@@ -28,10 +32,13 @@ config_schema = "schema.json"
 
 [exec]
 # {plugin_dir} = this plugin's directory, {file} = the real on-disk source path,
-# {artifact} = the app-provided output path. The build's working/output directory
-# is the app-core concern (today: the source file's parent; F2: an isolated temp
-# build dir) — the plugin does not choose it.
-command = ["{plugin_dir}/export.sh", "{file}", "{artifact}"]
+# {artifact} = the app-provided output path, {builddir} = the app-supplied per-run
+# isolated build directory (F2/P108). The app SUPPLIES the build path; this
+# plugin's driver routes latexmk's intermediates into it via latexmk's own native
+# -output-directory flag (the engine-specific isolation lever lives HERE, in the
+# plugin, NOT in the build-engine-agnostic core). The spawn cwd is the source
+# file's parent, so the source's relative resources resolve natively.
+command = ["{plugin_dir}/export.sh", "{file}", "{artifact}", "{builddir}"]
 
 [configure]
 command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
