@@ -1,0 +1,136 @@
+{
+  "run_id": "20260619T163521Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p116-pdf-preview.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p116-pdf-preview.spec.ts",
+            "title": "live PDF preview compiles demo.md on idle and renders a real page canvas",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 15053,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-viewer-canvas",
+          "value": "1@918x1188"
+        }
+      ]
+    },
+    {
+      "spec": "p117-build-isolation.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p117-build-isolation.spec.ts",
+            "title": "PDF build does not litter the source tree; the one-shot export still lands at its path",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 11676,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "d-created-files",
+          "value": "(none)"
+        },
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "d-litter",
+          "value": "(none)"
+        },
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "output-pages-info",
+          "value": "Title:           "
+        }
+      ]
+    },
+    {
+      "spec": "p08-export-pdf.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p08-export-pdf.spec.ts",
+            "title": "Export PDF runs the configured lualatex plugin and carries the witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 10692,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-producer",
+          "value": "Producer:        LuaTeX-1.17.0"
+        }
+      ]
+    },
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1307,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.1.3"
+        }
+      ]
+    }
+  ]
+}

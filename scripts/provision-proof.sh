@@ -116,7 +116,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "latexmk-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
@@ -1097,18 +1097,15 @@ p118-multipass-references.spec.ts)
 [plugin.latexmk-pdf-export]
 command = "$PANDOC_BIN --from markdown --standalone --to latex"
 EOF
-    # RED BASELINE: overwrite the hermetic latexmk-pdf-export/export.sh with the
-    # DELIBERATELY single-pass driver (pandoc md->latex then ONE lualatex pass, no
-    # latexmk, no BibTeX). This makes the obligation's named PDF driver id run a
-    # single pass TODAY, so the produced PDF carries (??) for the forward equation
-    # reference and [?] for the unrendered citation — the obligation's "single
-    # LaTeX pass leaves BOTH unresolved" baseline. The GREEN deliverable ships the
-    # real multi-pass latexmk export.sh (this override is removed), and latexmk's
-    # own as-many-passes-as-needed + auto-BibTeX resolves BOTH. The spec is
-    # byte-stable across RED -> GREEN (it always drives latexmk-pdf-export).
-    cp "$REPO_ROOT/tests/proof/fixtures/p118-single-pass-export.sh" \
-        "$PLUGINS_DIR/latexmk-pdf-export/export.sh"
-    chmod +x "$PLUGINS_DIR/latexmk-pdf-export/export.sh"
+    # GREEN deliverable (F3): the vendored latexmk-pdf-export plugin installed
+    # above (src-tauri/resources/vendor/plugins/latexmk-pdf-export) ships the REAL
+    # multi-pass latexmk export.sh as the configured PDF command. No single-pass
+    # override is applied: latexmk's own as-many-passes-as-needed + auto-BibTeX
+    # resolves BOTH the forward \eqref (real number) and the \cite (rendered to its
+    # bibliography entry). The spec is byte-stable across RED -> GREEN (it always
+    # drives latexmk-pdf-export); the prior RED applied a single-pass export.sh
+    # override here (now removed), so today the produced PDF carries the resolved
+    # markers and the spec passes.
     # The single-pass-unresolvable source: a forward \eqref to a numbered equation
     # whose \label appears LATER, plus a \cite against the config-declared bib.
     # Provisioned AS demo.md so the proven openAndSelectDemo selection path applies.
