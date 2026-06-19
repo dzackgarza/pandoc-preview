@@ -1,0 +1,49 @@
+{
+  "run_id": "20260619T181955Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p119-compile-toggle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p119-compile-toggle.spec.ts",
+            "title": "the auto/manual + fast/full PDF-compile controls gate idle recompiles and select different configured commands with different artifacts",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 48765,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p119-compile-toggle.spec.ts",
+          "name": "fast-vs-full-log-differ",
+          "value": true
+        },
+        {
+          "spec": "p119-compile-toggle.spec.ts",
+          "name": "manual-suppressed-then-recompiled",
+          "value": true
+        },
+        {
+          "spec": "p119-compile-toggle.spec.ts",
+          "name": "auto-recompiled-on-edit",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

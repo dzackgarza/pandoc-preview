@@ -7,11 +7,9 @@ Some introductory text.
 :::{.remark}
 
 A remark here.
-
 :::
 
 :::{.theorem title="Main Result"}
 
 The theorem statement.
-
 :::

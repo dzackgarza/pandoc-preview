@@ -1,0 +1,97 @@
+{
+  "run_id": "20260619T184911Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p116-pdf-preview.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p116-pdf-preview.spec.ts",
+            "title": "live PDF preview compiles demo.md on idle and renders a real page canvas",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 13894,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-viewer-canvas",
+          "value": "1@918x1188"
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2965,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "p43-preview-status.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p43-preview-status.spec.ts",
+            "title": "preview indicator: edit marks Out of date, then Recompiling, then Up to date",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4499,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p43-preview-status.spec.ts",
+          "name": "status-sequence",
+          "value": "stale>rendering>ok"
+        }
+      ]
+    }
+  ]
+}

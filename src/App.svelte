@@ -269,6 +269,17 @@
     if (activeTab === "preview" || activeTab === "pdf") previewSurface = activeTab;
   });
 
+  // Phase F / F6 / P113 — the slides fast-feedback preview mode. When active the
+  // SAME HTML-preview iframe shows a reveal.js DECK instead of the html5 render:
+  // the compile-on-idle scheduler (scheduleRender/doRender) routes the buffer
+  // through the revealjs-renderer plugin (pandoc --to revealjs, the sibling of the
+  // active html5 renderer) rather than the active renderer. The deck is HTML, so
+  // it paints into the existing preview iframe; editing re-renders the deck on idle
+  // (the fast path), distinct from a beamer->PDF compile. The slides renderer
+  // plugin carries ALL writer knowledge — the core only chooses which render IPC
+  // (api.renderSlides vs api.renderPreview) the SAME scheduler drives.
+  let slidesMode = $state(false);
+
   // ---- PDF compile-on-idle scheduler (Phase F / F1 / P107) ----------------
   //
   // The debounce sibling of the HTML scheduleRender/doRender loop: its OWN
@@ -799,7 +810,7 @@
         // renderStatus()); pdfPreviewArtifact is the on-disk path of the PDF the
         // scheduler produced (the artifact runPluginToPath returned), or null
         // until a compile succeeds — NEVER a stale path after a failed compile.
-        setPreviewMode: (mode: "preview" | "pdf") => {
+        setPreviewMode: (mode: "preview" | "pdf" | "slides") => {
           setPreviewMode(mode);
         },
         pdfStatus: () => pdfStatus,
@@ -1256,7 +1267,13 @@
     setStatus("rendering");
     const baseDir = dirOf(currentFile);
     try {
-      const res = await api.renderPreview(
+      // Phase F / F6 / P113: in slides mode the SAME scheduler drives the slides
+      // renderer plugin (api.renderSlides -> revealjs-renderer, pandoc --to
+      // revealjs) so the SAME preview iframe shows a reveal.js DECK; otherwise the
+      // active html5 renderer. The deck/HTML both land in `html`, re-rendered on
+      // idle as the buffer changes.
+      const render = slidesMode ? api.renderSlides : api.renderPreview;
+      const res = await render(
         content,
         baseDir,
         convertFileSrc(baseDir) + "/",
@@ -1408,9 +1425,29 @@
   // Switch the preview pane to the PDF mode and kick the compile-on-idle
   // scheduler. The menu/command-palette PDF-preview action and the E2E harness
   // both route through here.
-  function setPreviewMode(mode: "preview" | "pdf") {
+  function setPreviewMode(mode: "preview" | "pdf" | "slides") {
+    // Phase F / F6 / P113: "slides" shows a reveal.js DECK in the SAME preview
+    // iframe (activeTab = "preview"), produced by the slides renderer plugin via
+    // the SAME compile-on-idle scheduler. slidesMode flips the render IPC the
+    // scheduler drives; leaving slides mode (mode "preview"/"pdf") restores the
+    // html5 render. The decisive observable is the deck re-rendered into the iframe.
+    if (mode === "slides") {
+      slidesMode = true;
+      activeTab = "preview";
+      if (currentFile) doRenderNow();
+      return;
+    }
+    slidesMode = false;
     activeTab = mode;
     if (mode === "pdf") schedulePdf();
+  }
+
+  // Render the current buffer through the active render path NOW (no debounce), so
+  // switching INTO slides mode paints the deck immediately rather than only on the
+  // next edit. Subsequent edits re-render through the SAME scheduleRender debounce.
+  function doRenderNow() {
+    if (!currentFile) return;
+    void doRender(editor.getContent());
   }
 
   // ---- source↔preview line jump for owned tikz (P109 / D-4) ---------------

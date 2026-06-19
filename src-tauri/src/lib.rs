@@ -174,6 +174,7 @@ pub fn run() {
             fsops::rename_path,
             fsops::delete_path,
             render::render_preview,
+            render::render_slides,
             plugins::run_plugin,
             plugins::configure_plugin,
             plugins::launch_diagram_tool,

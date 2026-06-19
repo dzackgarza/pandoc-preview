@@ -709,6 +709,26 @@ pub fn render_active(
     let renderer_cfg = cfg.renderer.as_ref().ok_or_else(|| {
         Error::InvalidArgument("no [renderer] is configured (no active renderer)".into())
     })?;
+    let renderer_id = renderer_cfg.active.clone();
+    render_named(renderer_id, buffer, base_dir, base_url, mathjax_url)
+}
+
+/// Render the editor buffer to preview HTML through a SPECIFIC renderer plugin,
+/// named by id. This is the shared body the active-renderer HTML preview and the
+/// Phase F / F6 / P113 slides fast-feedback preview both run: the slides preview
+/// names the `revealjs-renderer` plugin (`pandoc --to revealjs`, the sibling of
+/// the active html5 renderer), so editing re-renders a reveal.js DECK into the
+/// SAME preview iframe on idle through the SAME plugin firewall. The renderer
+/// plugin carries ALL writer knowledge; the core only forwards the render
+/// context and the plugin's own config. An unknown renderer id is a loud error.
+pub fn render_named(
+    renderer_id: String,
+    buffer: String,
+    base_dir: String,
+    base_url: String,
+    mathjax_url: String,
+) -> Result<RenderOutcome> {
+    let cfg = config::load()?;
     let plugins_cfg = cfg.plugins.as_ref().ok_or_else(|| {
         Error::InvalidArgument(
             "a [renderer] is active but no [plugins] directory is configured".into(),
@@ -723,11 +743,10 @@ pub fn render_active(
     let plugins = discover(Path::new(&plugins_cfg.dir))?;
     let plugin = plugins
         .iter()
-        .find(|p| p.manifest.id == renderer_cfg.active)
+        .find(|p| p.manifest.id == renderer_id)
         .ok_or_else(|| {
             Error::InvalidArgument(format!(
-                "active renderer {:?} not found in the plugins dir",
-                renderer_cfg.active
+                "renderer {renderer_id:?} not found in the plugins dir"
             ))
         })?;
 
@@ -773,13 +792,10 @@ pub fn render_active(
         .map(|a| substitute(a, &subs))
         .collect();
     let (program, args) = argv.split_first().ok_or_else(|| {
-        Error::InvalidArgument(format!(
-            "renderer {} has an empty command",
-            renderer_cfg.active
-        ))
+        Error::InvalidArgument(format!("renderer {renderer_id} has an empty command"))
     })?;
 
-    let plugin_config = config_json(cfg.plugin.get(&renderer_cfg.active));
+    let plugin_config = config_json(cfg.plugin.get(&renderer_id));
     let mut child = Command::new(program)
         .args(args)
         .current_dir(&base_dir)

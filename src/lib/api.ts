@@ -169,6 +169,19 @@ export const renderPreview = (
   mathjaxUrl: string,
 ) => invoke<RenderResult>("render_preview", { source, baseDir, baseUrl, mathjaxUrl });
 
+/**
+ * Render the editor buffer to a reveal.js slide DECK through the slides renderer
+ * plugin (Phase F / F6 / P113) — the sibling of renderPreview. The deck HTML
+ * paints into the SAME preview iframe; the slides compile-on-idle scheduler
+ * re-renders it on idle (the fast HTML path).
+ */
+export const renderSlides = (
+  source: string,
+  baseDir: string,
+  baseUrl: string,
+  mathjaxUrl: string,
+) => invoke<RenderResult>("render_slides", { source, baseDir, baseUrl, mathjaxUrl });
+
 /** Run a discovered plugin by id against the real open buffer (Milestone A). */
 export const runPlugin = (
   pluginId: string,
