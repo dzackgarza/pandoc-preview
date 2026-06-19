@@ -1,4 +1,4 @@
-# Proof Obligations (P1–P83)
+# Proof Obligations (P1–P102)
 
 User-approved external proof obligations for Pandoc Preview.
 Each is an exact, externally observable happy-path state — real display, real pandoc, real filesystem, real XDG config.
@@ -357,6 +357,16 @@ It states the OBSERVABLE behaviour ONLY — no module, watcher, channel, or fing
 It is proven through the real app on a real display, where the external rewrite is performed by an INDEPENDENT process writing the file (the P48/P49 idiom for durable host-FS state — NOT the app writing it), and the reload is observed as the preview reflecting the NEW on-disk content (not the stale render).
 It is admissible only if it FAILS on a plausibly broken app — a stale render persisting after the external write (no reload), or a spurious reload firing absent any real change.
 
+### Milestone — Phase E: project navigation (P101–P102; E1 workspace search)
+
+P101–P102 (added 2026-06-19) cover the Phase E headline sub-milestone E1 "global full-text WORKSPACE search", authored from [[phase-e-project-navigation]] (the 2026-06-19 RATIFIED renumber: the plan's drafted P100/P101 COLLIDE with Phase D's P100 / D-0, so E1 maps to P101 + P102; Phase E specs continue p110+).
+They are the new `search` sidebar view (a sibling of the Phase-C references panel in `SIDEBAR_VIEWS`, riding the P18 activity-bar model built to hold more views) — a global content search across the open project, distinct from in-file find and from filename filtering.
+P101 is the content-search keystone (boolean grammar + click-to-open-at-line); P102 refines it with per-directory restriction and a relevancy heatmap.
+The witness uses the shared fixture extended to a multi-file project.
+They state the OBSERVABLE behaviour ONLY — no search-backend, plugin, ripgrep, query-translation, scoring, or heat-class-rendering internals (the wiring belongs to the implementer, not these obligations).
+They are proven through the real app on a real display, with the opened file's cursor line and the result-list contents read independently of the app's own report.
+Each is admissible only if it FAILS on a plausibly broken app.
+
 - **P90 — tikz-subset parser round-trips real source.** Parsing a real TikzIt-class `.tikz` fixture — a `tikzpicture` envelope carrying layered nodes and edges (a `\begin{pgfonlayer}{nodelayer}` block of `\node[<props>](<name>) at (<x>,<y>){<label>};` and a `\begin{pgfonlayer}{edgelayer}` block of `\draw[<props>](<src>) to (<tgt>);`), per-node/per-edge styles and properties, node labels, and a bounding-box `\path … rectangle …` — into a structured graph model and serializing that model back yields canonical tikz source that RE-PARSES to a STRUCTURALLY EQUAL model (same nodes with the same names, coordinates, props, and labels; same edges with the same endpoints and props; same layers and bounding box), and the serialization is STABLE across the round-trip (serializing the re-parsed model reproduces the same canonical source).
   A MALFORMED picture is rejected with a LOUD structured error that names the offending line/token — never silently accepted as an empty or partial graph, and never silently soft-reverted in the parser library layer.
   Admissible because it fails on a parser that DROPS content (a node, edge, property, or label present in the fixture is absent from the re-parsed model, so the structures are not equal), on a serializer that emits NON-RE-PARSEABLE source (the canonical output cannot be parsed back, or parses to a different structure, so the round-trip breaks), on an UNSTABLE serialization (re-serializing the re-parsed model produces different source than the first serialization, so the canonical form is not fixed), and on a parser that ACCEPTS MALFORMED input (a malformed picture yields an empty/partial graph with no error, instead of a loud structured error naming the offending line/token).
@@ -423,6 +433,15 @@ It is admissible only if it FAILS on a plausibly broken app — a stale render p
   Additionally, the tikz rendering toolchain — the LaTeX compiler together with the PDF→SVG converter — is a HARD dependency surfaced by the startup doctor battery: when the converter is absent the doctor reports a LOUD FAIL at the startup gate, never a silent runtime skip of the figure.
   Admissible because it fails on an app that shows the tikz source as TEXT / does not produce an SVG in the preview (the compile seam is dormant — the figure is never compiled, so the raw source appears verbatim and no vector figure is rendered), and on an app that treats a MISSING tikz converter as a silent no-op (the figure is silently skipped or rendered as raw source with no doctor FAIL) instead of a loud doctor FAIL at the startup gate.
   It is NOT satisfied by an assertion that a filter/converter file merely EXISTS on disk — a required-on-disk filter that is never loaded produces no rendered SVG, so an existence check would pass on exactly the dormant app this obligation must reject; the proof must observe a real rendered SVG in the preview and a real doctor FAIL when the converter is absent.
+
+- **P101 — workspace content search finds across files, with boolean operators and click-to-open-at-line.** In a multi-file project where `chapter1.md` contains `Minkowski bound` and `chapter2.md` contains `Minkowski lattice` and `Café`, open the Search view and query `Minkowski !lattice`: the results list `chapter1.md` (AND `Minkowski`, NOT `lattice`) and do NOT list `chapter2.md`; clicking the `chapter1.md` hit opens that file in the editor with the cursor on the matched line — an INDEPENDENT read of the editor cursor line equals the line containing `Minkowski bound`.
+  The boolean grammar is space=AND, `|`=OR, `!term`=NOT, `"phrase"`=exact phrase; the search is over file CONTENT, not file names.
+  Admissible because it fails on: a filename-only filter (content is never searched, so a content match is missed); a search that ignores `!`-negation (`chapter2.md` is wrongly listed despite containing `lattice`); and a result click that opens the file but NOT at the hit line (the independent cursor-line read does not equal the `Minkowski bound` line).
+  It is NOT satisfied by an assertion that a Search view merely EXISTS — a view that lists nothing, or lists every file regardless of content, or opens files at line 1, would pass an existence check while failing every clause above; the proof must observe the negated file ABSENT from the results and the opened cursor ON the matched line.
+
+- **P102 — per-directory restriction and relevancy heatmap.** In the multi-file project, restrict a search to a chosen subdirectory and query `Café`: only hits UNDER that subtree appear — a file matching `Café` OUTSIDE the chosen subtree is ABSENT from the results; and each result file carries a relevance weight rendered as a DISCRIMINABLE heat class — a file with more / exact matches shows a HIGHER-heat class than a single-match file (the two files are visibly distinguishable by heat class, not merely by list order).
+  Admissible because it fails on: a restriction that searches the whole workspace anyway (the out-of-subtree matching file appears in the results); and a flat result list with no per-file relevance distinction (every hit shares one heat class regardless of match count, so the higher-match and single-match files are indistinguishable).
+  It is NOT satisfied by an assertion that a scope control or a heat color merely EXISTS — a scope selector that does not actually constrain the results, or a uniform single-color list, would pass an existence check while failing both clauses; the proof must observe the out-of-subtree file ABSENT and two files in DIFFERENT heat classes by match count.
 
 ## Verification vehicle
 
