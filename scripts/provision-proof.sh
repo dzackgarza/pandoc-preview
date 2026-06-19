@@ -1063,6 +1063,56 @@ p116-pdf-preview.spec.ts)
 command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
 EOF
     ;;
+p121-slides-preview.spec.ts)
+    # P113 (Phase F / F6 — slides fast-feedback preview): editing re-renders a
+    # reveal.js DECK into the preview iframe on idle (the fast HTML path), distinct
+    # from a full beamer->PDF compile. Slides are "just a different pandoc command
+    # with reveal.js output" (feature-catalogue Tier-2): the deck is produced by the
+    # REAL pandoc revealjs WRITER (`--to revealjs --embed-resources`), rendered by the
+    # maintained reveal.js library pandoc targets — there is NO bespoke slide
+    # renderer. F6's app-core job is solely to WIRE that renderer plugin into the
+    # SAME compile-on-idle scheduler F1 built.
+    #
+    # The canonical config above already set up the default pandoc (html5) renderer +
+    # [plugins].dir (so the app boots and the HTML preview works); here we ADD the
+    # SPEC-OWNED revealjs-renderer plugin fixture into that SAME dir (the renderer-
+    # plugin sibling shape, OSOT) and its [plugin.revealjs-renderer] config section —
+    # the raw `pandoc --to revealjs --embed-resources` command the slides-mode
+    # compile-on-idle path drives. Only a schema-valid [plugin.revealjs-renderer]
+    # section is written: NO new app-core config keys are added (the schema rejects
+    # unknown keys and would fail the startup gate), so the app BOOTS cleanly and the
+    # RED failure is the MISSING slides fast-feedback preview, never a config-schema
+    # boot error.
+    install_plugin_fixtures "$PLUGINS_DIR" revealjs-renderer
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.revealjs-renderer]
+command = "$PANDOC_BIN --from markdown --to revealjs --standalone --embed-resources"
+EOF
+    # The slide-separator demo (provisioned AS demo.md so the proven
+    # openAndSelectDemo selection path applies). Pandoc's revealjs writer turns each
+    # top-level heading into a horizontal slide and a horizontal-rule `---` into a
+    # slide break (the pandoc revealjs slide-separator conventions), so this buffer
+    # is a genuine MULTI-SLIDE deck: a title slide, a `---`-separated slide, and a
+    # heading-separated slide. It carries the shared P1 witnesses so a render is
+    # recognisably demo.md; the spec then appends a DISTINCTIVE edit witness and
+    # proves it re-renders INTO the deck on idle.
+    cat > "$DEMO_FILE" <<'PPE_P121_SLIDES_EOF'
+# Geometry of Numbers — Café
+
+A *naïve* introduction to the geometry of numbers.
+
+---
+
+# Minkowski's Theorem
+
+A symmetric convex body of large enough volume contains a nonzero lattice point.
+
+## Minkowski bound
+
+The bound the second slide develops.
+PPE_P121_SLIDES_EOF
+    ;;
 p117-build-isolation.spec.ts)
     # P108 (Phase F / F2 — temp-directory build isolation): the LaTeX build must not
     # scatter .aux/.log/.fls/.out/.pdf intermediates beside the user's thesis source.
