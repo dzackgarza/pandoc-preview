@@ -600,16 +600,17 @@
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
         goToLine: (line: number) => editor.goToLine(line),
-        // P112 / P103 (Phase E / E2): run a named structural-motion editor command
+        // P112 / P103 (Phase E / E2) + P114 / P105 (E4): run a named editor command
         // against the live CM6 view — the SAME Command ((view) => boolean) the
-        // motion's Ctrl-Alt-<key> binding fires (the E2 keymap block composed
-        // alongside the existing app keymap). The six names are next/prev-section,
-        // next/prev-environment, next/prev-math-zone. Fire-and-forget; the spec
-        // observes the resulting cursor line/offset, read independently via
-        // cursorLine()/cursorOffset(). An unknown name is a LOUD error in the
-        // editor method.
-        runEditorCommand: (name: string) => {
-          editor.runStructuralCommand(name);
+        // command's binding fires. E2 names are the six structural motions
+        // (next/prev-section, next/prev-environment, next/prev-math-zone); E4 ADDS the
+        // three IN-PLACE EDIT names (rename-environment — its `arg` is the new env
+        // class; toggle-fraction; delete-delimiter-pair). Fire-and-forget; the spec
+        // observes the resulting cursor line/offset or buffer text, read independently
+        // via cursorLine()/cursorOffset()/getEditorText(). An unknown name is a LOUD
+        // error in the editor method.
+        runEditorCommand: (name: string, arg?: string) => {
+          editor.runEditorCommand(name, arg);
         },
         // Phase E / E1 / P101+P102: drive the SAME workspace content search the
         // Search view's query box fires (the boolean-parsed query over the open

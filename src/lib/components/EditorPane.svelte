@@ -1242,9 +1242,15 @@
 
   /** Move the cursor to the start of `line` (1-based) and scroll it into view —
    * the SAME dispatch goToLine performs, factored so the section/environment
-   * motions and goToLine share one cursor-move primitive. */
+   * motions and goToLine share one cursor-move primitive. When the line OPENS with
+   * an inline-math `$` delimiter (a `$…$` span sitting alone on the line), the
+   * cursor lands just INSIDE that delimiter — the SAME inside-the-math placement the
+   * E2 math-zone motion uses (zone.from + 1) — so a jump onto a math line lands the
+   * cursor within the span, not on the opening `$`. */
   function moveCursorToLine(line: number) {
-    const pos = view.state.doc.line(line).from;
+    const target = view.state.doc.line(line);
+    const opensWithMath = target.text.startsWith("$") && !target.text.startsWith("$$");
+    const pos = opensWithMath ? target.from + 1 : target.from;
     view.dispatch({
       selection: EditorSelection.cursor(pos),
       effects: EditorView.scrollIntoView(pos, { y: "center" }),
@@ -1350,6 +1356,214 @@
       throw new Error(`unknown structural-motion command: ${JSON.stringify(name)}`);
     }
     command(view);
+  }
+
+  // ── P105 / Phase E (E4): environment / command SURROUND + TOGGLE EDITS ─────────
+  // vimtex's `tse` (rename-environment), `tsf` (toggle-fraction), and `dsd`
+  // (delete-delimiter-pair) CAPABILITIES, ported onto the SAME structure-walking the
+  // E2 motions use — the markdownOutline div structure for the enclosing fenced env,
+  // and the latexLanguage syntax tree (driven by ensureSyntaxTree, the SAME parse
+  // mathZones/syntaxAncestryAt read) for the enclosing \frac / delimiter pair — and
+  // applied through view.dispatch, the SAME edit primitive wrapSelection/insertSnippet
+  // ride. Each transforms the EXISTING structure enclosing the cursor IN PLACE (never
+  // inserting a parallel one), and each is reversible: toggle-fraction round-trips
+  // (\frac{a}{b} ↔ a/b), rename-environment rewrites only the class (body intact), and
+  // delete-delimiter-pair removes only the two matched delimiter chars (contents kept).
+
+  /** The fenced div ENCLOSING the cursor: the nearest markdownOutline div whose
+   * opener line is at or above the cursor line — the SAME div structure (kind:div)
+   * outlineMotion walks for the env motions. */
+  function enclosingDiv(v: EditorView): OutlineItem {
+    const cursorLine = v.state.doc.lineAt(v.state.selection.main.head).number;
+    const divs = markdownOutline(v.state.doc.toString()).filter(
+      (item) => item.kind === "div" && item.line <= cursorLine,
+    );
+    const div = divs[divs.length - 1];
+    if (!div) throw new Error("rename-environment: cursor is not inside a fenced div");
+    return div;
+  }
+
+  /** rename-environment (vimtex `tse`): rewrite the class of the fenced div enclosing
+   * the cursor IN PLACE — `:::{.theorem}` → `:::{.lemma}` — leaving the div body
+   * byte-unchanged. Only the opener line's `{.<class>}` token is rewritten; no new
+   * env is inserted. `name` is the new env class (e.g. 'lemma'). */
+  function renameEnvironment(name: string): Command {
+    return (v: EditorView): boolean => {
+      const div = enclosingDiv(v);
+      const line = v.state.doc.line(div.line);
+      const opener = line.text;
+      const rewritten = opener.replace(/\{\.[A-Za-z][\w-]*\}/, `{.${name}}`);
+      if (rewritten === opener) {
+        throw new Error(
+          `rename-environment: no fenced-div class to rewrite on line ${div.line}: ${JSON.stringify(opener)}`,
+        );
+      }
+      v.dispatch({ changes: { from: line.from, to: line.to, insert: rewritten } });
+      v.focus();
+      return true;
+    };
+  }
+
+  /** The top-level math zone (DollarMath / ParenMath / BracketMath) whose char range
+   * CONTAINS the cursor — the SAME zone container mathZones (the E2 math-zone motion
+   * walk) collects. ensureSyntaxTree drives the mixed-language parse across the whole
+   * buffer first, so the zone is resolved off the real syntax tree, not a cached
+   * partial one. */
+  function enclosingMathZone(v: EditorView): { from: number; to: number } {
+    const head = v.state.selection.main.head;
+    const zone = mathZones().find((z) => z.from <= head && head <= z.to);
+    if (!zone) throw new Error("cursor is not inside a math zone");
+    return zone;
+  }
+
+  /** toggle-fraction (vimtex `tsf`): at the math zone enclosing the cursor, convert
+   * the `\frac{a}{b}` MathCommand to `a/b`, OR — if the zone already holds an `a/b`
+   * form (a `/` MathSpecialChar) — rebuild `\frac{a}{b}`. The round-trip inverts: the
+   * two branches are exact inverses on this structure. The \frac arguments are read
+   * off the latexLanguage syntax tree (MathCommand → CtrlSeq \frac + two MathArgument
+   * `{…}` nodes); the inverse splits the zone contents on the `/`. */
+  function toggleFraction(): Command {
+    return (v: EditorView): boolean => {
+      const zone = enclosingMathZone(v);
+      const tree = ensureSyntaxTree(v.state, v.state.doc.length, 5000);
+      if (!tree) throw new Error("toggle-fraction: parse did not complete");
+      const doc = v.state.doc.toString();
+
+      // Forward: a \frac{…}{…} MathCommand inside the zone → a/b.
+      let fracFrom = -1;
+      let fracTo = -1;
+      const args: Array<{ from: number; to: number }> = [];
+      let slashPos = -1;
+      tree.iterate({
+        from: zone.from,
+        to: zone.to,
+        enter: (n) => {
+          if (n.name === "MathCommand") {
+            fracFrom = n.from;
+            fracTo = n.to;
+            args.length = 0;
+          }
+          if (n.name === "MathArgument") args.push({ from: n.from, to: n.to });
+          if (n.name === "MathSpecialChar" && doc.slice(n.from, n.to) === "/") {
+            slashPos = n.from;
+          }
+        },
+      });
+
+      const isFrac = fracFrom >= 0 && doc.slice(fracFrom, fracFrom + 5) === "\\frac";
+      if (isFrac && args.length >= 2) {
+        const numerator = doc.slice(args[0].from + 1, args[0].to - 1);
+        const denominator = doc.slice(args[1].from + 1, args[1].to - 1);
+        v.dispatch({
+          changes: { from: fracFrom, to: fracTo, insert: `${numerator}/${denominator}` },
+        });
+        v.focus();
+        return true;
+      }
+
+      // Inverse: an `a/b` form inside the zone → \frac{a}{b}. The numerator is the
+      // zone contents before the `/`, the denominator after it (zone.from+1 / zone.to
+      // less the closing delimiter — the math chars between the `$…$`).
+      if (slashPos >= 0) {
+        const innerFrom = zone.from + 1; // just past the opening delimiter
+        const innerTo = zone.to - 1; // just before the closing delimiter
+        const numerator = doc.slice(innerFrom, slashPos).trim();
+        const denominator = doc.slice(slashPos + 1, innerTo).trim();
+        v.dispatch({
+          changes: {
+            from: innerFrom,
+            to: innerTo,
+            insert: `\\frac{${numerator}}{${denominator}}`,
+          },
+        });
+        v.focus();
+        return true;
+      }
+
+      throw new Error("toggle-fraction: no \\frac or a/b form in the enclosing math zone");
+    };
+  }
+
+  /** delete-delimiter-pair (vimtex `dsd`): remove the matched `(`…`)` delimiter pair
+   * enclosing the cursor, keeping the contents. The pair is found by matching the
+   * `(`/`)` MathSpecialChar nodes inside the enclosing math zone; the innermost pair
+   * spanning the cursor is chosen and its two delimiter chars deleted (close first so
+   * the open offset stays valid). Only the two delimiters go; everything between them
+   * survives. */
+  function deleteDelimiterPair(): Command {
+    return (v: EditorView): boolean => {
+      const head = v.state.selection.main.head;
+      const zone = enclosingMathZone(v);
+      const tree = ensureSyntaxTree(v.state, v.state.doc.length, 5000);
+      if (!tree) throw new Error("delete-delimiter-pair: parse did not complete");
+      const doc = v.state.doc.toString();
+
+      const open: number[] = [];
+      const pairs: Array<{ open: number; close: number }> = [];
+      tree.iterate({
+        from: zone.from,
+        to: zone.to,
+        enter: (n) => {
+          if (n.name !== "MathSpecialChar") return;
+          const ch = doc.slice(n.from, n.to);
+          if (ch === "(") {
+            open.push(n.from);
+          } else if (ch === ")") {
+            const o = open.pop();
+            if (o !== undefined) pairs.push({ open: o, close: n.from });
+          }
+        },
+      });
+
+      const enclosing =
+        pairs
+          .filter((p) => p.open <= head && head <= p.close + 1)
+          .sort((a, b) => a.close - a.open - (b.close - b.open))[0] ?? pairs[0];
+      if (!enclosing) {
+        throw new Error("delete-delimiter-pair: no () delimiter pair in the enclosing math zone");
+      }
+
+      v.dispatch({
+        changes: [
+          { from: enclosing.close, to: enclosing.close + 1, insert: "" },
+          { from: enclosing.open, to: enclosing.open + 1, insert: "" },
+        ],
+      });
+      v.focus();
+      return true;
+    };
+  }
+
+  /** The named IN-PLACE EDIT commands (P105 / E4). rename-environment takes the new
+   * env class as its argument; toggle-fraction and delete-delimiter-pair take none. */
+  function editCommand(name: string, arg?: string): Command {
+    switch (name) {
+      case "rename-environment":
+        if (arg === undefined) {
+          throw new Error("rename-environment requires the new env name as its argument");
+        }
+        return renameEnvironment(arg);
+      case "toggle-fraction":
+        return toggleFraction();
+      case "delete-delimiter-pair":
+        return deleteDelimiterPair();
+      default:
+        throw new Error(`unknown editor command: ${JSON.stringify(name)}`);
+    }
+  }
+
+  /** E2E (P114) / E3 command-palette surface: run a named editor command against the
+   * live CM6 view. Routes structural-motion names (P103) to runStructuralCommand and
+   * the IN-PLACE EDIT names (P105: rename-environment / toggle-fraction /
+   * delete-delimiter-pair) to the edit commands above — each the SAME Command its
+   * binding fires. An unknown name is a hard error (every name is wired from one of
+   * the two maps, so an unrecognized name is a wiring bug). */
+  export function runEditorCommand(name: string, arg?: string) {
+    if (name in structuralCommands) {
+      structuralCommands[name](view);
+      return;
+    }
+    editCommand(name, arg)(view);
   }
 
   /** Move the cursor to (and scroll to) the start of a 1-based line. */
