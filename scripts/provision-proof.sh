@@ -1118,6 +1118,95 @@ EOF
     # are tests/proof/fixtures/references.bib).
     cp "$REPO_ROOT/tests/proof/fixtures/references.bib" "$PROJECT_DIR/references.bib"
     ;;
+p119-compile-toggle.spec.ts)
+    # P110 (Phase F / F4): the auto/manual + fast/full PDF-compile controls. Both
+    # are config-persisted state SELECTING BETWEEN CONFIGURED commands — NOT new
+    # build machinery (HARD RULE #0). The spec needs TWO configured PDF command ids
+    # discoverable here:
+    #   FAST = the draft SINGLE-PASS command (id `fast-pdf-export`): the p118
+    #          single-pass export.sh baseline (pandoc md->latex + ONE lualatex pass,
+    #          no latexmk, no BibTeX) — leaves a forward \eqref (??) and a \cite [?]
+    #          UNRESOLVED;
+    #   FULL = the F3 latexmk MULTI-PASS driver (id `latexmk-pdf-export`, P109): the
+    #          shipped vendored driver whose real /usr/bin/latexmk runs
+    #          as-many-passes-as-needed + auto-BibTeX, RESOLVING both.
+    # The fixture (p118-multipass.md, a forward \eqref to a LATER \label + a \cite
+    # against the config-declared bib) is provisioned AS demo.md so the proven
+    # openAndSelectDemo path applies and a SINGLE pass leaves both unresolved — the
+    # FAST-vs-FULL artifact discriminator (clause c).
+    #
+    # The canonical config above already set up the pandoc renderer + [plugins].dir
+    # (so the app boots and the HTML preview works). NO new [preview] config keys are
+    # written here (the F4 auto/manual + fast/full fields are the GREEN deliverable;
+    # the current schema is deny_unknown_fields and would fail the startup gate), so
+    # the app BOOTS cleanly and the RED failure is the MISSING compile-toggle surface.
+    #
+    # FULL: install the shipped vendored latexmk multi-pass driver (the real
+    # reference-resolving PDF command) and its config section.
+    install_plugin_fixtures "$PLUGINS_DIR" latexmk-pdf-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.latexmk-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --to latex"
+EOF
+    # FAST: build a SECOND configured PDF command id `fast-pdf-export` from a copy of
+    # the latexmk-pdf-export plugin with (1) its plugin.toml id rewritten to
+    # `fast-pdf-export` and (2) its export.sh OVERWRITTEN by the committed p118
+    # single-pass driver fixture (pandoc md->latex + ONE lualatex pass). This is a
+    # REAL discovered plugin running the REAL single-pass build — the draft command
+    # the FAST selection picks — not a mock. Its [plugin.fast-pdf-export] config
+    # section carries the same raw pandoc md->latex command (the export.sh lifts it
+    # from PPE_PLUGIN_CONFIG).
+    FAST_DIR="$PLUGINS_DIR/fast-pdf-export"
+    cp -r "$VENDOR_PLUGINS/latexmk-pdf-export" "$FAST_DIR"
+    sed -i 's/^id = "latexmk-pdf-export"/id = "fast-pdf-export"/' "$FAST_DIR/plugin.toml"
+    sed -i 's/^name = .*/name = "PDF (fast single-pass draft)"/' "$FAST_DIR/plugin.toml"
+    cp "$REPO_ROOT/tests/proof/fixtures/p118-single-pass-export.sh" "$FAST_DIR/export.sh"
+    chmod +x "$FAST_DIR/export.sh"
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.fast-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --to latex"
+EOF
+    # The single-pass-unresolvable source: a forward \eqref to a numbered equation
+    # whose \label appears LATER, plus a \cite against the config-declared bib.
+    # Provisioned AS demo.md so the proven openAndSelectDemo selection path applies.
+    cp "$REPO_ROOT/tests/proof/fixtures/p118-multipass.md" "$DEMO_FILE"
+    # The raw-LaTeX \bibliography{references} + BibTeX resolves the bib by name in the
+    # BUILD cwd (= the source dir). Copy the fixture references.bib (carrying the DM19
+    # entry the \cite targets) into the project dir as references.bib (OSOT — same
+    # content as the config-declared $HOME/.pandoc/bib/references.bib).
+    cp "$REPO_ROOT/tests/proof/fixtures/references.bib" "$PROJECT_DIR/references.bib"
+    ;;
+p120-inline-warnings.spec.ts)
+    # P111 (Phase F / F4): a real LaTeX WARNING surfaced as a STRUCTURED Problems
+    # entry. The PDF compile runs through the FULL latexmk MULTI-PASS driver (P109,
+    # id `latexmk-pdf-export`) so the engine reruns until cross-references stabilise:
+    # the only surviving LaTeX warning on the WARNING fixture is the genuine
+    # undefined-reference warning (the transient single-pass "Label(s) may have
+    # changed. Rerun" warning is cleared), and the CLEAN fixture's final log carries
+    # ZERO warnings (so a phantom warning is detectable).
+    #
+    # The canonical config above already set up the pandoc renderer + [plugins].dir
+    # (so the app boots and the HTML preview works). NO new [preview] config keys are
+    # written here (the F4 fields are the GREEN deliverable; the schema is
+    # deny_unknown_fields), so the app BOOTS cleanly and the RED failure is the
+    # MISSING structured-warning surface.
+    install_plugin_fixtures "$PLUGINS_DIR" latexmk-pdf-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.latexmk-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --to latex"
+EOF
+    # The WARNING fixture (a forward \ref to a label never declared — a real,
+    # persistent undefined-reference LaTeX warning, but NOT an error: the PDF is
+    # still produced) is staged AS demo.md so the proven openAndSelectDemo path
+    # applies. The CLEAN fixture (no undefined refs, no \cite, no numbered cross-
+    # refs) is staged as a sibling project file clean.md so the spec can switch to it
+    # via clickSidebarEntry for the no-phantom-warning leg.
+    cp "$REPO_ROOT/tests/proof/fixtures/p120-warning.md" "$DEMO_FILE"
+    cp "$REPO_ROOT/tests/proof/fixtures/p120-clean.md" "$PROJECT_DIR/clean.md"
+    ;;
 p47-save-gate.spec.ts)
     # P47 A2 proves the save-gate blocks a REAL plugin export on an identity-less
     # buffer. So the shipped pandoc-html-export export-category plugin must be
@@ -1880,7 +1969,11 @@ esac
 # the latexmk-pdf-export driver's in-app one-shot export — single-pass RED today,
 # multi-pass latexmk in GREEN), so it needs the SAME cold-cache warmup so the
 # in-app compile lands within the spec's generous wait window.
-if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ] || [ "$SPEC" = "p118-multipass-references.spec.ts" ]; then
+# p119 (the F4 compile-toggle witness) and p120 (the F4 inline-warning witness)
+# both drive lualatex IN THE APP (via the FAST single-pass and/or FULL latexmk
+# in-app PDF compiles), so they need the SAME cold-cache warmup so the in-app
+# compiles land within the spec's wait windows.
+if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ] || [ "$SPEC" = "p118-multipass-references.spec.ts" ] || [ "$SPEC" = "p119-compile-toggle.spec.ts" ] || [ "$SPEC" = "p120-inline-warnings.spec.ts" ]; then
     WARMUP_PDF="$ABS_SPEC_DIR/lualatex-warmup.pdf"
     # cwd = the source file's parent, mirroring the app's export contract.
     (
