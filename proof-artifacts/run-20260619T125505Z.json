@@ -1,0 +1,46 @@
+{
+  "run_id": "20260619T125505Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p117-build-isolation.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p117-build-isolation.spec.ts",
+            "title": "PDF build does not litter the source tree; the one-shot export still lands at its path",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 11466,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 7\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"demo.aux\",\u001b[39m\n\u001b[31m+   \"demo.fdb_latexmk\",\u001b[39m\n\u001b[31m+   \"demo.fls\",\u001b[39m\n\u001b[31m+   \"demo.log\",\u001b[39m\n\u001b[31m+   \"demo.pdf\",\u001b[39m\n\u001b[31m+ ]\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "d-created-files",
+          "value": "demo.aux,demo.fdb_latexmk,demo.fls,demo.log,demo.pdf,demo.tex"
+        },
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "d-litter",
+          "value": "demo.aux,demo.fdb_latexmk,demo.fls,demo.log,demo.pdf"
+        }
+      ]
+    }
+  ]
+}

@@ -1021,6 +1021,40 @@ p116-pdf-preview.spec.ts)
 command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
 EOF
     ;;
+p117-build-isolation.spec.ts)
+    # P108 (Phase F / F2 — temp-directory build isolation): the LaTeX build must not
+    # scatter .aux/.log/.fls/.out/.pdf intermediates beside the user's thesis source.
+    # Today the export boundary spawns the export-plugin command with current_dir =
+    # the SOURCE FILE PARENT dir (render.rs export_sync / plugins.rs), so a latexmk
+    # driver's intermediates land in the source tree D.
+    #
+    # The obligation's observable — intermediates appearing beside the source — is
+    # only visible with a driver that writes its aux files into its working dir. Bare
+    # pandoc (the shipped pandoc-pdf-export command, --pdf-engine=lualatex) self-
+    # isolates: it runs the engine in pandoc's OWN private temp dir, so it NEVER
+    # litters D and the litter clause would be unobservable. So this spec provisions
+    # the obligation's named "pandoc -> lualatex via latexmk" driver: the
+    # latexmk-pdf-export fixture, whose export.sh runs the raw pandoc markdown->latex
+    # command (on PPE_PLUGIN_CONFIG, mirroring the shipped plugin) then drives
+    # latexmk -lualatex in the build's working dir. The Phase F plan calls this a
+    # "config swap, not new core code"; it surfaces the EXACT app-core seam P108
+    # targets (the build's current_dir).
+    #
+    # The canonical config above already set up the pandoc renderer + [plugins].dir
+    # (so the app boots and the HTML preview works); here we ADD the latexmk-pdf-
+    # export plugin into that SAME dir and its [plugin.latexmk-pdf-export] config
+    # section (the raw md->latex pandoc command). The spec drives
+    # runPlugin('latexmk-pdf-export', target) — the one-shot export P8 idiom — with
+    # {output} OUTSIDE D (at manifest.runDir), then lists D by an INDEPENDENT process
+    # before/after and asserts NO new latex intermediates appear in D, while the
+    # produced {output} PDF still lands at its chosen path with the P8 witnesses.
+    install_plugin_fixtures "$PLUGINS_DIR" latexmk-pdf-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.latexmk-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --to latex"
+EOF
+    ;;
 p47-save-gate.spec.ts)
     # P47 A2 proves the save-gate blocks a REAL plugin export on an identity-less
     # buffer. So the shipped pandoc-html-export export-category plugin must be
@@ -1772,7 +1806,14 @@ esac
 # the spec's compile-wait window. Warming it here makes the in-app compile land
 # within the wait. The warmup is provisioning only — the spec still drives the
 # app's own compile-on-idle path and reads the PDF the app produces.
-if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ]; then
+#
+# p117 (the F2 build-isolation witness) drives lualatex IN THE APP too (via the
+# latexmk-pdf-export driver's in-app one-shot export), so it needs the SAME cold-
+# cache warmup. The warmup uses bare pandoc (--pdf-engine=lualatex), which self-
+# isolates into pandoc's own temp dir and so does NOT pre-litter D — it only warms
+# the luaotfload database; the spec's own latexmk-driven export is what surfaces
+# the litter.
+if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ]; then
     WARMUP_PDF="$ABS_SPEC_DIR/lualatex-warmup.pdf"
     # cwd = the source file's parent, mirroring the app's export contract.
     (

@@ -1,0 +1,42 @@
+# P108 (Phase F / F2 — temp-directory build isolation) fixture: a PDF export
+# target whose build driver is latexmk, NOT bare pandoc. This is the obligation's
+# named "pandoc -> lualatex via latexmk" command (proof-obligations.md P108; the
+# Phase F plan calls swapping the PDF command to a latexmk driver a "config swap,
+# not new core code"). It is required HERE because the obligation's observable —
+# latex INTERMEDIATES scattering beside the source — is only visible with a driver
+# that writes its aux files into its working directory. Bare pandoc self-isolates
+# (it runs the engine in pandoc's OWN private temp dir), so the shipped
+# pandoc-pdf-export plugin NEVER litters the source tree and would make the
+# litter-clause unobservable. latexmk writes .aux/.fls/.log/.out/.pdf into its CWD,
+# so it surfaces the EXACT app-core seam P108 targets: render.rs export_sync /
+# plugins.rs spawning the build with current_dir = the source file's PARENT dir.
+#
+# Cloned from the shipped pandoc-pdf-export shape (id/name/description/category/
+# kind/extension, a JSON Schema referenced not inlined, an [exec] command with
+# {file}/{artifact} substitution, a self-owned [configure], a contributed doctor
+# check). It carries its OWN raw pandoc (markdown -> standalone latex) command on
+# PPE_PLUGIN_CONFIG, exactly as the shipped plugin does; export.sh runs that to
+# produce a .tex, then drives latexmk -lualatex over it and copies the produced
+# PDF to the app-chosen {artifact}.
+id = "latexmk-pdf-export"
+name = "PDF (latexmk)"
+description = "Exports the document to PDF via pandoc (markdown->latex) then latexmk -lualatex; the F2 build-isolation witness driver."
+category = "export"
+kind = "command"
+extension = "pdf"
+config_schema = "schema.json"
+
+[exec]
+# {plugin_dir} = this plugin's directory, {file} = the real on-disk source path,
+# {artifact} = the app-provided output path. The build's working/output directory
+# is the app-core concern (today: the source file's parent; F2: an isolated temp
+# build dir) — the plugin does not choose it.
+command = ["{plugin_dir}/export.sh", "{file}", "{artifact}"]
+
+[configure]
+command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
+
+[[doctor_checks]]
+id = "latexmk-pdf-export-runnable"
+description = "latexmk-pdf-export export.sh is present and executable"
+command = ["test", "-x", "{plugin_dir}/export.sh"]
