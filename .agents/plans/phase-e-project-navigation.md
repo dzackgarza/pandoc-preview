@@ -231,3 +231,12 @@ Witness uses the shared fixture ([[proof-obligations]] "## Shared witness fixtur
   - **E6 DEFERRED (blocked on editor tabs, like C6):** P107 HELD; tracked.
     E1–E5 executable now.
   - Each sub-milestone: blind-TDD via Workflow (obligation→RED→GREEN→adversarial review), full-suite gate before the Phase E merge (the d14/Phase-D lesson).
+
+- **2026-06-19: Phase E E1–E5 COMPLETE on branch `phase-e-project-navigation`** (blind-TDD via Workflow, role-separated, each independently reviewed + controller-verified):
+  - **E1/P101+P102** global workspace search — `workspace-search` firewall plugin running real `rg --json`, Zettlr boolean grammar (space/|/!/"phrase"), per-dir restriction, discriminable relevancy heatmap, click-to-open-at-line; new `search` SIDEBAR_VIEWS panel.
+  - **E2/P103** section/environment/math-zone motions — six composed CM6 commands reusing markdownOutline (heading/div) + the latexLanguage syntax tree (math zones), cursor-relative + reversible, exposed as named commands.
+  - **E3/P104** Ctrl+Shift+P command palette + Ctrl+P quick-open via the fzf firewall (recording-picker proof, D-7 pattern); `CommandPaletteModal.svelte` DELETED; `p40` MIGRATED (now proves the firewall palette runs Unfold-All — burden transferred, not hollow-deleted). Fixes the Ctrl+P transposition bug.
+  - **E4/P105** surround/toggle edits — rename-environment (in place), toggle-fraction (round-trips), delete-delimiter (keeps contents), reusing E2's syntax-tree walk + edit primitives.
+  - **E5/P106** structured YAML frontmatter editor modal — reuses the `yaml` lib (from C4); rewrites ONLY the `---` block (body byte-unchanged), inserts a block when absent.
+  - **Robustness fix:** `p41` now computes the theorem line off-disk (was hardcoded 13; flowmark recurrently collapses outline.md blank lines, shifting the line).
+  - **E6/P107 DEFERRED — blocked on Tier-3 editor tabs** (Ctrl+Tab MRU + quick-open prefix tokens require editor tabs that do not exist yet). Tracked.
