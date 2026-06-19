@@ -1,0 +1,44 @@
+{
+  "run_id": "20260619T164443Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1367,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.1.3"
+        }
+      ]
+    }
+  ]
+}

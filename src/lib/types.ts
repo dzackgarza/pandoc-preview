@@ -10,6 +10,14 @@ export type ExistingDir = string;
  *  string; the brand records that its existence was enforced at load. */
 export type ExistingFile = string;
 
+/** P110 — PDF compile-on-idle gating: "auto" recompiles after the debounce,
+ *  "manual" suppresses idle recompiles until an explicit Recompile. */
+export type PdfCompileMode = "auto" | "manual";
+
+/** P110 — PDF compile command selection: "fast" runs the draft single-pass
+ *  command, "full" runs the latexmk multi-pass driver (P109). */
+export type PdfCompileSpeed = "fast" | "full";
+
 export interface Config {
   general: {
     theme: "dark" | "light";
@@ -55,6 +63,19 @@ export interface Config {
   };
   preview: {
     debounce_ms: number;
+    // Phase F / F4 / P110 — whether the PDF compile-on-idle scheduler fires on an
+    // edit. "auto" recompiles after the debounce; "manual" suppresses idle
+    // recompiles until an explicit Recompile PDF. Config-persisted UI state, not new
+    // build machinery. Defaulted (auto) by Rust's loader when absent.
+    pdf_compile_mode: PdfCompileMode;
+    // Phase F / F4 / P110 — which configured PDF command id the scheduler / explicit
+    // Recompile runs. "fast" selects pdf_fast_command (draft single-pass); "full"
+    // selects pdf_full_command (latexmk multi-pass driver, P109).
+    pdf_compile_speed: PdfCompileSpeed;
+    // The discovered export-plugin id the "fast" speed runs (draft single-pass).
+    pdf_fast_command: string;
+    // The discovered export-plugin id the "full" speed runs (latexmk multi-pass).
+    pdf_full_command: string;
   };
   // Alternative-explorer roots: the macros pane browses `styles`, the figures
   // pane browses `figures`. Each is an ExistingDir — Rust's config loader
@@ -151,6 +172,18 @@ export interface SearchResult {
 // ok:        the preview is up to date with the source
 // error:     the last compile failed (see the log)
 export type RenderStatus = "idle" | "stale" | "rendering" | "ok" | "error";
+
+/** P111 (Phase F / F4) — a STRUCTURED PDF-compile Problems entry: a genuine
+ * LaTeX/pandoc warning parsed from the REAL PDF-compile log by the existing
+ * pplatex-class parser (complog.parseCompileLog), surfaced ALONGSIDE the raw log
+ * and DISTINCT from a hard error. `latexLogLine` is the verbatim latex-log line
+ * the parser recognized the warning from — P111's floor (the markdown-source-line
+ * jump is STRUCK). */
+export interface PdfProblem {
+  severity: "warning";
+  message: string;
+  latexLogLine: string;
+}
 
 /** A collapsed fold range (character offsets). Mirrors the Rust `Fold` in
  * config.rs; persisted per file in fold-state.json. */

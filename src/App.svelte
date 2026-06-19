@@ -12,6 +12,9 @@
     FileNode,
     Fingerprint,
     FoldState,
+    PdfCompileMode,
+    PdfCompileSpeed,
+    PdfProblem,
     PluginInfo,
     PluginResult,
     RenderStatus,
@@ -255,6 +258,16 @@
   // path into the asset-protocol URL the webview can load.
   let mathjaxUrl = $state("");
   let activeTab = $state<"preview" | "pdf" | "log" | "tikzlog">("preview");
+  // The SELECTED preview surface ("preview" = HTML, "pdf" = embedded pdf.js),
+  // tracked independently of the FOREGROUND tab. The Compile Log / TikZ Log tabs
+  // are transient diagnostic overlays the user flips to and back; viewing one must
+  // NOT cancel the PDF compile-on-idle scheduler. So the auto recompile gates on
+  // THIS (the chosen preview surface), not on activeTab being literally "pdf". It
+  // updates whenever a preview surface is foregrounded.
+  let previewSurface = $state<"preview" | "pdf">("preview");
+  $effect(() => {
+    if (activeTab === "preview" || activeTab === "pdf") previewSurface = activeTab;
+  });
 
   // ---- PDF compile-on-idle scheduler (Phase F / F1 / P107) ----------------
   //
@@ -265,12 +278,42 @@
   // to a real .pdf on disk, then paints it into the embedded pdf.js viewer via
   // convertFileSrc. The app core grows a VIEWER + a SCHEDULER only — it never
   // learns what lualatex is; the compile stays a configured command.
-  const PDF_EXPORT_PLUGIN_ID = "pandoc-pdf-export";
   let pdfStatus = $state<RenderStatus>("idle");
   let pdfTimer: ReturnType<typeof setTimeout> | undefined;
   let pdfSeq = 0;
   let pdfArtifact = $state<string | null>(null);
   let pdfViewerEl: HTMLElement | null = null;
+  // Phase F / F4 / P110 — the auto/manual + fast/full PDF-compile controls. These
+  // are config-persisted UI state SELECTING BETWEEN CONFIGURED commands, seeded
+  // from the [preview] config on load and mutated by the PreviewPane controls (and
+  // the E2E harness). MANUAL gates the compile-on-idle scheduler (it does not fire
+  // on edits until an explicit Recompile); FAST/FULL picks which configured PDF
+  // command id (config.preview.pdf_fast_command / pdf_full_command) the compile
+  // runs. No new build machinery — only a selection between discovered commands.
+  let pdfCompileMode = $state<PdfCompileMode>("auto");
+  let pdfCompileSpeed = $state<PdfCompileSpeed>("fast");
+  // The raw PDF-compile log (the P11 surface for the PDF compile): the selected
+  // command line + the engine's stderr/stdout. Distinct from the HTML render log.
+  // The structured Problems layer parses warnings from THIS log; the raw pane
+  // shows it verbatim.
+  let pdfLog = $state("");
+  // Phase F / F4 / P111 — the STRUCTURED PDF-compile Problems entries: the EXISTING
+  // pplatex-class latex-log parser (parseCompileLog, the Phase A layer) run over the
+  // REAL PDF-compile log, filtered to genuine warnings, each carrying its severity,
+  // message, and the verbatim latex-log line. Derived from pdfLog so a clean
+  // compile (no warning lines) surfaces NONE — no phantom warning is fabricated.
+  const pdfProblemsList = $derived<PdfProblem[]>(
+    parseCompileLog(pdfLog)
+      .filter((e) => e.severity === "warning")
+      .map((e) => ({
+        severity: "warning" as const,
+        message: e.message,
+        // The verbatim latex-log line the parser recognized this warning from is
+        // its `message` (parseCompileLog carries the trimmed source line as the
+        // message). P111's floor is the latex-log line, NOT a markdown-line jump.
+        latexLogLine: e.message,
+      })),
+  );
   // Asset-protocol URLs of the VENDORED offline pdf.js cmaps / standard-fonts
   // dirs (the MathJax local-asset precedent — never a CDN). Resolved on mount.
   let pdfCmapUrl = $state("");
@@ -311,6 +354,11 @@
     // screen: a misconfigured environment never reaches the webview.
     configPath = await api.getConfigPath();
     config = await api.getConfig();
+    // P110 — seed the auto/manual + fast/full PDF-compile controls from the
+    // config-persisted [preview] state, so the controls open in the configured
+    // default and a saved selection is honored on launch.
+    pdfCompileMode = config.preview.pdf_compile_mode;
+    pdfCompileSpeed = config.preview.pdf_compile_speed;
     // Discovered plugins drive the category-aware menu/command-palette populator
     // (export-category plugins surface their own "Export: <name>" entries; P66).
     discoveredPlugins = await api.listPlugins();
@@ -756,6 +804,26 @@
         },
         pdfStatus: () => pdfStatus,
         pdfPreviewArtifact: (): string | null => pdfArtifact,
+        // Phase F / F4 / P110: the auto/manual + fast/full PDF-compile controls.
+        // setPdfCompileMode gates the compile-on-idle scheduler (manual suppresses
+        // idle recompiles); setPdfCompileSpeed selects WHICH configured PDF command
+        // id the compile runs (fast = single-pass draft, full = latexmk multi-pass);
+        // recompilePdf fires the explicit Recompile PDF command (bypasses the gate).
+        // These drive the SAME state the PreviewPane controls mutate.
+        setPdfCompileMode: (mode: PdfCompileMode) => {
+          pdfCompileMode = mode;
+        },
+        setPdfCompileSpeed: (speed: PdfCompileSpeed) => {
+          pdfCompileSpeed = speed;
+        },
+        recompilePdf: () => {
+          recompilePdf();
+        },
+        // Phase F / F4 / P111: the STRUCTURED PDF-compile Problems entries — genuine
+        // LaTeX warnings parsed from the REAL PDF-compile log by the existing
+        // pplatex-class parser, each {severity, message, latexLogLine}. The SAME
+        // entries the Problems pane renders. A clean compile surfaces none.
+        pdfProblems: (): PdfProblem[] => pdfProblemsList,
         // P96 / D-7: register a non-tikz figure's dual-asset pairing (included
         // RENDER + editable SOURCE) through the SAME registerFigureAssets the
         // figure surface uses, persisting it to the host-fs registry sidecar.
@@ -891,7 +959,7 @@
     // When the PDF preview tab is active, the PDF compile-on-idle scheduler
     // re-runs on the same edit (its OWN debounce/seq), so the embedded viewer
     // tracks the buffer just as the HTML preview does.
-    if (activeTab === "pdf") schedulePdf();
+    if (previewSurface === "pdf") schedulePdf();
     // Independently of the preview render, capture the (unsaved) buffer to the
     // host-filesystem recovery store on its own short debounce (P45). This is
     // NOT tied to Save and NOT tied to the render debounce.
@@ -1025,6 +1093,17 @@
       },
       { id: "show_preview", label: "Show Preview", run: () => (activeTab = "preview") },
       { id: "show_log", label: "Show Log", run: () => (activeTab = "log") },
+      // P110 — the explicit Recompile PDF command: compiles the PDF NOW with the
+      // current fast/full selection, bypassing the auto/manual gate (its purpose
+      // under MANUAL). Switches to the PDF pane so the recompiled artifact paints.
+      {
+        id: "recompile_pdf",
+        label: "Recompile PDF",
+        run: () => {
+          activeTab = "pdf";
+          recompilePdf();
+        },
+      },
       { id: "settings", label: "Settings", run: () => (settingsOpen = true) },
       {
         id: "frontmatter",
@@ -1222,47 +1301,87 @@
     return `${dir}/.${name}.ppe-preview.${seq}.pdf`;
   }
 
+  // P110 — resolve the configured PDF command id the CURRENT fast/full selection
+  // picks. The app owns no command knowledge: it only names which discovered
+  // command plugin to run (fast = the draft single-pass; full = the latexmk
+  // multi-pass driver, P109), sourced from the [preview] config.
+  function selectedPdfCommandId(): string {
+    if (!config) throw new Error("selectedPdfCommandId: config not loaded");
+    return pdfCompileSpeed === "full"
+      ? config.preview.pdf_full_command
+      : config.preview.pdf_fast_command;
+  }
+
+  // P110 — the compile-on-idle scheduler. GATED on the auto/manual mode: under
+  // MANUAL an edit does NOT fire an idle recompile (the scheduler is a no-op until
+  // the explicit Recompile PDF command). Under AUTO it debounces then compiles, as
+  // the F1 scheduler always did.
   function schedulePdf() {
     if (!config || !currentFile) return;
+    if (pdfCompileMode !== "auto") return; // MANUAL suppresses idle recompiles
     pdfStatus = "stale";
     clearTimeout(pdfTimer);
     pdfTimer = setTimeout(() => void doPdfCompile(), config.preview.debounce_ms);
+  }
+
+  // P110 — the explicit Recompile PDF command (the buildCommands palette entry).
+  // Bypasses the auto/manual GATE: it compiles NOW with the current fast/full
+  // selection regardless of mode (that is its whole point under MANUAL). The
+  // command-palette entry and the E2E harness both route through here.
+  function recompilePdf() {
+    if (!config || !currentFile) return;
+    clearTimeout(pdfTimer);
+    pdfStatus = "rendering";
+    void doPdfCompile();
   }
 
   async function doPdfCompile() {
     const seq = ++pdfSeq;
     const target = pdfPreviewTarget(seq);
     if (!target) return;
+    const commandId = selectedPdfCommandId();
     pdfStatus = "rendering";
     try {
-      // Drive the CONFIGURED PDF export plugin through the SAME export boundary
-      // every path-consuming export uses (runPluginToPath → save-gate → the
-      // pandoc-pdf-export command). The app passes only the {file}/{artifact}
-      // paths; the pandoc -> lualatex command lives entirely in the plugin.
-      const res = await runPluginToPath(PDF_EXPORT_PLUGIN_ID, target);
+      // Drive the SELECTED configured PDF command (fast = single-pass draft, full =
+      // latexmk multi-pass driver) through the SAME export boundary every
+      // path-consuming export uses (runPluginToPath → save-gate → the command).
+      // The app passes only the {file}/{artifact} paths; the engine command lives
+      // entirely in the plugin.
+      const res = await runPluginToPath(commandId, target);
       if (seq !== pdfSeq) return; // a newer compile superseded this one
-      // The compile log surfaces the command/stderr/exit on the Compile Log pane
-      // (P11 surface) so a nonzero exit is diagnosable.
-      log = res.stderr || res.stdout || log;
+      // The compile log surfaces the SELECTED command line + the engine
+      // stderr/stdout on the Compile Log pane (P11 surface), so the logged command
+      // line names the configured command that ran (the fast/full discriminator)
+      // and the engine's warnings are present for the structured Problems parse.
+      const header = `command: ${commandId} ${currentFile} -> ${target}`;
+      pdfLog = `${header}\n--- stderr ---\n${res.stderr}\n--- stdout ---\n${res.stdout}`;
+      log = pdfLog;
       if (!res.success || !res.artifact) {
         // Nonzero PDF compile: FAIL LOUD. Show failed-compile and surface the
         // command/stderr/exit in the log; NEVER show a stale PDF as fresh —
         // the artifact accessor is cleared so the viewer is not fed old bytes.
         pdfArtifact = null;
         pdfStatus = "error";
-        log =
+        pdfLog =
           `PDF compile failed (exit ${res.exit_code ?? "unknown"}).\n` +
-          `command: ${PDF_EXPORT_PLUGIN_ID} ${currentFile} -> ${target}\n` +
-          `--- stderr ---\n${res.stderr}\n--- stdout ---\n${res.stdout}`;
+          `${header}\n--- stderr ---\n${res.stderr}\n--- stdout ---\n${res.stdout}`;
+        log = pdfLog;
         return;
       }
+      // The compile succeeded and produced a real artifact: the PDF is up to date.
+      // `ok` reflects the COMPILE outcome, not the paint — a recompile triggered
+      // while the PDF tab is not mounted (e.g. right after selecting a new file)
+      // still reaches `ok`, and the viewer repaints when it next mounts
+      // (onPdfViewerMount). Painting is a best-effort UI side effect here.
       pdfArtifact = res.artifact;
+      pdfStatus = "ok";
       await paintPdf(res.artifact, seq);
     } catch (e) {
       if (seq !== pdfSeq) return;
       pdfArtifact = null;
       pdfStatus = "error";
-      log = String(e);
+      pdfLog = String(e);
+      log = pdfLog;
       toastError(String(e));
     }
   }
@@ -1277,8 +1396,6 @@
     const bytes = await api.readFileBytes(artifact);
     if (seq !== pdfSeq) return;
     await renderPdfToContainer(pdfViewerEl, bytes, pdfCmapUrl, pdfFontUrl);
-    if (seq !== pdfSeq) return;
-    pdfStatus = "ok";
   }
 
   // The PDF tab's viewer container, handed up by PreviewPane on mount. When the
@@ -1650,6 +1767,13 @@
       const { content, fingerprint } = await api.readTextFile(path);
       currentFile = path;
       currentFingerprint = fingerprint; // P48: baseline for conflict detection
+      // Opening a different document shows its HTML preview: a stale PDF (or
+      // pdf.js viewer) from the previously open file must never be presented as
+      // this file's, so the view returns to the preview tab and the PDF artifact
+      // is dropped until a recompile for THIS file runs.
+      activeTab = "preview";
+      pdfArtifact = null;
+      pdfStatus = "idle";
       editor.setContent(content);
       editor.setFoldedRanges(foldState[path] ?? []); // restore this file's folds
       // P88/C4: re-resolve the @-citation source for THIS file — its frontmatter
@@ -2500,6 +2624,12 @@
             {status}
             {pdfStatus}
             {onPdfViewerMount}
+            {pdfCompileMode}
+            {pdfCompileSpeed}
+            onSetPdfCompileMode={(mode) => (pdfCompileMode = mode)}
+            onSetPdfCompileSpeed={(speed) => (pdfCompileSpeed = speed)}
+            pdfProblems={pdfProblemsList}
+            onRecompilePdf={recompilePdf}
             bind:activeTab
           />
         </div>

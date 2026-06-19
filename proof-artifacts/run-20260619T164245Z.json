@@ -1,0 +1,39 @@
+{
+  "run_id": "20260619T164245Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p118-multipass-references.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p118-multipass-references.spec.ts",
+            "title": "the configured multi-pass latexmk driver resolves the citation and forward cross-reference",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 17703,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p118-multipass-references.spec.ts",
+          "name": "pdf-text",
+          "value": "Multi-pass references The estimate in equation (1) controls the lattice growth rate, a bound first established by [1]. Some intervening prose so the labelled equation appears strictly LATER in the document than the forward reference above. A single LaTeX pass therefore cannot know the equation’s number when it typesets that earlier reference, leaving it unresolved until a second pass reads the aux"
+        }
+      ]
+    }
+  ]
+}

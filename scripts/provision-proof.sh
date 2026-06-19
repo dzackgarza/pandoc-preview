@@ -478,6 +478,16 @@ else
     # other spec this stays empty, so the canonical [editor] block is byte-for-byte
     # what it was before.
     EDITOR_EXTRA=""
+    # Phase F / F4 / P110: extra [preview] keys appended into the canonical [preview]
+    # block. The auto/manual + fast/full controls and the two PDF command ids live in
+    # [preview] (config.rs Preview). They are serde-defaulted (mode=auto, speed=fast,
+    # fast=pandoc-pdf-export, full=latexmk-pdf-export), so for every spec that does
+    # NOT touch the F4 controls this stays empty and the canonical [preview] block is
+    # byte-for-byte the F1 one (debounce_ms only) — p116 then uses the default fast
+    # command pandoc-pdf-export it installs. p119 selects between TWO installed PDF
+    # command ids, so it pins pdf_fast_command / pdf_full_command to the ids it
+    # installs (fast-pdf-export / latexmk-pdf-export).
+    PREVIEW_EXTRA=""
     case "$SPEC" in
     p52-snippet-dictionary.spec.ts | p59-snippet-dropdown.spec.ts | p63-insertion-bar-controls.spec.ts)
         # P52 (autocomplete-popup path) and P59 (insertion-bar dropdown path) both
@@ -725,6 +735,18 @@ else
         cp "$REPO_ROOT/tests/proof/fixtures/dictionaries/p54-mathdict.txt" "$SPELL_DICT"
         EDITOR_EXTRA="spell_dictionary = \"$SPELL_DICT\""
         ;;
+    p119-compile-toggle.spec.ts)
+        # P110: the auto/manual + fast/full PDF-compile controls select between TWO
+        # CONFIGURED PDF command ids. This spec installs BOTH (its post-config case
+        # below): the FAST single-pass draft (fast-pdf-export) and the FULL latexmk
+        # multi-pass driver (latexmk-pdf-export). Pin the [preview] command ids to
+        # those installed ids so the FAST selection runs the single-pass draft (the
+        # (??)/[?] artifact) and FULL runs latexmk (the reference-resolving one). The
+        # canonical default starts MANUAL is not needed (the spec sets mode/speed
+        # through the harness); only the command-id mapping must match the installed
+        # plugins.
+        PREVIEW_EXTRA=$'pdf_fast_command = "fast-pdf-export"\npdf_full_command = "latexmk-pdf-export"'
+        ;;
     esac
 
     # Canonical witness config: theme=dark, font_size=14 (P9 base),
@@ -743,6 +765,7 @@ $EDITOR_EXTRA
 
 [preview]
 debounce_ms = 200
+$PREVIEW_EXTRA
 EOF
     # Export is entirely the pandoc plugin suite: there is NO [export.*] app-core
     # config table. Export targets are discovered export-category plugins; the

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { RenderStatus } from "../types";
+  import type { PdfCompileMode, PdfCompileSpeed, PdfProblem, RenderStatus } from "../types";
   import type { LogEntry } from "../editor/complog";
   import type { TikzFigureLogEntry } from "../editor/tikzfigurelog";
 
@@ -13,6 +13,12 @@
     status,
     pdfStatus,
     onPdfViewerMount,
+    pdfCompileMode,
+    pdfCompileSpeed,
+    onSetPdfCompileMode,
+    onSetPdfCompileSpeed,
+    pdfProblems,
+    onRecompilePdf,
     dragging = false,
     activeTab = $bindable(),
   }: {
@@ -38,6 +44,21 @@
     // Called with the PDF viewer container element once the PDF tab mounts it, so
     // App.svelte's PDF scheduler can paint the compiled PDF into it via pdf.js.
     onPdfViewerMount: (el: HTMLElement) => void;
+    // Phase F / F4 / P110 — the auto/manual + fast/full PDF-compile controls. Bound
+    // to App.svelte's config-persisted state: the auto/manual toggle gates the
+    // compile-on-idle scheduler, the fast/full toggle selects WHICH configured PDF
+    // command runs. onRecompilePdf fires the explicit Recompile PDF command
+    // (bypasses the gate — its purpose under MANUAL).
+    pdfCompileMode: PdfCompileMode;
+    pdfCompileSpeed: PdfCompileSpeed;
+    onSetPdfCompileMode: (mode: PdfCompileMode) => void;
+    onSetPdfCompileSpeed: (speed: PdfCompileSpeed) => void;
+    onRecompilePdf: () => void;
+    // Phase F / F4 / P111 — the STRUCTURED PDF-compile warnings (genuine LaTeX
+    // warnings parsed from the REAL PDF-compile log by the existing pplatex-class
+    // parser), rendered as a Problems list DISTINCT from the raw log and from hard
+    // errors. A clean compile yields an empty list (no phantom warning).
+    pdfProblems: PdfProblem[];
     // True while the editor/preview divider is being dragged: the iframe's
     // pointer-events are disabled so the cursor crossing it cannot swallow the
     // drag's pointermove stream.
@@ -138,7 +159,62 @@
         {:else}
           <span class="text-zinc-400">Not compiled</span>
         {/if}
+        <div class="grow"></div>
+        <!-- P110 — the auto/manual gate + fast/full configured-command selection
+             controls, plus the explicit Recompile PDF command. -->
+        <label class="flex items-center gap-1" data-testid="pdf-compile-mode">
+          <span class="text-zinc-500 dark:text-zinc-400">Mode</span>
+          <select
+            class="rounded border border-zinc-300 bg-white px-1 py-0.5 dark:border-zinc-600 dark:bg-zinc-900"
+            value={pdfCompileMode}
+            onchange={(e) =>
+              onSetPdfCompileMode((e.currentTarget as HTMLSelectElement).value as PdfCompileMode)}
+          >
+            <option value="auto">Auto</option>
+            <option value="manual">Manual</option>
+          </select>
+        </label>
+        <label class="flex items-center gap-1" data-testid="pdf-compile-speed">
+          <span class="text-zinc-500 dark:text-zinc-400">Build</span>
+          <select
+            class="rounded border border-zinc-300 bg-white px-1 py-0.5 dark:border-zinc-600 dark:bg-zinc-900"
+            value={pdfCompileSpeed}
+            onchange={(e) =>
+              onSetPdfCompileSpeed((e.currentTarget as HTMLSelectElement).value as PdfCompileSpeed)}
+          >
+            <option value="fast">Fast</option>
+            <option value="full">Full</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          class="rounded border border-zinc-300 px-2 py-0.5 hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-700"
+          data-testid="pdf-recompile"
+          onclick={() => onRecompilePdf()}
+        >
+          Recompile PDF
+        </button>
       </div>
+      <!-- P111 — the STRUCTURED Problems list: genuine LaTeX warnings parsed from
+           the REAL PDF-compile log, DISTINCT from the raw Compile Log dump and from
+           hard errors. A clean compile renders an empty list (no phantom). -->
+      {#if pdfProblems.length > 0}
+        <ul
+          class="shrink-0 divide-y divide-zinc-200 overflow-auto border-b border-zinc-200 bg-white dark:divide-zinc-700 dark:border-zinc-700 dark:bg-zinc-800"
+          data-testid="pdf-problems"
+        >
+          {#each pdfProblems as problem, i (i)}
+            <li>
+              <div class="flex items-baseline gap-2 px-3 py-1.5 text-left text-xs">
+                <span class="font-mono font-semibold text-amber-600 dark:text-amber-400"
+                  >{problem.severity}</span
+                >
+                <span class="grow text-zinc-700 dark:text-zinc-200">{problem.message}</span>
+              </div>
+            </li>
+          {/each}
+        </ul>
+      {/if}
       <div
         class="grow overflow-auto bg-zinc-200 dark:bg-zinc-950"
         data-testid="pdf-viewer"

@@ -244,6 +244,72 @@ pub struct Editor {
 pub struct Preview {
     /// Milliseconds of editor idle time before re-rendering the preview.
     pub debounce_ms: u32,
+    /// Phase F / F4 / P110 — whether the PDF compile-on-idle scheduler fires on an
+    /// edit. `Auto` recompiles after the debounce window; `Manual` suppresses idle
+    /// recompiles until an explicit Recompile PDF command. Config-persisted UI
+    /// state selecting a behaviour, NOT new build machinery. The canonical config
+    /// bakes the default (`auto`); a config that does not name it takes that
+    /// opinionated value (never a runtime fallback — the value is fixed here).
+    #[serde(default = "default_pdf_compile_mode")]
+    pub pdf_compile_mode: PdfCompileMode,
+    /// Phase F / F4 / P110 — which of the two configured PDF command ids the
+    /// scheduler / the explicit Recompile runs. `Fast` selects the draft
+    /// single-pass command (`pdf_fast_command`); `Full` selects the latexmk
+    /// multi-pass driver (`pdf_full_command`). Config-persisted state selecting
+    /// between CONFIGURED commands.
+    #[serde(default = "default_pdf_compile_speed")]
+    pub pdf_compile_speed: PdfCompileSpeed,
+    /// Phase F / F4 / P110 — the discovered export-plugin id the `Fast` speed runs
+    /// (the draft single-pass PDF command). The app owns no command knowledge: this
+    /// names a plugin discovered through the firewall and run by id, exactly as the
+    /// other configured PDF commands are.
+    #[serde(default = "default_pdf_fast_command")]
+    pub pdf_fast_command: String,
+    /// Phase F / F4 / P110 — the discovered export-plugin id the `Full` speed runs
+    /// (the latexmk multi-pass driver, P109). Selecting `Full` picks this command
+    /// id over `pdf_fast_command`.
+    #[serde(default = "default_pdf_full_command")]
+    pub pdf_full_command: String,
+}
+
+/// PDF compile-on-idle gating (P110). `Manual` suppresses idle recompiles until an
+/// explicit Recompile; `Auto` recompiles after the debounce window.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PdfCompileMode {
+    Auto,
+    Manual,
+}
+
+/// PDF compile command selection (P110). `Fast` runs the draft single-pass command;
+/// `Full` runs the latexmk multi-pass driver.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PdfCompileSpeed {
+    Fast,
+    Full,
+}
+
+fn default_pdf_compile_mode() -> PdfCompileMode {
+    PdfCompileMode::Auto
+}
+
+fn default_pdf_compile_speed() -> PdfCompileSpeed {
+    PdfCompileSpeed::Fast
+}
+
+/// The canonical draft PDF command id (the FAST selection): the shipped
+/// pandoc-pdf-export command (pandoc -> lualatex, the F1 default PDF compile).
+/// A spec/config that installs a distinct fast draft command (the p119
+/// fast-pdf-export single-pass) overrides this in its [preview] block.
+fn default_pdf_fast_command() -> String {
+    "pandoc-pdf-export".to_string()
+}
+
+/// The canonical latexmk multi-pass PDF command id (the FULL selection). Matches the
+/// `latexmk-pdf-export` plugin (P109) first-run / provisioning installs.
+fn default_pdf_full_command() -> String {
+    "latexmk-pdf-export".to_string()
 }
 
 /// Inclusive editor font-size range, in px.
@@ -269,6 +335,18 @@ pub fn validate(config: &Config) -> Result<()> {
         return Err(Error::InvalidArgument(format!(
             "preview.debounce_ms must be between {DEBOUNCE_MS_MIN} and {DEBOUNCE_MS_MAX}, got {dbg}"
         )));
+    }
+    // P110: the FAST/FULL selectors name discovered PDF-command plugin ids; an empty
+    // id resolves no command, so reject it loudly (no silent no-op compile).
+    if config.preview.pdf_fast_command.trim().is_empty() {
+        return Err(Error::InvalidArgument(
+            "preview.pdf_fast_command must not be empty".into(),
+        ));
+    }
+    if config.preview.pdf_full_command.trim().is_empty() {
+        return Err(Error::InvalidArgument(
+            "preview.pdf_full_command must not be empty".into(),
+        ));
     }
     // directories.styles / directories.figures are ExistingDir: existence and
     // dir-ness are enforced at deserialize time (a missing path is a hard load

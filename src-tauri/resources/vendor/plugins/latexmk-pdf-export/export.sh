@@ -64,7 +64,26 @@ tex="$builddir/${base}.tex"
 # with cwd = the source dir (the core spawned us there), so latexmk's engine
 # resolves the document's relative resources (\input/\includegraphics) against the
 # source dir while writing .aux/.fls/.log/.out/.fdb_latexmk/.pdf into "$builddir".
+# Tell the TeX engine to emit UNWRAPPED log lines (max_print_line large) so each
+# diagnostic — notably the persistent "LaTeX Warning: Reference ... undefined on
+# input line N." — lands on ONE physical line in the .log. The default 79-column
+# wrap splits a warning across lines, which would corrupt both the verbatim
+# latex-log line and the log parser's line recovery (P111). This is engine output
+# formatting, not command knowledge.
+export max_print_line=10000
 latexmk -lualatex -interaction=nonstopmode -output-directory="$builddir" "$tex" >/dev/null 2>&1
+
+# Surface the lualatex engine log on this driver's stderr so the app's compile-log
+# pane (the P11 raw-log surface) carries the engine's REAL diagnostics — most
+# importantly the persistent "LaTeX Warning: Reference ... undefined ..." line a
+# multi-pass build cannot resolve (P111). The structured Problems layer parses
+# these warnings from the SAME log; a clean build's .log carries none, so no
+# phantom warning is fabricated. The .log is the authoritative engine log latexmk
+# wrote into the build dir.
+enginelog="$builddir/${base}.log"
+if [ -f "$enginelog" ]; then
+    cat "$enginelog" >&2
+fi
 
 # Surface the produced PDF (in the build dir) at the app-chosen {artifact} (an
 # absolute path outside the build dir and the source tree).
