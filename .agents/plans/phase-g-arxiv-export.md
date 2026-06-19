@@ -195,3 +195,11 @@ Phase G specifics:
 - **NOTHING in G1–G6 implemented yet.** Six sub-milestones designed; proof obligations **P114–P119 proposed (not ratified)** — ratify with the user before any RED, per the standing TDD discipline.
   [[proof-obligations]] is NOT edited by this plan.
 - **NEXT:** ratify P114–P119 numbering + wording with the user; provision `arxiv_latex_cleaner` via `uvx` and verify reachability; then begin G1 RED (flatten-for-arxiv `include.lua` mode + the shipped `[export.arxiv]` orchestration script), keeping P1–P69 green.
+
+- **2026-06-19: decisions RATIFIED (controller, "execute all phases, no stops"); Phases A–F shipped to main.** Executing on branch `phase-g-arxiv-export`.
+  - **Obligations P114–P119 as drafted (ceiling is P113 from Phase F; P112 was struck/F5).** Specs continue **p122+**; doctor-class specs continue the d-series.
+  - **The arXiv target = a vendored `arxiv-export` FIREWALL plugin** (an orchestrating script), NOT an `[export.<id>]` config table — export was migrated to the plugin firewall in earlier work. It rides the same firewall the pandoc-pdf-export/html-export plugins use; the app stays tool-agnostic (the entire pipeline is the plugin's argv/script).
+  - **G5 cleaner = `arxiv_latex_cleaner` via `uvx --from arxiv-latex-cleaner`** (VERIFIED working: --help exit 0). Hard dep, fail loud if the uvx pathway is blocked; never a hand-rolled stripper.
+  - **G4 SVG→PDF = `cairosvg` via `uvx --from cairosvg`** (inkscape/rsvg-convert/cairosvg are NOT installed as binaries; the uvx runner pathway provisions cairosvg without sudo — the same doctrine as the cleaner). Fail loud + name the offending file if a figure cannot be made compliant.
+  - latexmk/pdflatex/bibtex/tar confirmed present. G3 tikz-externalization reuses tikzcd.lua's pdflatex compile core (PDF output into the bundle).
+  - Order G1→G6, each blind-TDD via Workflow; full-suite gate before merge. Bundle proofs inspect the REAL tarball via independent tar/find/file/pdfinfo. Banned non-goals: hosted submission, in-browser TikZJax.
