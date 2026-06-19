@@ -212,6 +212,10 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 
 [preview]
 debounce_ms = 200
+pdf_compile_mode = "auto"
+pdf_compile_speed = "fast"
+pdf_fast_command = "pandoc-pdf-export"
+pdf_full_command = "latexmk-pdf-export"
 EOF
         emit_directories "$CONFIG_PATH"
         emit_figures "$CONFIG_PATH"
@@ -341,6 +345,10 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 
 [preview]
 debounce_ms = 200
+pdf_compile_mode = "auto"
+pdf_compile_speed = "fast"
+pdf_fast_command = "pandoc-pdf-export"
+pdf_full_command = "latexmk-pdf-export"
 EOF
         emit_directories "$CONFIG_PATH"
         emit_figures "$CONFIG_PATH"
@@ -399,6 +407,10 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 
 [preview]
 debounce_ms = 200
+pdf_compile_mode = "auto"
+pdf_compile_speed = "fast"
+pdf_fast_command = "pandoc-pdf-export"
+pdf_full_command = "latexmk-pdf-export"
 EOF
         emit_directories "$CONFIG_PATH"
         emit_figures "$CONFIG_PATH"
@@ -478,16 +490,19 @@ else
     # other spec this stays empty, so the canonical [editor] block is byte-for-byte
     # what it was before.
     EDITOR_EXTRA=""
-    # Phase F / F4 / P110: extra [preview] keys appended into the canonical [preview]
-    # block. The auto/manual + fast/full controls and the two PDF command ids live in
-    # [preview] (config.rs Preview). They are serde-defaulted (mode=auto, speed=fast,
-    # fast=pandoc-pdf-export, full=latexmk-pdf-export), so for every spec that does
-    # NOT touch the F4 controls this stays empty and the canonical [preview] block is
-    # byte-for-byte the F1 one (debounce_ms only) — p116 then uses the default fast
-    # command pandoc-pdf-export it installs. p119 selects between TWO installed PDF
-    # command ids, so it pins pdf_fast_command / pdf_full_command to the ids it
+    # Phase F / F4 / P110: the auto/manual + fast/full controls and the two PDF
+    # command ids live in [preview] (config.rs Preview) as REQUIRED fields — no serde
+    # defaults. The canonical [preview] block below emits all four with the shipped
+    # opinionated values (mode=auto, speed=fast, fast=pandoc-pdf-export,
+    # full=latexmk-pdf-export); a config omitting any is a hard load error. Specs that
+    # install distinct PDF command ids override these variables in their case below.
+    # p116 uses the shipped pandoc-pdf-export fast id it installs. p119 selects between
+    # TWO installed PDF command ids, so it pins the fast/full command ids to the ids it
     # installs (fast-pdf-export / latexmk-pdf-export).
-    PREVIEW_EXTRA=""
+    PREVIEW_PDF_COMPILE_MODE="auto"
+    PREVIEW_PDF_COMPILE_SPEED="fast"
+    PREVIEW_PDF_FAST_COMMAND="pandoc-pdf-export"
+    PREVIEW_PDF_FULL_COMMAND="latexmk-pdf-export"
     case "$SPEC" in
     p52-snippet-dictionary.spec.ts | p59-snippet-dropdown.spec.ts | p63-insertion-bar-controls.spec.ts)
         # P52 (autocomplete-popup path) and P59 (insertion-bar dropdown path) both
@@ -745,7 +760,8 @@ else
         # canonical default starts MANUAL is not needed (the spec sets mode/speed
         # through the harness); only the command-id mapping must match the installed
         # plugins.
-        PREVIEW_EXTRA=$'pdf_fast_command = "fast-pdf-export"\npdf_full_command = "latexmk-pdf-export"'
+        PREVIEW_PDF_FAST_COMMAND="fast-pdf-export"
+        PREVIEW_PDF_FULL_COMMAND="latexmk-pdf-export"
         ;;
     esac
 
@@ -765,7 +781,10 @@ $EDITOR_EXTRA
 
 [preview]
 debounce_ms = 200
-$PREVIEW_EXTRA
+pdf_compile_mode = "$PREVIEW_PDF_COMPILE_MODE"
+pdf_compile_speed = "$PREVIEW_PDF_COMPILE_SPEED"
+pdf_fast_command = "$PREVIEW_PDF_FAST_COMMAND"
+pdf_full_command = "$PREVIEW_PDF_FULL_COMMAND"
 EOF
     # Export is entirely the pandoc plugin suite: there is NO [export.*] app-core
     # config table. Export targets are discovered export-category plugins; the

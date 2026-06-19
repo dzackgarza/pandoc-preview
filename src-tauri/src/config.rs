@@ -247,28 +247,26 @@ pub struct Preview {
     /// Phase F / F4 / P110 — whether the PDF compile-on-idle scheduler fires on an
     /// edit. `Auto` recompiles after the debounce window; `Manual` suppresses idle
     /// recompiles until an explicit Recompile PDF command. Config-persisted UI
-    /// state selecting a behaviour, NOT new build machinery. The canonical config
-    /// bakes the default (`auto`); a config that does not name it takes that
-    /// opinionated value (never a runtime fallback — the value is fixed here).
-    #[serde(default = "default_pdf_compile_mode")]
+    /// state selecting a behaviour, NOT new build machinery. Required: the
+    /// canonical config bakes the opinionated value (`auto`); a config that omits
+    /// it fails to load (no runtime fallback — mirrors `debounce_ms`).
     pub pdf_compile_mode: PdfCompileMode,
     /// Phase F / F4 / P110 — which of the two configured PDF command ids the
     /// scheduler / the explicit Recompile runs. `Fast` selects the draft
     /// single-pass command (`pdf_fast_command`); `Full` selects the latexmk
     /// multi-pass driver (`pdf_full_command`). Config-persisted state selecting
-    /// between CONFIGURED commands.
-    #[serde(default = "default_pdf_compile_speed")]
+    /// between CONFIGURED commands. Required: omitting it is a hard load error.
     pub pdf_compile_speed: PdfCompileSpeed,
     /// Phase F / F4 / P110 — the discovered export-plugin id the `Fast` speed runs
     /// (the draft single-pass PDF command). The app owns no command knowledge: this
     /// names a plugin discovered through the firewall and run by id, exactly as the
-    /// other configured PDF commands are.
-    #[serde(default = "default_pdf_fast_command")]
+    /// other configured PDF commands are. Required: omitting it is a hard load
+    /// error (the canonical config ships `pandoc-pdf-export`).
     pub pdf_fast_command: String,
     /// Phase F / F4 / P110 — the discovered export-plugin id the `Full` speed runs
     /// (the latexmk multi-pass driver, P109). Selecting `Full` picks this command
-    /// id over `pdf_fast_command`.
-    #[serde(default = "default_pdf_full_command")]
+    /// id over `pdf_fast_command`. Required: omitting it is a hard load error
+    /// (the canonical config ships `latexmk-pdf-export`).
     pub pdf_full_command: String,
 }
 
@@ -288,28 +286,6 @@ pub enum PdfCompileMode {
 pub enum PdfCompileSpeed {
     Fast,
     Full,
-}
-
-fn default_pdf_compile_mode() -> PdfCompileMode {
-    PdfCompileMode::Auto
-}
-
-fn default_pdf_compile_speed() -> PdfCompileSpeed {
-    PdfCompileSpeed::Fast
-}
-
-/// The canonical draft PDF command id (the FAST selection): the shipped
-/// pandoc-pdf-export command (pandoc -> lualatex, the F1 default PDF compile).
-/// A spec/config that installs a distinct fast draft command (the p119
-/// fast-pdf-export single-pass) overrides this in its [preview] block.
-fn default_pdf_fast_command() -> String {
-    "pandoc-pdf-export".to_string()
-}
-
-/// The canonical latexmk multi-pass PDF command id (the FULL selection). Matches the
-/// `latexmk-pdf-export` plugin (P109) first-run / provisioning installs.
-fn default_pdf_full_command() -> String {
-    "latexmk-pdf-export".to_string()
 }
 
 /// Inclusive editor font-size range, in px.

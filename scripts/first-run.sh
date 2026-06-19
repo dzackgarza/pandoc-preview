@@ -190,6 +190,17 @@ csl = "$CSL"
 # Math is always MathJax (no option): KaTeX cannot cover pandoc's full
 # math syntax range.
 debounce_ms = $DEBOUNCE_MS
+# Phase F / F4 / P110 — PDF compile-on-idle controls. All four are required
+# (no runtime defaults); the app refuses to start if any is missing.
+# pdf_compile_mode: "auto" recompiles after the debounce window, "manual"
+# suppresses idle recompiles until an explicit Recompile PDF command.
+pdf_compile_mode = "auto"
+# pdf_compile_speed: "fast" runs the draft single-pass command, "full" the
+# latexmk multi-pass driver.
+pdf_compile_speed = "fast"
+# The discovered export-plugin command ids the fast/full speeds run by id.
+pdf_fast_command = "pandoc-pdf-export"
+pdf_full_command = "latexmk-pdf-export"
 
 # Roots for the alternative-explorer panes (the macros pane browses styles, the
 # figures pane browses figures). Both are required absolute paths.
