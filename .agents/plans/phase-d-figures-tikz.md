@@ -241,18 +241,11 @@ No mocks, no skips, no forced error modes.
     Proof: a tikzpicture in the document renders to an inline SVG in the preview.
     This is the deferred "Milestone F tikz pipeline", which is squarely Phase D (figures-tikz) — D-2/D-3/D-6 ride it.
 
-- **2026-06-19: Phase D COMPLETE — all 11 sub-milestones green on branch `phase-d-figures-tikz`.**
-  Blind-TDD via Workflow (role-separated obligation→RED→GREEN→adversarial review), each
-  independently reviewed + controller-re-verified:
-  - **D-1/P90** tikz-subset round-trip parser (`src-tauri/src/tikz.rs`, ported TikzIt grammar
-    via `nom`; pure-Rust `cargo test` round-trip).
-  - **D-0/P100** (DISCOVERED foundation) activated the dormant tikz→SVG preview pipeline:
-    wired `tikzcd.lua` into the renderer command (3 generators) + PANDOC_DIR/FIGURES_DIR/SVG_DIR
-    via `tikz-env.sh` + a tikz-toolchain doctor check (pdf2svg/pdflatex). Also fixed a
-    pre-existing Phase-A defect: `first-run.sh` now emits the schema-required `lint_rules`
-    (d14 GREEN).
-  - **D-2/P91** shared `.tikzstyles`/`.tikzdefs` palette (`[figures]` config + `{tikzstyles}`/
-    `{tikzdefs}` render-context tokens + vendored `tikzit.sty`).
+- **2026-06-19: Phase D COMPLETE — all 11 sub-milestones green on branch `phase-d-figures-tikz`.** Blind-TDD via Workflow (role-separated obligation→RED→GREEN→adversarial review), each independently reviewed + controller-re-verified:
+  - **D-1/P90** tikz-subset round-trip parser (`src-tauri/src/tikz.rs`, ported TikzIt grammar via `nom`; pure-Rust `cargo test` round-trip).
+  - **D-0/P100** (DISCOVERED foundation) activated the dormant tikz→SVG preview pipeline: wired `tikzcd.lua` into the renderer command (3 generators) + PANDOC_DIR/FIGURES_DIR/SVG_DIR via `tikz-env.sh` + a tikz-toolchain doctor check (pdf2svg/pdflatex).
+    Also fixed a pre-existing Phase-A defect: `first-run.sh` now emits the schema-required `lint_rules` (d14 GREEN).
+  - **D-2/P91** shared `.tikzstyles`/`.tikzdefs` palette (`[figures]` config + `{tikzstyles}`/ `{tikzdefs}` render-context tokens + vendored `tikzit.sty`).
   - **D-3/P92** swappable per-figure `<>`-template (QTikz `.pgs` convention).
   - **D-4/P93** source↔preview line jump (Ctrl+J/Ctrl+T) over the D-1 model.
   - **D-5/P94** vendored QTikz `tikzcommands.xml` seeds bar + completion.
@@ -262,12 +255,6 @@ No mocks, no skips, no forced error modes.
   - **D-9/P98** watch-file reload of an owned figure via the P48 fingerprint.
   - **D-10/P99** external SVG/PDF vector-asset inclusion into the global figures dir.
   - **C6 deferred** to its own milestone (task tracked) — see the 2026-06-18 note.
-  - **Full-suite gate** (first-ever full d+p run, per the d14 lesson): 108 PASS / 1 FAIL,
-    the lone fail being p17 (documented `unshare` env-block, not a defect). Surfaced + fixed
-    3 accumulated baseline-debt reds: p41 (a Phase-D `54e05be` checkpoint had accidentally
-    reformatted `outline.md`, shifting a line; fixture restored), p63 (stale flat-shape
-    snippet-dict read post-P77 object-schema migration; read updated), p37 (the spellchecker
-    fragmented `\oint` across text nodes; the `renderedToken` test helper hardened) — no
-    behavioral assertion weakened.
-  - Submodules pushed + reachable: `pandoc-config` (eaefd61→…→993cf58 on origin/main),
-    `codemirror-lang-latex` (9f6a6ee on origin/main).
+  - **Full-suite gate** (first-ever full d+p run, per the d14 lesson): 108 PASS / 1 FAIL, the lone fail being p17 (documented `unshare` env-block, not a defect).
+    Surfaced + fixed 3 accumulated baseline-debt reds: p41 (a Phase-D `54e05be` checkpoint had accidentally reformatted `outline.md`, shifting a line; fixture restored), p63 (stale flat-shape snippet-dict read post-P77 object-schema migration; read updated), p37 (the spellchecker fragmented `\oint` across text nodes; the `renderedToken` test helper hardened) — no behavioral assertion weakened.
+  - Submodules pushed + reachable: `pandoc-config` (eaefd61→…→993cf58 on origin/main), `codemirror-lang-latex` (9f6a6ee on origin/main).

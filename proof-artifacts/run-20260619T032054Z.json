@@ -1,0 +1,54 @@
+{
+  "run_id": "20260619T032054Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p111-search-scope-heatmap.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p111-search-scope-heatmap.spec.ts",
+            "title": "a search restricted to sections/ for Café lists only the in-subtree files (chapter2.md absent) and the three-match file carries a higher heat rank than the one-match file",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2490,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-scoped-high",
+          "value": "sections/intro.md"
+        },
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-out-absent",
+          "value": "chapter2.md"
+        },
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-high-rank",
+          "value": "3"
+        },
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-low-rank",
+          "value": "1"
+        }
+      ]
+    }
+  ]
+}

@@ -83,8 +83,9 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
                 .build(app)?,
         )
         .separator()
-        // No accelerators: the webview owns Ctrl-P (command palette) and the
-        // fold keymap; a registered menu accelerator would shadow them on Linux.
+        // No accelerators: the webview owns Ctrl+Shift+P (command palette),
+        // Ctrl+P (quick-open), and the fold keymap; a registered menu accelerator
+        // would shadow them on Linux.
         .item(&MenuItemBuilder::with_id("command_palette", "Command Palette").build(app)?)
         .item(&MenuItemBuilder::with_id("fold_all", "Fold All").build(app)?)
         .item(&MenuItemBuilder::with_id("unfold_all", "Unfold All").build(app)?)

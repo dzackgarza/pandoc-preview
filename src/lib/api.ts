@@ -185,6 +185,59 @@ export const configurePlugin = (pluginId: string) =>
  */
 export const listPlugins = () => invoke<PluginInfo[]>("list_plugins");
 
+// ── Firewall picker (Phase E / E3 / P104) ─────────────────────────────────────
+//
+// The command palette (Ctrl+Shift+P) and quick-open (Ctrl+P) both delegate the
+// CHOICE to a picker-category plugin run by id through the SAME generic firewall
+// (run_plugin). The app feeds the candidate list on the plugin's stdin (one
+// `<token>\t<label>` line per candidate — the precedent is workspaceSearch, which
+// feeds its request JSON on the same stdin) and the picker emits the CHOSEN
+// candidate line on stdout. In production the picker is the interactive fzf TUI;
+// the headless proof substitutes, via config, a non-interactive selection-
+// returning plugin (recording-picker). The app then RUNS the returned command /
+// OPENS the returned file — the app core owns no fzf argv, only the generic
+// category. A picker that returns no line, or an empty/failed run, is a LOUD
+// error (never a silent no-op pick).
+
+/** One pick candidate: the `token` the app dispatches on (a command id or a file
+ * path) and the human `label` shown in the picker. */
+export interface PickCandidate {
+  token: string;
+  label: string;
+}
+
+/**
+ * Run the picker-category plugin by id through the generic firewall, feeding the
+ * candidates on stdin and returning the TOKEN of the chosen candidate. `root` is
+ * a stable parent for the firewall's required (unused) source path, exactly as
+ * workspaceSearch supplies one. Fails loud if the picker run fails or returns no
+ * recognizable candidate line.
+ */
+export async function pickViaFirewall(
+  pickerId: string,
+  root: string,
+  candidates: PickCandidate[],
+): Promise<string> {
+  if (candidates.length === 0) {
+    throw new Error("pickViaFirewall: no candidates to pick from");
+  }
+  // The firewall delivers this on the plugin's stdin (the "buffer"); the
+  // source/output paths are unused by the pick pass (it reads stdin, writes the
+  // chosen line to stdout) but the firewall requires them.
+  const stdin = candidates.map((c) => `${c.token}\t${c.label}`).join("\n");
+  const result = await runPlugin(pickerId, `${root}/.picker`, "", stdin);
+  if (!result.success) {
+    throw new Error(
+      `picker plugin ${pickerId} failed (exit ${result.exit_code ?? "?"}): ${result.stderr.trim()}`,
+    );
+  }
+  const line = result.stdout.split("\n").find((l) => l.length > 0);
+  if (line === undefined) {
+    throw new Error(`picker plugin ${pickerId} returned no selection`);
+  }
+  return line.split("\t", 1)[0];
+}
+
 // ── Workspace content search (Phase E / E1 / P101+P102) ───────────────────────
 //
 // The app owns the boolean GRAMMAR translation and the per-file boolean

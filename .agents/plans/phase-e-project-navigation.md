@@ -214,14 +214,20 @@ Witness uses the shared fixture ([[proof-obligations]] "## Shared witness fixtur
 
 - **2026-06-16:** Plan authored from [[competitive-parity-roadmap]] "## Phase E" + the four per-program studies + the live code seams (CommandPaletteModal, App.svelte command/keybinding wiring, EditorPane keymap + outline + goToLine + edit primitives, dockview, fsops, plugins, config).
   Six sub-milestones E1–E6 defined; proposed obligations P100–P106 drafted (P106 HELD). **Nothing implemented yet.** Prerequisite green baseline: P1–P69, D1–D16 (verified spec families in `tests/proof/`).
+
 - **Key current-state finding to act on in E3:** `App.svelte:1363-1370` binds Ctrl+P to the app-owned `CommandPaletteModal` — wrong binding AND wrong (non-firewall) surface.
   E3 fixes both.
+
 - **NEXT:** ratify proposed obligations **P100–P106** with the user, then start **E1** (workspace search) RED. Decide at E1 design: `workspace-search` firewall plugin (`rg --json`, doctrine- preferred) vs. core `fsops::search_workspace`.
 
 - **2026-06-19: decisions RATIFIED (controller, "execute all phases, no stops"); Phases A–D shipped to main.** Executing on branch `phase-e-project-navigation`.
   - **Obligation renumber: P101–P107** (the plan's drafted P100–P106 COLLIDES — P100 is already taken by Phase D / D-0). Map: E1→P101 (search) + P102 (per-dir/heatmap), E2→P103 (motions), E3→P104, E4→P105, E5→P106, E6→P107 (HELD). Specs continue **p110+** (Phase D used p100–p109).
-  - **E1 backend = `workspace-search` firewall plugin running real `rg --json`** (doctrine-preferred; `rg` confirmed at /usr/bin/rg). Not a core Rust grep.
-  - **E3 pickers = `fzf`** (confirmed at /usr/bin/fzf; `dmenu` is absent but unneeded). Ctrl+P→quick-open, Ctrl+Shift+P→command-palette (firewall), delete `CommandPaletteModal.svelte`.
-  - **E3 CORRECTION (plan was wrong):** `tests/proof/p40-command-palette.spec.ts` EXISTS and currently passes (asserts the old Ctrl+P→app-palette). E3 MUST migrate p40 to the new behavior (Ctrl+Shift+P→firewall palette runs a command; Ctrl+P→quick-open), not silently break it — the new P104 spec drives the new behavior; p40 is updated/subsumed (replace with an aligned correction, never a hollow deletion).
-  - **E6 DEFERRED (blocked on editor tabs, like C6):** P107 HELD; tracked. E1–E5 executable now.
+  - **E1 backend = `workspace-search` firewall plugin running real `rg --json`** (doctrine-preferred; `rg` confirmed at /usr/bin/rg).
+    Not a core Rust grep.
+  - **E3 pickers = `fzf`** (confirmed at /usr/bin/fzf; `dmenu` is absent but unneeded).
+    Ctrl+P→quick-open, Ctrl+Shift+P→command-palette (firewall), delete `CommandPaletteModal.svelte`.
+  - **E3 CORRECTION (plan was wrong):** `tests/proof/p40-command-palette.spec.ts` EXISTS and currently passes (asserts the old Ctrl+P→app-palette).
+    E3 MUST migrate p40 to the new behavior (Ctrl+Shift+P→firewall palette runs a command; Ctrl+P→quick-open), not silently break it — the new P104 spec drives the new behavior; p40 is updated/subsumed (replace with an aligned correction, never a hollow deletion).
+  - **E6 DEFERRED (blocked on editor tabs, like C6):** P107 HELD; tracked.
+    E1–E5 executable now.
   - Each sub-milestone: blind-TDD via Workflow (obligation→RED→GREEN→adversarial review), full-suite gate before the Phase E merge (the d14/Phase-D lesson).

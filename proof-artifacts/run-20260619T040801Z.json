@@ -1,0 +1,68 @@
+{
+  "run_id": "20260619T040801Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p113-command-palette.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p113-command-palette.spec.ts",
+            "title": "Ctrl+Shift+P firewall palette runs Fold All (buffer folds); Ctrl+P quick-open opens the picked file",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3048,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p113-command-palette.spec.ts",
+          "name": "p113-palette-fold",
+          "value": 4
+        },
+        {
+          "spec": "p113-command-palette.spec.ts",
+          "name": "p113-quickopen",
+          "value": "/tmp/pandoc-preview-proof-runs/20260619T040801Z/p113-command-palette/project/demo.md"
+        }
+      ]
+    },
+    {
+      "spec": "p40-command-palette.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p40-command-palette.spec.ts",
+            "title": "Ctrl+Shift+P firewall palette runs Unfold All (pre-folded buffer unfolds)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2083,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p40-command-palette.spec.ts",
+          "name": "command-palette-unfold",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

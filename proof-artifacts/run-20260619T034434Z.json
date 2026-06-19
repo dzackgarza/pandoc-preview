@@ -1,0 +1,63 @@
+{
+  "run_id": "20260619T034434Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p51-composable-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p51-composable-completion.spec.ts",
+            "title": "A registered app completion source composes with the LaTeX source (both surface)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2713,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p51-composable-completion.spec.ts",
+          "name": "completion-sources-compose",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p40-command-palette.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p40-command-palette.spec.ts",
+            "title": "Ctrl-P palette: Fold All folds, Unfold All unfolds",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2652,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p40-command-palette.spec.ts",
+          "name": "command-palette-fold",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

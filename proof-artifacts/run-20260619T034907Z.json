@@ -1,0 +1,39 @@
+{
+  "run_id": "20260619T034907Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p41-outline-panel.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p41-outline-panel.spec.ts",
+            "title": "Outline lists headings and divs (with titles); clicking navigates",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1761,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p41-outline-panel.spec.ts",
+          "name": "outline-panel",
+          "value": 4
+        }
+      ]
+    }
+  ]
+}

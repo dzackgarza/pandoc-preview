@@ -39,7 +39,6 @@
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
   import ReferencesPanel from "./lib/components/ReferencesPanel.svelte";
   import SearchPanel from "./lib/components/SearchPanel.svelte";
-  import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
   import { parseCompileLog, type LogEntry } from "./lib/editor/complog";
   import {
     parseTikzFigureLog,
@@ -167,7 +166,6 @@
     activeView = activeView === id ? null : id;
   }
   let settingsOpen = $state(false);
-  let commandPaletteOpen = $state(false);
   // Insertion-bar modal-backed controls. Each flag is raised by the matching bar
   // button (matrix/table/footnote) and lowered on confirm/cancel. The confirm
   // routes into the SAME insertMatrix/insertTable/insertFootnote handlers the
@@ -945,7 +943,8 @@
     await api.saveFoldState(foldState);
   }
 
-  // The Ctrl-P command palette's operations, routed to the existing handlers.
+  // The Ctrl+Shift+P command palette's operations, routed to the existing
+  // handlers. This catalog is the candidate set fed to the firewall picker.
   function paletteCommands(): { id: string; label: string; run: () => void }[] {
     const cmds = [
       { id: "fold_all", label: "Fold All", run: () => editor.foldAllFolds() },
@@ -968,6 +967,39 @@
       { id: "show_preview", label: "Show Preview", run: () => (activeTab = "preview") },
       { id: "show_log", label: "Show Log", run: () => (activeTab = "log") },
       { id: "settings", label: "Settings", run: () => (settingsOpen = true) },
+      // Phase E / E2 structural-motion commands (P112): the SAME named Commands
+      // the Ctrl-Alt-<key> bindings fire, surfaced in the palette so the firewall
+      // picker can run any of them by id.
+      {
+        id: "next-section",
+        label: "Go to Next Section",
+        run: () => editor.runStructuralCommand("next-section"),
+      },
+      {
+        id: "prev-section",
+        label: "Go to Previous Section",
+        run: () => editor.runStructuralCommand("prev-section"),
+      },
+      {
+        id: "next-environment",
+        label: "Go to Next Environment",
+        run: () => editor.runStructuralCommand("next-environment"),
+      },
+      {
+        id: "prev-environment",
+        label: "Go to Previous Environment",
+        run: () => editor.runStructuralCommand("prev-environment"),
+      },
+      {
+        id: "next-math-zone",
+        label: "Go to Next Math Zone",
+        run: () => editor.runStructuralCommand("next-math-zone"),
+      },
+      {
+        id: "prev-math-zone",
+        label: "Go to Previous Math Zone",
+        run: () => editor.runStructuralCommand("prev-math-zone"),
+      },
     ];
     // Discovered export-category plugins (P66): one "Export: <name> (.<ext>)"
     // entry per plugin, name + extension sourced from the discovered manifest.
@@ -982,6 +1014,91 @@
       });
     }
     return cmds;
+  }
+
+  // The picker category whose member is the firewall file-finder / command picker
+  // (fzf in production; recording-picker in the headless proof). The app core owns
+  // no picker argv — only the generic category name (the diagram-tool doctrine).
+  const PICKER_CATEGORY = "picker";
+
+  /** Resolve the discovered picker-category plugin's id, failing loud if none is
+   * discoverable. */
+  function pickerPluginId(): string {
+    const plugin = discoveredPlugins.find((p) => p.category === PICKER_CATEGORY);
+    if (!plugin) {
+      throw new Error(`no plugin in the "${PICKER_CATEGORY}" category is discoverable`);
+    }
+    return plugin.id;
+  }
+
+  /** A stable parent for the firewall's required (unused) source path. Quick-open
+   * and the palette both need a root; the open project root is it. */
+  function pickerRoot(): string {
+    return projectRoot ?? dirOf(currentFile ?? "/");
+  }
+
+  // ── Ctrl+Shift+P: the firewall command palette (P104) ───────────────────────
+  // Feed the paletteCommands() catalog (id\tlabel) to the picker through the
+  // generic firewall, take back the chosen command id, and RUN that command's
+  // run() — the decisive observable is the command actually running (the buffer
+  // folds), never that the picker listed it. In production the picker is fzf; in
+  // the headless proof it returns a config-declared deterministic selection.
+  async function runCommandPalette() {
+    const cmds = paletteCommands();
+    try {
+      const chosen = await api.pickViaFirewall(
+        pickerPluginId(),
+        pickerRoot(),
+        cmds.map((c) => ({ token: c.id, label: c.label })),
+      );
+      const cmd = cmds.find((c) => c.id === chosen);
+      if (!cmd) {
+        toastError(`Command palette: unknown command ${chosen}`);
+        return;
+      }
+      cmd.run();
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
+  // ── Ctrl+P: the firewall quick-open file finder (P104) ───────────────────────
+  // Feed the workspace file list (every file path in the open project's tree) to
+  // the picker through the generic firewall, take back the chosen file path, and
+  // OPEN it — the decisive observable is the file actually opening (the active
+  // document becomes the picked file). In production the picker is fzf; in the
+  // headless proof it returns a config-declared deterministic selection.
+  async function runQuickOpen() {
+    if (!projectRoot) {
+      toastError("Open a folder first.");
+      return;
+    }
+    const files = workspaceFiles(tree);
+    if (files.length === 0) return;
+    try {
+      const chosen = await api.pickViaFirewall(
+        pickerPluginId(),
+        pickerRoot(),
+        files.map((path) => ({ token: path, label: path.slice(projectRoot!.length + 1) })),
+      );
+      await openFile(chosen);
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
+  /** Flatten a file tree to the absolute paths of its files (directories
+   * excluded) — the quick-open candidate set. */
+  function workspaceFiles(nodes: FileNode[]): string[] {
+    const out: string[] = [];
+    for (const node of nodes) {
+      if (node.is_dir) {
+        if (node.children) out.push(...workspaceFiles(node.children));
+      } else {
+        out.push(node.path);
+      }
+    }
+    return out;
   }
 
   function scheduleRender(content: string) {
@@ -1996,7 +2113,7 @@
         settingsOpen = true;
         break;
       case "command_palette":
-        commandPaletteOpen = true;
+        void runCommandPalette();
         break;
       case "fold_all":
         editor.foldAllFolds();
@@ -2037,7 +2154,11 @@
   onkeydown={(e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
       e.preventDefault();
-      commandPaletteOpen = true;
+      // VSCode-real bindings, both delivered behind the plugin firewall (P104):
+      // Ctrl+Shift+P -> command palette (run the picked command); Ctrl+P ->
+      // quick-open (open the picked workspace file).
+      if (e.shiftKey) void runCommandPalette();
+      else void runQuickOpen();
     }
   }}
 />
@@ -2241,13 +2362,6 @@
       {configPath}
       onSave={(next) => void saveSettings(next)}
       onCancel={() => (settingsOpen = false)}
-    />
-  {/if}
-
-  {#if commandPaletteOpen}
-    <CommandPaletteModal
-      commands={paletteCommands()}
-      onClose={() => (commandPaletteOpen = false)}
     />
   {/if}
 
