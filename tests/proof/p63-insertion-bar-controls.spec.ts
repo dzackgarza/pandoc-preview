@@ -140,15 +140,22 @@ test('Selecting the bar snippet dropdown option expands the snippet body at the 
   const manifest = loadRunManifest();
 
   // The bar's snippet dropdown surfaces the config dictionary's triggers; this
-  // run provisions the shared p52/p59 dict ({ "mthm": "::: {.theorem}\n$0\n:::" }).
-  // Read the dict independently to assert the option this spec selects exists.
+  // run provisions the shared p52/p59 dict (mode-tagged object schema:
+  // { "snippets": [ { trigger, body, mode? } ] }). Read the dict independently
+  // to assert the option this spec selects exists.
   const config = parseTomlFile(manifest.configPath);
   const editor = config.editor as { snippet_dictionary?: unknown } | undefined;
   const dictPath = editor?.snippet_dictionary;
   if (typeof dictPath !== 'string' || dictPath.length === 0) {
     throw new Error('config.editor.snippet_dictionary is missing — the p63 run must point config at the fixture dict');
   }
-  const dictKeys = Object.keys(JSON.parse(readFileSync(dictPath, 'utf-8')) as Record<string, unknown>);
+  // Mirror p59: the trigger set is the DISTINCT trigger tokens across the
+  // dictionary's snippets[] entries (the same trigger may appear twice — prose +
+  // math — and surfaces once).
+  const parsedDict = JSON.parse(readFileSync(dictPath, 'utf-8')) as {
+    snippets: Array<{ trigger: string }>;
+  };
+  const dictKeys = Array.from(new Set(parsedDict.snippets.map((e) => e.trigger))).sort();
   expect(dictKeys).toContain(SNIPPET_TRIGGER);
 
   await openAndSelectDemo(tauriPage, manifest.project);
