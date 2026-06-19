@@ -1,0 +1,92 @@
+{
+  "run_id": "20260619T123446Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p08-export-pdf.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p08-export-pdf.spec.ts",
+            "title": "Export PDF runs the configured lualatex plugin and carries the witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 11101,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-producer",
+          "value": "Producer:        LuaTeX-1.17.0"
+        }
+      ]
+    },
+    {
+      "spec": "p11-compile-log.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p11-compile-log.spec.ts",
+            "title": "the compile log shows the real --from markdown command and a zero exit",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3349,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p11-compile-log.spec.ts",
+          "name": "exit-status-line",
+          "value": "exit status: exit status: 0"
+        }
+      ]
+    },
+    {
+      "spec": "p43-preview-status.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p43-preview-status.spec.ts",
+            "title": "preview indicator: edit marks Out of date, then Recompiling, then Up to date",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4716,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p43-preview-status.spec.ts",
+          "name": "status-sequence",
+          "value": "stale>rendering>ok"
+        }
+      ]
+    }
+  ]
+}

@@ -129,6 +129,19 @@ pub fn read_text_file(path: String) -> Result<FileRead> {
     })
 }
 
+/// Read a file's RAW BYTES, returned as an IPC byte response (the frontend
+/// receives an ArrayBuffer). Used by the embedded pdf.js viewer (Phase F / F1):
+/// the asset protocol returns 403 to a `fetch()` of an `asset://` URL from the
+/// dev-server origin, so the compiled PDF's bytes are read through this host-fs
+/// boundary and handed to pdf.js as a byte array. Generic file I/O — carries no
+/// renderer/pandoc knowledge.
+#[tauri::command]
+pub fn read_file_bytes(path: String) -> Result<tauri::ipc::Response> {
+    let path = PathBuf::from(path);
+    let bytes = std::fs::read(&path).map_err(|e| Error::io(&path, e))?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
 /// Write `content` to `path` UNCONDITIONALLY and return the fingerprint of the
 /// freshly written file. Used where there is nothing to conflict with: a Save
 /// As to a new target, and the explicit force-overwrite resolution after a

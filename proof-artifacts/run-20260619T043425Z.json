@@ -1,0 +1,54 @@
+{
+  "run_id": "20260619T043425Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p74-structured-compile-log.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p74-structured-compile-log.spec.ts",
+            "title": "a structured compile-log entry parsed from the real preview-render warning jumps the editor to that source line, alongside the unchanged raw log",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3613,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "parsed-line",
+          "value": 5
+        },
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "parsed-severity",
+          "value": "warning"
+        },
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "parsed-message",
+          "value": "[WARNING] Note with key 'orphan' defined at line 5 column 1 but not used."
+        },
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "cursor-landed-offset",
+          "value": 43
+        }
+      ]
+    }
+  ]
+}

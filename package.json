@@ -28,6 +28,7 @@
     "codemirror-lang-latex": "file:vendor/codemirror-lang-latex",
     "dockview-core": "6.6.1",
     "nspell": "^2.1.5",
+    "pdfjs-dist": "^6.0.227",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

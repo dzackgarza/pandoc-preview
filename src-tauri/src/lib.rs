@@ -166,6 +166,7 @@ pub fn run() {
             config::save_figure_registry,
             fsops::list_tree,
             fsops::read_text_file,
+            fsops::read_file_bytes,
             fsops::write_text_file,
             fsops::write_text_file_checked,
             fsops::create_file,

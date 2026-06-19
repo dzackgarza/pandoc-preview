@@ -1,0 +1,44 @@
+{
+  "run_id": "20260619T123311Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p116-pdf-preview.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p116-pdf-preview.spec.ts",
+            "title": "live PDF preview compiles demo.md on idle and renders a real page canvas",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 13291,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-viewer-canvas",
+          "value": "1@918x1188"
+        }
+      ]
+    }
+  ]
+}

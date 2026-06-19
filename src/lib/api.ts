@@ -133,6 +133,14 @@ export const listTree = (root: string) => invoke<FileNode[]>("list_tree", { root
 // external modification.
 export const readTextFile = (path: string) => invoke<FileRead>("read_text_file", { path });
 
+// Read a file's RAW BYTES (Phase F / F1): the backend returns a tauri ipc byte
+// response, which invoke surfaces as an ArrayBuffer. The embedded pdf.js viewer
+// feeds these bytes to getDocument({ data }) — the asset protocol 403s a fetch
+// of an asset:// URL from the dev-server origin, so the PDF bytes travel the
+// host-fs IPC boundary instead.
+export const readFileBytes = (path: string) =>
+  invoke<ArrayBuffer>("read_file_bytes", { path });
+
 // Write unconditionally and return the post-write fingerprint. Used for Save As
 // (new target, nothing to conflict with) and the explicit force-overwrite that
 // resolves a conflict (the user chose their buffer wins).

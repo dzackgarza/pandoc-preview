@@ -24,6 +24,7 @@
   import { toastError, toastInfo, toastSuccess } from "./lib/toast.svelte";
   import { createSplitLayout, type SplitLayout } from "./lib/dockview";
   import { portal } from "./lib/portal";
+  import { renderPdfToContainer } from "./lib/pdfview";
 
   import EditorPane from "./lib/components/EditorPane.svelte";
   import ActivityBar from "./lib/components/ActivityBar.svelte";
@@ -253,7 +254,27 @@
   // once on mount from the app resource dir; convertFileSrc turns the absolute
   // path into the asset-protocol URL the webview can load.
   let mathjaxUrl = $state("");
-  let activeTab = $state<"preview" | "log" | "tikzlog">("preview");
+  let activeTab = $state<"preview" | "pdf" | "log" | "tikzlog">("preview");
+
+  // ---- PDF compile-on-idle scheduler (Phase F / F1 / P107) ----------------
+  //
+  // The debounce sibling of the HTML scheduleRender/doRender loop: its OWN
+  // debounce timer, OWN latest-wins seq guard, OWN RenderStatus. It drives the
+  // CONFIGURED PDF export command (the shipped pandoc-pdf-export plugin =
+  // pandoc -> lualatex) through the EXISTING export boundary (runPluginToPath)
+  // to a real .pdf on disk, then paints it into the embedded pdf.js viewer via
+  // convertFileSrc. The app core grows a VIEWER + a SCHEDULER only — it never
+  // learns what lualatex is; the compile stays a configured command.
+  const PDF_EXPORT_PLUGIN_ID = "pandoc-pdf-export";
+  let pdfStatus = $state<RenderStatus>("idle");
+  let pdfTimer: ReturnType<typeof setTimeout> | undefined;
+  let pdfSeq = 0;
+  let pdfArtifact = $state<string | null>(null);
+  let pdfViewerEl: HTMLElement | null = null;
+  // Asset-protocol URLs of the VENDORED offline pdf.js cmaps / standard-fonts
+  // dirs (the MathJax local-asset precedent — never a CDN). Resolved on mount.
+  let pdfCmapUrl = $state("");
+  let pdfFontUrl = $state("");
 
   let wordCount = $state(0);
   let cursorLine = $state(1);
@@ -301,6 +322,12 @@
     // convertFileSrc turns it into the asset-protocol URL the srcdoc preview
     // loads its MathJax <script> from — local, never a CDN.
     mathjaxUrl = convertFileSrc(await resolveResource("resources/mathjax/tex-full-svg-a11y.min.js"));
+    // Resolve the VENDORED offline pdf.js asset dirs (cmaps / standard fonts) to
+    // asset-protocol URLs the embedded pdf.js viewer reads from — local, never a
+    // CDN (the MathJax precedent). pdf.js wants a directory URL with a trailing
+    // slash; convertFileSrc yields the asset-protocol form of the resource dir.
+    pdfCmapUrl = convertFileSrc(await resolveResource("resources/pdfjs/cmaps")) + "/";
+    pdfFontUrl = convertFileSrc(await resolveResource("resources/pdfjs/standard_fonts")) + "/";
     await listen<string>("menu", (event) => handleMenu(event.payload));
 
     // P50 close guard: intercept the native window close. A dirty buffer blocks
@@ -717,6 +744,18 @@
         configBibliography: () => config?.editor.bibliography ?? null,
         renderStatus: () => status,
         statusHistory: () => [...statusHistory],
+        // Phase F / F1 / P107: the embedded-PDF-preview surface. setPreviewMode
+        // switches the preview pane to the pdf.js viewer mode and kicks the PDF
+        // compile-on-idle scheduler (the debounce sibling of scheduleRender).
+        // pdfStatus is that scheduler's OWN RenderStatus (sibling of
+        // renderStatus()); pdfPreviewArtifact is the on-disk path of the PDF the
+        // scheduler produced (the artifact runPluginToPath returned), or null
+        // until a compile succeeds — NEVER a stale path after a failed compile.
+        setPreviewMode: (mode: "preview" | "pdf") => {
+          setPreviewMode(mode);
+        },
+        pdfStatus: () => pdfStatus,
+        pdfPreviewArtifact: (): string | null => pdfArtifact,
         // P96 / D-7: register a non-tikz figure's dual-asset pairing (included
         // RENDER + editable SOURCE) through the SAME registerFigureAssets the
         // figure surface uses, persisting it to the host-fs registry sidecar.
@@ -776,6 +815,7 @@
 
   onDestroy(() => {
     clearTimeout(recoveryTimer); // stop the pending recovery autosave (F1 nit)
+    clearTimeout(pdfTimer); // stop the pending PDF compile-on-idle (Phase F)
     clearInterval(watchTimer); // stop the watch-file reload poll (P98 / D-9)
     split?.dispose();
   });
@@ -848,6 +888,10 @@
     wordCount = content.split(/\s+/).filter(Boolean).length;
     outline = editor.getOutline();
     scheduleRender(content);
+    // When the PDF preview tab is active, the PDF compile-on-idle scheduler
+    // re-runs on the same edit (its OWN debounce/seq), so the embedded viewer
+    // tracks the buffer just as the HTML preview does.
+    if (activeTab === "pdf") schedulePdf();
     // Independently of the preview render, capture the (unsaved) buffer to the
     // host-filesystem recovery store on its own short debounce (P45). This is
     // NOT tied to Save and NOT tied to the render debounce.
@@ -1156,6 +1200,100 @@
       log = String(e);
       toastError(String(e));
     }
+  }
+
+  // ---- PDF compile-on-idle (Phase F / F1 / P107) --------------------------
+  //
+  // Structural port of scheduleRender/doRender: same debounce-then-compile shape,
+  // same latest-wins seq guard, same RenderStatus transitions — but a SEPARATE
+  // timer/seq/status, and the compile is the CONFIGURED PDF export command run
+  // through the EXISTING export boundary, not the in-process pandoc render.
+
+  // Where the preview PDF lands: beside the open source file under a dot-prefixed
+  // per-compile name (keyed on the compile `seq`), so each recompile writes a
+  // FRESH artifact path and a slower compile's read can never collide with a
+  // newer compile overwriting the same path mid-read. Requires a durable file: an
+  // identity-less buffer has no place to anchor the preview PDF.
+  function pdfPreviewTarget(seq: number): string | null {
+    if (!currentFile) return null;
+    const slash = currentFile.lastIndexOf("/");
+    const dir = currentFile.slice(0, slash);
+    const name = currentFile.slice(slash + 1).replace(/\.[^/.]*$/, "");
+    return `${dir}/.${name}.ppe-preview.${seq}.pdf`;
+  }
+
+  function schedulePdf() {
+    if (!config || !currentFile) return;
+    pdfStatus = "stale";
+    clearTimeout(pdfTimer);
+    pdfTimer = setTimeout(() => void doPdfCompile(), config.preview.debounce_ms);
+  }
+
+  async function doPdfCompile() {
+    const seq = ++pdfSeq;
+    const target = pdfPreviewTarget(seq);
+    if (!target) return;
+    pdfStatus = "rendering";
+    try {
+      // Drive the CONFIGURED PDF export plugin through the SAME export boundary
+      // every path-consuming export uses (runPluginToPath → save-gate → the
+      // pandoc-pdf-export command). The app passes only the {file}/{artifact}
+      // paths; the pandoc -> lualatex command lives entirely in the plugin.
+      const res = await runPluginToPath(PDF_EXPORT_PLUGIN_ID, target);
+      if (seq !== pdfSeq) return; // a newer compile superseded this one
+      // The compile log surfaces the command/stderr/exit on the Compile Log pane
+      // (P11 surface) so a nonzero exit is diagnosable.
+      log = res.stderr || res.stdout || log;
+      if (!res.success || !res.artifact) {
+        // Nonzero PDF compile: FAIL LOUD. Show failed-compile and surface the
+        // command/stderr/exit in the log; NEVER show a stale PDF as fresh —
+        // the artifact accessor is cleared so the viewer is not fed old bytes.
+        pdfArtifact = null;
+        pdfStatus = "error";
+        log =
+          `PDF compile failed (exit ${res.exit_code ?? "unknown"}).\n` +
+          `command: ${PDF_EXPORT_PLUGIN_ID} ${currentFile} -> ${target}\n` +
+          `--- stderr ---\n${res.stderr}\n--- stdout ---\n${res.stdout}`;
+        return;
+      }
+      pdfArtifact = res.artifact;
+      await paintPdf(res.artifact, seq);
+    } catch (e) {
+      if (seq !== pdfSeq) return;
+      pdfArtifact = null;
+      pdfStatus = "error";
+      log = String(e);
+      toastError(String(e));
+    }
+  }
+
+  // Paint the freshly compiled PDF into the embedded pdf.js viewer. The PDF's
+  // bytes are read off disk through the host-fs IPC boundary (api.readFileBytes)
+  // and handed to pdf.js — the asset protocol 403s a fetch of an asset:// URL
+  // from the dev-server origin, so the bytes travel IPC, not the asset fetch.
+  // pdf.js owns the parse/paint.
+  async function paintPdf(artifact: string, seq: number) {
+    if (!pdfViewerEl) return; // PDF tab not mounted yet; mount handler repaints
+    const bytes = await api.readFileBytes(artifact);
+    if (seq !== pdfSeq) return;
+    await renderPdfToContainer(pdfViewerEl, bytes, pdfCmapUrl, pdfFontUrl);
+    if (seq !== pdfSeq) return;
+    pdfStatus = "ok";
+  }
+
+  // The PDF tab's viewer container, handed up by PreviewPane on mount. When the
+  // tab mounts AFTER a compile already produced an artifact, paint into it.
+  function onPdfViewerMount(el: HTMLElement) {
+    pdfViewerEl = el;
+    if (pdfArtifact) void paintPdf(pdfArtifact, pdfSeq);
+  }
+
+  // Switch the preview pane to the PDF mode and kick the compile-on-idle
+  // scheduler. The menu/command-palette PDF-preview action and the E2E harness
+  // both route through here.
+  function setPreviewMode(mode: "preview" | "pdf") {
+    activeTab = mode;
+    if (mode === "pdf") schedulePdf();
   }
 
   // ---- source↔preview line jump for owned tikz (P109 / D-4) ---------------
@@ -2360,6 +2498,8 @@
             tikzFigureLogEntries={tikzFigureLogEntries}
             onTikzEntryClick={(entry) => editor.goToLine(entry.line)}
             {status}
+            {pdfStatus}
+            {onPdfViewerMount}
             bind:activeTab
           />
         </div>

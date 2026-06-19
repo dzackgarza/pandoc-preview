@@ -31,7 +31,7 @@
   "bundle": {
     "active": true,
     "targets": ["deb", "rpm", "appimage"],
-    "resources": ["resources/mathjax/tex-full-svg-a11y.min.js"],
+    "resources": ["resources/mathjax/tex-full-svg-a11y.min.js", "resources/pdfjs/cmaps/*", "resources/pdfjs/standard_fonts/*"],
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.png"]
   }
 }

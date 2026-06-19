@@ -11,6 +11,8 @@
     tikzFigureLogEntries,
     onTikzEntryClick,
     status,
+    pdfStatus,
+    onPdfViewerMount,
     dragging = false,
     activeTab = $bindable(),
   }: {
@@ -29,19 +31,32 @@
     tikzFigureLogEntries: TikzFigureLogEntry[];
     onTikzEntryClick: (entry: TikzFigureLogEntry) => void;
     status: RenderStatus;
+    // The PDF compile-on-idle scheduler's OWN status (Phase F / F1 / P107), the
+    // sibling of `status` for the HTML preview: drives the PDF tab's status
+    // cluster (Recompiling…/Up to date/Compile failed). Distinct from `status`.
+    pdfStatus: RenderStatus;
+    // Called with the PDF viewer container element once the PDF tab mounts it, so
+    // App.svelte's PDF scheduler can paint the compiled PDF into it via pdf.js.
+    onPdfViewerMount: (el: HTMLElement) => void;
     // True while the editor/preview divider is being dragged: the iframe's
     // pointer-events are disabled so the cursor crossing it cannot swallow the
     // drag's pointermove stream.
     dragging?: boolean;
-    activeTab: "preview" | "log" | "tikzlog";
+    activeTab: "preview" | "pdf" | "log" | "tikzlog";
   } = $props();
+
+  // Svelte action: hand the mounted PDF viewer container up to App.svelte so its
+  // PDF compile-on-idle scheduler can paint the compiled PDF into it via pdf.js.
+  function mountPdfViewer(node: HTMLElement) {
+    onPdfViewerMount(node);
+  }
 </script>
 
 <div class="flex h-full flex-col bg-white dark:bg-zinc-900">
   <div
     class="flex items-center gap-1 border-b border-zinc-200 bg-zinc-50 px-2 dark:border-zinc-700 dark:bg-zinc-800"
   >
-    {#each [["preview", "Preview"], ["log", "Compile Log"], ["tikzlog", "TikZ Log"]] as const as [id, label] (id)}
+    {#each [["preview", "Preview"], ["pdf", "PDF"], ["log", "Compile Log"], ["tikzlog", "TikZ Log"]] as const as [id, label] (id)}
       <button
         class="relative border-b-2 px-3 py-1.5 text-sm {activeTab === id
           ? 'border-sky-500 font-medium text-zinc-900 dark:text-zinc-100'
@@ -92,6 +107,44 @@
       sandbox="allow-same-origin allow-scripts"
       srcdoc={html}
     ></iframe>
+  {:else if activeTab === "pdf"}
+    <!-- Embedded pdf.js viewer (Phase F / F1 / P107). The compile-on-idle PDF
+         scheduler in App.svelte drives the configured PDF export command to a
+         .pdf on disk, then paints it into this container via pdf.js. App receives
+         this element through onPdfViewerMount and owns the painting. The PDF
+         tab carries its OWN status cluster (pdfStatus), the sibling of the HTML
+         render-status. -->
+    <div class="flex h-full grow flex-col overflow-hidden">
+      <div
+        class="flex shrink-0 items-center gap-1.5 border-b border-zinc-200 bg-zinc-50 px-3 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800"
+        data-testid="pdf-render-status"
+        data-status={pdfStatus}
+      >
+        {#if pdfStatus === "rendering"}
+          <span
+            class="h-3 w-3 animate-spin rounded-full border-[1.5px] border-sky-500 border-t-transparent"
+            aria-hidden="true"
+          ></span>
+          <span class="text-sky-600 dark:text-sky-400">Compiling PDF…</span>
+        {:else if pdfStatus === "stale"}
+          <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+          <span class="text-amber-600 dark:text-amber-400">Out of date</span>
+        {:else if pdfStatus === "error"}
+          <span class="h-2 w-2 rounded-full bg-red-500"></span>
+          <span class="text-red-500">PDF compile failed — see log</span>
+        {:else if pdfStatus === "ok"}
+          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span class="text-zinc-400">Up to date</span>
+        {:else}
+          <span class="text-zinc-400">Not compiled</span>
+        {/if}
+      </div>
+      <div
+        class="grow overflow-auto bg-zinc-200 dark:bg-zinc-950"
+        data-testid="pdf-viewer"
+        use:mountPdfViewer
+      ></div>
+    </div>
   {:else if activeTab === "tikzlog"}
     <!-- Figure-compile log (D-6 / P95): the tikz FIGURE-compile diagnostics, a
          clickable list parsed from the raw `log` and mapped to the offending

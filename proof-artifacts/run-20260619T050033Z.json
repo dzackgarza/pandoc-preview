@@ -1,0 +1,49 @@
+{
+  "run_id": "20260619T050033Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p115-frontmatter-editor.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p115-frontmatter-editor.spec.ts",
+            "title": "frontmatter editor rewrites ONLY the block (body byte-unchanged) and inserts a block when none exists",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2456,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p115-frontmatter-editor.spec.ts",
+          "name": "p115-new-title",
+          "value": "New Discriminant Title"
+        },
+        {
+          "spec": "p115-frontmatter-editor.spec.ts",
+          "name": "p115-added-bibliography",
+          "value": "refs.bib"
+        },
+        {
+          "spec": "p115-frontmatter-editor.spec.ts",
+          "name": "p115-inserted-title",
+          "value": "Inserted Title"
+        }
+      ]
+    }
+  ]
+}
