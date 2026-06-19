@@ -1,0 +1,39 @@
+{
+  "run_id": "20260619T014121Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p37-editor-display-math-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p37-editor-display-math-highlighting.spec.ts",
+            "title": "Display math ($$…$$, block and single-line) renders with LaTeX highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1739,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p37-editor-display-math-highlighting.spec.ts",
+          "name": "display-math-highlighted",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}

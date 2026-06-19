@@ -1,0 +1,48 @@
+# The workspace-search firewall plugin (Phase E / E1 / P101+P102) — the seed of
+# the global full-text WORKSPACE content search. The app core owns ZERO
+# content-search knowledge: it discovers this plugin and runs it by id through
+# the generic plugin firewall (plugins.rs run_plugin), exactly as it runs the
+# renderer / lint / export plugins. ALL scanning is the REAL ripgrep binary
+# (`rg --json`) inside search.sh — there is NO owned grep or indexer in
+# src-tauri/src.
+#
+# The app contributes the search REQUEST on stdin as JSON
+#   { "root": "<abs project root>", "scope": "<rel subdir|>", "patterns": [...] }
+# and consumes the plugin's stdout: ripgrep's raw `--json` event stream
+# (begin/match/end/summary objects, one per line). The app translates Zettlr's
+# boolean grammar (space=AND, |=OR, !=NOT, "phrase"=exact) into the flat literal
+# `patterns` set and does the per-file boolean evaluation + relevancy scoring on
+# the parsed hits; this plugin's sole job is to run ripgrep and stream its
+# structured JSON back. No stringly blob crosses the boundary.
+#
+# Vendored shipped asset (the canonical copy lives here); scripts/first-run.sh
+# and scripts/provision-proof.sh install it into the configured plugins dir
+# alongside the pandoc-renderer / lint / export plugins (OSOT).
+id = "workspace-search"
+name = "Workspace Search"
+description = "Global full-text workspace content search via the real ripgrep binary (rg --json)."
+category = "search"
+kind = "command"
+# JSON Schema (draft 2020-12) for this plugin's [plugin.workspace-search] config
+# section. workspace-search has no user-tunable config (the empty object), so an
+# absent section validates and no [plugin.workspace-search] block is required.
+config_schema = "schema.json"
+
+[exec]
+# The search REQUEST JSON arrives on stdin; ripgrep's raw --json event stream is
+# written to stdout. {file}/{artifact} are unused by a search pass (the tool
+# reads stdin, writes stdout) — the firewall substitutes them harmlessly.
+command = ["{plugin_dir}/search.sh"]
+
+# Self-owned configure command (C1). The app's "Configure" action SPAWNS this
+# detached with {plugin_dir}/{config_dir} substituted.
+[configure]
+command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
+
+# Doctor check this plugin contributes to the one battery (A3/d09): the REAL
+# ripgrep binary (and jq, the request parser) MUST be present and runnable. A
+# missing rg is a LOUD doctor FAIL — never a silent empty search at runtime.
+[[doctor_checks]]
+id = "workspace-search-rg"
+description = "the real ripgrep (rg) binary the workspace search runs is present and runnable"
+command = ["{plugin_dir}/check-rg.sh"]

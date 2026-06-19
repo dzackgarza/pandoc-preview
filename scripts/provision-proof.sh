@@ -116,7 +116,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "pandoc-md-lint" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
@@ -176,6 +176,13 @@ operator_as_variable = true
 script_grouping = true
 lint_rules = []
 EOF
+    # The shipped workspace-search plugin (Phase E / E1 / P101+P102): global
+    # full-text content search via the real ripgrep binary (rg --json), run by id
+    # through the generic firewall. Installed alongside the renderer/lint into the
+    # SAME plugins dir. Its config section is the empty object (the schema requires
+    # no keys), so no [plugin.workspace-search] block is emitted; its contributed
+    # doctor check (rg present) joins the battery (d01).
+    install_plugin_fixtures "$plugins_dir" workspace-search
 }
 
 # ── Doctor (D-series) provisioning ─────────────────────────────────────

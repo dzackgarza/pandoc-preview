@@ -122,6 +122,28 @@ export interface PluginResult {
   stderr: string;
 }
 
+/** One workspace-search hit: a single matched line in a file (Phase E / E1).
+ * Parsed from a ripgrep `--json` `match` event the workspace-search firewall
+ * plugin streams; `path` is project-relative, `line`/`col` are 1-based. */
+export interface SearchHit {
+  path: string;
+  line: number;
+  col: number;
+  text: string;
+}
+
+/** One file in the workspace-search result list (Phase E / E1 / P101+P102):
+ * the matched file, its hits, and its relevancy `heatRank` — a higher integer
+ * for a higher-heat class (more matches rank higher). `line`/`col` are the
+ * first hit's coordinates, the click-to-open-at-line target. */
+export interface SearchResult {
+  path: string;
+  line: number;
+  col: number;
+  hits: SearchHit[];
+  heatRank: number;
+}
+
 // idle:      no compilation has run yet
 // stale:     the source changed; the shown preview no longer matches it and a
 //            re-render is pending (debouncing) or in flight for older content

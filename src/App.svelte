@@ -16,6 +16,7 @@
     PluginResult,
     RenderStatus,
     RepoState,
+    SearchResult,
   } from "./lib/types";
   import { CONFLICT_PREFIX } from "./lib/types";
   import type { OutlineItem } from "codemirror-lang-latex";
@@ -37,6 +38,7 @@
   import FootnoteModal from "./lib/components/FootnoteModal.svelte";
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
   import ReferencesPanel from "./lib/components/ReferencesPanel.svelte";
+  import SearchPanel from "./lib/components/SearchPanel.svelte";
   import CommandPaletteModal from "./lib/components/CommandPaletteModal.svelte";
   import { parseCompileLog, type LogEntry } from "./lib/editor/complog";
   import {
@@ -147,8 +149,12 @@
   // References pane: an open-book glyph.
   const REFERENCES_ICON =
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><path d="M8 4v9"/><path d="M8 4C6.5 3 4 3 2.5 3.5v8C4 11 6.5 11 8 12"/><path d="M8 4c1.5-1 4-1 5.5-.5v8C12 11 9.5 11 8 12"/></svg>';
+  // Search pane (Phase E / E1): a magnifying-glass glyph.
+  const SEARCH_ICON =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>';
   const SIDEBAR_VIEWS: SidebarView[] = [
     { id: "explorer", title: "Explorer", icon: EXPLORER_ICON },
+    { id: "search", title: "Search", icon: SEARCH_ICON },
     { id: "macros", title: "Macros", icon: MACROS_ICON },
     { id: "figures", title: "Figures", icon: FIGURES_ICON },
     { id: "references", title: "References", icon: REFERENCES_ICON },
@@ -181,6 +187,16 @@
   // sidecar (figure-registry.json) so a restarted app resolves the SAME render to
   // the SAME source; persisted whenever a pairing is registered.
   let figureRegistry = $state<Record<string, string>>({});
+
+  // Workspace content search (Phase E / E1 / P101+P102). The Search sidebar view
+  // owns the query box + per-directory scope control; the results are computed by
+  // api.workspaceSearch (the workspace-search firewall plugin running real
+  // ripgrep) and rendered by SearchPanel. `searchScope` is the project-relative
+  // subdirectory the next search restricts to (empty = the whole project).
+  let searchQuery = $state("");
+  let searchScope = $state("");
+  let searchResults = $state<SearchResult[]>([]);
+
   let prompt = $state<{
     title: string;
     initial: string;
@@ -586,6 +602,19 @@
         syntaxAncestryAt: (needle: string) => editor.syntaxAncestryAt(needle),
         getOutline: () => editor.getOutline(),
         goToLine: (line: number) => editor.goToLine(line),
+        // Phase E / E1 / P101+P102: drive the SAME workspace content search the
+        // Search view's query box fires (the boolean-parsed query over the open
+        // project's file CONTENT, through the workspace-search firewall plugin
+        // running real ripgrep), rendering the results into the Search view's
+        // result list. Fire-and-forget; the spec awaits the rendered
+        // [data-search-result] / [data-heat-rank] DOM. setSearchScope restricts
+        // the NEXT search to a project-relative subdirectory (the scope control).
+        workspaceSearch: (query: string) => {
+          void runWorkspaceSearch(query);
+        },
+        setSearchScope: (subdir: string) => {
+          searchScope = subdir;
+        },
         // A.6 / P74: the structured parse of the compile log the Compile Log pane
         // currently shows — the SAME `logEntries` the pane renders as a clickable
         // list (parseCompileLog over the real render `log`, the ported pplatex
@@ -1352,6 +1381,43 @@
     }
   }
 
+  // ---- workspace content search (Phase E / E1 / P101+P102) ----------------
+  //
+  // Run the global full-text content search over the open project, restricted to
+  // `searchScope` (a project-relative subdir, or the whole project when empty),
+  // through api.workspaceSearch — the app parses the Zettlr boolean grammar
+  // (space=AND, |=OR, !=NOT, "phrase"=exact), the workspace-search firewall
+  // plugin runs the REAL ripgrep, and the app evaluates the boolean expression
+  // per file and ranks each result by match count (the relevancy heatmap). A
+  // plugin failure is surfaced loudly via a toast (never a silent empty result).
+  async function runWorkspaceSearch(query: string) {
+    searchQuery = query;
+    if (!projectRoot) {
+      toastError("Open a folder before searching the workspace.");
+      return;
+    }
+    if (query.trim().length === 0) {
+      searchResults = [];
+      return;
+    }
+    try {
+      searchResults = await api.workspaceSearch(projectRoot, query, searchScope);
+    } catch (e) {
+      searchResults = [];
+      toastError(String(e));
+    }
+  }
+
+  // Open a search result in the editor at the matched line (the openFile +
+  // editor.goToLine path). projectRoot + the project-relative result path form
+  // the absolute file path the explorer also opens.
+  async function openSearchResult(result: SearchResult) {
+    if (!projectRoot) return;
+    const abs = `${projectRoot}/${result.path}`;
+    await openFile(abs);
+    if (currentFile === abs) editor.goToLine(result.line);
+  }
+
   // ---- session restore (P49) ----------------------------------------------
   //
   // On launch, reopen the last session's file from host-fs session state, then
@@ -2033,6 +2099,19 @@
                 onSelect={(line) => editor.goToLine(line)}
               />
             </div>
+          {:else if activeView === "search"}
+            <!-- Search pane (Phase E / E1): the global full-text workspace
+                 content search. The query box + scope control drive
+                 runWorkspaceSearch (the workspace-search firewall plugin running
+                 real ripgrep); clicking a result opens it at the matched line. -->
+            <SearchPanel
+              results={searchResults}
+              query={searchQuery}
+              scope={searchScope}
+              onSearch={(q) => void runWorkspaceSearch(q)}
+              onScopeChange={(s) => (searchScope = s)}
+              onOpenResult={(r) => void openSearchResult(r)}
+            />
           {:else if activeView === "macros"}
             <!-- Macros pane: an alternative explorer fixed at the styles dir. -->
             <FileTree

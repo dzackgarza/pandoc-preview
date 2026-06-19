@@ -326,4 +326,22 @@ else
     ln -sfn "$LINT_VENDOR" "$LINT_DEST"
 fi
 
+# Install the shipped workspace-search plugin (Phase E / E1 / P101+P102). Like
+# the renderer/lint/export plugins it is app-owned vendored code (the single
+# source of truth), symlinked into the plugins dir so updates stay atomic and a
+# real-directory user override is preserved. It has no [plugin.workspace-search]
+# config section (its schema is the empty object); its contributed doctor check
+# (the real rg binary present) joins the battery.
+SEARCH_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/workspace-search"
+if [ ! -d "$SEARCH_VENDOR" ]; then
+    echo "FATAL: vendored workspace-search plugin missing: $SEARCH_VENDOR" >&2
+    exit 1
+fi
+SEARCH_DEST="$PLUGINS_DIR/workspace-search"
+if [ -e "$SEARCH_DEST" ] && [ ! -L "$SEARCH_DEST" ]; then
+    echo "preserve (user override): $SEARCH_DEST" >&2
+else
+    ln -sfn "$SEARCH_VENDOR" "$SEARCH_DEST"
+fi
+
 gum style --bold --foreground 2 "Config written to $CONFIG_FILE"

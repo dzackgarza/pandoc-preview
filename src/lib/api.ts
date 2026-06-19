@@ -10,6 +10,8 @@ import type {
   PluginResult,
   RenderResult,
   RepoState,
+  SearchHit,
+  SearchResult,
   SessionState,
 } from "./types";
 
@@ -182,3 +184,239 @@ export const configurePlugin = (pluginId: string) =>
  * sourced from the discovered manifest, never an app-core config table (P66).
  */
 export const listPlugins = () => invoke<PluginInfo[]>("list_plugins");
+
+// ── Workspace content search (Phase E / E1 / P101+P102) ───────────────────────
+//
+// The app owns the boolean GRAMMAR translation and the per-file boolean
+// evaluation + relevancy scoring; the REAL scanning is the workspace-search
+// firewall plugin running ripgrep (rg --json). The app parses the plugin's
+// ripgrep JSON event stream into structured hits and never sees a stringly blob.
+
+/** A parsed boolean query (Zettlr grammar): space=AND, `|`=OR, `!`=NOT,
+ * `"phrase"`=exact phrase. `orGroups` is an AND of OR-groups of POSITIVE terms
+ * (a file must match at least one term in EVERY group); `notTerms` are terms the
+ * file must NOT contain. */
+export interface ParsedQuery {
+  orGroups: string[][];
+  notTerms: string[];
+}
+
+/** Tokenize a query string into terms, honoring `"phrases"`, the bare `|` OR
+ * operator (its own token), and a leading `!` negation marker. */
+function tokenizeQuery(query: string): Array<{ kind: "term" | "or"; text: string; negated: boolean }> {
+  const out: Array<{ kind: "term" | "or"; text: string; negated: boolean }> = [];
+  let i = 0;
+  while (i < query.length) {
+    const ch = query[i];
+    if (ch === " " || ch === "\t" || ch === "\n") {
+      i += 1;
+      continue;
+    }
+    if (ch === "|") {
+      out.push({ kind: "or", text: "|", negated: false });
+      i += 1;
+      continue;
+    }
+    let negated = false;
+    if (ch === "!") {
+      negated = true;
+      i += 1;
+    }
+    if (query[i] === '"') {
+      // Exact phrase: everything up to the closing quote is one term.
+      i += 1;
+      let phrase = "";
+      while (i < query.length && query[i] !== '"') {
+        phrase += query[i];
+        i += 1;
+      }
+      i += 1; // consume the closing quote
+      if (phrase.length > 0) out.push({ kind: "term", text: phrase, negated });
+      continue;
+    }
+    // Bare term: up to the next whitespace or `|`.
+    let term = "";
+    while (i < query.length && query[i] !== " " && query[i] !== "\t" && query[i] !== "\n" && query[i] !== "|") {
+      term += query[i];
+      i += 1;
+    }
+    if (term.length > 0) out.push({ kind: "term", text: term, negated });
+  }
+  return out;
+}
+
+/** Parse the Zettlr boolean grammar into AND-of-OR-groups (positive) plus NOT
+ * terms. Consecutive positive terms joined by a `|` operator form one OR group;
+ * every other positive term is its own (single-element) AND group; negated
+ * terms become NOT constraints. */
+export function parseQuery(query: string): ParsedQuery {
+  const tokens = tokenizeQuery(query);
+  const orGroups: string[][] = [];
+  const notTerms: string[] = [];
+  let current: string[] = [];
+  let pendingOr = false;
+  const flush = () => {
+    if (current.length > 0) {
+      orGroups.push(current);
+      current = [];
+    }
+  };
+  for (const tok of tokens) {
+    if (tok.kind === "or") {
+      pendingOr = true;
+      continue;
+    }
+    if (tok.negated) {
+      // A negation breaks any pending OR run and is a standalone NOT constraint.
+      flush();
+      pendingOr = false;
+      notTerms.push(tok.text);
+      continue;
+    }
+    if (pendingOr && current.length > 0) {
+      current.push(tok.text);
+    } else {
+      flush();
+      current = [tok.text];
+    }
+    pendingOr = false;
+  }
+  flush();
+  return { orGroups, notTerms };
+}
+
+/** Every distinct literal term (positive + negated) the plugin must hand to
+ * ripgrep as `-e <term>` so rg returns lines matching ANY of them; the app then
+ * does the boolean evaluation on the parsed per-file matches. */
+function allPatterns(parsed: ParsedQuery): string[] {
+  const set = new Set<string>();
+  for (const group of parsed.orGroups) for (const t of group) set.add(t);
+  for (const t of parsed.notTerms) set.add(t);
+  return [...set];
+}
+
+/** Parse ripgrep's `--json` event stream (one JSON object per line) into
+ * structured per-file hits, with the matched TERM text recorded per submatch so
+ * the app can attribute each hit to a query term. `path` is normalized to a
+ * project-relative path (the leading `./` ripgrep emits for a whole-project
+ * search is stripped). */
+function parseRgStream(stdout: string): Array<SearchHit & { terms: string[] }> {
+  const hits: Array<SearchHit & { terms: string[] }> = [];
+  for (const rawLine of stdout.split("\n")) {
+    const line = rawLine.trim();
+    if (line.length === 0) continue;
+    let evt: unknown;
+    try {
+      evt = JSON.parse(line);
+    } catch {
+      // ripgrep --json emits one well-formed JSON object per line; a line that
+      // does not parse is a contract violation, surfaced loudly.
+      throw new Error(`workspace-search: unparseable ripgrep JSON line: ${line}`);
+    }
+    const e = evt as {
+      type?: string;
+      data?: {
+        path?: { text?: string };
+        line_number?: number;
+        lines?: { text?: string };
+        submatches?: Array<{ match?: { text?: string }; start?: number }>;
+      };
+    };
+    if (e.type !== "match" || !e.data) continue;
+    const d = e.data;
+    const rawPath = d.path?.text;
+    const lineNumber = d.line_number;
+    if (typeof rawPath !== "string" || typeof lineNumber !== "number") {
+      throw new Error(`workspace-search: ripgrep match event missing path/line: ${line}`);
+    }
+    const path = rawPath.startsWith("./") ? rawPath.slice(2) : rawPath;
+    const subs = d.submatches ?? [];
+    const terms = subs.map((s) => s.match?.text ?? "").filter((t) => t.length > 0);
+    const col = (subs[0]?.start ?? 0) + 1; // 1-based column
+    hits.push({
+      path,
+      line: lineNumber,
+      col,
+      text: (d.lines?.text ?? "").replace(/\n$/, ""),
+      terms,
+    });
+  }
+  return hits;
+}
+
+/**
+ * Run a global full-text workspace content search (Phase E / E1 / P101+P102).
+ * The app parses `query` with the Zettlr boolean grammar (space=AND, `|`=OR,
+ * `!`=NOT, `"phrase"`=exact), runs the workspace-search firewall plugin (real
+ * `rg --json`) over `root` (restricted to `scope`, a project-relative subdir, or
+ * the whole project when empty), parses ripgrep's JSON event stream into hits,
+ * then evaluates the boolean expression per file and ranks each result by match
+ * count (the relevancy heatmap). A plugin failure is surfaced loudly (never a
+ * silent empty result).
+ */
+export async function workspaceSearch(
+  root: string,
+  query: string,
+  scope: string,
+): Promise<SearchResult[]> {
+  const parsed = parseQuery(query);
+  const patterns = allPatterns(parsed);
+  if (patterns.length === 0) return [];
+
+  const request = JSON.stringify({ root, scope, patterns });
+  // The firewall delivers `request` on the plugin's stdin (the "buffer"). The
+  // source/output paths are unused by the search pass (it reads stdin, writes
+  // stdout) but the firewall requires them; the root is a stable parent.
+  const result = await runPlugin("workspace-search", `${root}/.workspace-search`, "", request);
+  if (!result.success) {
+    throw new Error(
+      `workspace-search plugin failed (exit ${result.exit_code ?? "?"}): ${result.stderr.trim()}`,
+    );
+  }
+
+  const rawHits = parseRgStream(result.stdout);
+
+  const positiveTerms = new Set<string>();
+  for (const group of parsed.orGroups) for (const t of group) positiveTerms.add(t);
+
+  // Group hits by file, retaining the matched terms per hit so the boolean
+  // evaluation and the relevancy score read off the same per-file data.
+  const byFile = new Map<string, { hits: Array<SearchHit & { terms: string[] }>; terms: Set<string> }>();
+  for (const h of rawHits) {
+    let entry = byFile.get(h.path);
+    if (!entry) {
+      entry = { hits: [], terms: new Set() };
+      byFile.set(h.path, entry);
+    }
+    entry.hits.push(h);
+    for (const t of h.terms) entry.terms.add(t);
+  }
+
+  // A file is a result iff it satisfies EVERY positive OR-group (at least one of
+  // the group's terms present) AND contains NONE of the NOT terms. The relevancy
+  // weight (heatRank) is the count of matched lines carrying a POSITIVE query
+  // term (so a three-match file outranks a one-match file → a higher heat class).
+  const results: SearchResult[] = [];
+  for (const [path, entry] of byFile) {
+    const satisfiesAnd = parsed.orGroups.every((group) => group.some((t) => entry.terms.has(t)));
+    const violatesNot = parsed.notTerms.some((t) => entry.terms.has(t));
+    if (!satisfiesAnd || violatesNot) continue;
+
+    const positiveHits = entry.hits
+      .filter((h) => h.terms.some((t) => positiveTerms.has(t)))
+      .sort((a, b) => a.line - b.line)
+      .map((h) => ({ path: h.path, line: h.line, col: h.col, text: h.text }));
+    const first = positiveHits[0];
+    results.push({
+      path,
+      line: first.line,
+      col: first.col,
+      hits: positiveHits,
+      heatRank: positiveHits.length,
+    });
+  }
+
+  // Rank by heat (most matches first); stable secondary sort by path.
+  results.sort((a, b) => b.heatRank - a.heatRank || a.path.localeCompare(b.path));
+  return results;
+}

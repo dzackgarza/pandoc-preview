@@ -1,0 +1,129 @@
+{
+  "run_id": "20260619T014647Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p37-editor-display-math-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p37-editor-display-math-highlighting.spec.ts",
+            "title": "Display math ($$…$$, block and single-line) renders with LaTeX highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2371,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p37-editor-display-math-highlighting.spec.ts",
+          "name": "display-math-highlighted",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p41-outline-panel.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p41-outline-panel.spec.ts",
+            "title": "Outline lists headings and divs (with titles); clicking navigates",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2345,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p41-outline-panel.spec.ts",
+          "name": "outline-panel",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "spec": "p63-insertion-bar-controls.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar amsthm theorem button inserts the theorem fenced div at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2661,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar tikzcd and tikz diagram buttons inserts the distinct scaffolds at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 575,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar snippet dropdown option expands the snippet body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1170,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar code-block dropdown option inserts a fence tagged with the chosen language",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 481,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-env-class",
+          "value": "theorem"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-tikzcd-cursor",
+          "value": 15
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-snippet-trigger",
+          "value": "mthm"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-codeblock-lang",
+          "value": "python"
+        }
+      ]
+    }
+  ]
+}

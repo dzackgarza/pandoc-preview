@@ -1,0 +1,97 @@
+{
+  "run_id": "20260619T031533Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p89-references-sidebar.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p89-references-sidebar.spec.ts",
+            "title": "the references sidebar lists only the cited keys, rendered in CSL style matching the preview",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4139,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p89-references-sidebar.spec.ts",
+          "name": "references-sidebar-cited",
+          "value": "DM19"
+        },
+        {
+          "spec": "p89-references-sidebar.spec.ts",
+          "name": "references-sidebar-uncited-absent",
+          "value": "Vor08"
+        }
+      ]
+    },
+    {
+      "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p15-sidebar-toggle-preserves-ratio.spec.ts",
+            "title": "Hiding the file-tree sidebar preserves the editor:preview ratio",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3412,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-visible",
+          "value": 0.5
+        },
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-hidden",
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "spec": "p10-first-run-bootable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p10-first-run-bootable.spec.ts",
+            "title": "first-run.sh config parses to the selected values and boots the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 14292,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p10-first-run-bootable.spec.ts",
+          "name": "first-run-font-size",
+          "value": 20
+        }
+      ]
+    }
+  ]
+}
