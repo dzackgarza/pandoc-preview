@@ -1075,6 +1075,52 @@ EOF
     # shared fixture demo.md is untouched; only this spec's copy gains the input.
     printf '\n\n\\input{relinput.tex}\n' >> "$DEMO_FILE"
     ;;
+p118-multipass-references.spec.ts)
+    # P109 (Phase F / F3 — multi-pass reference resolution): the configured PDF
+    # compile command is the vendored latexmk multi-pass driver (pandoc md->latex,
+    # then `latexmk -lualatex -output-directory={builddir}` over the emitted .tex).
+    # The REAL /usr/bin/latexmk runs exactly-as-many-passes-as-needed and auto-
+    # invokes BibTeX (latexmk's default), so a forward cross-reference and a \cite
+    # both resolve — neither orchestrated by the app/plugin.
+    #
+    # The canonical config above already set up the pandoc renderer + [plugins].dir
+    # (so the app boots and the HTML preview works); here we ADD the obligation's
+    # named PDF driver (latexmk-pdf-export) into that SAME dir and its
+    # [plugin.latexmk-pdf-export] config section (the raw md->latex pandoc command),
+    # exactly as p117 does. The spec drives runPlugin('latexmk-pdf-export', target)
+    # — the one-shot export P8 idiom — and reads the produced PDF off disk by an
+    # INDEPENDENT pdftotext for the rendered-citation + resolved-cross-reference
+    # witnesses.
+    install_plugin_fixtures "$PLUGINS_DIR" latexmk-pdf-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.latexmk-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --to latex"
+EOF
+    # RED BASELINE: overwrite the hermetic latexmk-pdf-export/export.sh with the
+    # DELIBERATELY single-pass driver (pandoc md->latex then ONE lualatex pass, no
+    # latexmk, no BibTeX). This makes the obligation's named PDF driver id run a
+    # single pass TODAY, so the produced PDF carries (??) for the forward equation
+    # reference and [?] for the unrendered citation — the obligation's "single
+    # LaTeX pass leaves BOTH unresolved" baseline. The GREEN deliverable ships the
+    # real multi-pass latexmk export.sh (this override is removed), and latexmk's
+    # own as-many-passes-as-needed + auto-BibTeX resolves BOTH. The spec is
+    # byte-stable across RED -> GREEN (it always drives latexmk-pdf-export).
+    cp "$REPO_ROOT/tests/proof/fixtures/p118-single-pass-export.sh" \
+        "$PLUGINS_DIR/latexmk-pdf-export/export.sh"
+    chmod +x "$PLUGINS_DIR/latexmk-pdf-export/export.sh"
+    # The single-pass-unresolvable source: a forward \eqref to a numbered equation
+    # whose \label appears LATER, plus a \cite against the config-declared bib.
+    # Provisioned AS demo.md so the proven openAndSelectDemo selection path applies.
+    cp "$REPO_ROOT/tests/proof/fixtures/p118-multipass.md" "$DEMO_FILE"
+    # The raw-LaTeX \bibliography{references} + BibTeX resolves the bib by name in
+    # the BUILD cwd. The driver runs with cwd = the SOURCE dir, so the bib must be
+    # readable there: copy the fixture references.bib (carrying the DM19 entry the
+    # \cite targets) into the project dir as references.bib. This is the SAME
+    # content as the config-declared $HOME/.pandoc/bib/references.bib (OSOT — both
+    # are tests/proof/fixtures/references.bib).
+    cp "$REPO_ROOT/tests/proof/fixtures/references.bib" "$PROJECT_DIR/references.bib"
+    ;;
 p47-save-gate.spec.ts)
     # P47 A2 proves the save-gate blocks a REAL plugin export on an identity-less
     # buffer. So the shipped pandoc-html-export export-category plugin must be
@@ -1833,7 +1879,11 @@ esac
 # isolates into pandoc's own temp dir and so does NOT pre-litter D — it only warms
 # the luaotfload database; the spec's own latexmk-driven export is what surfaces
 # the litter.
-if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ]; then
+# p118 (the F3 multi-pass reference witness) drives lualatex IN THE APP too (via
+# the latexmk-pdf-export driver's in-app one-shot export — single-pass RED today,
+# multi-pass latexmk in GREEN), so it needs the SAME cold-cache warmup so the
+# in-app compile lands within the spec's generous wait window.
+if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ] || [ "$SPEC" = "p118-multipass-references.spec.ts" ]; then
     WARMUP_PDF="$ABS_SPEC_DIR/lualatex-warmup.pdf"
     # cwd = the source file's parent, mirroring the app's export contract.
     (
