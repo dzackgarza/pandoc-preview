@@ -1,0 +1,56 @@
+{
+  "run_id": "20260619T132313Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "tests/proof/p117-build-isolation.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p117-build-isolation.spec.ts",
+            "title": "PDF build does not litter the source tree; the one-shot export still lands at its path",
+            "project": "tauri",
+            "status": "timedOut",
+            "expectedStatus": "passed",
+            "durationMs": 120320,
+            "errors": [
+              "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m",
+              "Error: Not connected"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "tests/proof/p08-export-pdf.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p08-export-pdf.spec.ts",
+            "title": "Export PDF runs the configured lualatex plugin and carries the witnesses",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 44404,
+            "errors": [
+              "Error: Export PDF artifact never appeared at /tmp/pandoc-preview-proof-runs/20260619T132313Z/tests/proof/p08-export-pdf/export-witness.pdf (result: {\"success\":false,\"artifact\":null,\"exit_code\":null,\"stdout\":\"\",\"stderr\":\"error: no plugin with id \\\"pandoc-pdf-export\\\" in the plugins dir\"}). The generic plugin firewall did not discover/run the shipped pandoc-pdf-export export plugin against the real buffer."
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

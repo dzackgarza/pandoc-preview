@@ -1,0 +1,35 @@
+{
+  "run_id": "20260619T132739Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "tests/proof/p08-export-pdf.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p08-export-pdf.spec.ts",
+            "title": "Export PDF runs the configured lualatex plugin and carries the witnesses",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 45059,
+            "errors": [
+              "Error: Export PDF artifact never appeared at /tmp/pandoc-preview-proof-runs/20260619T132739Z/tests/proof/p08-export-pdf/export-witness.pdf (result: {\"success\":false,\"artifact\":null,\"exit_code\":null,\"stdout\":\"\",\"stderr\":\"error: no plugin with id \\\"pandoc-pdf-export\\\" in the plugins dir\"}). The generic plugin firewall did not discover/run the shipped pandoc-pdf-export export plugin against the real buffer."
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
