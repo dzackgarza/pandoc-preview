@@ -116,7 +116,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "latexmk-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "latexmk-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ] || [ "$id" = "arxiv-export" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
@@ -861,15 +861,15 @@ p122-arxiv-flatten.spec.ts)
     # — so a bundle that fails to MATERIALIZE the macros compiles to an "Undefined
     # control sequence \RR" error under the empty TEXMFHOME.
     #
-    # We DELIBERATELY install NO plugin here: there is no vendored arxiv-export
-    # plugin yet (Phase G is unimplemented), and installing a nonexistent fixture
-    # would make provisioning itself FAIL (cp of a missing dir) — masking the real
-    # RED with a boot/provision error. The canonical config above set up the
-    # pandoc renderer + [plugins].dir, so the app BOOTS cleanly; the spec then
-    # drives runPlugin('arxiv-export', target.tar.gz) and the generic firewall
-    # errors ("no plugin with id arxiv-export"), no tarball is written, and the
-    # spec throws at its missing-tarball guard. That is the faithful "no arxiv
-    # export / no flatten exists today" RED, distinct from any boot failure.
+    # Phase G / G1 is now implemented: the vendored arxiv-export FIREWALL plugin
+    # (src-tauri/resources/vendor/plugins/arxiv-export) is installed into the SAME
+    # [plugins].dir the canonical config above set up, and its [plugin.arxiv-export]
+    # config section (below) carries its raw pandoc md->tex command plus the dzg
+    # macro tier source dir (the hermetic styles/macros emit_pandoc_renderer's
+    # install-assets symlinked in). The spec drives runPlugin('arxiv-export',
+    # target.tar.gz); the plugin renders md->tex, latexpand-flattens the \input into
+    # one root .tex, materializes the REAL tier1-mathjax-simple.tex (defining \RR)
+    # plus the figures, and tars the self-contained bundle to {artifact}.
     #
     # The SECTION file uses \RR and carries the "Minkowski bound" witness, so that
     # witness only reaches the compiled PDF if the section was flattened in AND the
@@ -887,6 +887,19 @@ PPE_P122_SECTION_EOF
     # \RR (which the materialized macro tier must define). Only this spec's copy is
     # mutated; the shared fixture demo.md is untouched.
     printf '\n\nLattices live in $\\RR^n$.\n\n\\input{section-minkowski.tex}\n' >> "$DEMO_FILE"
+    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
+    # its [plugin.arxiv-export] config section: the raw pandoc md->tex command (the
+    # app's owned renderer, --to latex so the raw \input/\RR pass through verbatim)
+    # and the macros source dir (the hermetic styles/macros emit_pandoc_renderer's
+    # install-assets symlinked from the vendored pandoc-config). The plugin reads
+    # both off PPE_PLUGIN_CONFIG.
+    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.arxiv-export]
+command = "$PANDOC_BIN --from markdown --to latex --standalone"
+macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
+EOF
     ;;
 p19-plugin-run-by-id.spec.ts)
     # A1: the generic plugin firewall runs a tools plugin by id. The canonical

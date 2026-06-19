@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "arxiv-export config section",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["command", "macros_dir"],
+  "properties": {
+    "command": {
+      "type": "string",
+      "minLength": 1
+    },
+    "macros_dir": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

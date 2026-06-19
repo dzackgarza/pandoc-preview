@@ -1,0 +1,44 @@
+{
+  "run_id": "20260619T185417Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p121-slides-preview.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p121-slides-preview.spec.ts",
+            "title": "slides preview re-renders demo.md into a reveal.js deck on idle carrying the edited witness",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 8936,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p121-slides-preview.spec.ts",
+          "name": "reveal-section-count",
+          "value": 3
+        },
+        {
+          "spec": "p121-slides-preview.spec.ts",
+          "name": "edit-witness",
+          "value": "Successive minima bound the covolume −163."
+        }
+      ]
+    }
+  ]
+}

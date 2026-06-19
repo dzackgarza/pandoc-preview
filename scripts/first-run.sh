@@ -260,6 +260,16 @@ command = "$PANDOC_PATH --from markdown --to html5 --standalone --embed-resource
 [plugin.pandoc-pdf-export]
 command = "$PANDOC_PATH --from markdown --standalone --pdf-engine=lualatex"
 
+# The shipped arXiv-bundle export plugin (Phase G / G1 / P114): a self-contained
+# arXiv-ready .tar.gz — pandoc md->tex, latexpand-flattened into one root .tex,
+# with the dependent dzg macro tier materialized so it compiles with no system
+# styles. Its command is the raw pandoc md->tex command (the app's owned renderer,
+# --to latex so raw \input/\RR pass through); macros_dir is the dzg macro tier
+# source install-assets symlinks into ~/.pandoc/styles/macros.
+[plugin.arxiv-export]
+command = "$PANDOC_PATH --from markdown --to latex --standalone"
+macros_dir = "$HOME/.pandoc/styles/macros"
+
 # The shipped lint plugin (Phase A / P70): static math/delimiter balance lint for
 # the markdown buffer, discovered from [plugins].dir and run by id through the
 # generic firewall. The app core owns NO lint knowledge — this plugin wraps the
@@ -306,7 +316,7 @@ fi
 # stay atomic and a real-directory user override is preserved. The
 # [plugin.<id>].command sections written above are validated against each
 # plugin's schema by the generic plugin-config check.
-for export_plugin in pandoc-html-export pandoc-pdf-export; do
+for export_plugin in pandoc-html-export pandoc-pdf-export arxiv-export; do
     EXPORT_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/$export_plugin"
     if [ ! -d "$EXPORT_VENDOR" ]; then
         echo "FATAL: vendored export plugin missing: $EXPORT_VENDOR" >&2

@@ -1,0 +1,35 @@
+{
+  "run_id": "20260619T223954Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p122-arxiv-flatten.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p122-arxiv-flatten.spec.ts",
+            "title": "Export to the arxiv plugin yields a flattened, self-contained bundle that compiles with no system styles",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 64952,
+            "errors": [
+              "Error: arXiv bundle tarball never appeared at /tmp/pandoc-preview-proof-runs/20260619T223954Z/p122-arxiv-flatten/arxiv-bundle.tar.gz (result: {\"success\":false,\"artifact\":null,\"exit_code\":null,\"stdout\":\"\",\"stderr\":\"error: no plugin with id \\\"arxiv-export\\\" in the plugins dir\"}). The generic plugin firewall did not discover/run the vendored arxiv-export plugin to produce a flattened self-contained bundle from the real buffer."
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
