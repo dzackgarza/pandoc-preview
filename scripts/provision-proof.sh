@@ -1527,6 +1527,56 @@ A later paragraph carrying the second math span $c + d$ here.
 PPE_P112_EOF
     DEMO_FILE="$PROJECT_DIR/motions.md"
     ;;
+p114-surround-toggle.spec.ts)
+    # P105 (Phase E / E4): environment / command SURROUND + TOGGLE — the IN-PLACE
+    # EDIT counterpart to E2's read-only motions. vimtex's surround/toggle
+    # CAPABILITIES (`tse` rename-environment, `tsf` toggle-fraction, `dsd`
+    # delete-delimiter-pair) ported as named CM6 editor commands, each transforming
+    # the EXISTING enclosing structure at the cursor in place — never inserting a
+    # parallel one. The witness is a single buffer carrying, on KNOWN distinct
+    # lines, the three structures each command acts on:
+    #
+    #   :::{.theorem}            — the FENCED DIV (rename-environment's target); its
+    #   A theorem body inside…   — distinctive BODY must survive byte-unchanged when
+    #   :::                        the class becomes `.lemma` (one div, edited in place)
+    #   $\frac{a}{b}$            — the FRACTION in a math span (toggle-fraction's
+    #                              target): toggle → `a/b`, toggle again → `\frac{a}{b}`
+    #   $(x + y)$                — the DELIMITER pair in a math span (delete-delimiter-
+    #                              pair's target): delete → `x + y`, parens gone,
+    #                              contents kept
+    # The fraction and the delimiter math span each sit ALONE on their own line
+    # (no leading prose) so the line-start cursor the placement primitive
+    # (goToLine, reused — never an edit under test) lands lies INSIDE the structure;
+    # the spec confirms the cursor offset is within the structure's character range
+    # BEFORE invoking each edit command, so a later failure is the missing command,
+    # not a misplaced cursor. The default fixture's demo.md/outline.md do not lay
+    # out these structures on known distinct lines, so surround.md is written fresh
+    # below; the spec recomputes every target line off disk (never hardcoding), so
+    # the layout here cannot silently desync the assertions.
+    #
+    # RED today: there are no surround/toggle edit commands — no rename-environment,
+    # toggle-fraction, or delete-delimiter-pair — and no named-command surface
+    # (runEditorCommand) to fire them, so the spec's first edit-command evaluate
+    # throws and the buffer is never transformed. The failure is the MISSING
+    # commands, not a boot/setup error: the app, project, editor, and witness buffer
+    # are all brought up and the cursor placed (and confirmed) FIRST.
+    cat > "$PROJECT_DIR/surround.md" <<'PPE_P114_EOF'
+# Surround and toggle witness
+
+:::{.theorem}
+A theorem body inside a fenced div.
+:::
+
+The fraction math span sits alone on the next line.
+
+$\frac{a}{b}$
+
+The delimiter math span sits alone on the next line.
+
+$(x + y)$
+PPE_P114_EOF
+    DEMO_FILE="$PROJECT_DIR/surround.md"
+    ;;
 p113-command-palette.spec.ts)
     # P104 (Phase E / E3): the command palette (Ctrl+Shift+P) and quick-open
     # (Ctrl+P), both delivered behind the plugin firewall by a REAL picker plugin
