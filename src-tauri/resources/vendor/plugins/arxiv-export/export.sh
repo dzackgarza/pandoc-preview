@@ -103,8 +103,16 @@ printf '\\usepackage{dzg-arxiv}\n' > "$header"
 # Render the real {file} to a standalone .tex. --to latex passes the raw \input /
 # \RR through verbatim. The source dir is cwd (the core sets it), so document-
 # relative resources are referenced by their relative paths in the emitted .tex.
+#
+# --natbib selects pandoc's BibTeX citation driver: a pandoc citation `[@key]` is
+# emitted as a `\cite`/`\citep{key}` command (NOT resolved inline) and natbib is
+# pulled into the preamble, so the citation is left for latexmk's BibTeX pass
+# (step 4) to resolve into the baked `.bbl`. Without it, pandoc would print the
+# citation as literal text and BibTeX would see no `\citation`, baking an EMPTY
+# `.bbl`. The `\bibliography{...}` the document carries is the BibTeX driver
+# latexmk needs; --natbib leaves it in place.
 preflat="$work/pre-flat.tex"
-"${cmd[@]}" "$file" --include-in-header="$header" --output "$preflat"
+"${cmd[@]}" --natbib "$file" --include-in-header="$header" --output "$preflat"
 
 # ── 2. latexpand flatten into ONE root main.tex ───────────────────────────────
 # latexpand resolves every relative \input/\include against cwd (the source dir)
@@ -112,13 +120,19 @@ preflat="$work/pre-flat.tex"
 # self-contained bundle root.
 latexpand "$preflat" > "$bundle/main.tex"
 
-# ── 3. Materialize the document's relative figure resources ───────────────────
-# Copy every relative \includegraphics target referenced by the flattened root
-# into the bundle at its document-relative path, so the no-system-styles compile
-# finds the figures beside the root .tex. Paths are read off the REAL root .tex.
-python3 - "$bundle/main.tex" "$PWD" "$bundle" <<'PY_EOF'
+# ── 3. Materialize the document's relative figure + bibliography resources ────
+# Copy every relative \includegraphics target AND every \bibliography{...} target
+# referenced by the flattened root into the bundle at its document-relative path,
+# so the no-system-styles compile finds the figures beside the root .tex and
+# latexmk's BibTeX pass (step 4) resolves \bibliography{references} against the
+# bundle-root references.bib. Paths are read off the REAL root .tex.
+# The sentinel records whether the flattened root carries a \bibliography{...}
+# BibTeX driver — the document's REAL shape, read off the root .tex. It exists iff
+# the document has a bibliography, which gates the .bbl bake (step 4) below.
+bibflag="$work/has-bibliography"
+python3 - "$bundle/main.tex" "$PWD" "$bundle" "$bibflag" <<'PY_EOF'
 import os, re, shutil, sys
-root_tex, src_dir, bundle = sys.argv[1], sys.argv[2], sys.argv[3]
+root_tex, src_dir, bundle, bibflag = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 body = open(root_tex, encoding="utf-8").read()
 # \includegraphics[...]{path} — capture the path argument.
 for m in re.finditer(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", body):
@@ -134,8 +148,73 @@ for m in re.finditer(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", body):
     dst = os.path.join(bundle, rel)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.copyfile(src, dst)
+# \bibliography{names} — comma-separated bib basenames (the BibTeX driver). Copy
+# each named <name>.bib from the source dir into the bundle so latexmk's BibTeX
+# pass resolves it from the bundle root; a NAMED-but-absent .bib is a loud failure
+# (no .bbl could be baked). Record the sentinel iff a driver is present.
+has_bib = False
+for m in re.finditer(r"\\bibliography\{([^}]+)\}", body):
+    for name in m.group(1).split(","):
+        name = name.strip()
+        if not name:
+            continue
+        rel = name if name.endswith(".bib") else name + ".bib"
+        if os.path.isabs(rel):
+            continue
+        src = os.path.join(src_dir, rel)
+        if not os.path.isfile(src):
+            sys.stderr.write(f"arxiv-export: referenced bibliography missing: {src}\n")
+            sys.exit(7)
+        dst = os.path.join(bundle, rel)
+        os.makedirs(os.path.dirname(dst) or ".", exist_ok=True)
+        shutil.copyfile(src, dst)
+        has_bib = True
+if has_bib:
+    open(bibflag, "w").close()
 PY_EOF
 
-# ── 4. tar gzip the bundle to {artifact} ──────────────────────────────────────
+# ── 4. Bake the .bbl via the REAL latexmk multi-pass BibTeX build ──────────────
+# Only when the document carries a \bibliography{...} BibTeX driver (the sentinel
+# from step 3). A document WITHOUT a bibliography has no .bbl to bake and no .bib
+# to delete — that is the document's real shape, not a skipped edge case.
+#
+# Run /usr/bin/latexmk -pdf on the bundle root main.tex (cwd = the bundle), so
+# latexmk drives the LaTeX + BibTeX passes itself and writes its OWN intermediate
+# main.bbl into the bundle. The plugin owns NO bibliography processing — it
+# leverages latexmk's own .bbl. The jobname is the root .tex basename (main), so
+# latexmk's .bbl is already main.bbl (the name arXiv reads). max_print_line wide
+# so engine log lines are not wrapped (mirrors the F3 latexmk driver).
+mainstem="$(basename "$bundle/main.tex" .tex)"
+if [ -f "$bibflag" ]; then
+    export max_print_line=10000
+    # Run latexmk in the bundle; surface its engine log on stderr (the app's
+    # compile-log surface) so a failed bake carries the REAL engine diagnostics. A
+    # nonzero latexmk exit is tolerated ONLY long enough to reach the explicit .bbl
+    # assertion below — which fails loud if the BibTeX pass produced no .bbl.
+    latexmk_rc=0
+    ( cd "$bundle" && latexmk -pdf -interaction=nonstopmode "$mainstem.tex" ) >&2 || latexmk_rc=$?
+
+    # latexmk's own intermediate .bbl must exist — the citation resolved into it. A
+    # missing .bbl is a loud failure: the BibTeX pass never produced the resolved
+    # bibliography, so the bundle would carry an unresolved citation.
+    if [ ! -f "$bundle/$mainstem.bbl" ]; then
+        echo "arxiv-export/export.sh: latexmk (rc=$latexmk_rc) produced no $mainstem.bbl in the bundle" >&2
+        exit 8
+    fi
+
+    # arXiv compiles from the .bbl directly and a leftover required .bib BLOCKS
+    # submission — delete every .bib from the bundle now that the .bbl is baked.
+    find "$bundle" -name '*.bib' -delete
+
+    # Strip latexmk's other build intermediates so the bundle carries only sources
+    # + the baked .bbl (the .pdf/.aux/.log/.fls/.fdb_latexmk are build byproducts,
+    # not arXiv submission inputs). The baked .bbl is KEPT.
+    find "$bundle" -type f \
+        \( -name '*.aux' -o -name '*.log' -o -name '*.out' -o -name '*.fls' \
+           -o -name '*.fdb_latexmk' -o -name '*.pdf' -o -name '*.blg' -o -name '*.toc' \) \
+        -delete
+fi
+
+# ── 5. tar gzip the bundle to {artifact} ──────────────────────────────────────
 # -C the staging dir so the archive carries the single top-level bundle folder.
 tar -czf "$artifact" -C "$work" "arxiv-bundle"
