@@ -946,6 +946,77 @@ command = "$PANDOC_BIN --from markdown --to latex --standalone"
 macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
 EOF
     ;;
+p124-arxiv-tikz.spec.ts)
+    # P116 (Phase G / G3 — TikZ EXTERNALIZED to a precompiled PDF figure, with NO
+    # tikz source remaining in the bundle). The witness must carry (a) the shared P1
+    # witnesses so the compiled PDF is recognisably this document, (b) the same
+    # flatten + macro-materialize exercise p122 binds (a sibling SECTION .tex \input
+    # plus a use of \RR), so the bundle pipeline G1/G2 already cover stays exercised,
+    # and (c) at least ONE raw-LaTeX tikz diagram (a tikzpicture AND a tikzcd) so the
+    # pandoc-emitted root .tex carries a `\begin{tikzpicture}`/`\begin{tikzcd}`
+    # environment that G3 must PRECOMPILE to a bundled PDF and REWRITE to a
+    # `\includegraphics{<fig>.pdf}`.
+    #
+    # The G3 plugin extends G1/G2's `export.sh` (SAME vendored arxiv-export plugin):
+    # after G1's flatten + macro-materialization produce the self-contained bundle
+    # and BEFORE G2's latexmk `.bbl` bake, it drives the EXISTING tikzcd.lua filter's
+    # pdflatex compile core (run_pdflatex_and_convert via standalone-tikz.tex) to emit
+    # each diagram as a PDF written INTO the bundle, and rewrites the .tex so each
+    # diagram becomes `\includegraphics{<fig>.pdf}`. The [plugin.arxiv-export] config
+    # section is EXACTLY p122/p123's (command + macros_dir) — its schema is
+    # additionalProperties:false, so NO extra config key is added (an unknown key
+    # would fail config-schema at load and the app would never boot, masking the
+    # tikz-left-inline RED).
+    #
+    # The SECTION file reuses p122's verbatim — it uses \RR and carries the
+    # "Minkowski bound" witness, so the flatten + macro-materialize legs stay alive.
+    cat > "$PROJECT_DIR/section-minkowski.tex" <<'PPE_P124_SECTION_EOF'
+\section{Minkowski bound}
+
+A symmetric convex body in $\RR^n$ of large enough volume contains a nonzero
+lattice point: this yields the Minkowski bound. Flattened section sentinel
+PPE-FLATTENED-SECTION across all included files.
+PPE_P124_SECTION_EOF
+    # Append (1) the same raw-LaTeX \input of the section plus an inline \RR p122
+    # uses (so the flatten + materialize legs stay exercised), and (2) TWO raw-LaTeX
+    # tikz diagrams — a tikzpicture (two named nodes + an edge, the P100 tikz witness
+    # shape) and a tikzcd (the categorical-diagram form), each fenced as a pandoc
+    # `{=latex}` raw block so `pandoc --to latex` passes the environment through
+    # verbatim into the emitted root .tex. A G1/G2-only bundle (no G3) leaves these
+    # `\begin{tikzpicture}`/`\begin{tikzcd}` environments INLINE in a bundled .tex —
+    # exactly the RED this spec catches. Only THIS spec's demo.md copy is mutated;
+    # the shared fixture demo.md is untouched.
+    printf '\n\nLattices live in $\\RR^n$.\n\n\\input{section-minkowski.tex}\n' >> "$DEMO_FILE"
+    cat >> "$DEMO_FILE" <<'PPE_P124_TIKZ_EOF'
+
+A commutative diagram of lattice maps:
+
+```{=latex}
+\begin{tikzpicture}
+  \node (a) at (0,0) {Aleph};
+  \node (b) at (2,0) {Beth};
+  \draw (a) -- (b);
+\end{tikzpicture}
+```
+
+```{=latex}
+\begin{tikzcd}
+  A \arrow[r, "f"] \arrow[d] & B \arrow[d] \\
+  C \arrow[r]                & D
+\end{tikzcd}
+```
+PPE_P124_TIKZ_EOF
+    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
+    # its [plugin.arxiv-export] config section — IDENTICAL to p122/p123's (command +
+    # macros_dir; schema additionalProperties:false forbids any extra key).
+    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.arxiv-export]
+command = "$PANDOC_BIN --from markdown --to latex --standalone"
+macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
+EOF
+    ;;
 p19-plugin-run-by-id.spec.ts)
     # A1: the generic plugin firewall runs a tools plugin by id. The canonical
     # config above already set up the pandoc renderer + [plugins].dir (so the
