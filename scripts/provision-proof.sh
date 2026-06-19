@@ -1527,6 +1527,92 @@ A later paragraph carrying the second math span $c + d$ here.
 PPE_P112_EOF
     DEMO_FILE="$PROJECT_DIR/motions.md"
     ;;
+p113-command-palette.spec.ts)
+    # P104 (Phase E / E3): the command palette (Ctrl+Shift+P) and quick-open
+    # (Ctrl+P), both delivered behind the plugin firewall by a REAL picker plugin
+    # (NOT app chrome, NOT a mock in app logic). The real interactive fzf TUI
+    # cannot be driven headless (the same constraint as the D-7 diagram-tool GUI
+    # launch, p106), so the proof substitutes — VIA CONFIG — a real firewall picker
+    # plugin whose pick step RETURNS a deterministic selection on stdout: the app
+    # feeds the candidate list (the palette command catalog / the workspace file
+    # list) to the picker through the generic firewall, the picker emits the
+    # configured choice, and the app then RUNS the returned command / OPENS the
+    # returned file. The observable is the buffer ACTUALLY FOLDING / the file
+    # ACTUALLY OPENING — proving the palette RUNS the selection, not merely lists it.
+    #
+    # The canonical config block above already set up the pandoc renderer +
+    # [plugins].dir (so the app boots and the explorer lists the witness files —
+    # demo.md + outline.md, the shared fixture left intact). Here we ADD the
+    # recording-picker plugin into that SAME dir and its [plugin.recording-picker]
+    # config section, and write ONE config-declared deterministic selection file
+    # under the app's real config dir carrying BOTH surfaces' choices, one token
+    # per line:
+    #
+    #   fold_all            — the COMMAND PALETTE choice: the command id of the
+    #     "Fold All" command (the catalog id from paletteCommands() at App.svelte).
+    #     When Ctrl+Shift+P feeds the command catalog to the picker, the picker
+    #     returns the `fold_all` line and the app runs it — the buffer folds.
+    #   <abs path>/demo.md  — the QUICK-OPEN choice: the ABSOLUTE PATH of demo.md (a
+    #     workspace file DIFFERENT from the outline.md the proof opens first). When
+    #     Ctrl+P feeds the workspace file list to the picker, the picker returns the
+    #     demo.md line and the app opens it — the editor's active document becomes
+    #     demo.md, read independently of the app's own report.
+    #
+    # One file serves both surfaces because the candidate sets are disjoint by kind:
+    # the palette set carries `fold_all` and never a file path, the quick-open set
+    # carries the file path and never `fold_all`, so the picker's first-matching-
+    # token rule yields the correct pick for each surface from the candidate set the
+    # app actually fed through the firewall — never a hardcoded per-surface branch.
+    # The picker learns the file's basename off its config section on
+    # PPE_PLUGIN_CONFIG (selection_file = "picker-selection"), so the app's config —
+    # not a hardcoded path — names it.
+    #
+    # RED today: Ctrl+P still opens the OLD app-owned CommandPaletteModal (the
+    # un-fixed binding transposition) and there is no Ctrl+Shift+P firewall palette,
+    # no quick-open, and no picker-plugin wiring — so firing Ctrl+Shift+P never
+    # folds the buffer (no firewall palette runs the selection) and firing Ctrl+P
+    # opens the app palette rather than a quick-open that opens the picked file. The
+    # failure is the MISSING new behaviour, not a boot/setup error: the app,
+    # project, and editor are all brought up and outline.md opened FIRST.
+    install_plugin_fixtures "$PLUGINS_DIR" recording-picker
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.recording-picker]
+selection_file = "picker-selection"
+EOF
+    # The two deterministic selections, one token per line, under the app's real
+    # config dir (named by the config key above): the palette command id `fold_all`
+    # and the quick-open absolute path of demo.md (a file DIFFERENT from outline.md,
+    # so a real file-open is observable as the active document changing).
+    {
+        printf 'fold_all\n'
+        printf '%s\n' "$PROJECT_DIR/demo.md"
+    } > "$CONFIG_DIR/picker-selection"
+    ;;
+p40-command-palette.spec.ts)
+    # P104 (Phase E / E3) — the MIGRATED p40. p40 historically asserted the OLD
+    # Ctrl+P -> app-owned CommandPaletteModal behaviour (Fold All folds, Unfold All
+    # unfolds via that app palette). E3 FIXES that binding/surface: the palette
+    # moves to Ctrl+Shift+P behind the plugin firewall. p40's proof burden — that
+    # the palette RUNS a fold COMMAND against the real editor, not merely renders a
+    # modal — is TRANSFERRED here to the corrected surface: p40 now proves the
+    # Ctrl+Shift+P firewall palette runs "Unfold All" (the complement of p113's
+    # "Fold All" leg), so the two specs together prove both fold commands run
+    # through the new surface — never a hollow deletion of p40.
+    #
+    # Same picker plugin + config-section setup as the p113 branch, but the
+    # configured selection is `unfold_all` (the catalog id of "Unfold All"), and
+    # the witness buffer is PRE-FOLDED by the spec before the palette is invoked, so
+    # the observable is the buffer ACTUALLY UNFOLDING (folded ranges go back to
+    # empty) when the firewall palette runs the selected command.
+    install_plugin_fixtures "$PLUGINS_DIR" recording-picker
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.recording-picker]
+selection_file = "picker-selection"
+EOF
+    printf 'unfold_all\n' > "$CONFIG_DIR/picker-selection"
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────

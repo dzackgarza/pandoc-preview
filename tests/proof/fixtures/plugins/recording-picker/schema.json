@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "recording-picker config section",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["selection_file"],
+  "properties": {
+    "selection_file": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

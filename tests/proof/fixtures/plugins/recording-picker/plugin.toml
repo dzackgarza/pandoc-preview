@@ -1,0 +1,64 @@
+# Picker firewall fixture (P104 / Phase E / E3). A discovered plugin in the
+# `picker` category whose pick command stands in for the REAL interactive fzf TUI
+# the app cannot drive headless (the same constraint as the D-7 diagram-tool GUI
+# launch, P96). It is discovered exactly the way the shipped pandoc-renderer /
+# workspace-search / recording-diagram-tool plugins are — from the [plugins].dir,
+# by the SAME generic discover() — with NO app-core knowledge of fzf's argv.
+#
+# The command palette (Ctrl+Shift+P) and quick-open (Ctrl+P) both RUN this picker
+# by id through the generic plugin firewall (plugins.rs run_plugin): the app feeds
+# the candidate list (palette command catalog, or the workspace file list) to the
+# picker on stdin, the picker RETURNS the chosen token on stdout, and the app then
+# RUNS the returned command / OPENS the returned file. The REAL fzf picker is the
+# production UI; this fixture substitutes a NON-INTERACTIVE selection-returning
+# plugin via config so the WIRING (the app actually running the selection) can be
+# proven headless — a REAL plugin exercising the REAL firewall, NOT a mock in app
+# logic.
+#
+# Determinism: a real interactive picker chooses by user keystrokes. This fixture
+# reads its candidate choices from a config-declared selection file (the
+# `selection_file` config key, written by provisioning — one configured token per
+# line) and emits, on stdout, the FIRST candidate line from its stdin whose token
+# MATCHES ANY configured token — proving the app fed the real candidate set
+# through the firewall AND consumed the picker's returned line. Both surfaces
+# (palette + quick-open) share one selection file: the palette candidate set
+# carries the command id (`fold_all`) and never a file path, the quick-open set
+# carries the file path and never `fold_all`, so a single file holding both tokens
+# deterministically yields the correct pick for each surface. An app that never
+# runs the picker, or that ignores the picker's stdout, cannot fabricate it here.
+#
+# Cloned from the recording-diagram-tool / workspace-search shape: id / name /
+# description / category / kind, a JSON Schema referenced (not inlined) for its
+# [plugin.<id>] section, an [exec] command (stdin candidates -> stdout selection),
+# a self-owned [configure] command, and a contributed doctor check.
+id = "recording-picker"
+name = "Recording Picker"
+description = "A picker plugin that returns a config-configured deterministic selection on stdout (P104)."
+category = "picker"
+kind = "command"
+# JSON Schema (draft 2020-12) for this plugin's [plugin.recording-picker] config
+# section. Referenced, not inlined.
+config_schema = "schema.json"
+
+[exec]
+# The PICK command. The candidate list (one candidate per line, each `<token>` or
+# `<token>\t<label>`) arrives on stdin; the chosen candidate LINE is written to
+# stdout. {plugin_dir} = this plugin's directory, {config_dir} = the app's real
+# config dir (where the configured selection file lives). The real fzf picker
+# would let the user choose interactively; this fixture instead reads the
+# configured selection and emits the matching candidate line.
+command = ["{plugin_dir}/pick.sh", "{config_dir}"]
+
+# Self-owned configure command (C1). The app's "Configure" action SPAWNS this
+# detached; this fixture is non-interactive (it only needs to exist).
+[configure]
+command = ["{plugin_dir}/configure.sh", "{plugin_dir}", "{config_dir}"]
+
+# A doctor check this picker plugin contributes to the one battery (A3): the REAL
+# fzf binary the production picker runs MUST be present and runnable, and pick.sh
+# itself must be executable. A missing fzf is a LOUD doctor FAIL — never a silent
+# no-op picker at runtime.
+[[doctor_checks]]
+id = "recording-picker-runnable"
+description = "recording-picker pick.sh is present and executable and the fzf binary is on PATH"
+command = ["{plugin_dir}/check-picker.sh", "{plugin_dir}"]
