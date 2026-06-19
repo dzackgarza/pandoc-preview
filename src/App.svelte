@@ -36,6 +36,7 @@
   import InsertionBar from "./lib/components/InsertionBar.svelte";
   import DimensionModal from "./lib/components/DimensionModal.svelte";
   import FootnoteModal from "./lib/components/FootnoteModal.svelte";
+  import FrontmatterEditorModal from "./lib/components/FrontmatterEditorModal.svelte";
   import OutlinePanel from "./lib/components/OutlinePanel.svelte";
   import ReferencesPanel from "./lib/components/ReferencesPanel.svelte";
   import SearchPanel from "./lib/components/SearchPanel.svelte";
@@ -173,6 +174,10 @@
   let matrixModalOpen = $state(false);
   let tableModalOpen = $state(false);
   let footnoteModalOpen = $state(false);
+  // P106 (E5): the structured YAML frontmatter editor modal. Open carries the
+  // live buffer snapshot so the modal parses the leading `--- … ---` block and,
+  // on confirm, splices a re-emitted block ahead of the byte-unchanged body.
+  let frontmatterModalBuffer = $state<string | null>(null);
   // Document outline (headings + fenced divs) for the sidebar's Outline panel,
   // a resizable/collapsible section below the file tree.
   let outline = $state<OutlineItem[]>([]);
@@ -968,6 +973,11 @@
       { id: "show_preview", label: "Show Preview", run: () => (activeTab = "preview") },
       { id: "show_log", label: "Show Log", run: () => (activeTab = "log") },
       { id: "settings", label: "Settings", run: () => (settingsOpen = true) },
+      {
+        id: "frontmatter",
+        label: "Edit Frontmatter",
+        run: () => (frontmatterModalBuffer = editor.getContent()),
+      },
       // Phase E / E2 structural-motion commands (P112): the SAME named Commands
       // the Ctrl-Alt-<key> bindings fire, surfaced in the palette so the firewall
       // picker can run any of them by id.
@@ -2113,6 +2123,9 @@
       case "settings":
         settingsOpen = true;
         break;
+      case "frontmatter":
+        frontmatterModalBuffer = editor.getContent();
+        break;
       case "command_palette":
         void runCommandPalette();
         break;
@@ -2363,6 +2376,27 @@
       {configPath}
       onSave={(next) => void saveSettings(next)}
       onCancel={() => (settingsOpen = false)}
+    />
+  {/if}
+
+  {#if frontmatterModalBuffer !== null}
+    <!-- P106 (E5): the structured YAML frontmatter editor. On confirm it returns
+         a buffer whose leading `--- … ---` block was re-emitted and whose body is
+         byte-unchanged; that buffer replaces the live document through the same
+         setContent pipeline every external-rewrite/restore path uses. -->
+    <FrontmatterEditorModal
+      buffer={frontmatterModalBuffer}
+      onSave={(next) => {
+        frontmatterModalBuffer = null;
+        // Apply the re-emitted block + byte-unchanged body to the live buffer,
+        // then persist — so the document on disk and the live buffer agree and
+        // the edit is committed (the same setContent → save the menu Save path
+        // uses). A persisted edit also leaves the buffer clean, so a subsequent
+        // file switch is not blocked by the unsaved-changes guard.
+        editor.setContent(next);
+        void saveCurrent();
+      }}
+      onCancel={() => (frontmatterModalBuffer = null)}
     />
   {/if}
 
