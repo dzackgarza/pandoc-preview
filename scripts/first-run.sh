@@ -118,7 +118,7 @@ CSL="$HOME/.pandoc/csl/alpha-preview.csl"
 TIKZSTYLES="$FIGURES_DIR/shared.tikzstyles"
 TIKZDEFS="$FIGURES_DIR/shared.tikzdefs"
 # The per-figure preamble template (Phase D / D-3 / P92): the standalone LaTeX
-# document each compiled figure body is wrapped in, with the QTikz `<>` source
+# document each compiled figure body is wrapped in, with the QTikz <> source
 # marker. install-assets symlinks the vendored starter standalone-tikz.tex into
 # the templates dir; the [figures] table below points config at it.
 FIGURE_TEMPLATE="$HOME/.pandoc/templates/standalone-tikz.tex"
@@ -217,7 +217,7 @@ figures = "$FIGURES_DIR"
 tikzstyles = "$TIKZSTYLES"
 tikzdefs = "$TIKZDEFS"
 # The per-figure preamble template (Phase D / D-3 / P92): the standalone LaTeX
-# document each figure body is wrapped in, with the QTikz `<>` source marker.
+# document each figure body is wrapped in, with the QTikz <> source marker.
 # Required, load-validated existing file; swap it (or edit its content) to change
 # the preamble every figure compiles under.
 template = "$FIGURE_TEMPLATE"
