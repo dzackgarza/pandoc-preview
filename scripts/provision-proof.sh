@@ -992,6 +992,35 @@ p08-export-pdf.spec.ts)
 command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
 EOF
     ;;
+p116-pdf-preview.spec.ts)
+    # P107 (Phase F / F1): the LIVE PDF preview — an embedded pdf.js viewer fed by
+    # a compile-on-idle scheduler that drives the CONFIGURED PDF compile command
+    # (the shipped [export.pdf] = pandoc -> lualatex, i.e. the pandoc-pdf-export
+    # export-category plugin) to a real .pdf on disk, then renders it. This is the
+    # live-preview surface a one-shot export (P8) does not give. The compile path
+    # reuses P8's PDF command boundary VERBATIM, so the configured PDF command must
+    # be DISCOVERABLE here exactly as P8 provisions it: the canonical config above
+    # already set up the pandoc renderer + [plugins].dir (so the app boots and the
+    # HTML preview works); here we ADD the shipped pandoc-pdf-export plugin into
+    # that SAME dir (vendored alongside pandoc-renderer, OSOT) and its
+    # [plugin.pandoc-pdf-export] config section — the raw pandoc -> lualatex command
+    # the compile-on-idle scheduler drives to produce the .pdf the viewer renders.
+    #
+    # Only the SAME schema-valid [plugin.pandoc-pdf-export] section P8 emits is
+    # written: NO new config keys (no [preview].pdf_preview selector) are added,
+    # because the current config schema rejects unknown keys and would fail the
+    # startup gate — the app must BOOT cleanly so the RED failure is the missing PDF
+    # preview surface, not a config-schema boot error. The PDF-preview obligation is
+    # driven entirely through the app's test harness + the live DOM; the produced
+    # PDF is read off disk by independent processes (pdfinfo/pdftotext), exactly as
+    # P8's discipline requires.
+    install_plugin_fixtures "$PLUGINS_DIR" pandoc-pdf-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.pandoc-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
+EOF
+    ;;
 p47-save-gate.spec.ts)
     # P47 A2 proves the save-gate blocks a REAL plugin export on an identity-less
     # buffer. So the shipped pandoc-html-export export-category plugin must be
@@ -1736,7 +1765,14 @@ esac
 # binary), NOT the proof: the spec still drives the app's own export and
 # asserts on the artifact that export produces. Fails loudly if the command
 # cannot produce a PDF — a broken lualatex is a broken proof environment.
-if [ "$SPEC" = "p08-export-pdf.spec.ts" ]; then
+#
+# p116 (the F1 live PDF preview) needs the SAME warmup: its compile-on-idle
+# scheduler drives the SAME pandoc -> lualatex command IN THE APP after the
+# debounce, and on a cold luaotfload cache that first lualatex run far exceeds
+# the spec's compile-wait window. Warming it here makes the in-app compile land
+# within the wait. The warmup is provisioning only — the spec still drives the
+# app's own compile-on-idle path and reads the PDF the app produces.
+if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ]; then
     WARMUP_PDF="$ABS_SPEC_DIR/lualatex-warmup.pdf"
     # cwd = the source file's parent, mirroring the app's export contract.
     (
