@@ -183,18 +183,43 @@ export async function renderedToken(
   needle: string,
 ): Promise<RenderedToken> {
   const raw = await page.evaluate(`(() => {
+    const needle = ${JSON.stringify(needle)};
     const content = document.querySelector('.cm-editor .cm-content');
     if (!content) return null;
     const cs = getComputedStyle(content);
     const base = cs.color, baseStyle = cs.fontStyle, baseWeight = cs.fontWeight;
+    const describe = (el, text) => {
+      const es = getComputedStyle(el);
+      return JSON.stringify({ tag: el.tagName, color: es.color, base, fontStyle: es.fontStyle, fontWeight: es.fontWeight, baseStyle, baseWeight, text });
+    };
+    // Fast path: the whole needle lives in a single text node (the common case —
+    // a token highlighted by one contiguous span). Resolve to that node's parent.
     const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
-      const i = node.nodeValue.indexOf(${JSON.stringify(needle)});
+      const i = node.nodeValue.indexOf(needle);
       if (i >= 0) {
-        const el = node.parentElement;
-        const es = getComputedStyle(el);
-        return JSON.stringify({ tag: el.tagName, color: es.color, base, fontStyle: es.fontStyle, fontWeight: es.fontWeight, baseStyle, baseWeight, text: node.nodeValue });
+        return describe(node.parentElement, node.nodeValue);
+      }
+    }
+    // Fragmented path: an OVERLAPPING decoration (e.g. the spellchecker wrapping a
+    // sub-word like 'oint' of '\\oint' in cm-spellError) splits the token across
+    // adjacent sibling spans, so no single text node holds the contiguous needle.
+    // Resolve within each .cm-line: concatenate its text nodes, find the needle in
+    // that concatenation, then return the parent element of the text node holding
+    // the needle's FIRST character (the leading highlight span — the latex-command
+    // colour for a control sequence). This recovers the same highlight span the
+    // fast path would return when no decoration overlaps the token.
+    for (const line of content.querySelectorAll('.cm-line')) {
+      const nodes = [];
+      let joined = '';
+      const lw = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+      let n;
+      while ((n = lw.nextNode())) { nodes.push({ node: n, start: joined.length }); joined += n.nodeValue; }
+      const i = joined.indexOf(needle);
+      if (i >= 0) {
+        const hit = nodes.find((e) => e.start <= i && i < e.start + e.node.nodeValue.length);
+        if (hit) return describe(hit.node.parentElement, joined);
       }
     }
     return null;
