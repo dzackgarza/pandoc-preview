@@ -850,6 +850,44 @@ p12-export-custom-pipeline.spec.ts)
 command = "noop"
 EOF
     ;;
+p122-arxiv-flatten.spec.ts)
+    # P114 (Phase G / G1 — flattened self-contained arXiv bundle). The witness
+    # project must (a) carry the shared P1 witnesses so the compiled PDF is
+    # recognisably this document, (b) \input a sibling SECTION .tex so the
+    # flatten-for-arxiv step is genuinely exercised (an un-flattened bundle leaves
+    # a dangling \input to a file NOT in the bundle), and (c) use the custom macro
+    # \RR — defined in the real dzg macro tier the preamble pulls in
+    # (tier1-mathjax-simple.tex: \newcommand{\RR}{{\mathbf{R}}}), NOT a TeX builtin
+    # — so a bundle that fails to MATERIALIZE the macros compiles to an "Undefined
+    # control sequence \RR" error under the empty TEXMFHOME.
+    #
+    # We DELIBERATELY install NO plugin here: there is no vendored arxiv-export
+    # plugin yet (Phase G is unimplemented), and installing a nonexistent fixture
+    # would make provisioning itself FAIL (cp of a missing dir) — masking the real
+    # RED with a boot/provision error. The canonical config above set up the
+    # pandoc renderer + [plugins].dir, so the app BOOTS cleanly; the spec then
+    # drives runPlugin('arxiv-export', target.tar.gz) and the generic firewall
+    # errors ("no plugin with id arxiv-export"), no tarball is written, and the
+    # spec throws at its missing-tarball guard. That is the faithful "no arxiv
+    # export / no flatten exists today" RED, distinct from any boot failure.
+    #
+    # The SECTION file uses \RR and carries the "Minkowski bound" witness, so that
+    # witness only reaches the compiled PDF if the section was flattened in AND the
+    # macro materialized — exactly the two G1 properties P114 binds together.
+    cat > "$PROJECT_DIR/section-minkowski.tex" <<'PPE_P122_SECTION_EOF'
+\section{Minkowski bound}
+
+A symmetric convex body in $\RR^n$ of large enough volume contains a nonzero
+lattice point: this yields the Minkowski bound. Flattened section sentinel
+PPE-FLATTENED-SECTION across all included files.
+PPE_P122_SECTION_EOF
+    # Append a raw-LaTeX \input of the section (a RELATIVE path) plus an inline use
+    # of \RR to demo.md. pandoc --to latex passes the raw TeX through verbatim, so
+    # the emitted .tex carries the \input (which latexpand must flatten) and the
+    # \RR (which the materialized macro tier must define). Only this spec's copy is
+    # mutated; the shared fixture demo.md is untouched.
+    printf '\n\nLattices live in $\\RR^n$.\n\n\\input{section-minkowski.tex}\n' >> "$DEMO_FILE"
+    ;;
 p19-plugin-run-by-id.spec.ts)
     # A1: the generic plugin firewall runs a tools plugin by id. The canonical
     # config above already set up the pandoc renderer + [plugins].dir (so the
