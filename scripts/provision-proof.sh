@@ -1372,6 +1372,110 @@ p108-watch-file-reload.spec.ts)
 
 PPE_P108_RED_EOF
     ;;
+p110-workspace-search.spec.ts)
+    # P101 (Phase E / E1): global full-text WORKSPACE content search across the
+    # open project, with the boolean grammar (space=AND, |=OR, !term=NOT,
+    # "phrase"=exact) operating on file CONTENT, and click-to-open-at-line.
+    #
+    # The witness is a MULTI-FILE project whose two root chapters discriminate
+    # the !-negation on CONTENT. The default fixture project (demo.md/outline.md,
+    # which themselves carry "Minkowski", "lattice", and "Café") would CONFOUND
+    # the result set, so this spec REBUILDS the hermetic project tree from scratch
+    # into a controlled corpus — the search must find exactly chapter1.md and must
+    # NOT find chapter2.md for the query `Minkowski !lattice`.
+    #
+    #   chapter1.md — contains the unique term "Minkowski bound"; it has the word
+    #     "Minkowski" and does NOT contain "lattice" anywhere. The line carrying
+    #     "Minkowski bound" is the click-to-open-at-line target. It is on a known,
+    #     deterministic line so an INDEPENDENT cursor-line read (cursorLine())
+    #     after the result click can be checked against the real on-disk line — the
+    #     spec computes that line by reading the file off disk, not from a constant.
+    #   chapter2.md — contains "Minkowski lattice" (so it matches `Minkowski` but
+    #     is EXCLUDED by `!lattice`) and also "Café" (the P102 scope discriminator,
+    #     harmless here). A content search that ignores `!`-negation wrongly lists
+    #     it; a filename-only filter never searches content at all.
+    #
+    # RED today: there is no Search view, no workspace-search backend, and no
+    # search hooks/DOM — so the spec's search driver finds nothing and the
+    # result-list assertions fail. The failure is the MISSING workspace search,
+    # not a boot/setup error: the app, project, and editor are all brought up
+    # first (the corpus is real markdown the explorer lists).
+    rm -rf "$PROJECT_DIR"
+    mkdir -p "$PROJECT_DIR"
+    # chapter1.md — "Minkowski bound" present, "lattice" ABSENT. The matched line
+    # is line 5 (1-based) below; the spec recomputes it off disk rather than
+    # hardcoding, so a layout change here cannot silently desync the assertion.
+    cat > "$PROJECT_DIR/chapter1.md" <<'PPE_P110_CH1_EOF'
+# Chapter One
+
+Some preliminary discussion of convex bodies.
+
+The Minkowski bound controls the count of points.
+
+A closing remark with no further keywords.
+PPE_P110_CH1_EOF
+    # chapter2.md — "Minkowski lattice" (matches Minkowski, excluded by !lattice)
+    # plus "Café" (the P102 out-of-subtree discriminator). NEVER listed for the
+    # P101 query.
+    cat > "$PROJECT_DIR/chapter2.md" <<'PPE_P110_CH2_EOF'
+# Chapter Two
+
+We now study the Minkowski lattice and its symmetries.
+
+Aside: written in a Café over a long afternoon.
+PPE_P110_CH2_EOF
+    DEMO_FILE="$PROJECT_DIR/chapter1.md"
+    ;;
+p111-search-scope-heatmap.spec.ts)
+    # P102 (Phase E / E1): per-directory RESTRICTION of the workspace search and a
+    # per-result relevancy HEATMAP. Restricting a search to a chosen subdirectory
+    # and querying `Café` must list ONLY hits UNDER that subtree (an out-of-subtree
+    # `Café` file ABSENT), and each result must carry a DISCRIMINABLE heat class —
+    # a file with MORE matches in a HIGHER-heat class than a single-match file.
+    #
+    # The witness REBUILDS the hermetic project tree (the default fixture would
+    # confound the corpus) into a controlled layout with a scoped subdirectory and
+    # one out-of-subtree match:
+    #
+    #   sections/intro.md  — contains "Café" THREE times → the HIGH-heat result.
+    #   sections/notes.md  — contains "Café" ONCE        → the LOW-heat result.
+    #   chapter2.md        — contains "Café" ONCE, but lives OUTSIDE sections/ →
+    #                        it must be ABSENT when the search is restricted to
+    #                        sections/. A restriction that searches the whole
+    #                        workspace anyway wrongly lists it.
+    #
+    # The two in-subtree files differ ONLY by match count, so a flat single-class
+    # result list cannot distinguish them — the heat class is the sole
+    # discriminator the spec reads off the DOM.
+    #
+    # RED today: there is no Search view, no scope control, and no per-result heat
+    # class — so the scoped search finds nothing and the heat-class read fails. The
+    # failure is the MISSING scope+heatmap, not a boot error.
+    rm -rf "$PROJECT_DIR"
+    mkdir -p "$PROJECT_DIR/sections"
+    # HIGH-heat: three "Café" matches under the scoped subtree.
+    cat > "$PROJECT_DIR/sections/intro.md" <<'PPE_P111_INTRO_EOF'
+# Introduction
+
+We met at a Café to discuss the geometry of numbers.
+A second Café featured prominently in the proof.
+The third Café sealed the argument over espresso.
+PPE_P111_INTRO_EOF
+    # LOW-heat: a single "Café" match under the scoped subtree.
+    cat > "$PROJECT_DIR/sections/notes.md" <<'PPE_P111_NOTES_EOF'
+# Notes
+
+A brief aside scribbled in a Café.
+PPE_P111_NOTES_EOF
+    # OUT-OF-SUBTREE: a "Café" match at the project ROOT, outside sections/. Must
+    # be ABSENT when the search is restricted to sections/.
+    cat > "$PROJECT_DIR/chapter2.md" <<'PPE_P111_CH2_EOF'
+# Chapter Two
+
+An unrelated chapter, also written in a Café elsewhere.
+PPE_P111_CH2_EOF
+    DEMO_FILE="$PROJECT_DIR/sections/intro.md"
+    ;;
 esac
 
 # ── lualatex font-cache warmup (p08 only) ──────────────────────────────
