@@ -901,6 +901,51 @@ command = "$PANDOC_BIN --from markdown --to latex --standalone"
 macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
 EOF
     ;;
+p123-arxiv-bbl.spec.ts)
+    # P115 (Phase G / G2 — bake the `.bbl`, name it to the main `.tex`, ship NO
+    # `.bib`). The witness must carry at least one `\cite` against a config-declared
+    # bibliography so latexmk's BibTeX pass, run by the plugin inside the flattened
+    # bundle, RESOLVES the citation and PRODUCES a `.bbl` carrying the cited entry's
+    # formatted reference. The config-declared bibliography is the canonical
+    # `editor.bibliography` the canonical config above set ($HOME/.pandoc/bib/
+    # references.bib, the fixture references.bib emit_pandoc_renderer copied in —
+    # whose DM19 entry is Dolgachev & Mumford 2019, the DISTINCTIVE author the spec
+    # reads off the baked `.bbl`).
+    #
+    # The G2 plugin extends G1's `export.sh` (SAME vendored arxiv-export plugin):
+    # after flatten + macro-materialization it runs the REAL /usr/bin/latexmk `-pdf`
+    # inside the bundle, captures latexmk's own intermediate `.bbl` RENAMED to the
+    # main `.tex` basename, and DELETES the `.bib`. The [plugin.arxiv-export] config
+    # section is EXACTLY p122's (command + macros_dir) — its schema is
+    # additionalProperties:false, so NO extra config key is added (an unknown key
+    # would fail config-schema at load and the app would never boot, masking the
+    # missing-`.bbl` RED). The bibliography reaches the bundle as a document RELATIVE
+    # resource: a project-local `references.bib` the document's raw `\bibliography
+    # {references}` names, copied into the bundle by the flatten/materialize step the
+    # same way the figures are (cwd = the source file's parent at run time).
+    #
+    # The pandoc citation `[@DM19]` (pandoc `--to latex` emits `\cite{DM19}`) plus
+    # the raw-LaTeX `\bibliographystyle{plain} \bibliography{references}` are
+    # appended to THIS spec's demo.md copy only; the shared fixture demo.md is
+    # untouched. pandoc `--to latex` passes the raw `\bibliography{...}` through
+    # verbatim, so the emitted `.tex` carries the BibTeX driver latexmk needs.
+    printf '\n\nThe bound is sharpened in [@DM19].\n\n\\bibliographystyle{plain}\n\\bibliography{references}\n' >> "$DEMO_FILE"
+    # Stage the config-declared bibliography as a project-RELATIVE references.bib so
+    # `\bibliography{references}`, compiled by latexmk from the bundle root, resolves
+    # it (the SAME byte content as the canonical editor.bibliography). This is the
+    # `.bib` the GREEN plugin must DELETE from the bundle AFTER baking the `.bbl`.
+    cp "$REPO_ROOT/tests/proof/fixtures/references.bib" "$PROJECT_DIR/references.bib"
+    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
+    # its [plugin.arxiv-export] config section — IDENTICAL to p122's (command +
+    # macros_dir; schema additionalProperties:false forbids any extra key).
+    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.arxiv-export]
+command = "$PANDOC_BIN --from markdown --to latex --standalone"
+macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
+EOF
+    ;;
 p19-plugin-run-by-id.spec.ts)
     # A1: the generic plugin firewall runs a tools plugin by id. The canonical
     # config above already set up the pandoc renderer + [plugins].dir (so the
@@ -2116,7 +2161,7 @@ esac
 # both drive lualatex IN THE APP (via the FAST single-pass and/or FULL latexmk
 # in-app PDF compiles), so they need the SAME cold-cache warmup so the in-app
 # compiles land within the spec's wait windows.
-if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ] || [ "$SPEC" = "p118-multipass-references.spec.ts" ] || [ "$SPEC" = "p119-compile-toggle.spec.ts" ] || [ "$SPEC" = "p120-inline-warnings.spec.ts" ]; then
+if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ] || [ "$SPEC" = "p118-multipass-references.spec.ts" ] || [ "$SPEC" = "p119-compile-toggle.spec.ts" ] || [ "$SPEC" = "p120-inline-warnings.spec.ts" ] || [ "$SPEC" = "p123-arxiv-bbl.spec.ts" ]; then
     WARMUP_PDF="$ABS_SPEC_DIR/lualatex-warmup.pdf"
     # cwd = the source file's parent, mirroring the app's export contract.
     (
