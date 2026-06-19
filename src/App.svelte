@@ -651,6 +651,15 @@
         foldAll: () => editor.foldAllFolds(),
         unfoldAll: () => editor.unfoldAllFolds(),
         getFoldedRanges: () => editor.getFoldedRanges(),
+        // P66: the EXACT command catalog the Ctrl+Shift+P firewall picker is fed
+        // (paletteCommands() → runCommandPalette feeds these id\tlabel pairs to the
+        // picker through the generic firewall). Returning the labels surfaces the
+        // real catalog the palette presents — the analog of the old in-app palette
+        // DOM read, now that CommandPaletteModal.svelte is deleted (E3). The
+        // discovered export-category plugins contribute their "Export: <name>
+        // (.<ext>)" entries to this same catalog, so an entry's presence here is
+        // exactly its being surfaced in the palette.
+        paletteCommandLabels: (): string[] => paletteCommands().map((c) => c.label),
         cursorLine: () => cursorLine,
         currentFile: () => currentFile,
         // P49: the session-restore offer. pendingRestore returns a JSON-

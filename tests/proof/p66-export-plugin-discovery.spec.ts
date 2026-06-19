@@ -33,6 +33,12 @@ import { openProject, clickSidebarEntry, waitForHarness } from './support/app';
 //   (2) COMMAND-PALETTE ENTRY — the live webview's command palette must surface
 //       an "Export: Witness Export" entry carrying the plugin's declared
 //       extension "wexp", sourced from the DISCOVERED plugin, not config.export.
+//       Phase E / E3 moved the command palette behind the plugin firewall
+//       (Ctrl+Shift+P → fzf picker) and DELETED the in-app CommandPaletteModal.
+//       The catalog the firewall picker is fed (paletteCommands(), App.svelte) is
+//       exactly what the palette surfaces; this spec reads those catalog labels
+//       through the harness observable __PPE_E2E__.paletteCommandLabels() — the
+//       analog of the old palette DOM read against the new firewall mechanism.
 //
 // RED today, for the exact KILLs P66 names:
 //   - The PluginManifest (plugins.rs) has NO `extension` field and uses
@@ -76,22 +82,15 @@ function doctorReport(runDir: string): string {
   return `${result.stdout ?? ''}${result.stderr ?? ''}`;
 }
 
-async function openCommandPalette(page: { evaluate(e: string): Promise<unknown> }) {
-  await page.evaluate(`(() => {
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', code: 'KeyP', ctrlKey: true, bubbles: true, cancelable: true }));
-    return null;
-  })()`);
-}
-
-// Every command-palette entry's visible label text, read from the REAL rendered
-// palette DOM ([data-testid="command-palette"] → button). An entry is "surfaced"
-// iff its label text is present in the open palette.
+// Every command-palette entry's label, read from the REAL command catalog the
+// Ctrl+Shift+P firewall picker is fed (paletteCommands() in App.svelte, exposed
+// verbatim through __PPE_E2E__.paletteCommandLabels()). This catalog IS what the
+// firewall palette surfaces — the discovered export-category plugins push their
+// "Export: <name> (.<ext>)" entries onto it — so an entry is "surfaced in the
+// palette" iff its label is present here. This replaces the deleted in-app
+// CommandPaletteModal DOM read (E3) with the new firewall mechanism's catalog.
 async function paletteLabels(page: { evaluate(e: string): Promise<unknown> }): Promise<string[]> {
-  const raw = await page.evaluate(`(() => {
-    const p = document.querySelector('[data-testid="command-palette"]');
-    if (!p) return JSON.stringify([]);
-    return JSON.stringify(Array.from(p.querySelectorAll('button')).map((b) => (b.textContent ?? '').trim()));
-  })()`);
+  const raw = await page.evaluate(`JSON.stringify(window.__PPE_E2E__.paletteCommandLabels())`);
   if (typeof raw !== 'string') {
     throw new Error(`paletteLabels returned non-string: ${JSON.stringify(raw)}`);
   }
@@ -127,6 +126,12 @@ test('an export-category plugin is discovered, surfaced in the menu with its ext
   // ── Half 2: the discovered export plugin is surfaced in the command palette ──
   // with its declared name AND its declared output extension, sourced from the
   // DISCOVERED plugin (not the app-core config.export, which has no entry for it).
+  // E3 moved the palette behind the firewall (Ctrl+Shift+P → fzf) and deleted the
+  // in-app modal, so "surfaced in the palette" is now read off the catalog the
+  // firewall picker is fed (__PPE_E2E__.paletteCommandLabels()) — the analog of
+  // the old palette DOM read. paletteCommands() pushes the discovered
+  // export-category plugin's entry onto that catalog (App.svelte), so its presence
+  // here is exactly its being surfaced in the firewall palette.
   await waitForHarness(tauriPage);
   await openProject(tauriPage, manifest.project);
   await tauriPage.waitForFunction(
@@ -135,9 +140,11 @@ test('an export-category plugin is discovered, surfaced in the menu with its ext
   );
   await clickSidebarEntry(tauriPage, 'demo.md');
 
-  await openCommandPalette(tauriPage);
+  // The catalog is populated from the discovered plugins, which load after the
+  // project opens; poll until the export-category entry joins the firewall palette
+  // catalog (RED before E3 wired category="export" plugins into paletteCommands()).
   await tauriPage.waitForFunction(
-    `!!document.querySelector('[data-testid="command-palette"]')`,
+    `window.__PPE_E2E__.paletteCommandLabels().some((l) => l.includes('Witness Export'))`,
     10_000,
   );
 
@@ -147,9 +154,10 @@ test('an export-category plugin is discovered, surfaced in the menu with its ext
   const exportEntry = labels.find((l) => l.includes('Witness Export'));
   if (exportEntry === undefined) {
     throw new Error(
-      `no "Export: Witness Export" command-palette entry surfaced from the discovered ` +
-        `export plugin. Palette labels were: ${JSON.stringify(labels)}. The menu/palette ` +
-        `still reads config.export and ignores category="export" plugins (P66 KILL).`,
+      `no "Export: Witness Export" command surfaced in the firewall palette catalog ` +
+        `from the discovered export plugin. Palette catalog labels were: ` +
+        `${JSON.stringify(labels)}. The palette still reads config.export and ignores ` +
+        `category="export" plugins (P66 KILL).`,
     );
   }
   // The entry must carry the plugin's declared output extension — the generic
