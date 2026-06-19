@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { test, expect } from './fixtures';
 import { loadRunManifest } from './support/run-manifest';
 import { recordObservation } from './support/observations';
@@ -41,7 +43,16 @@ test('Outline lists headings and divs (with titles); clicking navigates', async 
     'Theorem: Main Result',
   ]);
 
-  // Click the titled div entry -> cursor lands on its line (line 13 of outline.md).
+  // Click the titled div entry -> cursor lands on its line. Compute the expected
+  // line from the fixture on disk (the `:::{.theorem title="Main Result"}` line),
+  // not a hardcoded number: the markdown auto-formatter (flowmark) may collapse
+  // blank lines inside the fenced divs, shifting the div's line — the navigation
+  // contract is "click lands on the div's actual line", so read it off disk.
+  const outlineLines = readFileSync(join(manifest.project, 'outline.md'), 'utf-8').split('\n');
+  const theoremLine =
+    outlineLines.findIndex((l) => /:::\s*\{[^}]*\.theorem\b[^}]*Main Result/.test(l)) + 1;
+  expect(theoremLine).toBeGreaterThan(0);
+
   const clicked = await tauriPage.evaluate(`(() => {
     const b = Array.from(document.querySelectorAll('[data-testid="outline"] button'))
       .find((x) => x.querySelector('span:last-child')?.textContent.trim() === 'Theorem: Main Result');
@@ -50,7 +61,7 @@ test('Outline lists headings and divs (with titles); clicking navigates', async 
     return true;
   })()`);
   expect(clicked).toBe(true);
-  await tauriPage.waitForFunction(`window.__PPE_E2E__.cursorLine() === 13`, 10_000);
+  await tauriPage.waitForFunction(`window.__PPE_E2E__.cursorLine() === ${theoremLine}`, 10_000);
 
   // The outline is a collapsible section: its header toggles the list.
   await tauriPage.evaluate(
