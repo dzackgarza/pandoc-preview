@@ -1,0 +1,35 @@
+{
+  "run_id": "20260618T235811Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p109-tikz-line-jump.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p109-tikz-line-jump.spec.ts",
+            "title": "the source↔preview jump from a node line targets THAT node's rendered element (a different node line targets a different element), and a source edit + re-sync updates the preview model",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 3207,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.placeCursorOnTikzNodeLine is not a function. (In 'window.__PPE_E2E__.placeCursorOnTikzNodeLine(\"alpha\")', 'window.__PPE_E2E__.placeCursorOnTikzNodeLine' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}

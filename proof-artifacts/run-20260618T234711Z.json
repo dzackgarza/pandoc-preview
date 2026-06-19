@@ -1,0 +1,63 @@
+{
+  "run_id": "20260618T234711Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p48-save-conflict.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p48-save-conflict.spec.ts",
+            "title": "Save refuses to clobber an externally modified file, then an explicit overwrite resolves it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3802,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p48-save-conflict.spec.ts",
+          "name": "conflict-refusal-then-overwrite",
+          "value": "refused-marker-intact-then-forced-write"
+        }
+      ]
+    },
+    {
+      "spec": "p100-tikz-render.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p100-tikz-render.spec.ts",
+            "title": "a tikzpicture renders as an inline SVG figure in the live preview, not raw source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4595,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p100-tikz-render.spec.ts",
+          "name": "tikz-svg-count",
+          "value": "3"
+        }
+      ]
+    }
+  ]
+}
