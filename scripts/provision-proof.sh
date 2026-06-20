@@ -1103,6 +1103,88 @@ command = "$PANDOC_BIN --from markdown --to latex --standalone"
 macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
 EOF
     ;;
+p126-arxiv-cleaner.spec.ts)
+    # P118 (Phase G / G5 — the REAL google-research/arxiv-latex-cleaner pass strips
+    # comments, draft commands, and unused assets, and removes dot-files; with the
+    # cleaner UNAVAILABLE the export FAILS LOUDLY). AFTER G4's figure-format gate and
+    # the G2 `.bbl` bake, BEFORE the final `tar`, the plugin runs the REAL cleaner
+    # UNMODIFIED via the approved uvx runner (uvx --from arxiv-latex-cleaner
+    # arxiv_latex_cleaner <bundle> …) over the flattened bundle, so the REAL cleaner
+    # strips `%`-comments + comment/iffalse blocks, DELETES the configured draft
+    # commands (`\todo{}` via commands_to_delete), PRUNES unused `.tex`/images,
+    # RESIZES images under the px cap, and REMOVES auxiliary/dot-files — producing the
+    # cleaned folder ready to upload. The plugin OWNS NO comment-stripper/pruner/
+    # resizer/dot-file remover; it only INVOKES the real tool and VALIDATES its output.
+    #
+    # The arXiv target is the SAME vendored arxiv-export FIREWALL plugin p122/p123/
+    # p124/p125 drive — its `export.sh` orchestrating script, riding the SAME generic
+    # export firewall (run_plugin in plugins.rs); the app core is unchanged. The
+    # cleaner's config (image px cap, commands_to_delete, regex rules) is a SHIPPED
+    # asset vendored WITH the plugin (install_plugin_fixtures copies the whole vendor
+    # plugin dir verbatim), referenced from the plugin's argv — NOT app config. The
+    # spec drives runPlugin('arxiv-export', target.tar.gz) BY ID against the REAL open
+    # buffer, exactly as the other arxiv specs do.
+    #
+    # WITNESS — demo.md. It already carries the shared P1 witnesses + a
+    # `![scatter](fig/plot.png)` (a referenced image the cleaner KEEPS). This case
+    # makes the emitted `.tex`, POST md->tex emission and — crucially — AFTER the G1
+    # latexpand flatten step, STILL carry the four artifacts the REAL cleaner exists
+    # to remove. Each artifact is forced to SURVIVE the builder so the cleaner is the
+    # ONLY thing that removes it (a clause the builder already satisfies would pass on
+    # a cleaner-absent app and prove nothing):
+    #
+    #   (a) a "SECRET COMMENT" inside a `\begin{comment}…\end{comment}` block AND an
+    #       `\iffalse … \fi` block. latexpand (the G1 flattener) strips bare `%`-line
+    #       comments but KEEPS `comment`/`iffalse` BLOCKS (verified), so the sentinel
+    #       survives into the flattened bundle and ONLY the REAL cleaner (which strips
+    #       comment/iffalse blocks) removes it. A bare `%`-line comment would be a
+    #       FALSE clause — latexpand already deletes it, so its absence proves nothing.
+    #   (b) a `\todo{fix this}` draft command. latexpand does NOT delete it (verified);
+    #       ONLY the cleaner's commands_to_delete (`\todo`) does.
+    #   (c) an UNUSED image (fig/p126-unused.png). It is REFERENCED by an
+    #       `\includegraphics{fig/p126-unused.png}` INSIDE the comment block, so the
+    #       builder copies it into the bundle (it IS referenced in the raw `.tex`),
+    #       but once the cleaner strips the comment block NO surviving `\includegraphics`
+    #       references it — so the cleaner PRUNES the now-orphaned image. The builder
+    #       alone keeps it; only the cleaner removes it.
+    #   (d) a dot-prefixed image (fig/.p126-dot.png) REFERENCED by an
+    #       `\includegraphics{fig/.p126-dot.png}`, so the builder copies the dot-file
+    #       into the bundle; arXiv rejects dot-files and ONLY the cleaner removes them.
+    #
+    # The raw-LaTeX block is injected via a pandoc raw-latex fence so pandoc emits it
+    # verbatim into the `.tex`.
+    cat >> "$DEMO_FILE" <<'PPE_P126_WITNESS_EOF'
+
+A draft note follows.
+
+```{=latex}
+\begin{comment}
+SECRET COMMENT do-not-ship reviewer aside
+\includegraphics{fig/p126-unused.png}
+\end{comment}
+\iffalse SECRET COMMENT iffalse leak \fi
+\todo{fix this}
+```
+
+![dotfig](fig/.p126-dot.png)
+PPE_P126_WITNESS_EOF
+    # The UNUSED image (referenced only inside the comment block) and the dot-prefixed
+    # image (referenced by a surviving include): real PNG bytes (the committed plot.png)
+    # under distinct names so the bundle copies them in and the cleaner is the only
+    # remover.
+    cp "$PROJECT_DIR/fig/plot.png" "$PROJECT_DIR/fig/p126-unused.png"
+    cp "$PROJECT_DIR/fig/plot.png" "$PROJECT_DIR/fig/.p126-dot.png"
+    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
+    # its [plugin.arxiv-export] config section — IDENTICAL to p122/p123/p124/p125's
+    # (command + macros_dir; schema additionalProperties:false forbids any extra key).
+    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.arxiv-export]
+command = "$PANDOC_BIN --from markdown --to latex --standalone"
+macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
+EOF
+    ;;
 p19-plugin-run-by-id.spec.ts)
     # A1: the generic plugin firewall runs a tools plugin by id. The canonical
     # config above already set up the pandoc renderer + [plugins].dir (so the
