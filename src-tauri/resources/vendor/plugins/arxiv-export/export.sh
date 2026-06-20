@@ -573,6 +573,153 @@ fi
 rm -rf "$bundle"
 mv "$cleaned" "$bundle"
 
+# ── 4c. FINAL dot-file compliance sweep ────────────────────────────────────────
+# Phase G / G5 (P118). arXiv hard-rejects ANY hidden/dot file or dot-prefixed
+# directory anywhere in a submission. The REAL arxiv_latex_cleaner (step 4b) is the
+# tool for comments / draft commands / unused-asset pruning (clauses A/B/C) and it
+# removes its OWN known auxiliary dot-files (.git/, .gitignore, .DS_Store, …) — but
+# it COPIES a genuinely-REFERENCED figure verbatim and hardcodes its to_delete set,
+# so a referenced dot-named figure (e.g. fig/.p126-dot.png, kept because a surviving
+# \includegraphics points at it) survives the cleaner. arXiv would still reject it.
+#
+# This is a final COMPLIANCE GATE (like the G4 figure-format gate), NOT a substitute
+# for the cleaner: the plugin OWNS only this orchestration + the loud-fail. It runs
+# AFTER the cleaner captured its cleaned tree back into $bundle and BEFORE the tar:
+#   1. Every dot-prefixed DIRECTORY anywhere in the bundle is junk (never a
+#      legitimate input) — remove it.
+#   2. Every dot-prefixed FILE anywhere: if NO bundled .tex references it via
+#      \includegraphics/\input/\include it is dot-junk — delete it. If it IS
+#      referenced (a real input that happens to be dot-named), RENAME its basename to
+#      strip the leading dot (dir + extension preserved) and UPDATE every reference
+#      to it in the bundled .tex files, so it still resolves and is non-dot. A name
+#      collision after stripping the dot is a LOUD failure (no silent overwrite).
+#   3. An independent `find "$bundle" -name '.*'` must then be EMPTY. Any remaining
+#      dot-path is a LOUD failure — NEVER ship a bundle with a dot-file.
+python3 - "$bundle" <<'PY_DOTSWEEP_EOF'
+import os, re, sys
+
+bundle = sys.argv[1]
+
+# --- 1. Remove every dot-prefixed DIRECTORY anywhere in the bundle. -----------
+# Walk top-down, prune dot-dirs by removing the subtree and not descending into it.
+import shutil
+for dirpath, dirnames, _ in os.walk(bundle, topdown=True):
+    keep = []
+    for d in dirnames:
+        if d.startswith("."):
+            shutil.rmtree(os.path.join(dirpath, d))
+        else:
+            keep.append(d)
+    dirnames[:] = keep
+
+# --- Gather the bundled .tex files and the set of paths they reference. --------
+tex_files = []
+for dirpath, _, filenames in os.walk(bundle):
+    for fn in filenames:
+        if fn.endswith(".tex"):
+            tex_files.append(os.path.join(dirpath, fn))
+
+# \includegraphics[...]{path}, \input{path}, \include{path} — capture the braced
+# target. These are the only commands by which a bundled .tex references a file.
+REF_RE = re.compile(
+    r"\\(?:includegraphics(?:\[[^\]]*\])?|input|include)\s*\{([^}]+)\}"
+)
+tex_bodies = {p: open(p, encoding="utf-8").read() for p in tex_files}
+referenced = set()
+for body in tex_bodies.values():
+    for m in REF_RE.finditer(body):
+        referenced.add(m.group(1).strip())
+
+def is_referenced(rel_no_dot, rel_with_dot):
+    # A reference may name the file with or without its extension, and either with
+    # the leading dot (as the bundle currently has it) or already without. Match the
+    # dot-named path the bundle carries, in full or extension-stripped form.
+    no_ext = re.sub(r"\.[^./]+$", "", rel_with_dot)
+    no_ext_clean = re.sub(r"\.[^./]+$", "", rel_no_dot)
+    return any(
+        r in (rel_with_dot, rel_no_dot, no_ext, no_ext_clean) for r in referenced
+    )
+
+# --- 2. For every dot-prefixed FILE anywhere: delete (unreferenced) or rename + ---
+#        rewrite references (referenced). Collect renames to apply to the .tex bodies.
+renames = []  # (rel_with_dot, rel_no_dot)
+for dirpath, _, filenames in os.walk(bundle):
+    rel_dir = os.path.relpath(dirpath, bundle)
+    rel_dir = "" if rel_dir == "." else rel_dir
+    for fn in filenames:
+        if not fn.startswith("."):
+            continue
+        stripped = fn.lstrip(".")
+        if not stripped:
+            sys.stderr.write(
+                f"arxiv-export: dot-file sweep: file with only-dot name cannot be "
+                f"made compliant: {os.path.join(dirpath, fn)}\n"
+            )
+            sys.exit(27)
+        rel_with_dot = os.path.join(rel_dir, fn) if rel_dir else fn
+        rel_no_dot = os.path.join(rel_dir, stripped) if rel_dir else stripped
+        abs_with_dot = os.path.join(dirpath, fn)
+        if is_referenced(rel_no_dot, rel_with_dot):
+            abs_no_dot = os.path.join(dirpath, stripped)
+            if os.path.exists(abs_no_dot):
+                # Stripping the dot would collide with an existing file — fail loud,
+                # never silently overwrite.
+                sys.stderr.write(
+                    f"arxiv-export: dot-file sweep: cannot strip leading dot from "
+                    f"referenced figure {rel_with_dot}: target {rel_no_dot} already "
+                    f"exists in the bundle (name collision)\n"
+                )
+                sys.exit(28)
+            os.rename(abs_with_dot, abs_no_dot)
+            renames.append((rel_with_dot, rel_no_dot))
+        else:
+            # Unreferenced dot-junk (.DS_Store, editor swap, leftover .aux, …): delete.
+            os.remove(abs_with_dot)
+
+# Apply each rename to every reference form in every bundled .tex body, then write.
+if renames:
+    for p, body in tex_bodies.items():
+        new_body = body
+        for rel_with_dot, rel_no_dot in renames:
+            no_ext_with = re.sub(r"\.[^./]+$", "", rel_with_dot)
+            no_ext_no = re.sub(r"\.[^./]+$", "", rel_no_dot)
+            # Rewrite the braced target inside each include command, matching the
+            # dot-named form (full path or extension-stripped) the .tex carried.
+            for old, new in ((rel_with_dot, rel_no_dot), (no_ext_with, no_ext_no)):
+                new_body = re.sub(
+                    r"(\\(?:includegraphics(?:\[[^\]]*\])?|input|include)\s*\{)"
+                    + re.escape(old) + r"(\})",
+                    r"\g<1>" + new.replace("\\", "\\\\") + r"\g<2>",
+                    new_body,
+                )
+        if new_body != body:
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(new_body)
+
+# --- 3. Independent verification: no dot-path may remain anywhere in the bundle. ---
+remaining = []
+for dirpath, dirnames, filenames in os.walk(bundle):
+    for name in list(dirnames) + filenames:
+        if name.startswith("."):
+            remaining.append(os.path.join(dirpath, name))
+if remaining:
+    sys.stderr.write(
+        "arxiv-export: dot-file sweep: dot-path(s) survived the sweep and cannot "
+        "ship to arXiv: " + ", ".join(remaining) + "\n"
+    )
+    sys.exit(29)
+PY_DOTSWEEP_EOF
+
+# Independent shell-level confirmation (a second tool, not the python above): a
+# `find` for any dot-prefixed path anywhere in the bundle must return EMPTY. If any
+# dot-path remains, FAIL LOUDLY naming it — never ship a bundle with a dot-file.
+dotleft="$(find "$bundle" -name '.*' -not -name '.' -not -name '..' || true)"
+if [ -n "$dotleft" ]; then
+    echo "arxiv-export/export.sh: dot-file sweep left dot-path(s) in the bundle (arXiv would reject):" >&2
+    printf '%s\n' "$dotleft" >&2
+    exit 30
+fi
+
 # ── 5. tar gzip the bundle to {artifact} ──────────────────────────────────────
 # -C the staging dir so the archive carries the single top-level bundle folder.
 tar -czf "$artifact" -C "$work" "arxiv-bundle"
