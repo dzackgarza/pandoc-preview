@@ -244,8 +244,11 @@ Regression gate every sub-milestone: **P1–P69 + D-series stay green** — espe
 
 - **2026-06-19: Phase F COMPLETE (F1–F4, F6) on branch `phase-f-pdf-preview`** (blind-TDD via Workflow, role-separated, independently reviewed + controller-verified; two REJECT→remediation cycles):
   - **F1/P107** embedded pdf.js viewer (vendored pdfjs-dist, offline worker/cmaps) + a compile-on-idle scheduler (separate debounce/latest-wins/status, structural sibling of the HTML loop) driving the configured PDF command; real PDF on disk (pdfinfo/pdftotext), painted canvas; fails-loud-not-stale.
-  - **F2/P108** temp-directory build isolation via latexmk `-output-directory` + an app-supplied `{builddir}` placeholder (core stays latex-agnostic, cwd=source so relative paths resolve). REMEDIATED from an initial cwd=temp+TEXINPUTS approach (rejected: broke multi-file relative paths + core latex knowledge); p117 strengthened with a relative-`\input` fixture.
+  - **F2/P108** temp-directory build isolation via latexmk `-output-directory` + an app-supplied `{builddir}` placeholder (core stays latex-agnostic, cwd=source so relative paths resolve).
+    REMEDIATED from an initial cwd=temp+TEXINPUTS approach (rejected: broke multi-file relative paths + core latex knowledge); p117 strengthened with a relative-`\input` fixture.
   - **F3/P109** shipped latexmk multi-pass driver plugin (auto multi-pass + auto-BibTeX), doctor-gated; a `\cite`+forward-`\eqref` fixture resolves (Dolgachev/[1], equation (1)) where single-pass leaves [?]/(??).
-  - **F4/P110+P111** auto/manual + fast/full compile toggle (config-persisted, selects configured commands) + structured inline warnings via the existing pplatex/TexLogParser layer. REMEDIATED: the four `[preview]` fields are required static config (no runtime serde-defaults), emitted by first-run.sh + provision-proof.sh.
+  - **F4/P110+P111** auto/manual + fast/full compile toggle (config-persisted, selects configured commands) + structured inline warnings via the existing pplatex/TexLogParser layer.
+    REMEDIATED: the four `[preview]` fields are required static config (no runtime serde-defaults), emitted by first-run.sh + provision-proof.sh.
   - **F6/P113** slides reveal.js fast-feedback preview (real `pandoc -t revealjs --embed-resources`) wired into the F1 scheduler; re-renders the deck on idle with real `.reveal>.slides>section` structure.
-  - **F5/P112 STRUCK** (precise bidirectional SyncTeX jump) — needs `sourcepos`, dropped per the standing `-f markdown` ruling. The filter-tagged hover-to-edit floor already works.
+  - **F5/P112 STRUCK** (precise bidirectional SyncTeX jump) — needs `sourcepos`, dropped per the standing `-f markdown` ruling.
+    The filter-tagged hover-to-edit floor already works.

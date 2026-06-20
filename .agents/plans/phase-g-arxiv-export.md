@@ -192,24 +192,34 @@ Phase G specifics:
 - **2026-06-16:** Plan authored.
   Source items copied from [[competitive-parity-roadmap]] Phase G; full target study read ([[parity-research/arxiv-export]]). Code seams inspected and confirmed against the real tree: `render.rs::export_sync` (lines 116–165) runs an arbitrary configured argv verbatim (the P12 contract — the arXiv target is a new `[export.arxiv]` entry, not a core change); `config.rs::ExportPlugin`/`validate_export_plugin` is the unchanged plugin model; `include.lua`, `select_images.lua`, `tikzcd.lua` confirmed present under `src-tauri/resources/vendor/pandoc-config/filters/`; shipped export tables in `scripts/first-run.sh` (lines 199–214); the P12 spec + `exportByPlugin` E2E path are the proof model.
   `latexmk`/`pdflatex` present on host; **`arxiv_latex_cleaner` NOT installed** — must be provisioned via `uvx --from arxiv-latex-cleaner`, fail loud if absent.
+
 - **NOTHING in G1–G6 implemented yet.** Six sub-milestones designed; proof obligations **P114–P119 proposed (not ratified)** — ratify with the user before any RED, per the standing TDD discipline.
   [[proof-obligations]] is NOT edited by this plan.
+
 - **NEXT:** ratify P114–P119 numbering + wording with the user; provision `arxiv_latex_cleaner` via `uvx` and verify reachability; then begin G1 RED (flatten-for-arxiv `include.lua` mode + the shipped `[export.arxiv]` orchestration script), keeping P1–P69 green.
 
 - **2026-06-19: decisions RATIFIED (controller, "execute all phases, no stops"); Phases A–F shipped to main.** Executing on branch `phase-g-arxiv-export`.
   - **Obligations P114–P119 as drafted (ceiling is P113 from Phase F; P112 was struck/F5).** Specs continue **p122+**; doctor-class specs continue the d-series.
-  - **The arXiv target = a vendored `arxiv-export` FIREWALL plugin** (an orchestrating script), NOT an `[export.<id>]` config table — export was migrated to the plugin firewall in earlier work. It rides the same firewall the pandoc-pdf-export/html-export plugins use; the app stays tool-agnostic (the entire pipeline is the plugin's argv/script).
+  - **The arXiv target = a vendored `arxiv-export` FIREWALL plugin** (an orchestrating script), NOT an `[export.<id>]` config table — export was migrated to the plugin firewall in earlier work.
+    It rides the same firewall the pandoc-pdf-export/html-export plugins use; the app stays tool-agnostic (the entire pipeline is the plugin's argv/script).
   - **G5 cleaner = `arxiv_latex_cleaner` via `uvx --from arxiv-latex-cleaner`** (VERIFIED working: --help exit 0). Hard dep, fail loud if the uvx pathway is blocked; never a hand-rolled stripper.
-  - **G4 SVG→PDF = `cairosvg` via `uvx --from cairosvg`** (inkscape/rsvg-convert/cairosvg are NOT installed as binaries; the uvx runner pathway provisions cairosvg without sudo — the same doctrine as the cleaner). Fail loud + name the offending file if a figure cannot be made compliant.
-  - latexmk/pdflatex/bibtex/tar confirmed present. G3 tikz-externalization reuses tikzcd.lua's pdflatex compile core (PDF output into the bundle).
-  - Order G1→G6, each blind-TDD via Workflow; full-suite gate before merge. Bundle proofs inspect the REAL tarball via independent tar/find/file/pdfinfo. Banned non-goals: hosted submission, in-browser TikZJax.
+  - **G4 SVG→PDF = `cairosvg` via `uvx --from cairosvg`** (inkscape/rsvg-convert/cairosvg are NOT installed as binaries; the uvx runner pathway provisions cairosvg without sudo — the same doctrine as the cleaner).
+    Fail loud + name the offending file if a figure cannot be made compliant.
+  - latexmk/pdflatex/bibtex/tar confirmed present.
+    G3 tikz-externalization reuses tikzcd.lua's pdflatex compile core (PDF output into the bundle).
+  - Order G1→G6, each blind-TDD via Workflow; full-suite gate before merge.
+    Bundle proofs inspect the REAL tarball via independent tar/find/file/pdfinfo.
+    Banned non-goals: hosted submission, in-browser TikZJax.
 
 - **2026-06-20: Phase G COMPLETE (G1–G6, P114–P119) on branch `phase-g-arxiv-export`** (blind-TDD via Workflow; three REJECT→remediation cycles):
   - The arXiv target is ONE vendored `arxiv-export` firewall plugin (export.sh orchestrating script); app core unchanged.
   - **G1/P114** flatten md→tex via pandoc + latexpand into one root .tex, materialize macros/.sty; self-contained compile under empty TEXMFHOME → witness PDF.
   - **G2/P115** latexmk .bbl bake named to the main tex, delete .bib.
-  - **G3/P116** tikz externalized to precompiled PDF (reuses tikzcd.lua core), `\includegraphics`, no tikz source. REMEDIATED: the .bbl cleanup `-name '*.pdf' -delete` was nuking the externalized figures; scoped to root + exclude figures/; p124 strengthened to the cite+tikz interaction.
+  - **G3/P116** tikz externalized to precompiled PDF (reuses tikzcd.lua core), `\includegraphics`, no tikz source.
+    REMEDIATED: the .bbl cleanup `-name '*.pdf' -delete` was nuking the externalized figures; scoped to root + exclude figures/; p124 strengthened to the cite+tikz interaction.
   - **G4/P117** figure-format gate: SVG→PDF via cairosvg/uvx, every figure PDF/PNG/JPG by magic, loud-fail (no tarball) on a non-convertible figure.
-  - **G5/P118** the REAL arxiv_latex_cleaner via uvx strips comments/`\todo`/unused; loud-fail if unavailable. REMEDIATED: added a final dot-file compliance sweep (the cleaner can't remove a *referenced* dot-prefixed figure) — rename referenced dot-files + update refs, delete dot-junk; `find -name '.*'` empty.
+  - **G5/P118** the REAL arxiv_latex_cleaner via uvx strips comments/`\todo`/unused; loud-fail if unavailable.
+    REMEDIATED: added a final dot-file compliance sweep (the cleaner can't remove a *referenced* dot-prefixed figure) — rename referenced dot-files + update refs, delete dot-junk; `find -name '.*'` empty.
   - **G6/P119** capstone: 50 MB cap enforcement (real `du`, loud-fail + no tarball over-cap) + end-to-end integrity asserting EVERY arXiv hard requirement on the ONE real tarball (bbl+no-bib, no-aux, no-dot, figures-compliant, self-contained compile→witness PDF, <50MB).
-  - Tooling (no sudo): `arxiv_latex_cleaner` + `cairosvg` via uvx; latexmk/bibtex/tar present. Banned non-goals (hosted submission, in-browser TikZJax) honored.
+  - Tooling (no sudo): `arxiv_latex_cleaner` + `cairosvg` via uvx; latexmk/bibtex/tar present.
+    Banned non-goals (hosted submission, in-browser TikZJax) honored.
