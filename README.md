@@ -1,6 +1,6 @@
 # Pandoc Preview
 
-Overleaf-style markdown editor for mathematical writing: a CodeMirror 6 editor on the left, a live pandoc-rendered HTML preview on the right, a project file tree, a tabbed preview / compile-log / problems pane, an amsthm-aware insertion bar, native menus, toasts, and a Zotero-style settings dialog backed by an XDG TOML config.
+Overleaf-style editor for mathematical writing: a CodeMirror 6 editor on the left, live HTML/PDF previews through renderer plugins on the right, a project file tree, a tabbed preview / compile-log / problems pane, an amsthm-aware insertion bar, native menus, toasts, and strict XDG TOML config validation.
 
 Built with Tauri 2 (Rust core) and Svelte 5 + Vite + Tailwind (frontend).
 
@@ -25,10 +25,10 @@ Structural motions move by section / environment / math-zone.
 Three comfort modes — typewriter (centered caret line), distraction-free (hide the chrome), and readability (sentence coloring).
 
 **Math & figures.** Math renders with MathJax (always — no engine option, since KaTeX cannot cover pandoc’s full math syntax) and renders offline with no network.
-TikZ / `tikzcd` pictures render as inline vector figures in the live preview, driven by a shared `.tikzstyles` palette and a per-figure preamble template; source ↔ preview jump selects the matching rendered node, figures are hover-editable, and external diagram sources can be registered, edited in an external editor, externalized, and inserted into a configured global figures directory.
+TikZ / `tikzcd` pictures render through the configured renderer templates and user-owned style/macro files; source ↔ preview jumps use renderer/toolchain mappings where available, figures are hover-editable where source positions exist, and external diagram sources can be registered, edited in an external editor, externalized, and inserted into a configured global figures directory.
 
-**Citations.** A single config-declared bibliography feeds both the editor and the preview.
-`@`-trigger completion fuzzy-matches on metadata and previews the entry before insert; a per-file `bibliography:` frontmatter override is honored; the references sidebar lists only the document’s cited keys in the configured CSL style; label completion spans the whole project.
+**Citations.** Configured bibliography data feeds editor completion and diagnostics, while the renderer toolchain owns compiled citation output.
+`@`-trigger completion fuzzy-matches on metadata and previews the entry before insert; a per-file `bibliography:` frontmatter override is honored as editor metadata; the references sidebar lists the document’s cited keys where useful; label completion spans the whole project.
 
 **Insertion bar.** Replaces the formatting toolbar: amsthm environments, tikz/`tikzcd` scaffolds, a matrix builder, a table builder, a snippet dropdown, a code-block-type dropdown, a footnote modal, and insert-image-from-clipboard.
 
@@ -64,9 +64,9 @@ just dev     # run the app
 just build   # release bundles (deb, rpm, appimage)
 ```
 
-The app refuses to start without a complete config at `${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`; `just setup` (`scripts/first-run.sh`) is the only thing that creates it.
+The app refuses to start without a complete config at `${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`; `just setup` (`scripts/first-run.sh`) creates it through the external gum walkthrough.
 Re-run with `scripts/first-run.sh --force` to overwrite.
-Settings changed in-app (Tools → Settings…) are written back to the same file.
+Plugin configuration is owned by plugin-declared configuration commands; the app validates plugin config generically and does not render pandoc-specific settings pages.
 
 ## Pandoc assets (pinned dependency)
 
