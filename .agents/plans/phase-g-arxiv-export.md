@@ -121,7 +121,7 @@ Greenfield (a hand-rolled cleaner) is explicitly rejected and never substituted.
 
 Run `arxiv_latex_cleaner` (via `uvx --from arxiv-latex-cleaner …`, hard dependency, fail loud if the runner pathway is blocked) over the bundle: strip `%` comments and `comment`/`iffalse` blocks, delete configured draft commands (`\todo{}` etc. via `commands_to_delete`), prune unused `.tex`/images, resize images under the px cap, and remove auxiliary/dot files — producing the cleaned folder "ready to upload."
 The cleaner's config (image cap, `commands_to_delete`, regex rules) is a shipped asset referenced from the plugin's argv, NOT app config.
-**Proof: P118.**
+**Proof: P118 (RATIFIED 2026-06-20 into [[proof-obligations]]).**
 
 ### G6 — Final tarball "ready to upload"
 
