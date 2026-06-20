@@ -2070,125 +2070,26 @@ p29-global-figures-resource.spec.ts)
     cp "$REPO_ROOT/tests/proof/fixtures/global-figures/rendered/global.png" "$FIGS_DIR/"
     printf '\n![globalfig](rendered/global.png)\n' >> "$DEMO_FILE"
     ;;
-p101-shared-tikzstyles.spec.ts)
-    # P91 (Phase D / D-2): a tikz style defined ONLY in the shared `.tikzstyles`
-    # palette must visibly determine a compiled figure's appearance in the live
-    # preview, and changing that shared file must change the render.
-    #
-    # Provision the shared palette file in TikzIt's NATIVE `.tikzstyles` format
-    # (`\tikzstyle{NAME}=[...]`, per [[parity-research/tikzit]]) into this spec's
-    # hermetic global figures dir. It declares ONE distinctive style, `bigredbox`,
-    # with `fill=red` — a clearly detectable visual signature: a node carrying
-    # this style compiles (pdflatex + pdf2svg) to an SVG whose fill is
-    # `rgb(100%, 0%, 0%)` (verified against the real toolchain). The style name and
-    # its fill appear in NO other fixture, so a red fill in the rendered figure can
-    # ONLY come from the figure compile having consumed THIS shared file.
-    #
-    # The companion BLUE variant (`bigredbox`=fill=blue) is provisioned alongside,
-    # under a sibling name the spec swaps in on disk for the discriminator leg: the
-    # spec overwrites the active shared file with the blue definition and
-    # re-triggers a render, asserting the rendered figure changes from the red
-    # signature to the blue signature (`rgb(0%, 0%, 100%)`). This proves the SHARED
-    # FILE'S CONTENT determines the render — a hardcoded-red compile that ignored
-    # the file would survive the first leg but fail the discriminator.
-    #
-    # NOTE (the RED today): the figure-compile seam P100 activated does NOT
-    # `\input` this shared file, and there is no config key declaring it (the
-    # config schema is deny_unknown_fields, so declaring an undefined
-    # shared-tikzstyles key here would be a BOOT failure, not the missing-
-    # consumption behavior this obligation targets). So a node using
-    # `style=bigredbox` compiles WITHOUT the style's effect: the figure either
-    # fails to produce a vector figure or renders with no red fill. The shared
-    # file sits on disk, unconsumed. The GREEN wiring (D-2) adds the
-    # config-declared, ExistingFile-validated shared-tikzstyles path and `\input`s
-    # it into the figure compile; this provisioning places the file where that
-    # wiring will read it (the configured global figures dir).
-    FIGS_DIR="$ABS_SPEC_DIR/home/.pandoc/figures"
-    mkdir -p "$FIGS_DIR"
-    # emit_pandoc_renderer (default config block above) ran install-assets, which
-    # symlinked the VENDORED starter shared.tikzstyles into FIGS_DIR. Writing
-    # through that symlink would corrupt the vendored starter, so replace it with a
-    # REAL file carrying THIS spec's red witness style (--remove-destination drops
-    # the symlink first). The config's [figures].tikzstyles already points here.
-    rm -f "$FIGS_DIR/shared.tikzstyles"
-    cat > "$FIGS_DIR/shared.tikzstyles" <<'PPE_P101_RED_EOF'
-\tikzstyle{bigredbox}=[fill=red, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm]
-PPE_P101_RED_EOF
-    cat > "$FIGS_DIR/shared-blue.tikzstyles" <<'PPE_P101_BLUE_EOF'
-\tikzstyle{bigredbox}=[fill=blue, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm]
-PPE_P101_BLUE_EOF
-    # The config's [figures].tikzdefs points at shared.tikzdefs; the vendored
-    # starter (symlinked by install-assets) suffices — the witness style needs no
-    # extra preamble. Leave it as the installed starter.
-    ;;
-p102-perfigure-template.spec.ts)
-    # P92 (Phase D / D-3): the per-figure PREAMBLE TEMPLATE is config-swappable.
-    # The FIXED vendored standalone-tikz.tex preamble is generalized into a
-    # config-declared, existing-file-validated template carrying a single `<>`
-    # placeholder (the QTikz `.pgs` `TemplateReplaceText` convention) where the
-    # figure source is substituted before the pdflatex compile — letting a figure
-    # declare its OWN `\usetikzlibrary`/macros independent of the fixed
-    # pandoc-filter preamble.
-    #
-    # Two real per-figure template fixtures are provisioned into this spec's
-    # hermetic global figures dir (the same place [figures].tikzstyles/.tikzdefs
-    # already live):
-    #
-    #  (1) perfigure-spy.tikztemplate — a standalone preamble that loads
-    #      `\usetikzlibrary{spy}` and carries the `<>` placeholder in the document
-    #      body. The `spy` library is the witness: it is NOT loaded by the FIXED
-    #      standalone-tikz.tex's transitive preamble (dzg-tikz → dzg-preamble loads
-    #      arrows.meta/cd/calc/matrix/positioning/decorations/shapes/backgrounds/
-    #      fit/intersections/hobby/…, plus pgfplots/quiver/tikz-cd/dynkin/xy, and
-    #      tikzit loads backgrounds/arrows/shapes — but NONE of them load `spy`),
-    #      so a figure using `spy using outlines` + `\spy on ...` compiles ONLY when
-    #      THIS template wraps it. Verified against the real pdflatex+pdf2svg
-    #      toolchain: without `\usetikzlibrary{spy}` the compile fails hard
-    #      (`pgfkeys Error: I do not know the key '/tikz/spy using outlines'`); with
-    #      it the figure compiles and pdf2svg yields an SVG carrying drawing content.
-    #
-    #  (2) perfigure-nospy.tikztemplate — the DISCRIMINATOR variant: byte-identical
-    #      EXCEPT it OMITS the `\usetikzlibrary{spy}` line. The spec swaps this onto
-    #      the active [figures].template path on disk for the second leg; the SAME
-    #      spy-requiring figure must then FAIL to compile (no figure rendered),
-    #      proving the configured template — not a fixed built-in preamble —
-    #      governs the compile outcome.
-    #
-    # NOTE (the RED today): there is no [figures].template config key — the
-    # [figures] table declares only tikzstyles/tikzdefs (D-2/P91) and the config
-    # schema is deny_unknown_fields, so declaring an undefined `template` key here
-    # would be a BOOT failure, not the missing-template-governance behavior this
-    # obligation targets. So (exactly as P91 places its shared .tikzstyles on disk
-    # unconsumed) these template fixtures sit on disk and the figure compile uses
-    # the FIXED standalone-tikz.tex preamble regardless — which lacks `spy`, so the
-    # spy-requiring figure NEVER compiles to a vector figure. The GREEN wiring (D-3)
-    # adds the config-declared, ExistingFile-validated [figures].template path and
-    # wraps the figure source at the template's `<>` placeholder; this provisioning
-    # places the templates where that wiring will read them.
-    FIGS_DIR="$ABS_SPEC_DIR/home/.pandoc/figures"
-    mkdir -p "$FIGS_DIR"
-    # The spy-carrying per-figure template. `<>` is the QTikz `.pgs`
-    # TemplateReplaceText marker the wiring substitutes the figure source into.
-    cat > "$FIGS_DIR/perfigure-spy.tikztemplate" <<'PPE_P102_SPY_EOF'
-\documentclass[tikz,border=2pt]{standalone}
-\usepackage{tikz}
-\usepackage{tikzit}
-\usetikzlibrary{spy}
-\begin{document}
-\nopagecolor
-<>
-\end{document}
-PPE_P102_SPY_EOF
-    # The DISCRIMINATOR variant: identical preamble MINUS \usetikzlibrary{spy}.
-    cat > "$FIGS_DIR/perfigure-nospy.tikztemplate" <<'PPE_P102_NOSPY_EOF'
-\documentclass[tikz,border=2pt]{standalone}
-\usepackage{tikz}
-\usepackage{tikzit}
-\begin{document}
-\nopagecolor
-<>
-\end{document}
-PPE_P102_NOSPY_EOF
+p132-tikz-file-render.spec.ts)
+    # P128 — a tikz FILE renders standalone as an inline SVG via the user-owned
+    # template (the file-mode replacement for the retired inline P100; carries the
+    # burden retired off P91/P92). Provision a real .tikz file in the witness
+    # project carrying a tikzpicture. Opening it routes — by the discovery-driven
+    # (input type → render target) matrix — to the tikz-renderer (inputs=["tikz"]),
+    # which wraps the source in the user-owned standalone-tikz.tex template (it owns
+    # its preamble via \usepackage{dzg-tikz} over the styles tree) and compiles
+    # pdflatex → pdf2svg to an inline SVG. Install the tikz-renderer plugin so
+    # discovery finds it; the default emit_pandoc_renderer already symlinked the
+    # vendored template into ~/.pandoc/templates.
+    install_plugin_fixtures "$PLUGINS_DIR" tikz-renderer
+    PROJ_DIR="$(dirname "$DEMO_FILE")"
+    cat > "$PROJ_DIR/figure.tikz" <<'PPE_P128_EOF'
+\begin{tikzpicture}
+  \node (a) at (0,0) {Aleph};
+  \node (b) at (2,0) {Beth};
+  \draw (a) -- (b);
+\end{tikzpicture}
+PPE_P128_EOF
     ;;
 p108-watch-file-reload.spec.ts)
     # P98 (Phase D / D-9): watch-file reload of the OPEN owned figure. The open
