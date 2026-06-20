@@ -30,6 +30,11 @@ config_schema = "schema.json"
 # TEXINPUTS root). No injected placeholders: the template owns its preamble.
 command = ["{plugin_dir}/render.sh", "{base_dir}"]
 
+# "Configure" opens the user-owned template for editing — the whole config surface
+# (the template owns the preamble + styles). The app just spawns this detached.
+[configure]
+command = ["{plugin_dir}/configure.sh", "{config_dir}"]
+
 [[doctor_checks]]
 id = "tikz-render-toolchain"
 description = "the tikz file render path resolves: pdflatex + pdf2svg present and the user-owned standalone-tikz.tex template compiles"
