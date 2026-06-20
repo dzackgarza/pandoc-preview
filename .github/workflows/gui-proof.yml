@@ -1,0 +1,164 @@
+name: CI
+'on':
+  pull_request: {}
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  standard-qc:
+    name: Standard QC (non-GUI)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Go for gum
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.x
+      - name: Install Linux, Tauri, TeX, and document tools
+        run: |-
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-bin \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            webkit2gtk-driver \
+            xvfb \
+            dbus-x11 \
+            jq \
+            pandoc \
+            latexmk \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-luatex \
+            texlive-pictures \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            biber \
+            chktex \
+            lacheck \
+            texlive-extra-utils \
+            ripgrep \
+            pdf2svg \
+            poppler-utils \
+            just
+      - name: Install gum
+        run: |-
+          go install github.com/charmbracelet/gum@v0.16.2
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+      - name: Install arXiv export helper
+        run: |-
+          uv tool install arxiv-latex-cleaner
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install CodeQL CLI
+        run: |
+          curl -L "https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-linux64.tar.gz" -o "$RUNNER_TEMP/codeql-bundle.tar.gz"
+          mkdir -p "$RUNNER_TEMP/codeql"
+          tar -xzf "$RUNNER_TEMP/codeql-bundle.tar.gz" -C "$RUNNER_TEMP/codeql" --strip-components=1
+          echo "$RUNNER_TEMP/codeql" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/codeql/codeql" resolve packs
+      - name: Install project dependencies
+        run: just deps
+      - name: Run Svelte typecheck
+        run: just typecheck
+      - name: Run standard push-tier QC
+        run: just test-ci
+  gui-proof:
+    name: GUI proof (Tauri real webview)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CARGO_TERM_COLOR: always
+      TMPDIR: /tmp/pandoc-preview-proof-tmp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Go for gum
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.x
+      - name: Install Linux, Tauri, TeX, and document tools
+        run: |-
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-bin \
+            librsvg2-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            webkit2gtk-driver \
+            xvfb \
+            dbus-x11 \
+            jq \
+            pandoc \
+            latexmk \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-luatex \
+            texlive-pictures \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            biber \
+            chktex \
+            lacheck \
+            texlive-extra-utils \
+            ripgrep \
+            pdf2svg \
+            poppler-utils \
+            just
+      - name: Install gum
+        run: |-
+          go install github.com/charmbracelet/gum@v0.16.2
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+      - name: Install arXiv export helper
+        run: |-
+          uv tool install arxiv-latex-cleaner
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install project dependencies
+        run: just deps
+      - name: Run GUI proof suite
+        run: |
+          mkdir -p "$TMPDIR"
+          dbus-run-session -- xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" just proof
+      - name: Upload GUI proof artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/pandoc-preview-proof-tmp/pandoc-preview-proof-runs/
+          if-no-files-found: error
+          retention-days: 14
