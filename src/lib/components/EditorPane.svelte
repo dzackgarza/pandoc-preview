@@ -453,11 +453,11 @@
     // [editor.comfort] booleans so a persisted mode is active at launch (the
     // config round-trip restores it). distraction_free is an App-shell CSS state
     // (App.svelte), not an editor concern, so only the two editor modes are
-    // seeded here. An absent comfort object (no mode ever enabled — config.rs
-    // skip-serializes the all-off table) reads as every mode OFF.
+    // seeded here. comfort is a REQUIRED sub-table (config.rs fails the load if it
+    // is absent), so the booleans are read directly — no soft default.
     const comfort = config.editor.comfort;
-    setComfortMode("typewriter", comfort?.typewriter ?? false);
-    setComfortMode("readability", comfort?.readability ?? false);
+    setComfortMode("typewriter", comfort.typewriter);
+    setComfortMode("readability", comfort.readability);
   });
 
   /** P120 — reconfigure a single EDITOR comfort compartment in/out. ON installs

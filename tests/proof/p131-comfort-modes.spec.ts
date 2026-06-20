@@ -217,12 +217,18 @@ test('comfort modes center the caret, hide the chrome, mark sentences, and round
   await openAndSelectDemo(tauriPage, manifest.project);
   await waitForPreview(tauriPage, `return d.querySelector('h1') !== null;`);
 
-  // The canonical config has NO [editor.comfort] table yet — assert the modes are
-  // OFF at baseline (no table present), confirming the app booted on a comfort-less
-  // config (so a later failure is the missing feature, not a config-schema reject).
+  // [editor.comfort] is a REQUIRED opinionated sub-table: the canonical config bakes
+  // it with every mode OFF (all-false). Assert it is PRESENT at baseline with the
+  // three booleans false — confirming the app booted on a comfort-carrying config (so
+  // a later failure is the missing feature behavior, not a config-schema reject), and
+  // that the required table parsed (no serde default, no silent coercion).
   const baseCfg = parseTomlFile(manifest.configPath);
   const baseEditor = baseCfg.editor as Record<string, unknown>;
-  expect(baseEditor.comfort).toBeUndefined();
+  const baseComfort = baseEditor.comfort as Record<string, unknown>;
+  expect(baseComfort).toBeDefined();
+  expect(baseComfort.distraction_free).toBe(false);
+  expect(baseComfort.typewriter).toBe(false);
+  expect(baseComfort.readability).toBe(false);
 
   // Make the buffer TALL so the caret line can meaningfully move from "low in the
   // viewport" (typewriter OFF) to "centered" (typewriter ON). appendAtEnd lands the

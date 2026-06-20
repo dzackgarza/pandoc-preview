@@ -1,0 +1,49 @@
+{
+  "run_id": "20260620T052104Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p131-comfort-modes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p131-comfort-modes.spec.ts",
+            "title": "comfort modes center the caret, hide the chrome, mark sentences, and round-trip through config",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4683,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p131-comfort-modes.spec.ts",
+          "name": "caret-fraction-off",
+          "value": 2.3154
+        },
+        {
+          "spec": "p131-comfort-modes.spec.ts",
+          "name": "caret-fraction-typewriter-on",
+          "value": 0.5012
+        },
+        {
+          "spec": "p131-comfort-modes.spec.ts",
+          "name": "readability-mark-count",
+          "value": 171
+        }
+      ]
+    }
+  ]
+}

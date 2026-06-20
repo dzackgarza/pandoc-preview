@@ -82,13 +82,12 @@ export interface Config {
     // (a CM6 scroll-margin extension); readability colors prose sentence spans (a
     // CM6 decoration layer).
     //
-    // Optional on the wire: the comfort feature is a "dormant unless enabled" UI
-    // state. config.rs serializes `[editor.comfort]` ONLY when a mode is enabled
-    // (skip_serializing_if = all-off), so a config that never enabled a mode sends
-    // NO comfort object — which the app reads as every mode OFF. As soon as a mode
-    // is enabled it is serialized and round-trips. The three keys are always
-    // present together when the object is present.
-    comfort?: {
+    // REQUIRED sub-object (mirrors the required `Comfort` struct in config.rs): the
+    // canonical config bakes `[editor.comfort]` with every mode OFF, and every
+    // provisioning path emits it. A config omitting the table is a hard Rust load
+    // error, so the frontend always receives the object — read the booleans directly,
+    // no `?.`/`?? false` soft default.
+    comfort: {
       distraction_free: boolean;
       typewriter: boolean;
       readability: boolean;

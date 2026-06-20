@@ -259,49 +259,33 @@ pub struct Editor {
     /// sentence coloring), each a config-owned boolean the app reads at launch and
     /// persists on toggle.
     ///
-    /// The mode set is an "all OFF" UI state: a config that carries NO
-    /// `[editor.comfort]` table opens with every mode OFF (`Comfort::default()` =
-    /// all-false), and a config whose modes are all OFF is NOT re-serialized with
-    /// an empty table (`skip_serializing_if`). This keeps the comfort feature
-    /// invisible until the user enables a mode — the first-run/canonical config
-    /// need not bake it, and a Settings round-trip that never touched comfort
-    /// leaves the file byte-identical (the P9 round-trip class: `after == before`).
-    /// As soon as a mode is enabled, the table IS serialized with its true bool, so
-    /// the enabled mode round-trips and survives a relaunch.
-    #[serde(default, skip_serializing_if = "Comfort::all_off")]
+    /// Required opinionated sub-table: the canonical config bakes `[editor.comfort]`
+    /// with every mode OFF (all-false), and every provisioning path that emits an
+    /// `[editor]` table also emits `[editor.comfort]`. A config omitting the table is
+    /// a hard load error (no serde default, no silent coercion) — exactly like the
+    /// other required `Editor` fields. The booleans always round-trip and survive a
+    /// relaunch.
     pub comfort: Comfort,
 }
 
-/// The three EDITOR-presentation comfort modes (P120), each a config-owned
-/// boolean. `deny_unknown_fields`: an unexpected key is a LOUD deserialize error.
-/// `Default` is all-false (every mode OFF) so an absent `[editor.comfort]` table
-/// opens with the comfort feature dormant; `all_off` drives the
-/// `skip_serializing_if` so a dormant feature is never written back. Mirrors the
-/// `comfort` sub-object in src/lib/types.ts.
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+/// The three EDITOR-presentation comfort modes (P120), each a REQUIRED
+/// config-owned boolean. `deny_unknown_fields`: an unexpected key is a LOUD
+/// deserialize error. No serde default on the struct or any field: an absent
+/// `[editor.comfort]` table, or an absent mode key, is a hard load error — the
+/// canonical config and every provisioning path bake the opinionated all-false
+/// state. Mirrors the `comfort` sub-object in src/lib/types.ts.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Comfort {
     /// Hide the chrome (sidebar / insertion bar / status bar) — an App-shell CSS
     /// state, not editor infra.
-    #[serde(default)]
     pub distraction_free: bool,
     /// Keep the caret line vertically centered in the editor viewport (a CM6
     /// scroll-margin / scroll-into-view centering extension).
-    #[serde(default)]
     pub typewriter: bool,
     /// Color prose sentence spans (a thin CM6 sentence-decoration layer respecting
     /// the fork's math/code exclusion predicate).
-    #[serde(default)]
     pub readability: bool,
-}
-
-impl Comfort {
-    /// Every comfort mode is OFF — the dormant state an absent `[editor.comfort]`
-    /// table deserializes to, and the state whose re-serialization is skipped so a
-    /// never-enabled feature never writes a table to the user's config.
-    fn all_off(&self) -> bool {
-        !self.distraction_free && !self.typewriter && !self.readability
-    }
 }
 
 /// The three-way editor|preview view mode (P121). `Split` shows both panes;

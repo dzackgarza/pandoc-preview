@@ -399,14 +399,14 @@
     // P120 — seed the three comfort modes from the config-owned [editor.comfort]
     // booleans so a persisted mode is active at launch. The editor compartments
     // (typewriter/readability) are seeded inside EditorPane from the same config;
-    // the distraction-free shell state is driven by viewComfort below. An absent
-    // comfort object (no mode ever enabled — config.rs skip-serializes the all-off
-    // table) reads as every mode OFF.
+    // the distraction-free shell state is driven by viewComfort below. comfort is a
+    // REQUIRED sub-table (config.rs fails the load if it is absent), so the booleans
+    // are read directly — no soft default.
     const comfort = config.editor.comfort;
     viewComfort = {
-      distractionFree: comfort?.distraction_free ?? false,
-      typewriter: comfort?.typewriter ?? false,
-      readability: comfort?.readability ?? false,
+      distractionFree: comfort.distraction_free,
+      typewriter: comfort.typewriter,
+      readability: comfort.readability,
     };
     // Discovered plugins drive the category-aware menu/command-palette populator
     // (export-category plugins surface their own "Export: <name>" entries; P66).
@@ -2681,6 +2681,7 @@
     if (!config) {
       throw new Error("setComfort called before the config was ready");
     }
+    const prev = viewComfort;
     viewComfort = { ...viewComfort, [mode]: on };
     // The two EDITOR modes reconfigure their CM6 compartment live; distraction
     // free is purely the App-shell CSS state above (no editor change).
@@ -2702,6 +2703,13 @@
       await api.saveConfig(next);
       config = next;
     } catch (e) {
+      // The persist FAILED — surface it loudly (the P9 saveSettings convention)
+      // AND undo the optimistic live state so the toggle does not silently linger
+      // on a mode the on-disk config never recorded (it would revert on relaunch).
+      viewComfort = prev;
+      if (mode === "typewriter" || mode === "readability") {
+        editor.setComfortMode(mode, prev[mode]);
+      }
       toastError(String(e));
     }
   }
