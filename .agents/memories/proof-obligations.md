@@ -290,41 +290,56 @@ It is admissible only if it FAILS on a plausibly broken app.
 
 ### Milestone — Phase D: figures & TikZ (P90–P100)
 
-**2026-06-20 REALIGNMENT (issue #2 — ratified by the user).** Phase D built tikz as an INLINE-IN-MARKDOWN subsystem: a tikzcd.lua filter compiled each fenced tikz block to an SVG inside the markdown preview, fed by a config-injected `[figures]` palette/template (`tikzstyles`/`tikzdefs`/`template`) the renderer forwarded as `{tikzstyles}`/`{tikzdefs}`/`{figure_template}` env/placeholders. The user ruled this a bespoke injection drift: tikz is the SAME render primitive as markdown — "pandoc + a template" — applied to a tikz FILE, with the template OWNING its preamble (`\usepackage{dzg-tikz}` over the user's styles tree). The inline-in-markdown machinery and the entire injection surface are REMOVED; a tikz file now renders standalone via the `tikz-renderer` sibling plugin (`render_tikz`, the user-owned `standalone-tikz.tex` template → pdflatex → pdf2svg → inline SVG), selected by file type exactly as markdown selects the html5 renderer. This fixes the issue-#2 boot failure at the root: there is no `[figures]` `ExistingFile` and no `shared.*` asset left to drift or go missing.
+**2026-06-20 REALIGNMENT (issue #2 — ratified by the user).** Phase D built tikz as an INLINE-IN-MARKDOWN subsystem: a tikzcd.lua filter compiled each fenced tikz block to an SVG inside the markdown preview, fed by a config-injected `[figures]` palette/template (`tikzstyles`/`tikzdefs`/`template`) the renderer forwarded as `{tikzstyles}`/`{tikzdefs}`/`{figure_template}` env/placeholders.
+The user ruled this a bespoke injection drift: tikz is the SAME render primitive as markdown — "pandoc + a template" — applied to a tikz FILE, with the template OWNING its preamble (`\usepackage{dzg-tikz}` over the user's styles tree).
+The inline-in-markdown machinery and the entire injection surface are REMOVED; a tikz file now renders standalone via the `tikz-renderer` sibling plugin (`render_tikz`, the user-owned `standalone-tikz.tex` template → pdflatex → pdf2svg → inline SVG), selected by file type exactly as markdown selects the html5 renderer.
+This fixes the issue-#2 boot failure at the root: there is no `[figures]` `ExistingFile` and no `shared.*` asset left to drift or go missing.
 
 Disposition of the Phase D obligations under this realignment:
 
-- **P90 (D-1 parser) — KEPT.** The owned-tikz parser (`cargo test tikz_roundtrip`) is model-only; it serves authoring/copy in file mode. Unchanged.
-- **P100 (D-0 inline tikz→SVG in markdown) — REPLACED** by the new file-mode obligation **P128** below (a tikz FILE renders standalone as an inline SVG via the user-owned template). Burden transferred: "tikz source compiles to a real vector figure in the live preview, raw source not echoed" is re-proven against the file render path.
-- **P91 (D-2 shared `.tikzstyles`/`.tikzdefs` palette) — RETIRED.** The injected shared palette is the invented mechanism. The legitimate underlying need ("the user's styles govern figures") is carried by P128: the template owns its preamble via `\usepackage{dzg-tikz}`, so a style the user defines in the styles tree governs the rendered figure. No config palette, no `shared.*` asset.
-- **P92 (D-3 config-declared per-figure template) — RETIRED.** The config `template` key is the invented mechanism. The legitimate need ("the template governs the compile") is carried by P128: the user-owned `standalone-tikz.tex` (editable, at a fixed path) is what every tikz file compiles under.
-- **P93 (D-4 source↔preview jump) — RETIRED as ill-conceived.** A source-line → rendered-SVG-element mapping is not well-defined (pdf2svg has no per-node identity; procedural/loop tikz has no 1:1 correspondence). The scaffolding is deleted. See the realignment section's P93/P109 entry.
+- **P90 (D-1 parser) — KEPT.** The owned-tikz parser (`cargo test tikz_roundtrip`) is model-only; it serves authoring/copy in file mode.
+  Unchanged.
+- **P100 (D-0 inline tikz→SVG in markdown) — REPLACED** by the new file-mode obligation **P128** below (a tikz FILE renders standalone as an inline SVG via the user-owned template).
+  Burden transferred: "tikz source compiles to a real vector figure in the live preview, raw source not echoed" is re-proven against the file render path.
+- **P91 (D-2 shared `.tikzstyles`/`.tikzdefs` palette) — RETIRED.** The injected shared palette is the invented mechanism.
+  The legitimate underlying need ("the user's styles govern figures") is carried by P128: the template owns its preamble via `\usepackage{dzg-tikz}`, so a style the user defines in the styles tree governs the rendered figure.
+  No config palette, no `shared.*` asset.
+- **P92 (D-3 config-declared per-figure template) — RETIRED.** The config `template` key is the invented mechanism.
+  The legitimate need ("the template governs the compile") is carried by P128: the user-owned `standalone-tikz.tex` (editable, at a fixed path) is what every tikz file compiles under.
+- **P93 (D-4 source↔preview jump) — RETIRED as ill-conceived.** A source-line → rendered-SVG-element mapping is not well-defined (pdf2svg has no per-node identity; procedural/loop tikz has no 1:1 correspondence).
+  The scaffolding is deleted.
+  See the realignment section's P93/P109 entry.
 - **P94 (D-5 tikz-command DB) — KEPT.** Authoring assist, independent of the render mechanism.
-- **P95 (D-6 inline figure-compile error log) — REPLACE PENDING.** File-mode compile errors surface via the `tikz-renderer` plugin's `log`/stderr; a new spec asserting a malformed tikz file surfaces a clickable error replaces the inline `tikzfigurelog.ts` path. Outstanding.
+- **P95 (D-6 inline figure-compile error log) — REPLACE PENDING.** File-mode compile errors surface via the `tikz-renderer` plugin's `log`/stderr; a new spec asserting a malformed tikz file surfaces a clickable error replaces the inline `tikzfigurelog.ts` path.
+  Outstanding.
 - **P96 (D-7 dual-asset registry for non-tikz figures) — KEPT.** Orthogonal to tikz.
 - **P97 (D-8 subgraph copy) — KEPT.** Model-only clipboard operation.
 - **P98 (D-9 watch-file reload) — REWORK PENDING.** Generic watch/reload; re-point its fixture from an inline-figure markdown doc to a tikz FILE rendered via `render_tikz`. Outstanding.
-- **Phase G arXiv (the tikz-externalize legs P116/P117 + capstone) — REWORK PENDING.** `arxiv-export/export.sh` drove `tikzcd.lua` to externalize inline tikz; with inline tikz gone, the bundle references precompiled tikz files. Outstanding.
+- **Phase G arXiv (the tikz-externalize legs P116/P117 + capstone) — REWORK PENDING.** `arxiv-export/export.sh` drove `tikzcd.lua` to externalize inline tikz; with inline tikz gone, the bundle references precompiled tikz files.
+  Outstanding.
 
 UPDATE (2026-06-20) — full spec disposition so NO spec tests a removed mechanism:
 
-- **RETIRED (feature genuinely deleted; specs + provisioning removed):**
-  `p100-tikz-render` (inline render → replaced by P128), `p101-shared-tikzstyles` (P91 injection), `p102-perfigure-template` (P92 injection), `p105-tikz-error-map` (P95 inline figure-log → superseded by the standard Compile Log), `p109-tikz-line-jump` (P93 jump → RETIRED as ill-conceived: no source-line→SVG-element mapping exists), and the arXiv inline-tikz-externalize specs `p124-arxiv-tikz` (P116), `p125-arxiv-figure-gate` (P117), `p127-arxiv-capstone` (its tikz-externalize leg) — there is no inline tikz to externalize. `p126-arxiv-cleaner` is kept (non-tikz).
-- **REPLACED:** P100 → **P128** authored as `tests/proof/p132-tikz-file-render.spec.ts` (+ provisioning: a real `figure.tikz` opened via the discovery matrix → inline SVG, raw source absent; verified provisioning + a real tikz→SVG render).
-- **REWORKED to the new model (no longer red):** `p108-watch-file-reload` (P98) → a generic markdown text-marker witness (the watch-reload is renderer-independent); `p121-slides-preview` → drives the shipped revealjs-renderer via the render-target selector (`setRenderTarget('revealjs-renderer', null)`) — verified the revealjs render.sh emits a real `.reveal > .slides > section` deck. The frontend inline figure-compile log (`tikzfigurelog.ts` + the TikZ Log tab) is removed.
-- **P93/P109 (source↔preview jump) — RETIRED as ill-conceived (not deferred).** The obligation assumes a source-line → rendered-SVG-element correspondence, but `pdf2svg` output carries NO per-node identity and procedural tikz (e.g. a loop drawing an N×N grid) has no 1:1 line↔element mapping at all — the feature is not well-defined. It was agent-invented. The entire scaffolding is DELETED: `tikzjump.ts`, the App.svelte jump handler + harness hooks, the EditorPane Ctrl+J/Ctrl+T keybindings + `ownedTikzEnvelopeText`/`refreshTikzModel`/`placeCursorOnTikzNodeLine`/`cursorTikzNodeName`/`__PPE_TIKZ_MODEL__`. (P90 parser + P97 subgraph copy, which share `parse_tikz`, are unaffected.)
-- **MATRIX COMPLETE (2026-06-20).** The (input × output) render matrix the user named —
-  `{md, tex, tikz} × {html, pdf}` — is filled and discovery-driven (bibtex is citation data,
-  not a render target). Cells: md→html (pandoc-renderer), md→pdf (pandoc-pdf-export /
-  latexmk-pdf-export), md→html-slides (revealjs-renderer), md→pdf-slides (beamer-pdf-export),
-  tex→html (latex-renderer), tex→pdf (latex-pdf-export), tikz→html/svg (tikz-renderer),
-  tikz→pdf (tikz-pdf-export). The export menu is filtered by the open file's input type
-  (`exportPlugins()` intersects `category=export` with `inputs ∋ inputTypeOf(file)`), so only
-  valid export targets are offered per file. All eight render/export plugins are doctor-clean
-  (hermetic `--doctor`: 30 OK, all passed); each new export verified by smoke test
-  (tex→19 KB PDF, tikz→6.5 KB PDF, beamer→6 KB PDF, tex→51 KB HTML).
+- **RETIRED (feature genuinely deleted; specs + provisioning removed):** `p100-tikz-render` (inline render → replaced by P128), `p101-shared-tikzstyles` (P91 injection), `p102-perfigure-template` (P92 injection), `p105-tikz-error-map` (P95 inline figure-log → superseded by the standard Compile Log), `p109-tikz-line-jump` (P93 jump → RETIRED as ill-conceived: no source-line→SVG-element mapping exists), and the arXiv inline-tikz-externalize specs `p124-arxiv-tikz` (P116), `p125-arxiv-figure-gate` (P117), `p127-arxiv-capstone` (its tikz-externalize leg) — there is no inline tikz to externalize.
+  `p126-arxiv-cleaner` is kept (non-tikz).
 
-- **BUILT (2026-06-20, verified by smoke test + hermetic --doctor):** **P130 beamer** — the `beamer-pdf-export` plugin (`pandoc --to beamer --pdf-engine=lualatex` against pandoc's BUILT-IN beamer template — the shipped `beamer_template.latex` is machine-broken: it `\input`s a stale absolute path; a user-supplied beamer template is a future selector enhancement). A discovered export target ("Export: Beamer Slides (.pdf)"); md→beamer PDF verified (6 KB %PDF). **P131 `.tex` render input** — the `latex-renderer` plugin (`pandoc --from latex --to html5`, `inputs = ["latex"]`); opening a `.tex` file dispatches to it through the discovery matrix; .tex→HTML verified. `.bib` is NOT a render cell (citation data, already handled) — see the disposition note below.
+- **REPLACED:** P100 → **P128** authored as `tests/proof/p132-tikz-file-render.spec.ts` (+ provisioning: a real `figure.tikz` opened via the discovery matrix → inline SVG, raw source absent; verified provisioning + a real tikz→SVG render).
+
+- **REWORKED to the new model (no longer red):** `p108-watch-file-reload` (P98) → a generic markdown text-marker witness (the watch-reload is renderer-independent); `p121-slides-preview` → drives the shipped revealjs-renderer via the render-target selector (`setRenderTarget('revealjs-renderer', null)`) — verified the revealjs render.sh emits a real `.reveal > .slides > section` deck.
+  The frontend inline figure-compile log (`tikzfigurelog.ts` + the TikZ Log tab) is removed.
+
+- **P93/P109 (source↔preview jump) — RETIRED as ill-conceived (not deferred).** The obligation assumes a source-line → rendered-SVG-element correspondence, but `pdf2svg` output carries NO per-node identity and procedural tikz (e.g. a loop drawing an N×N grid) has no 1:1 line↔element mapping at all — the feature is not well-defined.
+  It was agent-invented.
+  The entire scaffolding is DELETED: `tikzjump.ts`, the App.svelte jump handler + harness hooks, the EditorPane Ctrl+J/Ctrl+T keybindings + `ownedTikzEnvelopeText`/`refreshTikzModel`/`placeCursorOnTikzNodeLine`/`cursorTikzNodeName`/`__PPE_TIKZ_MODEL__`. (P90 parser + P97 subgraph copy, which share `parse_tikz`, are unaffected.)
+
+- **MATRIX COMPLETE (2026-06-20).** The (input × output) render matrix the user named — `{md, tex, tikz} × {html, pdf}` — is filled and discovery-driven (bibtex is citation data, not a render target).
+  Cells: md→html (pandoc-renderer), md→pdf (pandoc-pdf-export / latexmk-pdf-export), md→html-slides (revealjs-renderer), md→pdf-slides (beamer-pdf-export), tex→html (latex-renderer), tex→pdf (latex-pdf-export), tikz→html/svg (tikz-renderer), tikz→pdf (tikz-pdf-export).
+  The export menu is filtered by the open file's input type (`exportPlugins()` intersects `category=export` with `inputs ∋ inputTypeOf(file)`), so only valid export targets are offered per file.
+  All eight render/export plugins are doctor-clean (hermetic `--doctor`: 30 OK, all passed); each new export verified by smoke test (tex→19 KB PDF, tikz→6.5 KB PDF, beamer→6 KB PDF, tex→51 KB HTML).
+
+- **BUILT (2026-06-20, verified by smoke test + hermetic --doctor):** **P130 beamer** — the `beamer-pdf-export` plugin (`pandoc --to beamer --pdf-engine=lualatex` against pandoc's BUILT-IN beamer template — the shipped `beamer_template.latex` is machine-broken: it `\input`s a stale absolute path; a user-supplied beamer template is a future selector enhancement).
+  A discovered export target ("Export: Beamer Slides (.pdf)"); md→beamer PDF verified (6 KB %PDF). **P131 `.tex` render input** — the `latex-renderer` plugin (`pandoc --from latex --to html5`, `inputs = ["latex"]`); opening a `.tex` file dispatches to it through the discovery matrix; .tex→HTML verified.
+  `.bib` is NOT a render cell (citation data, already handled) — see the disposition note below.
 
 All reworked/authored specs are verified as far as possible without a display (provisioning boots doctor-clean, render.sh produces the asserted output); the full `just proof` E2E run still requires the GUI session.
 
@@ -709,61 +724,35 @@ A batch with a PDF target runs `lualatex` (a hard dependency, the P8 engine), so
 
 - **P128 — a tikz FILE renders standalone as an inline vector figure in the live preview, via the user-owned template, and a style the user defines governs the render.** (added 2026-06-20; the issue-#2 realignment replacement for P100, carrying the burden retired off P91/P92.) Opening a tikz FILE (a `.tikz` file whose content is a `tikzpicture`/`tikzcd` body) in the app renders it in the live preview as a real inline VECTOR figure (an `<svg>` carrying drawing content — `path`/`line`/`g`/`text`), and the raw tikz source is NOT shown verbatim — proving the file is COMPILED, not echoed, through the file-mode render path (the `tikz-renderer` plugin wrapping the source in the user-owned `standalone-tikz.tex` template, pdflatex → pdf2svg). The template OWNS its preamble via `\usepackage{dzg-tikz}` over the user's styles tree: a named tikz style/macro the user defines ONLY in that styles tree visibly determines the rendered figure (and changing that definition changes the render), with NO app-injected palette, NO `[figures]` config table, and NO `shared.*` asset.
   The preview SVG is read from the preview DOM by the harness, independently of the app's own report.
-  Admissible because it fails on: a tikz file that renders RAW SOURCE (no `<svg>` with drawing content appears — the file was not compiled); a render that IGNORES the user's styles tree (a figure using a user-defined style does not reflect it, or changing the style in the styles tree does not change the render — proving an injected/hardcoded palette rather than the template-owned preamble); and a tikz file routed through the MARKDOWN renderer (the source is rendered as a code block / passed through, not compiled to a figure). It is NOT satisfied by an assertion that a `render_tikz`/`tikz-renderer`/`isTikzFile` symbol merely EXISTS — the proof must open a real `.tikz` file on a real display and confirm the compiled inline SVG appears, the raw source does not, and a user-styles-tree change moves the render.
+  Admissible because it fails on: a tikz file that renders RAW SOURCE (no `<svg>` with drawing content appears — the file was not compiled); a render that IGNORES the user's styles tree (a figure using a user-defined style does not reflect it, or changing the style in the styles tree does not change the render — proving an injected/hardcoded palette rather than the template-owned preamble); and a tikz file routed through the MARKDOWN renderer (the source is rendered as a code block / passed through, not compiled to a figure).
+  It is NOT satisfied by an assertion that a `render_tikz`/`tikz-renderer`/`isTikzFile` symbol merely EXISTS — the proof must open a real `.tikz` file on a real display and confirm the compiled inline SVG appears, the raw source does not, and a user-styles-tree change moves the render.
   It folds the old `tikz-toolchain` doctor gate: the `tikz-renderer` plugin's doctor check fails loud if pdflatex/pdf2svg or the user-owned template is absent.
 
 ### Render-matrix realignment (2026-06-20, issue #2 → systemic)
 
-The tikz drift was the tip of a pattern: a *render target* (input type × output mode +
-template + engine) was reified into bespoke machinery, hardcoded into the core, or left
-half-wired. The ratified model: the app owns only the input data, the current output mode
-(the expected data contract — html bytes for the live preview, a file for export), and
-GUI exposure; **which renderer/export plugin and which template fill a cell is discovered
-+ user-selected**, never hardcoded. Plugins declare `inputs` in their manifest; the app
-builds the (open file type → candidate render targets) matrix from discovery.
+The tikz drift was the tip of a pattern: a *render target* (input type × output mode + template + engine) was reified into bespoke machinery, hardcoded into the core, or left half-wired.
+The ratified model: the app owns only the input data, the current output mode (the expected data contract — html bytes for the live preview, a file for export), and GUI exposure; **which renderer/export plugin and which template fill a cell is discovered
++ user-selected**, never hardcoded.
+  Plugins declare `inputs` in their manifest; the app builds the (open file type → candidate render targets) matrix from discovery.
 
 Status of the realignment obligations:
 
-- **BUILT (WS1/WS2, verified: build + typecheck + hermetic --doctor).** Plugins declare
-  `inputs`; one `render(renderer_id, template, …)` IPC replaces the per-mode commands;
-  the frontend resolves the renderer by file type from discovery (default `[renderer].active`);
-  the hardcoded `SLIDES_RENDERER_ID`/`TIKZ_RENDERER_ID` consts and `isTikzFile`/`slidesMode`
-  booleans are gone; a `{template}` placeholder is forwarded to renderers.
+- **BUILT (WS1/WS2, verified: build + typecheck + hermetic --doctor).** Plugins declare `inputs`; one `render(renderer_id, template, …)` IPC replaces the per-mode commands; the frontend resolves the renderer by file type from discovery (default `[renderer].active`); the hardcoded `SLIDES_RENDERER_ID`/`TIKZ_RENDERER_ID` consts and `isTikzFile`/`slidesMode` booleans are gone; a `{template}` placeholder is forwarded to renderers.
 
-- **P129 — render-target selector (PENDING, GUI-proof-gated).** With a markdown file open,
-  the user can select among the discovered render targets compatible with the current
-  input + output (e.g. Article preview vs Slides for html; Article PDF vs Beamer PDF for
-  export); selecting a target re-renders through it (the selected renderer + template,
-  forwarded via `{template}`), and the choice persists across relaunch (config round-trip,
-  the `view_mode` precedent). Admissible only if it fails on: no selector; a selector that
-  does not change the rendered output; a non-persisted choice.
+- **P129 — render-target selector (PENDING, GUI-proof-gated).** With a markdown file open, the user can select among the discovered render targets compatible with the current input + output (e.g. Article preview vs Slides for html; Article PDF vs Beamer PDF for export); selecting a target re-renders through it (the selected renderer + template, forwarded via `{template}`), and the choice persists across relaunch (config round-trip, the `view_mode` precedent).
+  Admissible only if it fails on: no selector; a selector that does not change the rendered output; a non-persisted choice.
 
-- **P130 — slides as a template selection (PENDING, GUI-proof-gated).** Selecting the
-  Slides target renders the SAME markdown as a reveal.js DECK in the preview iframe (the
-  shipped `revealjs-renderer` plugin = `pandoc --to revealjs` + the `pandoc_revealjs_template.html`
-  template); the Beamer PDF target exports the same source to a beamer PDF via the pdf
-  export plugin + `beamer_template.latex`. Slides is NOT a bespoke mode — it is a
-  discovered render target. (Replaces the deleted dead `slidesMode`/`revealjs-renderer`-const
-  wiring; ship the vendored `revealjs-renderer` plugin, doctor-clean like `tikz-renderer`.)
+- **P130 — slides as a template selection (PENDING, GUI-proof-gated).** Selecting the Slides target renders the SAME markdown as a reveal.js DECK in the preview iframe (the shipped `revealjs-renderer` plugin = `pandoc --to revealjs` + the `pandoc_revealjs_template.html` template); the Beamer PDF target exports the same source to a beamer PDF via the pdf export plugin + `beamer_template.latex`. Slides is NOT a bespoke mode — it is a discovered render target.
+  (Replaces the deleted dead `slidesMode`/`revealjs-renderer`-const wiring; ship the vendored `revealjs-renderer` plugin, doctor-clean like `tikz-renderer`.)
 
-- **DEFERRED to a follow-up (recorded so not silently dropped).** `.tex` and `.bib` are
-  CATEGORICALLY DIFFERENT — not "two input cells":
-  - **P131 — `.tex` as a document render INPUT TYPE** (the genuine missing render cell):
-    a `.tex` file is a LaTeX document that renders to html/pdf, exactly like md/tikz — add a
-    latex renderer (e.g. `pandoc --from latex --to html5`, `inputs = ["latex"]`) + a latex
-    template so opening a `.tex` file dispatches to it through the discovery matrix instead
-    of falling through to the markdown renderer (garbage today). A thin renderer plugin like
-    the others.
-  - **`.bib` is NOT a render cell.** A `.bib` is a bibliography DATABASE — citation DATA the
-    app already consumes (`editor.bibliography`, citation completion, the references panel),
-    not a document to "render." The only conceivable gap is a bibtex EDITOR grammar for
-    *editing* a `.bib` (the editor applies the latex grammar to every file today) — an editor
-    concern, not a render-matrix obligation. (My earlier "P132 .bib render cell" was a
-    category error.)
+- **DEFERRED to a follow-up (recorded so not silently dropped).** `.tex` and `.bib` are CATEGORICALLY DIFFERENT — not "two input cells":
+  - **P131 — `.tex` as a document render INPUT TYPE** (the genuine missing render cell): a `.tex` file is a LaTeX document that renders to html/pdf, exactly like md/tikz — add a latex renderer (e.g. `pandoc --from latex --to html5`, `inputs = ["latex"]`) + a latex template so opening a `.tex` file dispatches to it through the discovery matrix instead of falling through to the markdown renderer (garbage today).
+    A thin renderer plugin like the others.
+  - **`.bib` is NOT a render cell.** A `.bib` is a bibliography DATABASE — citation DATA the app already consumes (`editor.bibliography`, citation completion, the references panel), not a document to "render."
+    The only conceivable gap is a bibtex EDITOR grammar for *editing* a `.bib` (the editor applies the latex grammar to every file today) — an editor concern, not a render-matrix obligation.
+    (My earlier "P132 .bib render cell" was a category error.)
 
-- **Carried tikz debt** (from the Phase D realignment note above): **P128** (file-mode
-  tikz render) + the **P93/P95/P98** file-mode reworks + retiring the injection-only
-  `p100/p101/p102/p105` specs — all GUI-proof-gated, driven red→green with the suite.
+- **Carried tikz debt** (from the Phase D realignment note above): **P128** (file-mode tikz render) + the **P93/P95/P98** file-mode reworks + retiring the injection-only `p100/p101/p102/p105` specs — all GUI-proof-gated, driven red→green with the suite.
 
 ## Verification vehicle
 
