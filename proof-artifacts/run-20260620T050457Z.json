@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 20883,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!(window.__PPE_E2E__ && window.__PPE_E2E__.openProject)"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!(window.__PPE_E2E__ && window.__PPE_E2E__.openProject)"]
           }
         ]
       },

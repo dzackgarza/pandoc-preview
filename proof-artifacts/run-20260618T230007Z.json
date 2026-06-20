@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 3589,
-            "errors": [
-              "Error: provisioning did not stage the editable source at /tmp/pandoc-preview-proof-runs/20260618T230007Z/p106-dual-asset-registry/project/fig.svg"
-            ]
+            "errors": ["Error: provisioning did not stage the editable source at /tmp/pandoc-preview-proof-runs/20260618T230007Z/p106-dual-asset-registry/project/fig.svg"]
           }
         ]
       },

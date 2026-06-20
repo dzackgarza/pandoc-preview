@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 12075,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!document.querySelector('.cm-tooltip-autocomplete')"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!document.querySelector('.cm-tooltip-autocomplete')"]
           }
         ]
       },

@@ -1,6 +1,6 @@
 # Render-Core Rebuild Plan (plugin-system-first)
 
-Durable, resumable roadmap for rebuilding greenfield2's render core into a renderer-agnostic app + generic plugin system, then vendoring the `~/.pandoc` math machinery onto it.
+Durable, resumable roadmap for rebuilding greenfield2's render core into a pandoc-only editor -> rendering plugin -> output pane pipeline, with the generic plugin firewall used for pandoc output surfaces and OS/tool integrations.
 Authored 2026-06-14. If interrupted, resume from the **Status / resume here** section at the bottom.
 
 This is a repo artifact (future-work + current-state), NOT a memory.
@@ -8,7 +8,7 @@ The durable *decisions* live in memory: see [[render-rebuild-sequencing-and-vend
 
 ## Ratified forks (2026-06-14)
 
-1. **Sequencing: full plugin system first.** Build the generic plugin firewall before any math feature is visible; both renderers ship as plugins.
+1. **Sequencing: full plugin system first.** Build the generic plugin firewall before any math feature is visible; pandoc rendering/export surfaces ship through that firewall.
 2. **Macros: split by pipeline.** Preview = MathJax macro injection (existing `~/.pandoc` pipeline); export = LaTeX preamble via `dzg-unified`. App never embeds a macro list.
 3. **Vendoring: symlink from a vendor dir.** Canonical copies in a bundled/XDG vendor dir, symlinked into `~/.pandoc/{filters,templates}`; app is source of truth; user overrides by replacing a symlink.
    Doctor verifies the set + external texmf (`dzg-unified`), never vendor-copied.
@@ -73,19 +73,17 @@ A2/A3 extend the already-green `--doctor` battery, so they are doctor-class (`d0
 
 * * *
 
-## Milestone B — Renderer-as-plugin + generic renderer  [RATIFIED 2026-06-14]
+## Milestone B — Pandoc renderer as plugin  [RATIFIED 2026-06-14; alternate-renderer clause superseded 2026-06-20]
 
-**Goal.** The app core owns NO renderer knowledge.
-`render_preview` keeps its exact signature (frontend + all P-series untouched) but DELEGATES buffer→HTML to the active renderer plugin.
-Two renderers ship as plugins: pandoc (today's preview argv, structured config retained transitionally) and generic (md stdin → HTML stdout, raw-string config).
-The pandoc command-model (raw-string-canonical + semantic deconstruction) is deferred to C (ratified split).
+**Goal.** The app core owns NO document-conversion semantics.
+`render_preview` keeps its exact signature (frontend + all P-series untouched) but delegates source -> output orchestration to the pandoc renderer plugin.
+The pandoc command-model (raw-string-canonical; no app-side command parsing) is deferred to C (ratified split).
 
 **Renderer-plugin interface (atop A's firewall).**
 - Renderer plugins are `category = "renderer"`, `kind = "command"`.
-- Active renderer selected by a core config value `[renderer] active = "<id>"` (a core value like `[plugins].dir`; no runtime default — absent is a loud error once preview runs).
-  Optional-table parsing pattern like `[plugins]`, but the preview path requires it; every preview-capable config declares it.
+- The pandoc renderer plugin is the product renderer; configuration selects pandoc command/input/output/view orchestration, not a non-pandoc renderer.
+  No runtime default — absent renderer/plugin config is a loud error once preview runs.
 - To render: core runs the active renderer plugin's command with the buffer on stdin and render context substituted per-argument — `{base_dir}`, `{base_url}`, `{mathjax}` (new render-context placeholders beyond A's `{plugin_dir}`/ `{config_dir}`/`{file}`/`{artifact}`). The plugin's own `[plugin.<id>]` config is delivered to the plugin process (env `PPE_PLUGIN_CONFIG` as JSON) so a renderer script can read e.g. pandoc `from_format`/`extra_args`. Stdout = standalone HTML, loaded into the preview iframe exactly as today; nonzero exit → RenderResult.ok = false (compile log), same as now.
-- The generic renderer ignores context/config except its own raw script string.
 
 **Ownership moves OUT of core (this is what B2 enforces).**
 - `[pandoc]` (path/from_format/extra_args) leaves core `Config`; it becomes the pandoc renderer plugin's `[plugin.<id>]` config section (structured, transitional; C makes it the raw string).
@@ -95,30 +93,29 @@ The pandoc command-model (raw-string-canonical + semantic deconstruction) is def
   This is anticipated by the contract; D1/D5 specs get updated as part of B GREEN (RED first: the re-scoped assertions fail against today's hardcoded battery).
 - Export still spawns pandoc, but only via `[export.<id>]` config argv (config, not core code) and the generic `export-plugins` doctor check (no pandoc strings) — so export is unaffected by B2.
 
-**Shipped renderer plugins.** Two committed repo artifacts (canonical source; Milestone D vendors/symlinks them into the XDG plugins dir): `pandoc-renderer` (builds today's preview argv) and `generic-renderer` (the markdown-it-class escape hatch).
-Provisioning installs them into the hermetic plugins dir for the relevant specs.
+**Shipped renderer plugin.** The committed renderer artifact is `pandoc-renderer`, which builds today's preview argv and later becomes the pandoc command orchestrator for source/output modes.
+Provisioning installs it into the hermetic plugins dir for the relevant specs.
 
-**Proof obligations (RATIFIED).**
-- **B1 (behavioral, `p20`)** — The generic renderer renders the witness with ZERO app-core changes.
-  With `[renderer].active` = the committed generic renderer and it installed in the plugins dir, the live preview shows the witness rendered by THAT renderer, proven by a marker only it emits (distinct from pandoc output).
-  The acceptance test of the whole abstraction (renderer-plugin-architecture.md).
-- **B2 (architecture hygiene, NOT a proof-suite test).** The "no pandoc-specific strings in the app core" invariant is enforced by an agent-facing grep gate in `.agents/` (per the global rule banning source-content meta-assertions in the behavioral proof suite; the invariant is still enforced, just outside `tests/proof`). B1 carries the behavioral subsumption: a leak into core would break the generic renderer's no-core-changes property.
+**Proof obligations (RATIFIED, then scoped 2026-06-20).**
+- **B1 (behavioral, `p20`)** — The pandoc renderer plugin renders the witness through the plugin boundary with ZERO app-owned document-conversion semantics.
+  The live preview shows real pandoc output from the plugin path, not app-core rendering.
+- **B2 (architecture hygiene, NOT a proof-suite test).** The "no app-owned document-conversion semantics" invariant is enforced by an agent-facing grep gate in `.agents/` (per the global rule banning source-content meta-assertions in the behavioral proof suite; the invariant is still enforced, just outside `tests/proof`).
 - **Regression gate:** P1–P18 and D1–D9 stay green.
   The pandoc preview now flows through the pandoc renderer plugin; D1/D5 are re-scoped (above) as part of B.
 
-**RED/GREEN sequencing.** B1 RED: add the `[renderer]` config field (parsing plumbing) so the app boots with `active = generic`, but `render_preview` still hardcodes pandoc → the generic marker is absent → RED for the right reason (active-renderer selection has no effect yet).
-GREEN: `render_preview` delegates to the active renderer plugin; move pandoc out of core; migrate doctor checks; re-scope D1/D5; install shipped renderer plugins.
+**RED/GREEN sequencing.** B1 RED: route render through plugin configuration while the implementation still hardcodes the old core pandoc path, so the plugin path is not exercised and the witness fails for the right reason.
+GREEN: `render_preview` delegates to the pandoc renderer plugin; move pandoc out of core; migrate doctor checks; re-scope D1/D5; install shipped renderer plugin.
 Keep the full suite green.
 
 **Milestone B GREEN — DONE (2026-06-14). Full suite 28/28 green.** Implemented: `plugins::render_active` (the renderer-delegation entry point: render-context placeholders `{base_dir}`/`{base_url}`/`{mathjax}`, plugin config on `PPE_PLUGIN_CONFIG`, buffer→stdin→HTML); `render_preview` delegates to it (signature unchanged → frontend + P-series untouched).
 `[pandoc]` removed from core `Config`; the pandoc-executable/pandoc-invocation doctor checks removed from core.
-Two shipped renderer plugins (fixtures for now; D vendors them): `pandoc-renderer` (render.sh = the old core preview argv; contributes the pandoc-executable/pandoc-invocation checks — a check's detail captures its command stdout, so `pandoc --version`'s version still surfaces, keeping D1's version assertion) and `generic-renderer` (B1's escape-hatch).
+Shipped renderer plugin (fixture for now; D vendors it): `pandoc-renderer` (render.sh = the old core preview argv; contributes the pandoc-executable/pandoc-invocation checks — a check's detail captures its command stdout, so `pandoc --version`'s version still surfaces, keeping D1's version assertion).
 `Error::PandocSpawn`→`ProcessSpawn` (the core spawns generic programs now).
 Frontend: SettingsModal dropped the pandoc pane (plugin config is edited via the file / a future schema-driven page); Config TS type updated.
-Provisioning rewired: `emit_pandoc_renderer` is the default renderer setup; p20 swaps in generic; first-run.sh writes the renderer-plugin config.
+Provisioning rewired: `emit_pandoc_renderer` is the renderer setup; first-run.sh writes the renderer-plugin config.
 **D1/D5 specs were NOT re-scoped** after all — the pandoc-renderer contributes identically-named checks with version capture, so D1/D5 pass unchanged (only their provisioning moved `[pandoc]`→`[plugin.pandoc-renderer]`). p10/p11 specs were updated to the new config/log shapes (first-run now writes `[plugin.pandoc-renderer]`; the compile log shows the renderer command).
 **B2** is enforced by `.agents/check-no-pandoc-in-core.sh` (wired into `just test`/`test-ci`), not a proof spec.
-Known B/D coupling: first-run.sh writes `[plugins].dir` but does not install the shipped renderers there — **Milestone D must vendor/install them** or a freshly first-run product config points at an empty plugins dir (tests pre-install via provisioning).
+Known B/D coupling: first-run.sh writes `[plugins].dir` but does not install the shipped pandoc renderer there — **Milestone D must vendor/install it** or a freshly first-run product config points at an empty plugins dir (tests pre-install via provisioning).
 **NEXT: Milestone C** (pandoc raw-command-canonical model inside the pandoc renderer plugin).
 
 ## Milestone C — Pandoc renderer plugin (raw-command-canonical)
@@ -218,8 +215,7 @@ Diagram-tool plugins (quiver/qtikz/ipe), figure library over the global figures 
 - **Milestone A GREEN (this commit): A1–A3 implemented; full suite 27/27 green.** `plugins.rs` discovers plugins from the optional `[plugins].dir`, validates each `[plugin.<id>]` section against the plugin's declared JSON Schema via the `jsonschema` crate (ONE generic path), runs a plugin by id against the real buffer (`run_plugin` + the `__PPE_E2E__.runPlugin` bridge returning `PluginResult`), and the doctor aggregates `plugin-config:<id>` + each plugin's contributed `[[doctor_checks]]` into the one battery.
   Core config gained an OPTIONAL `[plugins]` table + `[plugin.<id>]` sections (additive capability; empty/absent is never re-serialized, so plugin-less configs roundtrip unchanged — A4 still HELD, core `validate()` stays hand-coded).
   `kind` is validated (fail-loud on unsupported).
-  **NEXT: Milestone B** (renderer-as-plugin + generic renderer).
-  Decisions worth noting: `[plugins]` is optional in Milestone A because plugins are additive here; it becomes required (with a config migration) when B/C make renderers plugins.
+  **NEXT: Milestone B** (pandoc renderer as plugin; alternate-renderer proof target superseded 2026-06-20). Decisions worth noting: `[plugins]` is optional in Milestone A because plugins are additive here; it becomes required (with a config migration) when B/C make renderers plugins.
   `jsonschema = 0.40` (`validator_for`/`validate`/`instance_path()`). Operational note: `just proof` (P-series) needs port 1420 free — a running `just dev` holds it and silently makes every webview spec load the non-e2e bundle (no `__PPE_E2E__`). Also: in a from-cold full run, d01 can flake on the 8s spawnDoctor timeout because two ~50s cargo builds precede it; re-run with cached binaries for a clean pass (binary is correct — verified standalone).
 - Nothing in A–G implemented yet.
   Prerequisite green baseline: P1–P18, D1–D7 (full suite 25/25 green as of commit 4007cb0).

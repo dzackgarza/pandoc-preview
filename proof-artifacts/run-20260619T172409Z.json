@@ -23,10 +23,7 @@
             "status": "timedOut",
             "expectedStatus": "passed",
             "durationMs": 120336,
-            "errors": [
-              "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m",
-              "Error: Not connected"
-            ]
+            "errors": ["\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m", "Error: Not connected"]
           }
         ]
       },

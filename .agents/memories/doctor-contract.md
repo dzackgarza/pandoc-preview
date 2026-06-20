@@ -15,8 +15,8 @@ Ordered, named, structured checks in the Rust backend (`doctor` module):
   Supersedes the original `pdf-engine` check (2026-06-13): that check asserted lualatex on PATH while the export command never passed `--pdf-engine` and thus ran pandoc's implicit pdflatex default — check and command were out of sync.
   See [[export-plugins-contract]]. No full probe run (would compile real documents); honest limit.
 
-**Ownership note (2026-06-13):** under the renderer-plugin model ([Renderer Plugin Architecture](renderer-plugin-architecture)), the renderer-specific checks above (`pandoc-executable`, `pandoc-invocation`, `export-plugins`, and the required-filter/template-existence checks) are **contributed by the active renderer/export plugins, not hardcoded in the app core**. The doctor is a single framework that runs the core checks (`config-exists`, `config-schema`, `config-values` for the core schema) and aggregates each enabled plugin's contributed checks — one battery, three consumers, but the renderer rows come from the plugin that owns them.
-The generic renderer plugin contributes no pandoc checks.
+**Ownership note (2026-06-13; corrected 2026-06-20):** under the pandoc-plugin model ([Renderer Plugin Architecture](renderer-plugin-architecture)), the renderer/output checks above (`pandoc-executable`, `pandoc-invocation`, `export-plugins`, and the required-filter/template-existence checks) are **contributed by the pandoc rendering/export plugins, not hardcoded in the app core**. The doctor is a single framework that runs the core checks (`config-exists`, `config-schema`, `config-values` for the core schema) and aggregates each enabled plugin's contributed checks — one battery, three consumers, but the pandoc rows come from the plugin that owns them.
+There is no generic renderer escape hatch that bypasses pandoc checks for product render/output modes.
 
 Consumers:
 

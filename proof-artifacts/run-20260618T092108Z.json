@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 12693,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\tilde{}\")"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\tilde{}\")"]
           }
         ]
       },

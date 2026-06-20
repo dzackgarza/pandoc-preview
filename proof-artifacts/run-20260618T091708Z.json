@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 11461,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\tilde{}\")"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\tilde{}\")"]
           }
         ]
       },
@@ -43,9 +41,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 12399,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\bar{p}\")"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\bar{p}\")"]
           }
         ]
       },

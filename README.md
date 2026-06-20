@@ -39,7 +39,7 @@ Run `just --list` for the other commands (release builds, etc.).
 
 ## Configuration
 
-The config lives at `${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`. It has no built-in defaults — the editor refuses to start until it is complete, which is what `just setup` produces. The renderer, export targets, linter, and search are plugins listed in that file; add or change them there.
+The config lives at `${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`. It has no built-in defaults — the editor refuses to start until it is complete, which is what `just setup` produces. The renderer, export targets, linter, and search are plugins listed in that file; add or change them there. Plugin configuration is owned by plugin-declared configuration commands; the app validates plugin config generically and does not render pandoc-specific settings pages.
 
 ## Pandoc assets
 

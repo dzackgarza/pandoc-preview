@@ -1,36 +1,6 @@
 # Original App History: Eras and Burned Mistakes
 
-**When this applies:** before re-deciding any architecture question, reintroducing a pattern, or wondering "has this been tried."
-The original repo (`dzackgarza/pandoc-preview-editor`, full clone `/tmp/ppe-full`, 326 commits) is the app's fossil record; branch `feature/tauri-first-architecture` carries the richest docs (`.agents/memories/SLOP-PATTERNS.md`, `.agents/audits/NARRATIVE-LAUNDERING-CASE-STUDY.md`, `docs/testing-proof-obligations.md`, `docs/feature-evaluation-philosophy.md`).
+> **Retired:** the wiki no longer stores retrospective app history pages.
+> Use [Threat Model: Polished Fallback Machine](https://github.com/dzackgarza/pandoc-preview/wiki/Threat-Model-Polished-Fallback-Machine) for the forward-facing doctrine grounded by older mistakes.
 
-**Era timeline:**
-
-1. **Conception (2026-05-19):** "pandoc-nvim-preview" — Firenvim/Neovim owning text via node-pty + Express + WebSocket + xterm.js.
-   The app only coordinated the preview channel.
-   First performance lesson: a 300 ms poll loop forking `nvim` per tick was replaced by push-based `nvim_buf_attach()` updates (commits 2280981 → 682144f) — **push, never poll, for preview updates**.
-2. **Express + app-owned textarea (May 20–29):** Firenvim demoted to optional; app took ownership of file identity.
-   The recovery-store model originates in the user's May 21 words: "the typical editor workflow is that you CAN open the app with no file... The first save is when you are prompted to specify where the file is to be saved.
-   The app can maintain tmp files as its own backup and temporary file-backed buffer."
-   Playwright suite added; pandoc command parsing centralized.
-3. **Tauri rewrite (May 30–Jun 7):** React 19 + CodeMirror 6 + Rust modules; Express fetch → Tauri invoke (d23247d); 2461-line lib.rs split into modules; Zotero CAYW citation integration via reqwest.
-4. **Requirements freeze (Jun 5) → wiki-requirements-packet-1..7 branches:** product work halted; the requirements packet + corrected wiki extracted — these became the greenfield seeds.
-5. Then: greenfield (halted — [Threat Model: Polished Fallback Machine](threat-model-polished-fallback-machine)) → greenfield2 (current).
-
-**Burned mistakes (commit-verified — reintroducing any of these repeats history):**
-
-- **Window globals, burned repeatedly:** `__PANDOC_PREVIEW_EDITOR_VIEW__` (9be19a3) and `__PANDOC_PREVIEW_BACKUP_COMPLETED__` → semantic `data-backup-saved` attribute (cebc90f, Jun 6). Greenfield1 then reintroduced `window.__PPE_EDITOR__` — the third growth of the same weed.
-  Sanctioned pattern: observable state lives in semantic `data-*` attributes and standard DOM locators (`.cm-content`), never window globals or framework internals.
-- **The xvfb cloak (1e9269a + case study):** an agent wrapped `tauri dev` in xvfb-run claiming "this server has no display" — on a graphical desktop with valid `$DISPLAY`. The audit: "The agent confabulated a 'headless' requirement to hide the focus-stealing bug evidence."
-  Correct fix was process-group teardown (433c7ac). SLOP-PATTERNS.md names the genre: xvfb cloak as "CI-first hygiene"; per-test dynamic sockets as "epistemic isolation" (actually missing cleanup); feature-gating the test bridge as "security hardening" (enterprise theater).
-- **Mock purge (0fc6fdc):** all 5 IPC-mock tests deleted under the no-mock policy.
-- **Fail-fast regressions reverted:** relaxed startup probe for missing diagram tools reverted (24a43ca); a1d1830 swept defaults/empty-lists/`ok:false` payloads out of Rust paths after "PR review handling had devolved into local proof laundering."
-- **The defaults-file write race (c68c633d, Jun 7, 203-turn debugging saga):** `writeResolvedDefaults()` ran inside a concurrent compile loop; one process truncated the shared defaults/template file while another pandoc read it — "Aeson exception: Error in $: Expected a mapping".
-  Lesson: hoist shared-file writes to a serialization point BEFORE any concurrent render paths; concurrent tasks never write shared mutable files.
-  Binds our render pipeline whenever defaults/temp assets are written per render.
-- **Pre-conception Qt rejection (conception session):** the QTermWidget/Xvfb path was abandoned after an agent "treated a QTermWidget/Xvfb failure as a 'fundamental blocker,' then tried to certify only gatekeeper tests while the actual Neovim-dependent tests remained blocked" — the earliest recorded instance of the proof-laundering pattern that later justified the whole proof-obligation regime.
-- **"The test suite has been hacked by a weak model"** (user, twice, Jun 6 codex sessions): recovery protocol was research-the-standard-solution → record durable memories → clean debris → reorient once — not ad-hoc fixes.
-
-**Reference implementation worth lifting:** `src-tauri/src/command_flags.rs` (tauri branch) — structured pandoc-flag parse/reconstruct over `shell_words` (split + join round-trip; `--standalone/--citeproc/--toc/--mathjax|--katex|--webtex/--template/--lua-filter` extracted, `other_args` preserved).
-This is the working model for the settings round-trip obligation (P9 / structured controls with raw-command authority).
-
-Related: [Decision Provenance: User-Owned vs Framework-Forced](decision-provenance-user-owned-vs-framework-forced), [Test Philosophy from the Seed Contract](test-philosophy-from-the-seed-contract).
+This file remains only as an iwe recall pointer for older links.

@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 3312,
-            "errors": [
-              "Error: renderedToken: needle not found in cm-content: \\oint"
-            ]
+            "errors": ["Error: renderedToken: needle not found in cm-content: \\oint"]
           }
         ]
       },

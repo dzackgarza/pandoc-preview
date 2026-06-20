@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 5711,
-            "errors": [
-              "Error: The bundle ships 1 dot-file / dot-prefixed path(s) arXiv would reject — the cleaner did not remove them. Found: arxiv-bundle/fig/.p126-dot.png."
-            ]
+            "errors": ["Error: The bundle ships 1 dot-file / dot-prefixed path(s) arXiv would reject — the cleaner did not remove them. Found: arxiv-bundle/fig/.p126-dot.png."]
           }
         ]
       },

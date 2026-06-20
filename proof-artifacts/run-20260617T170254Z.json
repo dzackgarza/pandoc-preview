@@ -31,9 +31,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 38443,
-            "errors": [
-              "TypeError: Cannot read properties of undefined (reading 'html')"
-            ]
+            "errors": ["TypeError: Cannot read properties of undefined (reading 'html')"]
           }
         ]
       },

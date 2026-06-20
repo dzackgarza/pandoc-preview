@@ -41,7 +41,7 @@ Quarto has no canonical sync (open feature request).
 **Recommended (staged, renderer-plugin-aware):**
 - **Stage 0** — proportional + `data-line` snap where present, a `programmaticScroll` timestamp guard, capture/restore `scrollTop` across re-renders, all height reads gated on `MathJax.startup.promise`. Works with `-f markdown`, **no exactness violation** — meets the primitive bar.
 - **Stage 1** (gated on the reader decision): **1a clean** = `commonmark_x+sourcepos` + the Lua filter + the VSCode algorithm + IntersectionObserver for the reverse direction; **1b exactness-preserving** = keep `-f markdown`, accept proportional-only as the ceiling.
-- Scroll-sync mapping is a **renderer-plugin concern** ([Renderer Plugin Architecture](renderer-plugin-architecture)): the app core consumes an OPTIONAL `data-line` contract and degrades to proportional when absent; a generic markdown-it renderer supplies its own line markers.
+- Scroll-sync mapping is a **pandoc-plugin concern** ([Renderer Plugin Architecture](renderer-plugin-architecture)): the app core consumes an OPTIONAL `data-line` contract and degrades to proportional when absent; line markers come from the selected pandoc reader/filter workflow, not a non-pandoc renderer.
 
 **Risks:** exactness violation (reader switch); MathJax timing (reading heights before typeset desyncs everything below the first math block); re-render churn (rebuild mappings/observers on render-complete, never memoize across renders — element identity is destroyed every render by design); filter ordering (existing tikz/callout Lua filters must tolerate/skip `sourcepos` Divs); YAML-frontmatter `sourcepos` line offset (pandoc issue #7863 — may need a correction offset).
 
