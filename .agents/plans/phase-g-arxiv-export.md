@@ -203,3 +203,13 @@ Phase G specifics:
   - **G4 SVG→PDF = `cairosvg` via `uvx --from cairosvg`** (inkscape/rsvg-convert/cairosvg are NOT installed as binaries; the uvx runner pathway provisions cairosvg without sudo — the same doctrine as the cleaner). Fail loud + name the offending file if a figure cannot be made compliant.
   - latexmk/pdflatex/bibtex/tar confirmed present. G3 tikz-externalization reuses tikzcd.lua's pdflatex compile core (PDF output into the bundle).
   - Order G1→G6, each blind-TDD via Workflow; full-suite gate before merge. Bundle proofs inspect the REAL tarball via independent tar/find/file/pdfinfo. Banned non-goals: hosted submission, in-browser TikZJax.
+
+- **2026-06-20: Phase G COMPLETE (G1–G6, P114–P119) on branch `phase-g-arxiv-export`** (blind-TDD via Workflow; three REJECT→remediation cycles):
+  - The arXiv target is ONE vendored `arxiv-export` firewall plugin (export.sh orchestrating script); app core unchanged.
+  - **G1/P114** flatten md→tex via pandoc + latexpand into one root .tex, materialize macros/.sty; self-contained compile under empty TEXMFHOME → witness PDF.
+  - **G2/P115** latexmk .bbl bake named to the main tex, delete .bib.
+  - **G3/P116** tikz externalized to precompiled PDF (reuses tikzcd.lua core), `\includegraphics`, no tikz source. REMEDIATED: the .bbl cleanup `-name '*.pdf' -delete` was nuking the externalized figures; scoped to root + exclude figures/; p124 strengthened to the cite+tikz interaction.
+  - **G4/P117** figure-format gate: SVG→PDF via cairosvg/uvx, every figure PDF/PNG/JPG by magic, loud-fail (no tarball) on a non-convertible figure.
+  - **G5/P118** the REAL arxiv_latex_cleaner via uvx strips comments/`\todo`/unused; loud-fail if unavailable. REMEDIATED: added a final dot-file compliance sweep (the cleaner can't remove a *referenced* dot-prefixed figure) — rename referenced dot-files + update refs, delete dot-junk; `find -name '.*'` empty.
+  - **G6/P119** capstone: 50 MB cap enforcement (real `du`, loud-fail + no tarball over-cap) + end-to-end integrity asserting EVERY arXiv hard requirement on the ONE real tarball (bbl+no-bib, no-aux, no-dot, figures-compliant, self-contained compile→witness PDF, <50MB).
+  - Tooling (no sudo): `arxiv_latex_cleaner` + `cairosvg` via uvx; latexmk/bibtex/tar present. Banned non-goals (hosted submission, in-browser TikZJax) honored.
