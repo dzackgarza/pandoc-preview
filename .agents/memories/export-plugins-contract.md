@@ -7,10 +7,10 @@ So "Export HTML"/"Export PDF" become sibling plugins in the vendored pandoc suit
 **The `[export.<id>]` app-config-table model described below is the CURRENT TRANSITIONAL implementation** (it kept exports working through Milestones A–C); migrating exports into the pandoc suite is the dedicated milestone that retires these tables.
 Until then, treat the drift risk as live and keep the shipped export commands close to the renderer's command.
 
-User-mandated design (2026-06-13, correcting an earlier too-narrow proposal): the ENTIRE export compilation command is user configuration.
-Export targets are plugins; the pandoc HTML/PDF invocations are merely the default plugins shipped with the app.
-Users may need custom filters, templates, flags, metadata, or an entirely different pipeline (latexmk, their own build script).
-Forcing an opinionated fixed command with a few knobs (e.g. only `pdf_engine`) is explicitly rejected.
+User-mandated design (2026-06-13, corrected 2026-06-20): the export command is user configuration inside the pandoc plugin suite.
+Export targets are plugins; HTML/PDF invocations are pandoc workflows shipped with the app.
+Users may need custom filters, templates, flags, metadata, or output commands, but the product render/output doctrine remains pandoc-only.
+Forcing an opinionated fixed command with a few knobs (e.g. only `pdf_engine`) is explicitly rejected; implementing non-pandoc conversion or latexmk orchestration in app code is also rejected.
 
 ## Config shape
 
@@ -35,7 +35,7 @@ command = [
 ```
 
 - `[export.<id>]` table; each entry is a plugin.
-  Arbitrary user-defined entries are first-class (e.g. a latexmk pipeline or a shell script).
+  User-defined entries are first-class when they route document conversion through the pandoc workflow owned by the plugin suite.
 - `command` is an argv array (never a shell string).
   `{input}` and `{output}` placeholders are substituted per-argument (substring substitution); validation requires both placeholders to appear somewhere in the argv, non-empty label, non-empty extension, argv length >= 1. Fail loudly otherwise.
 - Process runs with cwd = the source file's parent directory.

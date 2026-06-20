@@ -3,8 +3,8 @@
 **When this applies:** configuring the render pipeline, writing config examples/templates, provisioning test fixtures, or deciding where a document-semantics feature lives.
 Inventory verified against `~/.pandoc/filters/` 2026-06-13. A missing required filter is a fatal validation failure (within the pandoc renderer plugin), and test fixtures must provision real copies — never stubs.
 
-**These filters belong to the pandoc renderer plugin, not the app core.** Filters, their required set, and their install/management are owned by the pandoc renderer plugin ([Renderer Plugin Architecture](renderer-plugin-architecture)); the required ones surface on that plugin's config page as permanently-checked, un-uncheckable items with explanatory hover.
-The generic renderer plugin has no filters and no such validation.
+**These filters belong to the pandoc rendering plugin, not the app core.** Filters, their required set, and their install/management are owned by the pandoc rendering plugin ([Renderer Plugin Architecture](renderer-plugin-architecture)); the plugin's gum configuration flow locks in required filters and its doctor checks fail loud when they are missing.
+There is no non-pandoc renderer path that bypasses this doctrine.
 
 **Canonical filter location (user ruling, 2026-06-13): uniformize to `~/.pandoc/filters`.** All filters live there — the pandoc plugin's shipped filters are installed/managed INTO `~/.pandoc/filters`, and render commands, config examples, docs, and fixtures reference only that path.
 No app-internal/resource-bundle filter paths at render time, no second filter directory ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references)).
@@ -16,8 +16,8 @@ No app-internal/resource-bundle filter paths at render time, no second filter di
 - **`obsidian_callouts.lua`** — `[!TYPE]` blockquotes → `Div.callout[data-callout=type]`.
 - **`obsidian.lua`** — wikilink/`%%`-comment/tag handling for Obsidian-flavored sources (AST-based, per the no-regex rule).
 
-**PDF/export pipeline (required for the latexmk path):** `include.lua` (heading-shifted multi-file inclusion), `convert_amsthm_envs.lua` (LaTeX branch: real amsthm environments with `[title]` + `\label`), `select_images.lua`, with natbib/biblatex — the `compile-pandoc` recipe in the `~/.pandoc` justfile is the reference invocation.
-Note this is the EXPORT path (its own plugin surface), not preview render ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references)).
+**PDF/export workflow (required for pandoc PDF output):** `include.lua` (heading-shifted multi-file inclusion), `convert_amsthm_envs.lua` (LaTeX branch: real amsthm environments with `[title]` + `\label`), `select_images.lua`, with natbib/biblatex — the `compile-pandoc` recipe in the `~/.pandoc` justfile is a reference asset-repo workflow, not app-owned latexmk orchestration.
+Note this is the EXPORT path (its own pandoc plugin surface), not preview render ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references)).
 
 **Formatting pipeline (separate tool surface, NOT preview):** `normalize_displaymath.lua`, `normalize_fenced_divs.lua` (flowmark/format-markdown chain).
 

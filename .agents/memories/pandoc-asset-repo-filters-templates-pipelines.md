@@ -8,7 +8,8 @@ Audited 2026-06-13; it is a git repo with its own AGENTS.md/HANDOFF.md.
 **The canonical pipelines (justfile — "see the justfile in ~/.pandoc for ideas on what standard compilation pipelines look like" — user):**
 
 - `preview`: md → PDF live-reload via `entr` + zathura — the PDF half of the manual loop the app replaces.
-- `compile-pandoc`: **md → LaTeX → PDF via latexmk** with filters `include.lua`, `convert_amsthm_envs.lua`, `select_images.lua`, natbib/biblatex — THE reference implementation of the "most correct" references/crefs pipeline ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references)).
+- `compile-pandoc`: **asset-repo reference workflow** for md → LaTeX → PDF with filters `include.lua`, `convert_amsthm_envs.lua`, `select_images.lua`, natbib/biblatex.
+  It demonstrates the filter/template behavior the pandoc plugin must preserve; it is not app-owned latexmk orchestration ([Rendering Pipeline Requirements: Filters, MathJax, References](rendering-pipeline-requirements-filters-mathjax-references)).
 - `format-markdown`: flowmark --semantic; `render-figures` → `render_figures.py`.
 
 **Filter highlights (filters/):**
