@@ -358,7 +358,7 @@ fi
 # stay atomic and a real-directory user override is preserved. The
 # [plugin.<id>].command sections written above are validated against each
 # plugin's schema by the generic plugin-config check.
-for export_plugin in pandoc-html-export pandoc-pdf-export beamer-pdf-export arxiv-export; do
+for export_plugin in pandoc-html-export pandoc-pdf-export beamer-pdf-export latex-pdf-export tikz-pdf-export arxiv-export; do
     EXPORT_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/$export_plugin"
     if [ ! -d "$EXPORT_VENDOR" ]; then
         echo "FATAL: vendored export plugin missing: $EXPORT_VENDOR" >&2

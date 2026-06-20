@@ -1280,9 +1280,11 @@
     // Discovered export-category plugins (P66): one "Export: <name> (.<ext>)"
     // entry per plugin, name + extension sourced from the discovered manifest.
     // Export is entirely the pandoc plugin suite; the app core owns no export
-    // command knowledge. The plugin runs through the generic firewall.
-    for (const plugin of discoveredPlugins) {
-      if (plugin.category !== "export" || plugin.extension === null) continue;
+    // command knowledge. The plugin runs through the generic firewall. Only export
+    // targets that handle the open file's INPUT TYPE are offered (the discovery
+    // matrix: a beamer/latex-pdf export for a markdown/tex file respectively, never
+    // a latex export for a markdown buffer).
+    for (const plugin of exportPlugins()) {
       cmds.push({
         id: `export-plugin:${plugin.id}`,
         label: `Export: ${plugin.name} (.${plugin.extension})`,
@@ -1290,8 +1292,8 @@
       });
     }
     // H.3 (P122): ONE batch-export entry that loops the per-plugin export path
-    // over every discovered export-category plugin, writing N artifacts at once.
-    if (discoveredPlugins.some((p) => p.category === "export" && p.extension !== null)) {
+    // over every export target valid for the open file, writing N artifacts at once.
+    if (exportPlugins().length > 0) {
       cmds.push({
         id: "export:all",
         label: "Export: All Configured Targets",
@@ -2163,11 +2165,17 @@
     }
   }
 
-  /** The discovered export-category plugins with a declared output extension —
-   * the configured export targets the per-plugin export path (exportViaPlugin /
-   * runPluginToPath) runs ONE at a time. Batch export loops THESE. */
+  /** The discovered export-category plugins with a declared output extension that
+   * handle the OPEN file's input type — the configured export targets the
+   * per-plugin export path (exportViaPlugin / runPluginToPath) runs ONE at a time
+   * (the discovery matrix's export side). Batch export loops THESE. None when no
+   * file is open. */
   function exportPlugins(): PluginInfo[] {
-    return discoveredPlugins.filter((p) => p.category === "export" && p.extension !== null);
+    if (!currentFile) return [];
+    const type = inputTypeOf(currentFile);
+    return discoveredPlugins.filter(
+      (p) => p.category === "export" && p.extension !== null && p.inputs.includes(type),
+    );
   }
 
   /** H.3 BATCH / MULTI-FORMAT EXPORT (P122). ONE action exports the open buffer

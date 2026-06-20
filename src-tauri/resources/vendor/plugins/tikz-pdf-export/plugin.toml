@@ -1,0 +1,32 @@
+# TikZ → PDF export — the tikz file render's PDF output. The tikz preview compiles
+# a tikz file (wrapped in the user-owned standalone-tikz.tex template) to a PDF and
+# then to an SVG for the iframe; this export keeps the PDF (the QTikz "export figure
+# as PDF" model). A discovered export target (category "export", extension "pdf")
+# for the "tikz" input type; offered in the export menu only when a .tikz file is
+# open. Self-contained; build isolation via pdflatex's -output-directory into the
+# app-supplied {builddir}.
+#
+# Vendored shipped asset; first-run symlinks it into the plugins dir.
+id = "tikz-pdf-export"
+name = "TikZ Figure PDF"
+description = "Compiles a .tikz figure to a standalone PDF via the user-owned tikz template + pdflatex."
+category = "export"
+kind = "command"
+extension = "pdf"
+config_schema = "schema.json"
+# Only offered for .tikz files.
+inputs = ["tikz"]
+
+[exec]
+# The generic export firewall invokes: export.sh <file> <artifact> <builddir>.
+command = ["{plugin_dir}/export.sh", "{file}", "{artifact}", "{builddir}"]
+
+# The figure's look is governed by the user-owned template + styles tree (edited
+# directly), so the required [configure] table is a no-op.
+[configure]
+command = ["true"]
+
+[[doctor_checks]]
+id = "tikz-pdf-toolchain"
+description = "the tikz pdf export path resolves: pdflatex present and the user-owned standalone-tikz.tex template exists"
+command = ["{plugin_dir}/check-export.sh"]

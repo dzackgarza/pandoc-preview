@@ -313,6 +313,17 @@ UPDATE (2026-06-20) — full spec disposition so NO spec tests a removed mechani
 - **REPLACED:** P100 → **P128** authored as `tests/proof/p132-tikz-file-render.spec.ts` (+ provisioning: a real `figure.tikz` opened via the discovery matrix → inline SVG, raw source absent; verified provisioning + a real tikz→SVG render).
 - **REWORKED to the new model (no longer red):** `p108-watch-file-reload` (P98) → a generic markdown text-marker witness (the watch-reload is renderer-independent); `p121-slides-preview` → drives the shipped revealjs-renderer via the render-target selector (`setRenderTarget('revealjs-renderer', null)`) — verified the revealjs render.sh emits a real `.reveal > .slides > section` deck. The frontend inline figure-compile log (`tikzfigurelog.ts` + the TikZ Log tab) is removed.
 - **P93/P109 (source↔preview jump) — RETIRED as ill-conceived (not deferred).** The obligation assumes a source-line → rendered-SVG-element correspondence, but `pdf2svg` output carries NO per-node identity and procedural tikz (e.g. a loop drawing an N×N grid) has no 1:1 line↔element mapping at all — the feature is not well-defined. It was agent-invented. The entire scaffolding is DELETED: `tikzjump.ts`, the App.svelte jump handler + harness hooks, the EditorPane Ctrl+J/Ctrl+T keybindings + `ownedTikzEnvelopeText`/`refreshTikzModel`/`placeCursorOnTikzNodeLine`/`cursorTikzNodeName`/`__PPE_TIKZ_MODEL__`. (P90 parser + P97 subgraph copy, which share `parse_tikz`, are unaffected.)
+- **MATRIX COMPLETE (2026-06-20).** The (input × output) render matrix the user named —
+  `{md, tex, tikz} × {html, pdf}` — is filled and discovery-driven (bibtex is citation data,
+  not a render target). Cells: md→html (pandoc-renderer), md→pdf (pandoc-pdf-export /
+  latexmk-pdf-export), md→html-slides (revealjs-renderer), md→pdf-slides (beamer-pdf-export),
+  tex→html (latex-renderer), tex→pdf (latex-pdf-export), tikz→html/svg (tikz-renderer),
+  tikz→pdf (tikz-pdf-export). The export menu is filtered by the open file's input type
+  (`exportPlugins()` intersects `category=export` with `inputs ∋ inputTypeOf(file)`), so only
+  valid export targets are offered per file. All eight render/export plugins are doctor-clean
+  (hermetic `--doctor`: 30 OK, all passed); each new export verified by smoke test
+  (tex→19 KB PDF, tikz→6.5 KB PDF, beamer→6 KB PDF, tex→51 KB HTML).
+
 - **BUILT (2026-06-20, verified by smoke test + hermetic --doctor):** **P130 beamer** — the `beamer-pdf-export` plugin (`pandoc --to beamer --pdf-engine=lualatex` against pandoc's BUILT-IN beamer template — the shipped `beamer_template.latex` is machine-broken: it `\input`s a stale absolute path; a user-supplied beamer template is a future selector enhancement). A discovered export target ("Export: Beamer Slides (.pdf)"); md→beamer PDF verified (6 KB %PDF). **P131 `.tex` render input** — the `latex-renderer` plugin (`pandoc --from latex --to html5`, `inputs = ["latex"]`); opening a `.tex` file dispatches to it through the discovery matrix; .tex→HTML verified. `.bib` is NOT a render cell (citation data, already handled) — see the disposition note below.
 
 All reworked/authored specs are verified as far as possible without a display (provisioning boots doctor-clean, render.sh produces the asserted output); the full `just proof` E2E run still requires the GUI session.

@@ -1,0 +1,31 @@
+# LaTeX → PDF export — a .tex document is already a complete LaTeX source, so
+# tex→pdf is just compiling it: `latexmk -lualatex`. No pandoc step (unlike the
+# markdown pdf exports). A discovered export target (category "export", extension
+# "pdf") for the "latex" input type; it appears in the export menu only when a
+# .tex file is open. Self-contained; build isolation via latexmk's own
+# -output-directory into the app-supplied {builddir}.
+#
+# Vendored shipped asset; first-run symlinks it into the plugins dir.
+id = "latex-pdf-export"
+name = "LaTeX PDF"
+description = "Compiles a .tex document to PDF via latexmk -lualatex (no pandoc step)."
+category = "export"
+kind = "command"
+extension = "pdf"
+config_schema = "schema.json"
+# Only offered for .tex files.
+inputs = ["latex"]
+
+[exec]
+# The generic export firewall invokes: export.sh <file> <artifact> <builddir>.
+command = ["{plugin_dir}/export.sh", "{file}", "{artifact}", "{builddir}"]
+
+# No app-owned config (latexmk over the .tex is the whole pipeline); the required
+# [configure] table is a no-op.
+[configure]
+command = ["true"]
+
+[[doctor_checks]]
+id = "latex-pdf-toolchain"
+description = "the latex pdf export path resolves: latexmk + lualatex present"
+command = ["{plugin_dir}/check-export.sh"]

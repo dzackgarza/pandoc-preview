@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "tikz-pdf-export plugin config",
+  "description": "Self-contained: it wraps the .tikz source in the user-owned template and compiles to PDF with pdflatex. No config — an absent [plugin.tikz-pdf-export] section validates as the empty object.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {}
+}
