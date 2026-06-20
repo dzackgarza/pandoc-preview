@@ -18,6 +18,7 @@ description = "Renders markdown to a reveal.js slide deck via pandoc -t revealjs
 category = "renderer"
 kind = "command"
 config_schema = "schema.json"
+inputs = ["markdown", "latex"]
 
 [exec]
 # Render context placeholders ({base_dir}/{base_url}/{mathjax}) are available; the

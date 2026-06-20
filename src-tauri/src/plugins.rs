@@ -34,6 +34,11 @@ const PH_BASE_URL: &str = "{base_url}";
 const PH_MATHJAX: &str = "{mathjax}";
 const PH_BIBLIOGRAPHY: &str = "{bibliography}";
 const PH_CSL: &str = "{csl}";
+/// The user-SELECTED template the renderer wraps the buffer in (the open file's
+/// render target template, chosen from discovery; default = the renderer's shipped
+/// template). Forwarded as render context — the user's selection, NOT app-owned
+/// config injected as a source of truth (unlike the removed `[figures]` palette).
+const PH_TEMPLATE: &str = "{template}";
 
 /// Environment variable carrying the active plugin's `[plugin.<id>]` config as
 /// JSON, so a renderer/check script can read its own config (e.g. the pandoc
@@ -72,6 +77,14 @@ pub struct PluginManifest {
     /// Path (relative to the plugin dir) of the JSON Schema for this plugin's
     /// `[plugin.<id>]` config section.
     pub config_schema: String,
+    /// Input file types this plugin renders, e.g. `["markdown"]`, `["tikz"]`,
+    /// `["markdown", "latex"]`. The app builds the (input type → render target)
+    /// matrix from discovery: a plugin is a candidate render/export target for an
+    /// open file ONLY if its `inputs` contains that file's type. Empty for
+    /// non-render plugins (lint, search, configure-only) — a legitimate state, not
+    /// a default value.
+    #[serde(default)]
+    pub inputs: Vec<String>,
     /// Doctor checks this plugin contributes to the battery. May be empty.
     #[serde(default)]
     pub doctor_checks: Vec<DoctorCheck>,
@@ -124,6 +137,10 @@ pub struct PluginInfo {
     pub name: String,
     pub category: String,
     pub extension: Option<String>,
+    /// Input file types this plugin renders (from the manifest `inputs`). The
+    /// webview builds the (open file type → candidate render targets) matrix from
+    /// this across all discovered plugins.
+    pub inputs: Vec<String>,
 }
 
 /// One doctor-battery row contributed by a plugin (the config-schema check or a
@@ -643,6 +660,7 @@ fn list_plugins_sync() -> Result<Vec<PluginInfo>> {
             name: p.manifest.name,
             category: p.manifest.category,
             extension: p.manifest.extension,
+            inputs: p.manifest.inputs,
         })
         .collect())
 }
@@ -683,36 +701,17 @@ fn render_log(program: &str, args: &[String], output: &std::process::Output) -> 
     log
 }
 
-/// Render the editor buffer to preview HTML through the ACTIVE renderer plugin.
-/// The app core owns no renderer knowledge: it loads `[renderer].active`, finds
-/// that renderer plugin, supplies the render context as `{base_dir}`/`{base_url}`/
-/// `{mathjax}`/`{bibliography}`/`{csl}` placeholders and the plugin's own config on `PPE_PLUGIN_CONFIG`,
-/// feeds the buffer on stdin, and takes stdout as the standalone HTML. A missing
-/// `[renderer]` (no active renderer) or unknown renderer id is a loud error.
-pub fn render_active(
-    buffer: String,
-    base_dir: String,
-    base_url: String,
-    mathjax_url: String,
-) -> Result<RenderOutcome> {
-    let cfg = config::load()?;
-    let renderer_cfg = cfg.renderer.as_ref().ok_or_else(|| {
-        Error::InvalidArgument("no [renderer] is configured (no active renderer)".into())
-    })?;
-    let renderer_id = renderer_cfg.active.clone();
-    render_named(renderer_id, buffer, base_dir, base_url, mathjax_url)
-}
-
 /// Render the editor buffer to preview HTML through a SPECIFIC renderer plugin,
-/// named by id. This is the shared body the active-renderer HTML preview and the
-/// Phase F / F6 / P113 slides fast-feedback preview both run: the slides preview
-/// names the `revealjs-renderer` plugin (`pandoc --to revealjs`, the sibling of
-/// the active html5 renderer), so editing re-renders a reveal.js DECK into the
-/// SAME preview iframe on idle through the SAME plugin firewall. The renderer
-/// plugin carries ALL writer knowledge; the core only forwards the render
-/// context and the plugin's own config. An unknown renderer id is a loud error.
+/// named by id, wrapping the buffer in a SELECTED template. The frontend resolves
+/// both from plugin discovery (the open file's input type → a candidate render
+/// target, defaulting to `[renderer].active`; the user may select another target,
+/// e.g. the slides renderer) and the user's template choice (default = the
+/// renderer's shipped template). The renderer plugin carries ALL writer knowledge;
+/// the core only forwards the render context, the selected template, and the
+/// plugin's own config. An unknown renderer id is a loud error.
 pub fn render_named(
     renderer_id: String,
+    template: String,
     buffer: String,
     base_dir: String,
     base_url: String,
@@ -756,6 +755,9 @@ pub fn render_named(
             cfg.editor.bibliography.path().display().to_string(),
         ),
         (PH_CSL, cfg.editor.csl.path().display().to_string()),
+        // The user-selected template the renderer wraps the buffer in (render
+        // context, forwarded — the renderer's command takes --template={template}).
+        (PH_TEMPLATE, template),
     ];
     let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
     let argv: Vec<String> = plugin

@@ -27,6 +27,8 @@ extension = "html"
 # JSON Schema (draft 2020-12) for this plugin's [plugin.pandoc-html-export]
 # config section. Referenced, not inlined.
 config_schema = "schema.json"
+# Input file types this export target handles (the render-matrix `inputs`).
+inputs = ["markdown"]
 
 [exec]
 # argv with per-element placeholder substitution: {plugin_dir} = this plugin's

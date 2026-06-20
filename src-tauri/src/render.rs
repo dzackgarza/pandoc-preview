@@ -14,6 +14,8 @@ pub struct RenderResult {
 }
 
 fn render_sync(
+    renderer_id: String,
+    template: String,
     source: String,
     base_dir: String,
     base_url: String,
@@ -30,11 +32,22 @@ fn render_sync(
         ));
     }
 
-    // The app core owns NO renderer knowledge: delegate buffer->HTML to the
-    // active renderer plugin (renderer-plugin-architecture.md). The render context
-    // (base_dir/base_url/mathjax) is supplied to the plugin; the plugin (pandoc,
-    // generic, …) builds and runs whatever it needs.
-    let outcome = crate::plugins::render_active(source, base_dir, base_url, mathjax_url)?;
+    // The app core owns NO renderer-id and NO template knowledge: the frontend
+    // resolves WHICH renderer plugin and WHICH template from plugin DISCOVERY (the
+    // open file's input type → a candidate render target, defaulting to the
+    // configured active renderer; the user may select another target, e.g. slides)
+    // and passes them here. The core forwards the render context
+    // (base_dir/base_url/mathjax) and the selected template; the plugin (pandoc,
+    // tikz, revealjs, …) builds and runs whatever it needs. One render path for
+    // every input type and every renderer — no hardcoded plugin ids.
+    let outcome = crate::plugins::render_named(
+        renderer_id,
+        template,
+        source,
+        base_dir,
+        base_url,
+        mathjax_url,
+    )?;
     Ok(RenderResult {
         ok: outcome.ok,
         html: outcome.html,
@@ -42,143 +55,25 @@ fn render_sync(
     })
 }
 
+/// Render the editor buffer to preview HTML through a renderer plugin the frontend
+/// selected from discovery. `renderer_id` is the chosen render target's plugin
+/// (the open file's input type → a candidate renderer, defaulting to the configured
+/// active renderer; the user may pick another, e.g. the slides renderer);
+/// `template` is the user-selected template the plugin wraps the buffer in (default
+/// = the renderer's shipped template). This single command replaces the former
+/// per-mode render_preview/render_slides/render_tikz: the core holds no plugin ids.
 #[tauri::command]
-pub async fn render_preview(
+pub async fn render(
+    renderer_id: String,
+    template: String,
     source: String,
     base_dir: String,
     base_url: String,
     mathjax_url: String,
 ) -> Result<RenderResult> {
     tauri::async_runtime::spawn_blocking(move || {
-        render_sync(source, base_dir, base_url, mathjax_url)
+        render_sync(renderer_id, template, source, base_dir, base_url, mathjax_url)
     })
     .await
     .expect("render task panicked")
-}
-
-/// The renderer plugin id for the Phase F / F6 / P113 slides fast-feedback
-/// preview: the `revealjs-renderer` plugin (`pandoc --to revealjs`, the sibling
-/// of the active html5 renderer). The app core names WHICH renderer plugin
-/// produces slides; the plugin carries the writer command. Editing re-renders the
-/// reveal.js DECK through this plugin into the SAME preview iframe on idle (the
-/// fast HTML path), distinct from a beamer->PDF compile.
-const SLIDES_RENDERER_ID: &str = "revealjs-renderer";
-
-fn render_slides_sync(
-    source: String,
-    base_dir: String,
-    base_url: String,
-    mathjax_url: String,
-) -> Result<RenderResult> {
-    if !PathBuf::from(&base_dir).is_dir() {
-        return Err(Error::InvalidArgument(format!(
-            "base_dir {base_dir} is not a directory"
-        )));
-    }
-    if mathjax_url.trim().is_empty() {
-        return Err(Error::InvalidArgument(
-            "mathjax_url must not be empty (the local MathJax asset URL)".into(),
-        ));
-    }
-
-    // The slides deck is produced by the revealjs-renderer plugin (pandoc's own
-    // revealjs writer) — the renderer-plugin sibling of the active html5 renderer.
-    // The core owns NO slide-renderer knowledge: it names the plugin and forwards
-    // the SAME render context the HTML preview uses.
-    let outcome = crate::plugins::render_named(
-        SLIDES_RENDERER_ID.to_string(),
-        source,
-        base_dir,
-        base_url,
-        mathjax_url,
-    )?;
-    Ok(RenderResult {
-        ok: outcome.ok,
-        html: outcome.html,
-        log: outcome.log,
-    })
-}
-
-/// Render the editor buffer to a reveal.js slide DECK through the slides renderer
-/// plugin (Phase F / F6 / P113). The sibling of `render_preview`: same render
-/// context, same plugin firewall, but the `revealjs-renderer` plugin (pandoc
-/// `--to revealjs`) instead of the active html5 renderer. The deck HTML paints
-/// into the SAME preview iframe; editing re-renders it on idle (the fast path).
-#[tauri::command]
-pub async fn render_slides(
-    source: String,
-    base_dir: String,
-    base_url: String,
-    mathjax_url: String,
-) -> Result<RenderResult> {
-    tauri::async_runtime::spawn_blocking(move || {
-        render_slides_sync(source, base_dir, base_url, mathjax_url)
-    })
-    .await
-    .expect("slides render task panicked")
-}
-
-/// The renderer plugin id for the tikz FILE render mode: the `tikz-renderer`
-/// plugin (pandoc/latex against the user-owned `standalone-tikz.tex` template, the
-/// sibling of the active html5 renderer). A tikz file is the SAME render primitive
-/// as markdown — one render against a template — only the template differs. The
-/// app core names WHICH renderer plugin renders a tikz file; the plugin owns the
-/// template wrap + the pdflatex→pdf2svg compile and returns the SVG-bearing HTML
-/// into the SAME preview iframe.
-const TIKZ_RENDERER_ID: &str = "tikz-renderer";
-
-fn render_tikz_sync(
-    source: String,
-    base_dir: String,
-    base_url: String,
-    mathjax_url: String,
-) -> Result<RenderResult> {
-    if !PathBuf::from(&base_dir).is_dir() {
-        return Err(Error::InvalidArgument(format!(
-            "base_dir {base_dir} is not a directory"
-        )));
-    }
-    if mathjax_url.trim().is_empty() {
-        return Err(Error::InvalidArgument(
-            "mathjax_url must not be empty (the local MathJax asset URL)".into(),
-        ));
-    }
-
-    // The tikz file is rendered by the tikz-renderer plugin (the user-owned
-    // standalone-tikz.tex template + pdflatex→pdf2svg). The core owns NO tikz
-    // knowledge: it names the plugin and forwards the SAME render context the HTML
-    // preview uses (the plugin uses only the buffer + base_dir).
-    let outcome = crate::plugins::render_named(
-        TIKZ_RENDERER_ID.to_string(),
-        source,
-        base_dir,
-        base_url,
-        mathjax_url,
-    )?;
-    Ok(RenderResult {
-        ok: outcome.ok,
-        html: outcome.html,
-        log: outcome.log,
-    })
-}
-
-/// Render a tikz FILE buffer to a standalone preview figure (an inline SVG) through
-/// the tikz renderer plugin. The sibling of `render_preview`: same render context,
-/// same plugin firewall, but the `tikz-renderer` plugin (the user-owned
-/// `standalone-tikz.tex` template, compiled pdflatex→pdf2svg) instead of the active
-/// html5 renderer. The frontend calls this instead of `render_preview` when the
-/// open file is a tikz file. The SVG-bearing HTML paints into the SAME preview
-/// iframe; editing re-renders it on idle, exactly as markdown does.
-#[tauri::command]
-pub async fn render_tikz(
-    source: String,
-    base_dir: String,
-    base_url: String,
-    mathjax_url: String,
-) -> Result<RenderResult> {
-    tauri::async_runtime::spawn_blocking(move || {
-        render_tikz_sync(source, base_dir, base_url, mathjax_url)
-    })
-    .await
-    .expect("tikz render task panicked")
 }

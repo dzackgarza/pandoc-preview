@@ -162,40 +162,31 @@ export const renamePath = (from: string, to: string) =>
   invoke<void>("rename_path", { from, to });
 export const deletePath = (path: string) => invoke<void>("delete_path", { path });
 
-export const renderPreview = (
-  source: string,
-  baseDir: string,
-  baseUrl: string,
-  mathjaxUrl: string,
-) => invoke<RenderResult>("render_preview", { source, baseDir, baseUrl, mathjaxUrl });
-
 /**
- * Render the editor buffer to a reveal.js slide DECK through the slides renderer
- * plugin (Phase F / F6 / P113) — the sibling of renderPreview. The deck HTML
- * paints into the SAME preview iframe; the slides compile-on-idle scheduler
- * re-renders it on idle (the fast HTML path).
+ * Render the editor buffer to preview HTML through a renderer plugin the frontend
+ * selected from discovery. The ONE render path for every input type and renderer:
+ * `rendererId` is the chosen render target's plugin (the open file's input type → a
+ * candidate renderer, defaulting to the configured active renderer; the user may
+ * pick another, e.g. the slides renderer); `template` is the user-selected template
+ * the plugin wraps the buffer in (default = the renderer's shipped template). The
+ * output HTML paints into the preview iframe; editing re-renders on idle.
  */
-export const renderSlides = (
+export const render = (
+  rendererId: string,
+  template: string,
   source: string,
   baseDir: string,
   baseUrl: string,
   mathjaxUrl: string,
-) => invoke<RenderResult>("render_slides", { source, baseDir, baseUrl, mathjaxUrl });
-
-/**
- * Render a tikz FILE buffer to a standalone preview figure (an inline SVG) through
- * the tikz-renderer plugin — the sibling of renderPreview. A tikz file is the same
- * render primitive as markdown, only with a different (user-owned) template. The
- * SVG-bearing HTML paints into the SAME preview iframe; editing re-renders it on
- * idle. The frontend calls this instead of renderPreview when the open file is a
- * tikz file.
- */
-export const renderTikz = (
-  source: string,
-  baseDir: string,
-  baseUrl: string,
-  mathjaxUrl: string,
-) => invoke<RenderResult>("render_tikz", { source, baseDir, baseUrl, mathjaxUrl });
+) =>
+  invoke<RenderResult>("render", {
+    rendererId,
+    template,
+    source,
+    baseDir,
+    baseUrl,
+    mathjaxUrl,
+  });
 
 /** Run a discovered plugin by id against the real open buffer (Milestone A). */
 export const runPlugin = (

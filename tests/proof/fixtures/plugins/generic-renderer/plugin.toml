@@ -14,6 +14,7 @@ kind = "command"
 # The generic renderer has no app-exposed config beyond its own script; its config
 # section is an empty object (no required keys).
 config_schema = "schema.json"
+inputs = ["markdown"]
 
 [exec]
 # Render context placeholders ({base_dir}/{base_url}/{mathjax}) are available but

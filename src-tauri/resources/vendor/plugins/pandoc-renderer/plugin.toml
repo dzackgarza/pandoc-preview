@@ -17,6 +17,9 @@ description = "Renders markdown to preview HTML via pandoc; the shipped default 
 category = "renderer"
 kind = "command"
 config_schema = "schema.json"
+# Input file types this renderer handles. The app builds the (open file → render
+# target) matrix from discovery; this renderer is a candidate for markdown files.
+inputs = ["markdown"]
 
 [exec]
 # Render context on argv; the markdown buffer arrives on stdin; HTML on stdout.

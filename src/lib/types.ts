@@ -117,21 +117,6 @@ export interface Config {
     styles: ExistingDir;
     figures: ExistingDir;
   };
-  // The shared figure palette (Phase D / D-2 / P91): the ONE `.tikzstyles` style
-  // file and ONE `.tikzdefs` preamble every compiled figure `\input`s. Each is an
-  // ExistingFile — Rust's config loader validates the path exists and is a file at
-  // load time (Figures in config.rs), failing loud otherwise. The renderer
-  // forwards them as render context the figure compile `\input`s.
-  figures: {
-    tikzstyles: ExistingFile;
-    tikzdefs: ExistingFile;
-    // The per-figure preamble template (Phase D / D-3 / P92): the standalone
-    // LaTeX document the figure compile wraps each tikz body in, carrying the
-    // QTikz `<>` marker where the figure source is substituted. An ExistingFile —
-    // Rust validates the path at load (Figures in config.rs), failing loud
-    // otherwise. The renderer forwards it as the {figure_template} render context.
-    template: ExistingFile;
-  };
   // Plugin firewall + active renderer (Milestone A/B). Optional; absent when the
   // config declares no plugins/renderer. The UI does not edit these (they round-
   // trip verbatim through save), so per-plugin config is left opaque.
@@ -163,6 +148,11 @@ export interface PluginInfo {
   name: string;
   category: string;
   extension: string | null;
+  /** Input file types this plugin renders (manifest `inputs`), e.g.
+   * ["markdown"], ["tikz"], ["markdown", "latex"]. The render dispatch builds the
+   * (open file type → candidate render targets) matrix from this. Empty for
+   * non-render plugins (lint, search). */
+  inputs: string[];
 }
 
 /** Structured result of running a generic plugin by id (Milestone A). Mirrors

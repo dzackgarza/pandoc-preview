@@ -270,16 +270,6 @@
     if (activeTab === "preview" || activeTab === "pdf") previewSurface = activeTab;
   });
 
-  // Phase F / F6 / P113 — the slides fast-feedback preview mode. When active the
-  // SAME HTML-preview iframe shows a reveal.js DECK instead of the html5 render:
-  // the compile-on-idle scheduler (scheduleRender/doRender) routes the buffer
-  // through the revealjs-renderer plugin (pandoc --to revealjs, the sibling of the
-  // active html5 renderer) rather than the active renderer. The deck is HTML, so
-  // it paints into the existing preview iframe; editing re-renders the deck on idle
-  // (the fast path), distinct from a beamer->PDF compile. The slides renderer
-  // plugin carries ALL writer knowledge — the core only chooses which render IPC
-  // (api.renderSlides vs api.renderPreview) the SAME scheduler drives.
-  let slidesMode = $state(false);
 
   // ---- PDF compile-on-idle scheduler (Phase F / F1 / P107) ----------------
   //
@@ -379,10 +369,39 @@
 
   const fileName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
   const dirOf = (path: string) => path.slice(0, path.lastIndexOf("/"));
-  // A tikz file renders via the one render primitive with the tikz template (the
-  // tikz-renderer plugin) instead of the active html5 renderer — the same way a
-  // markdown file renders via the preview template. Detected by extension.
-  const isTikzFile = (path: string) => path.endsWith(".tikz");
+  // The open file's INPUT TYPE name (matching a plugin manifest's `inputs`), by
+  // extension. This is the only file-type knowledge the app owns; which renderer
+  // and template handle the type comes from plugin discovery.
+  const inputTypeOf = (path: string): string => {
+    if (path.endsWith(".tikz")) return "tikz";
+    if (path.endsWith(".tex")) return "latex";
+    if (path.endsWith(".bib")) return "bibtex";
+    return "markdown";
+  };
+
+  // Resolve the render target (renderer plugin + template) for the current file's
+  // live HTML preview from DISCOVERY: the candidates are the discovered renderer
+  // plugins whose `inputs` include the file's type; the default is the configured
+  // active renderer when it qualifies, else the first candidate. (WS3 adds a UI
+  // selector that overrides this and a template; for now template = "" means the
+  // renderer's shipped default template.) Fails loud if no renderer handles the
+  // type — never a silent wrong-renderer fallback.
+  const resolveRenderTarget = (
+    path: string,
+  ): { rendererId: string; template: string } => {
+    const type = inputTypeOf(path);
+    const candidates = discoveredPlugins.filter(
+      (p) => p.category === "renderer" && p.inputs.includes(type),
+    );
+    const active = config?.renderer?.active;
+    const chosen = candidates.find((p) => p.id === active) ?? candidates[0];
+    if (!chosen) {
+      throw new Error(
+        `no renderer plugin handles input type "${type}" for ${path}`,
+      );
+    }
+    return { rendererId: chosen.id, template: "" };
+  };
 
   onMount(async () => {
     // The startup gate (the Rust doctor battery) has already proven the config
@@ -862,7 +881,7 @@
         // renderStatus()); pdfPreviewArtifact is the on-disk path of the PDF the
         // scheduler produced (the artifact runPluginToPath returned), or null
         // until a compile succeeds — NEVER a stale path after a failed compile.
-        setPreviewMode: (mode: "preview" | "pdf" | "slides") => {
+        setPreviewMode: (mode: "preview" | "pdf") => {
           setPreviewMode(mode);
         },
         // Phase H / H.2 / P121: the three-way view-mode toggle. setViewMode runs
@@ -1395,18 +1414,16 @@
     setStatus("rendering");
     const baseDir = dirOf(currentFile);
     try {
-      // The SAME scheduler drives every render mode, each a render against a
-      // different template through the SAME plugin firewall: a tikz file renders
-      // via the tikz-renderer plugin (the user-owned standalone-tikz.tex template,
-      // compiled to an inline SVG); slides mode via the slides renderer plugin
-      // (pandoc --to revealjs); otherwise the active html5 renderer. The output
-      // always lands in `html` and re-renders on idle as the buffer changes.
-      const render = isTikzFile(currentFile)
-        ? api.renderTikz
-        : slidesMode
-          ? api.renderSlides
-          : api.renderPreview;
-      const res = await render(
+      // The SAME scheduler drives every render: one path, the render target
+      // (renderer plugin + template) resolved from plugin DISCOVERY by the open
+      // file's input type — a tikz file → the tikz renderer (its template wraps the
+      // source into an inline SVG), markdown → the active html5 renderer, and (once
+      // selected) slides → the revealjs renderer. The core holds no plugin ids. The
+      // output always lands in `html` and re-renders on idle as the buffer changes.
+      const target = resolveRenderTarget(currentFile);
+      const res = await api.render(
+        target.rendererId,
+        target.template,
         content,
         baseDir,
         convertFileSrc(baseDir) + "/",
@@ -1558,29 +1575,9 @@
   // Switch the preview pane to the PDF mode and kick the compile-on-idle
   // scheduler. The menu/command-palette PDF-preview action and the E2E harness
   // both route through here.
-  function setPreviewMode(mode: "preview" | "pdf" | "slides") {
-    // Phase F / F6 / P113: "slides" shows a reveal.js DECK in the SAME preview
-    // iframe (activeTab = "preview"), produced by the slides renderer plugin via
-    // the SAME compile-on-idle scheduler. slidesMode flips the render IPC the
-    // scheduler drives; leaving slides mode (mode "preview"/"pdf") restores the
-    // html5 render. The decisive observable is the deck re-rendered into the iframe.
-    if (mode === "slides") {
-      slidesMode = true;
-      activeTab = "preview";
-      if (currentFile) doRenderNow();
-      return;
-    }
-    slidesMode = false;
+  function setPreviewMode(mode: "preview" | "pdf") {
     activeTab = mode;
     if (mode === "pdf") schedulePdf();
-  }
-
-  // Render the current buffer through the active render path NOW (no debounce), so
-  // switching INTO slides mode paints the deck immediately rather than only on the
-  // next edit. Subsequent edits re-render through the SAME scheduleRender debounce.
-  function doRenderNow() {
-    if (!currentFile) return;
-    void doRender(editor.getContent());
   }
 
   // ---- source↔preview line jump for owned tikz (P109 / D-4) ---------------
