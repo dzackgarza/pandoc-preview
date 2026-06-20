@@ -70,6 +70,12 @@ export interface Config {
     // opens in and persists. Required; the canonical config bakes "split". An
     // unknown variant is a hard load error in config.rs (no runtime default).
     view_mode: ViewMode;
+    // P123 (Phase H / H.4) — words-per-minute the status cluster's reading-time
+    // metric divides the live word count by. The metric is a DERIVED
+    // ceil(wordCount / reading_wpm) over the SAME word count the status bar
+    // already shows (no new scan). Required; range-validated and round-tripped in
+    // config.rs (the P9 class) — an out-of-range or missing value is a hard error.
+    reading_wpm: number;
   };
   preview: {
     debounce_ms: number;

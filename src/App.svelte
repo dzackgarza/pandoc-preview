@@ -2747,6 +2747,7 @@
       {projectRoot}
       {dirty}
       {wordCount}
+      readingWpm={config.editor.reading_wpm}
       {cursorLine}
       {cursorCol}
       {repoState}

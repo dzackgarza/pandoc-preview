@@ -184,6 +184,14 @@ bibliography = "$BIBLIOGRAPHY"
 # The CSL citation style the preview formats citations with (layered onto pandoc
 # as --csl from this value). Required; load-validated as an existing file.
 csl = "$CSL"
+# Phase H / H.2 / P121 — the three-way editor|preview view mode the layout opens
+# in and persists: "split" shows both panes, "editor"/"preview" show only one.
+# Required; an unknown variant is a hard load error.
+view_mode = "split"
+# Phase H / H.4 / P123 — words-per-minute the status bar's reading-time metric
+# divides the live word count by (ceil(words / reading_wpm)). Required;
+# range-validated (1–2000).
+reading_wpm = 200
 
 [preview]
 # Editor idle time in ms before the preview re-renders (0–10000).

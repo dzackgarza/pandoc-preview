@@ -210,6 +210,7 @@ line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 view_mode = "split"
+reading_wpm = 200
 
 [preview]
 debounce_ms = 200
@@ -344,6 +345,7 @@ line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 view_mode = "split"
+reading_wpm = 200
 
 [preview]
 debounce_ms = 200
@@ -407,6 +409,7 @@ line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 view_mode = "split"
+reading_wpm = 200
 
 [preview]
 debounce_ms = 200
@@ -506,7 +509,24 @@ else
     PREVIEW_PDF_COMPILE_SPEED="fast"
     PREVIEW_PDF_FAST_COMMAND="pandoc-pdf-export"
     PREVIEW_PDF_FULL_COMMAND="latexmk-pdf-export"
+    # Phase H / H.4 / P123 — words-per-minute the status bar's reading-time metric
+    # divides the live word count by (ceil(words / reading_wpm)). The canonical
+    # opinionated value is 200; p129 overrides it to a DISTINCTIVE, non-round 137 so
+    # ceil(words/137) cannot coincide with the value a hardcoded default (e.g. 200)
+    # would yield — a dead/hardcoded metric fails the spec's equality.
+    EDITOR_READING_WPM=200
     case "$SPEC" in
+    p129-reading-time.spec.ts)
+        # P123 (Phase H / H.4): the status bar's reading-time metric is DERIVED as
+        # ceil(words / reading_wpm) over the SAME word count the bar already shows,
+        # where reading_wpm is config-owned ([editor].reading_wpm). Provision a
+        # DISTINCTIVE, non-round 137 so the spec's ceil(words/137) equality cannot
+        # coincide with a hardcoded default (e.g. 200) — a dead/hardcoded metric
+        # fails it, and the same buffer against a different reading_wpm would show a
+        # different reading time (the "different config → different result" the
+        # obligation names).
+        EDITOR_READING_WPM=137
+        ;;
     p52-snippet-dictionary.spec.ts | p59-snippet-dropdown.spec.ts | p63-insertion-bar-controls.spec.ts)
         # P52 (autocomplete-popup path) and P59 (insertion-bar dropdown path) both
         # declare the snippet dictionary by a CONFIG-OWNED path. They share the
@@ -781,6 +801,7 @@ line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 view_mode = "split"
+reading_wpm = $EDITOR_READING_WPM
 $EDITOR_EXTRA
 
 [preview]

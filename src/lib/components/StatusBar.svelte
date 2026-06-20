@@ -6,6 +6,7 @@
     projectRoot,
     dirty,
     wordCount,
+    readingWpm,
     cursorLine,
     cursorCol,
     repoState,
@@ -16,12 +17,21 @@
     projectRoot: string | null;
     dirty: boolean;
     wordCount: number;
+    readingWpm: number;
     cursorLine: number;
     cursorCol: number;
     repoState: RepoState | null;
     onRepoInit: () => void;
     onRepoTrack: () => void;
   } = $props();
+
+  // P123 (Phase H / H.4) — reading-time metric DERIVED from the SAME live word
+  // count the status bar already shows: ceil(wordCount / reading_wpm), no new
+  // buffer scan and no new state. reading_wpm is config-owned (config.rs Editor,
+  // range-validated and round-tripped — the P9 class), so a different configured
+  // speed yields a different reading time. Rendered as a sibling span to the word
+  // count below.
+  const readingMinutes = $derived(Math.ceil(wordCount / readingWpm));
 
   const displayPath = $derived(
     filePath && projectRoot && filePath.startsWith(projectRoot)
@@ -87,5 +97,6 @@
   {#if filePath}
     <span>Ln {cursorLine}, Col {cursorCol}</span>
     <span>{wordCount} words</span>
+    <span>{readingMinutes} min read</span>
   {/if}
 </div>

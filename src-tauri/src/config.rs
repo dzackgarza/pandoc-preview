@@ -245,6 +245,15 @@ pub struct Editor {
     /// config omitting it is a hard load error and an unknown variant is a LOUD
     /// deserialize error (no runtime default, no silent coercion).
     pub view_mode: ViewMode,
+    /// Phase H / H.4 / P123 — words-per-minute the status cluster's reading-time
+    /// metric divides the live word count by. The metric is a DERIVED
+    /// `ceil(wordCount / reading_wpm)` over the SAME word count the status bar
+    /// already shows (no new buffer scan, no new state). Range-validated in
+    /// `validate()` like `font_size`/`debounce_ms` and round-tripped by
+    /// `save_config` (the P9 class). Required: the canonical config bakes the
+    /// opinionated value; a config omitting it is a hard load error (no runtime
+    /// default), and an out-of-range value fails loudly.
+    pub reading_wpm: u32,
 }
 
 /// The three-way editor|preview view mode (P121). `Split` shows both panes;
@@ -314,6 +323,11 @@ pub const FONT_SIZE_MAX: u32 = 48;
 /// Inclusive preview debounce range, in ms.
 pub const DEBOUNCE_MS_MIN: u32 = 0;
 pub const DEBOUNCE_MS_MAX: u32 = 10_000;
+/// Inclusive reading-speed range, in words per minute (P123). A 0 wpm would make
+/// the derived `ceil(words / wpm)` reading-time metric divide by zero; the upper
+/// bound keeps the configured speed in a sane human range.
+pub const READING_WPM_MIN: u32 = 1;
+pub const READING_WPM_MAX: u32 = 2_000;
 
 /// The single source of truth for the config-values invariants. Both the
 /// settings save path (`save_config`) and the doctor's `config-values` check
@@ -330,6 +344,12 @@ pub fn validate(config: &Config) -> Result<()> {
     if dbg > DEBOUNCE_MS_MAX {
         return Err(Error::InvalidArgument(format!(
             "preview.debounce_ms must be between {DEBOUNCE_MS_MIN} and {DEBOUNCE_MS_MAX}, got {dbg}"
+        )));
+    }
+    let wpm = config.editor.reading_wpm;
+    if wpm < READING_WPM_MIN || wpm > READING_WPM_MAX {
+        return Err(Error::InvalidArgument(format!(
+            "editor.reading_wpm must be between {READING_WPM_MIN} and {READING_WPM_MAX}, got {wpm}"
         )));
     }
     // P110: the FAST/FULL selectors name discovered PDF-command plugin ids; an empty

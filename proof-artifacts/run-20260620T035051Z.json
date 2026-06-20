@@ -1,0 +1,59 @@
+{
+  "run_id": "20260620T035051Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p129-reading-time.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p129-reading-time.spec.ts",
+            "title": "reading-time metric reflects the word count and the config WPM",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3397,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "reading-wpm",
+          "value": 137
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "words-before",
+          "value": 54
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "reading-minutes-before",
+          "value": 1
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "words-after",
+          "value": 254
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "reading-minutes-after",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}
