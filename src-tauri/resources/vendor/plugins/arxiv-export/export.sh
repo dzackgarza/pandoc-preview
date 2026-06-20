@@ -348,7 +348,16 @@ if [ -f "$bibflag" ]; then
     # Strip latexmk's other build intermediates so the bundle carries only sources
     # + the baked .bbl (the .pdf/.aux/.log/.fls/.fdb_latexmk are build byproducts,
     # not arXiv submission inputs). The baked .bbl is KEPT.
-    find "$bundle" -type f \
+    #
+    # SCOPE: latexmk runs on the ROOT main.tex, so ALL of its byproducts (main.pdf,
+    # main.aux, main.log, …) land at the bundle ROOT. The G3-externalized diagram
+    # PDFs live under figures/ (figures/tikz-N.pdf) and are arXiv submission INPUTS
+    # referenced by \includegraphics — deleting them ships a dangling include. So
+    # this cleanup is restricted to the bundle root (-maxdepth 1) AND figures/ is
+    # explicitly excluded, so the externalized figure PDFs always survive while the
+    # root main.pdf byproduct is still removed.
+    find "$bundle" -maxdepth 1 -type f \
+        -not -path '*/figures/*' \
         \( -name '*.aux' -o -name '*.log' -o -name '*.out' -o -name '*.fls' \
            -o -name '*.fdb_latexmk' -o -name '*.pdf' -o -name '*.blg' -o -name '*.toc' \) \
         -delete

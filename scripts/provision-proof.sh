@@ -1006,6 +1006,18 @@ A commutative diagram of lattice maps:
 \end{tikzcd}
 ```
 PPE_P124_TIKZ_EOF
+    # G2×G3 INTERACTION: the witness ALSO carries a \cite + \bibliography (the SAME
+    # p123 shape) so the flattened root has a bibliography → has_bib=true → G2's REAL
+    # latexmk .bbl bake AND its post-bake build-intermediate cleanup RUN. That cleanup
+    # deletes latexmk's root byproducts (main.pdf/.aux/.log/…); it MUST NOT recurse
+    # into figures/ and delete the G3-externalized figures/tikz-N.pdf diagram PDFs.
+    # With both legs present, this spec's figure-survival assertions (precompiled
+    # figure PDF present + valid pdfinfo, \includegraphics resolves to it on disk) now
+    # run AFTER the .bbl cleanup, PROVING the externalized figure PDFs survive it.
+    # The bibliography reaches the bundle as a project-RELATIVE references.bib exactly
+    # as in p123 (the DM19 entry is Dolgachev & Mumford 2019).
+    printf '\n\nThe bound is sharpened in [@DM19].\n\n\\bibliographystyle{plain}\n\\bibliography{references}\n' >> "$DEMO_FILE"
+    cp "$REPO_ROOT/tests/proof/fixtures/references.bib" "$PROJECT_DIR/references.bib"
     # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
     # its [plugin.arxiv-export] config section — IDENTICAL to p122/p123's (command +
     # macros_dir; schema additionalProperties:false forbids any extra key).
