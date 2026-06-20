@@ -225,3 +225,9 @@ A secondary risk is that H.2's three-way toggle must HIDE a dockview pane, never
 
 **Next action.** Ratify P120–P123 with the user, then RED H.2 (`p114` spec: setting view mode to `editor` zeroes the preview pane width and returning to `split` restores the prior ratio; fails because no view-mode toggle exists — both panes always show).
 Commit RED before any GREEN.
+
+- **2026-06-20: decisions RATIFIED (controller, "execute all phases, no stops"); Phases A–G shipped to main.** Executing on branch `phase-h-qol` (the LAST parity phase).
+  - **Obligations P120–P123 as drafted (ceiling P119 from Phase G); P124 reserved spare.** Specs continue **p128+** (Phase G used p122–p127). Build order H.2 (P121) → H.4 (P123) → H.3 (P122) → H.1 (P120) — disjoint seams.
+  - **H.6 (autocorrect / magic quotes) is NOT BUILT** — a correctness hazard (smart-quote substitution corrupting `"` inside `\text{}` / `$…$` LaTeX-bearing source), per the roadmap's standing caution and this plan's disposition. No obligation. Recorded so its absence is not mistaken for an oversight.
+  - Near-zero owned code: lean on published CM6 extensions (typewriter scroll-margin, readability decorations), the existing dockview `SplitviewComponent` visibility API, the existing `exportToPath` loop, and the existing `wordCount` state — refine, don't greenfield. New config options are `deny_unknown_fields`-validated + XDG-round-tripped (P9). The view toggle HIDES a dockview pane, never rebuilds the splitview (P13/P15 ratio preserved).
+  - Each blind-TDD via Workflow; full-suite gate before merge.
