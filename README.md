@@ -1,46 +1,129 @@
 # Pandoc Preview
 
-A desktop markdown editor for mathematical writing: edit on the left, see a live preview on the right, and export to HTML, PDF, or an arXiv-ready bundle. It is like Overleaf, but you write markdown and pandoc does the rendering, so the preview matches what pandoc produces. For Linux.
+Pandoc Preview is a local, source-first editor for mathematical research manuscripts.
+It gives a project-editor surface - file tree, source editor, search, quick open, command palette, and live HTML or PDF preview - while rendering through the user's real Pandoc and TeX workflow.
 
-## Requirements
+The source text stays canonical.
+Templates, filters, macros, bibliographies, figures, and export commands stay in the existing toolchain; the app gives that toolchain one writing surface.
 
-The editor runs real command-line tools for rendering, export, linting, and search, and checks for them at startup, naming any that are missing. The shipped setup uses all of them:
+## Status
 
-- `pandoc` — preview and export
-- `lualatex` and `latexmk` — PDF export
-- `pdf2svg` — TikZ figures in the preview
-- `chktex` and `lacheck` — the markdown/math linter
-- `ripgrep` — workspace search
-- `latexpand` and `arxiv_latex_cleaner` — the arXiv export bundle
-- `gum` — first-run setup
-- `bun`, `cargo`, `just`, and `webkit2gtk-4.1` — to build and run
+Pandoc Preview is experimental source-build software for a single-user Linux workstation.
+It is currently developed against the author's Arch Linux setup.
 
-## Install and run
+No binary release is published.
+Hosted collaboration, account sync, multi-user projects, and cross-platform support are not current targets.
+
+## Who it is for
+
+Pandoc Preview is for researchers writing papers, preprints, theses, notes, or slides with Markdown, LaTeX, BibTeX, TikZ, and Pandoc.
+
+Use it when the current workflow is an editor plus watcher scripts, Pandoc or LaTeX commands, a browser or PDF viewer, citation-key copying, figure-directory glue, and export scripts.
+
+Do not use it as a general Markdown editor, a hosted Overleaf replacement, or a Typora-style inline WYSIWYG editor.
+The separate source pane is intentional.
+
+## How it fits
+
+Pandoc Preview uses the familiar source-left/output-right layout, but the layout is not the product.
+The important difference is that preview output comes from the configured local renderer rather than an approximate Markdown renderer owned by the editor.
+
+It should feel like an ordinary local project editor: open folders, edit files, search, use quick-open, run commands, and keep source files on disk.
+Its specialization is the mathematical research toolchain around those files.
+
+## Core workflow
+
+- Open a research project folder.
+- Edit Markdown, LaTeX, TikZ, slide, or bibliography source.
+- Catch cheap source mistakes before a full render where the editor can do so.
+- Inspect HTML or PDF output produced by the configured Pandoc/TeX commands.
+- Insert citations and figures without leaving the writing context.
+- Export using the same templates, filters, macros, bibliography, and figure assets that made the preview work.
+
+## What is distinctive
+
+- **Exact preview path** - the preview is produced by the real configured renderer, not by a substitute Markdown parser.
+- **Source-first editing** - source text is the durable document, even when the preview is live.
+- **Mathematical feedback loop** - editor diagnostics catch cheap delimiter, math-mode, citation, and syntax mistakes before expensive renders.
+- **Tool-native integration** - Pandoc, TeX, Zotero or BibTeX, TikZ, templates, filters, macros, and figure files remain owned by their existing formats and tools.
+- **Publication continuity** - the same project assets support drafting, preview, PDF output, LaTeX export, arXiv-oriented bundles, and archived source handoff.
+- **Visible failure** - missing configuration or renderer failure is an error, not a silent downgrade to a lower-fidelity preview.
+
+## What it is not
+
+- A hosted collaboration service.
+- An account-backed project manager.
+- A WYSIWYG editor that hides source syntax.
+- A general IDE.
+- An app-owned document ecosystem.
+- A cross-platform product.
+
+## Install and run from source
+
+Install the local tools needed for the source build and first-run setup:
+
+- `just`
+- `pandoc`
+- `gum`
+- `bun`
+- `cargo`
+- WebKitGTK / Tauri desktop dependencies for your Linux distribution
+
+Then run:
 
 ```sh
-just deps     # fetch dependencies
-just setup    # interactive first-run setup; writes your config
-just dev      # launch the editor
+just deps
+just setup
+just dev
 ```
 
-The editor needs a config before it will start; `just setup` walks you through writing one (re-run `scripts/first-run.sh --force` to redo it). When the window opens, point it at a folder and click a `.md` file — the rendered preview appears on the right and updates as you type. Settings you change in-app (Tools → Settings) are written back to the same config.
+`just deps` fetches dependencies and pinned submodules.
+`just setup` writes the required config file.
+`just dev` launches the desktop app.
 
-Run `just --list` for the other commands (release builds, etc.).
+When the window opens, choose a project folder and open a source file.
+The preview pane renders through the configured toolchain and updates as the source changes.
 
-## What it does
+Run `just --list` for the current command surface.
 
-- **Editing** — completions that expand in math mode, snippets, Emmet abbreviations, spellcheck with a custom math dictionary, and writing-focus modes (typewriter, distraction-free, readability).
-- **Math and figures** — MathJax everywhere, working offline. TikZ and `tikzcd` diagrams render inline; you can jump between a figure and its source, edit it, and keep figures in a shared folder.
-- **Citations** — one bibliography drives both the editor and the preview. Type `@` to complete a citation with a preview of the entry, override the bibliography per file, and get a references list of only the keys you cited.
-- **Inserting structure** — a bar for amsthm environments, matrices, tables, code blocks, footnotes, and pasted images, in place of a formatting toolbar.
-- **Export** — self-contained HTML, PDF (single-pass or multi-pass with bibliography resolution), and an arXiv-ready `.tar.gz`. One action exports to every configured target at once.
-- **Working in a project** — a file tree, full-text search across the folder, a command palette (Ctrl+Shift+P), and quick-open (Ctrl+P).
-- **Not losing work** — unsaved edits are recovered after a crash, the last session is restored on launch, a save won't silently overwrite a file that changed underneath you, and closing with unsaved changes is guarded.
+## Toolchain requirements
+
+The source build checks required tools loudly.
+The full research-writing loop can also use these command-line tools, depending on the configured workflows:
+
+- `lualatex` and `latexmk` for PDF builds
+- `pdf2svg` for figure preview paths
+- `chktex` and `lacheck` for TeX diagnostics
+- `ripgrep` for workspace search
+- `latexpand` and `arxiv_latex_cleaner` for arXiv-oriented source bundles
+
+The app does not hide missing tools behind fallback behavior.
+Install the tool or remove the workflow that requires it.
 
 ## Configuration
 
-The config lives at `${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`. It has no built-in defaults — the editor refuses to start until it is complete, which is what `just setup` produces. The renderer, export targets, linter, and search are plugins listed in that file; add or change them there. Plugin configuration is owned by plugin-declared configuration commands; the app validates plugin config generically and does not render pandoc-specific settings pages.
+The config lives at:
+
+```text
+${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml
+```
+
+The app refuses to start without a complete config.
+Run `just setup` to create one.
+Renderer, export, lint, and search behavior are configured there rather than hard-coded into the editor.
 
 ## Pandoc assets
 
-The templates, filters, CSL, and bibliography come from [`pandoc-config`](https://github.com/dzackgarza/pandoc-config), pinned to a specific commit as a git submodule. `just deps` fetches it, and the install step symlinks the assets into `~/.pandoc`, preserving any file you have overridden there.
+Templates, filters, CSL files, and bibliography assets come from the pinned `pandoc-config` git submodule.
+`just deps` fetches it, and `just install-assets` links those assets into `~/.pandoc` while preserving real files already present there.
+
+## Development
+
+This is a Tauri 2, Svelte 5, Vite, Tailwind, and CodeMirror 6 application.
+Those implementation details matter for contributors, not for deciding whether the app fits a writing workflow.
+
+Use `just --list` for build, run, proof, and typecheck commands.
+
+## License
+
+No top-level license file is currently present in this source tree.
