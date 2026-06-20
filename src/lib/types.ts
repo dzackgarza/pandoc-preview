@@ -76,6 +76,23 @@ export interface Config {
     // already shows (no new scan). Required; range-validated and round-tripped in
     // config.rs (the P9 class) — an out-of-range or missing value is a hard error.
     reading_wpm: number;
+    // P120 (Phase H / H.1) — the three EDITOR-presentation comfort modes, each a
+    // config-owned boolean read at launch and persisted on toggle. distraction_free
+    // is an App-shell CSS state hiding the chrome; typewriter centers the caret line
+    // (a CM6 scroll-margin extension); readability colors prose sentence spans (a
+    // CM6 decoration layer).
+    //
+    // Optional on the wire: the comfort feature is a "dormant unless enabled" UI
+    // state. config.rs serializes `[editor.comfort]` ONLY when a mode is enabled
+    // (skip_serializing_if = all-off), so a config that never enabled a mode sends
+    // NO comfort object — which the app reads as every mode OFF. As soon as a mode
+    // is enabled it is serialized and round-trips. The three keys are always
+    // present together when the object is present.
+    comfort?: {
+      distraction_free: boolean;
+      typewriter: boolean;
+      readability: boolean;
+    };
   };
   preview: {
     debounce_ms: number;

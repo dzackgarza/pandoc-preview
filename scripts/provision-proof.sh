@@ -212,6 +212,13 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 view_mode = "split"
 reading_wpm = 200
 
+# Phase H / H.1 / P120 — the three EDITOR comfort modes, all FALSE by default
+# (required sub-table, no runtime default). Mirrors first-run.sh.
+[editor.comfort]
+distraction_free = false
+typewriter = false
+readability = false
+
 [preview]
 debounce_ms = 200
 pdf_compile_mode = "auto"
@@ -347,6 +354,13 @@ csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 view_mode = "split"
 reading_wpm = 200
 
+# Phase H / H.1 / P120 — the three EDITOR comfort modes, all FALSE by default
+# (required sub-table, no runtime default). Mirrors first-run.sh.
+[editor.comfort]
+distraction_free = false
+typewriter = false
+readability = false
+
 [preview]
 debounce_ms = 200
 pdf_compile_mode = "auto"
@@ -410,6 +424,13 @@ bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
 view_mode = "split"
 reading_wpm = 200
+
+# Phase H / H.1 / P120 — the three EDITOR comfort modes, all FALSE by default
+# (required sub-table, no runtime default). Mirrors first-run.sh.
+[editor.comfort]
+distraction_free = false
+typewriter = false
+readability = false
 
 [preview]
 debounce_ms = 200

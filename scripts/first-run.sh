@@ -193,6 +193,16 @@ view_mode = "split"
 # range-validated (1–2000).
 reading_wpm = 200
 
+# Phase H / H.1 / P120 — the three EDITOR-presentation comfort modes, each a
+# config-owned boolean read at launch and persisted on toggle. Required
+# sub-table (no runtime default); all three ship FALSE (every mode OFF by
+# default). distraction_free hides the chrome (sidebar/insertion bar/status
+# bar); typewriter centers the caret line; readability colors prose sentences.
+[editor.comfort]
+distraction_free = false
+typewriter = false
+readability = false
+
 [preview]
 # Editor idle time in ms before the preview re-renders (0–10000).
 # Math is always MathJax (no option): KaTeX cannot cover pandoc's full

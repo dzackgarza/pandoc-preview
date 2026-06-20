@@ -102,6 +102,11 @@
     spellcheckExtension,
   } from "../editor/spellcheck";
   import { mdLintDiagnostics } from "../editor/lint";
+  // P120 (Phase H / H.1) — the two EDITOR-presentation comfort modes realized as
+  // CM6 extensions in Compartments (the spellCompartment precedent): typewriter
+  // scroll-centering and the readability sentence-decoration layer.
+  import { typewriterExtension } from "../editor/typewriter";
+  import { readabilityExtension } from "../editor/readability";
 
   let {
     config,
@@ -160,6 +165,14 @@
   // compartment so A.2's config-driven class toggles can reconfigure it
   // post-mount, mirroring spellCompartment.
   const lintCompartment = new Compartment();
+  // P120 (Phase H / H.1) — the two EDITOR-presentation comfort modes, each its
+  // own Compartment NEXT TO spellCompartment so setComfort can reconfigure it
+  // in/out without rebuilding the editor (the established post-mount-reconfigure
+  // pattern). Typewriter = the scroll-centering extension; readability = the
+  // sentence-decoration layer. Both start EMPTY (mode OFF) and are seeded from
+  // config.editor.comfort below.
+  const typewriterCompartment = new Compartment();
+  const readabilityCompartment = new Compartment();
 
   // App-owned completion sources, COMPOSED with the LaTeX command source rather
   // than overriding it. latex() folds a single delegating source (below) into
@@ -358,6 +371,10 @@
             linter((view) => mdLintDiagnostics(view.state, sourcePath())),
             lintGutter(),
           ]),
+          // P120 — the comfort-mode compartments, EMPTY until seeded from
+          // config.editor.comfort post-mount and reconfigured by setComfort.
+          typewriterCompartment.of([]),
+          readabilityCompartment.of([]),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) onChange(u.state.doc.toString());
             if (u.selectionSet || u.docChanged) {
@@ -431,7 +448,44 @@
     installSpellcheck(config).catch((e) =>
       toastError(`Spellcheck failed to load: ${e}`),
     );
+
+    // P120 — seed the EDITOR comfort compartments from the config-owned
+    // [editor.comfort] booleans so a persisted mode is active at launch (the
+    // config round-trip restores it). distraction_free is an App-shell CSS state
+    // (App.svelte), not an editor concern, so only the two editor modes are
+    // seeded here. An absent comfort object (no mode ever enabled — config.rs
+    // skip-serializes the all-off table) reads as every mode OFF.
+    const comfort = config.editor.comfort;
+    setComfortMode("typewriter", comfort?.typewriter ?? false);
+    setComfortMode("readability", comfort?.readability ?? false);
   });
+
+  /** P120 — reconfigure a single EDITOR comfort compartment in/out. ON installs
+   *  the extension (typewriter scroll-centering / readability sentence
+   *  decorations); OFF reconfigures the compartment back to the empty extension,
+   *  removing it live — the spellCompartment reconfigure pattern. */
+  export function setComfortMode(
+    mode: "typewriter" | "readability",
+    on: boolean,
+  ) {
+    const compartment =
+      mode === "typewriter" ? typewriterCompartment : readabilityCompartment;
+    const extension = on
+      ? mode === "typewriter"
+        ? typewriterExtension()
+        : readabilityExtension()
+      : [];
+    view.dispatch({ effects: compartment.reconfigure(extension) });
+    // Enabling typewriter must center the caret line NOW — the extension's
+    // updateListener only recenters on the NEXT selection/doc change, and the
+    // reconfigure transaction itself moves neither. Dispatch an explicit
+    // center-scroll for the current caret so the mode takes effect immediately
+    // (the same scrollIntoView the extension uses on every later cursor move).
+    if (mode === "typewriter" && on) {
+      const head = view.state.selection.main.head;
+      view.dispatch({ effects: EditorView.scrollIntoView(head, { y: "center" }) });
+    }
+  }
 
   /** Read, parse, and register the config-owned bibliography as the @-citation
    *  completion source (P85/P86). editor.bibliography is a REQUIRED ExistingFile

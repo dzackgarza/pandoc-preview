@@ -363,6 +363,20 @@
   // config.toml so it survives a restart (the P9 round-trip class).
   let viewMode = $state<ViewMode>("split");
 
+  // Phase H / H.1 / P120 — the three EDITOR-presentation comfort modes. Seeded
+  // from the config-owned [editor.comfort] booleans on launch (so a persisted
+  // mode is restored), mutated by the comfort:distraction-free/typewriter/
+  // readability commands. distraction_free drives an App-shell CSS state (it
+  // hides the ActivityBar/sidebar, the InsertionBar, and the StatusBar); the
+  // typewriter/readability modes reconfigure their CM6 compartments in
+  // EditorPane. setComfort persists each toggle to config.toml (the P9 round-trip
+  // class).
+  let viewComfort = $state<{
+    distractionFree: boolean;
+    typewriter: boolean;
+    readability: boolean;
+  }>({ distractionFree: false, typewriter: false, readability: false });
+
   const fileName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
   const dirOf = (path: string) => path.slice(0, path.lastIndexOf("/"));
 
@@ -382,6 +396,18 @@
     // so a persisted mode is restored at launch; applied to the splitview once the
     // layout is built below.
     viewMode = config.editor.view_mode;
+    // P120 — seed the three comfort modes from the config-owned [editor.comfort]
+    // booleans so a persisted mode is active at launch. The editor compartments
+    // (typewriter/readability) are seeded inside EditorPane from the same config;
+    // the distraction-free shell state is driven by viewComfort below. An absent
+    // comfort object (no mode ever enabled — config.rs skip-serializes the all-off
+    // table) reads as every mode OFF.
+    const comfort = config.editor.comfort;
+    viewComfort = {
+      distractionFree: comfort?.distraction_free ?? false,
+      typewriter: comfort?.typewriter ?? false,
+      readability: comfort?.readability ?? false,
+    };
     // Discovered plugins drive the category-aware menu/command-palette populator
     // (export-category plugins surface their own "Export: <name>" entries; P66).
     discoveredPlugins = await api.listPlugins();
@@ -846,6 +872,21 @@
           void setViewMode(mode);
         },
         viewMode: (): ViewMode => viewMode,
+        // Phase H / H.1 / P120: the three EDITOR-presentation comfort modes.
+        // setComfort runs the SAME path the comfort:distraction-free/typewriter/
+        // readability palette commands run — flips the App-shell distraction-free
+        // CSS state OR reconfigures the editor's typewriter/readability CM6
+        // compartment, AND persists the boolean to the config-owned
+        // [editor.comfort] sub-table (the P9 round-trip). Fire-and-forget; the
+        // spec awaits the resulting editor geometry / chrome visibility /
+        // decoration DOM / on-disk config. comfortState reports the live booleans.
+        setComfort: (
+          mode: "distractionFree" | "typewriter" | "readability",
+          on: boolean,
+        ) => {
+          void setComfort(mode, on);
+        },
+        comfortState: () => ({ ...viewComfort }),
         pdfStatus: () => pdfStatus,
         pdfPreviewArtifact: (): string | null => pdfArtifact,
         // Phase F / F4 / P110: the auto/manual + fast/full PDF-compile controls.
@@ -1157,6 +1198,26 @@
         id: "view:split",
         label: "View: Split",
         run: () => void setViewMode("split"),
+      },
+      // Phase H / H.1 / P120 — the three EDITOR-presentation comfort modes. Each
+      // TOGGLES its mode through the SAME setComfort the E2E hook drives:
+      // flipping the App-shell distraction-free chrome-hide CSS state, or
+      // reconfiguring the editor's typewriter/readability CM6 compartment, and
+      // persisting the boolean to the config-owned [editor.comfort] sub-table.
+      {
+        id: "comfort:distraction-free",
+        label: "Comfort: Distraction-Free",
+        run: () => void setComfort("distractionFree", !viewComfort.distractionFree),
+      },
+      {
+        id: "comfort:typewriter",
+        label: "Comfort: Typewriter",
+        run: () => void setComfort("typewriter", !viewComfort.typewriter),
+      },
+      {
+        id: "comfort:readability",
+        label: "Comfort: Readability",
+        run: () => void setComfort("readability", !viewComfort.readability),
       },
       // P110 — the explicit Recompile PDF command: compiles the PDF NOW with the
       // current fast/full selection, bypassing the auto/manual gate (its purpose
@@ -2606,6 +2667,45 @@
     }
   }
 
+  // Phase H / H.1 / P120 — toggle one of the three EDITOR-presentation comfort
+  // modes and persist it. distraction_free is an App-shell CSS state (it drives
+  // the chrome-hiding conditionals in the markup via viewComfort); typewriter and
+  // readability reconfigure the matching CM6 compartment in EditorPane. Either
+  // way the boolean is written back to the config-owned [editor.comfort] sub-table
+  // so the mode survives a relaunch (the P9 round-trip, the SAME shape
+  // setViewMode uses).
+  async function setComfort(
+    mode: "distractionFree" | "typewriter" | "readability",
+    on: boolean,
+  ): Promise<void> {
+    if (!config) {
+      throw new Error("setComfort called before the config was ready");
+    }
+    viewComfort = { ...viewComfort, [mode]: on };
+    // The two EDITOR modes reconfigure their CM6 compartment live; distraction
+    // free is purely the App-shell CSS state above (no editor change).
+    if (mode === "typewriter" || mode === "readability") {
+      editor.setComfortMode(mode, on);
+    }
+    const next: Config = {
+      ...config,
+      editor: {
+        ...config.editor,
+        comfort: {
+          distraction_free: viewComfort.distractionFree,
+          typewriter: viewComfort.typewriter,
+          readability: viewComfort.readability,
+        },
+      },
+    };
+    try {
+      await api.saveConfig(next);
+      config = next;
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
   // ---- layout --------------------------------------------------------------
   //
   // The editor|preview split is owned by dockview-core's SplitviewComponent
@@ -2633,8 +2733,13 @@
 
 {#if config}
   <div class="flex h-full flex-col">
-    <InsertionBar
-      onInsertEnvironment={insertEnvironment}
+    <!-- P120 — distraction-free HIDES the chrome (InsertionBar / ActivityBar +
+         sidebar / StatusBar). Each region is conditionally removed from the DOM
+         when viewComfort.distractionFree is on, so it is absent / not laid out
+         (offsetParent null, zero box) — the visibility the proof observes. -->
+    {#if !viewComfort.distractionFree}
+      <InsertionBar
+        onInsertEnvironment={insertEnvironment}
       onInsertDiagram={insertDiagram}
       onOpenMatrix={() => (matrixModalOpen = true)}
       onOpenTable={() => (tableModalOpen = true)}
@@ -2648,17 +2753,22 @@
       {tikzCommandNames}
       fileOpen={currentFile !== null}
     />
+    {/if}
 
     <div class="flex min-h-0 grow">
-      <!-- VSCode-style activity bar: always visible, holds the view controls. -->
-      <ActivityBar views={SIDEBAR_VIEWS} {activeView} onSelect={selectView} />
+      <!-- VSCode-style activity bar: visible unless distraction-free hides it
+           (P120). The activity bar AND the sidebar are removed together so the
+           whole left chrome column collapses in distraction-free mode. -->
+      {#if !viewComfort.distractionFree}
+        <ActivityBar views={SIDEBAR_VIEWS} {activeView} onSelect={selectView} />
+      {/if}
 
       <!-- The collapsible side bar shows the active view. It is a flex sibling
            OUTSIDE the splitview, so its show/hide changes the splitview
            container's width and dockview's ResizeObserver relayouts the
            editor|preview split proportionally — the ratio is preserved across
-           the collapse (P15). -->
-      {#if activeView}
+           the collapse (P15). Hidden entirely in distraction-free mode (P120). -->
+      {#if activeView && !viewComfort.distractionFree}
         <div
           data-pane="sidebar"
           class="flex w-60 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700"
@@ -2819,18 +2929,21 @@
       </div>
     </div>
 
-    <StatusBar
-      filePath={currentFile}
-      {projectRoot}
-      {dirty}
-      {wordCount}
-      readingWpm={config.editor.reading_wpm}
-      {cursorLine}
-      {cursorCol}
-      {repoState}
-      onRepoInit={() => void repoInit()}
-      onRepoTrack={() => void repoTrack()}
-    />
+    <!-- P120 — the StatusBar is part of the chrome distraction-free hides. -->
+    {#if !viewComfort.distractionFree}
+      <StatusBar
+        filePath={currentFile}
+        {projectRoot}
+        {dirty}
+        {wordCount}
+        readingWpm={config.editor.reading_wpm}
+        {cursorLine}
+        {cursorCol}
+        {repoState}
+        onRepoInit={() => void repoInit()}
+        onRepoTrack={() => void repoTrack()}
+      />
+    {/if}
   </div>
 
   {#if settingsOpen}

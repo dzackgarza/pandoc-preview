@@ -1,0 +1,68 @@
+{
+  "run_id": "20260620T051054Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p09-settings-roundtrip.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p09-settings-roundtrip.spec.ts",
+            "title": "Settings changes persist to config.toml and re-style the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3000,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p09-settings-roundtrip.spec.ts",
+          "name": "config-font-size",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "spec": "d14-first-run-doctor-clean.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d14-first-run-doctor-clean.spec.ts",
+            "title": "the real first-run.sh leaves a system that passes --doctor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3220,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-doctor-exit",
+          "value": 0
+        },
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-plugins-count",
+          "value": 6
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "run_id": "20260620T050746Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p131-comfort-modes.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p131-comfort-modes.spec.ts",
+            "title": "comfort modes center the caret, hide the chrome, mark sentences, and round-trip through config",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 8902,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (() => {\n       const sc = document.querySelector('.cm-editor .cm-scroller');\n       const al = document.querySelector('.cm-editor .cm-content .cm-activeLine');\n       if (!sc || !al) return false;\n       const s = sc.getBoundingClientRect();\n       const a = al.getBoundingClientRect();\n       if (s.height <= 0) return false;\n       const f = ((a.top + a.bottom) / 2 - s.top) / s.height;\n       return f > 0.35 && f < 0.65;\n     })()"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
