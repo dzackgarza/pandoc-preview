@@ -1,0 +1,26 @@
+# arxiv-latex-cleaner settings — the SHIPPED cleaner-config asset for the G5
+# (P118) cleaner pass. Vendored WITH the plugin (install_plugin_fixtures copies
+# the whole plugin dir verbatim) and referenced from export.sh's argv as
+#   uvx --from arxiv-latex-cleaner arxiv_latex_cleaner <bundle> --config <this>
+# — NOT app config. The REAL google-research/arxiv-latex-cleaner reads it; this
+# plugin owns no stripper/pruner/resizer/dot-file remover.
+#
+# Keys are the cleaner's own YAML settings (merged into its argparse defaults by
+# arxiv_latex_cleaner.merge_args_into_config):
+#   • resize_images / im_size — cap every bundled raster's longest side at the px
+#     cap so oversized figures are shrunk for the upload size budget.
+#   • commands_to_delete — the configured DRAFT commands the cleaner deletes
+#     wholesale; `todo` removes every `\todo{...}` reviewer aside.
+#   • environments_to_delete — draft environments removed in full. (`comment` is
+#     already stripped unconditionally by the cleaner; listed here to document the
+#     draft-environment contract and to delete any project-local `note` drafts.)
+# The cleaner additionally — without configuration — strips `%`-comments, the
+# `comment` environment, simplifies `\iffalse … \fi` blocks, prunes `.tex`/images
+# left unreferenced after those strips, and drops its known auxiliary/dot files
+# (.git/, .gitignore, .DS_Store, .idea, *.aux/.log/.out/…).
+resize_images: true
+im_size: 1200
+commands_to_delete:
+  - todo
+environments_to_delete:
+  - note

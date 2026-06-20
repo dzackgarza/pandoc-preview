@@ -519,6 +519,55 @@ if [ -f "$bibflag" ]; then
         -delete
 fi
 
+# ── 4b. The REAL arxiv_latex_cleaner pass ─────────────────────────────────────
+# Phase G / G5 (P118). AFTER the figure-format gate (3c) and the .bbl bake (4),
+# and BEFORE the final tar, run the REAL google-research/arxiv-latex-cleaner
+# UNMODIFIED over the flattened bundle. The cleaner strips `%`-comments and the
+# `comment`/`\iffalse` blocks, DELETES the configured draft commands (`\todo{}`
+# via the shipped config's commands_to_delete), PRUNES `.tex`/images left
+# unreferenced after those strips, RESIZES rasters under the px cap, and removes
+# its known auxiliary/dot files (.git/, .gitignore, .DS_Store, .idea, build
+# byproducts) — producing the cleaned folder "ready to upload."
+#
+# The plugin OWNS NO comment-stripper / pruner / resizer / dot-file remover: it
+# only INVOKES the real tool through the approved uvx runner and VALIDATES the
+# output. The cleaner's settings (px cap, commands_to_delete, draft environments)
+# are the SHIPPED cleaner-config.yaml vendored beside this script — referenced
+# from the argv, NOT app config.
+#
+# arxiv_latex_cleaner is a HARD dependency: a missing uvx runner is a LOUD failure
+# (exit nonzero NAMING arxiv_latex_cleaner, NO tarball) — never a silently-skipped
+# / fake-cleaned bundle. The cleaner writes its output to a sibling folder named
+# "<input>_arXiv"; we then replace the staged bundle with that cleaned folder so
+# the tar carries the cleaned tree (still under the single top-level bundle dir).
+cleaner_config="$(dirname "$0")/cleaner-config.yaml"
+if [ ! -f "$cleaner_config" ]; then
+    echo "arxiv-export/export.sh: shipped cleaner-config missing: $cleaner_config" >&2
+    exit 22
+fi
+cleaner_uvx="$(command -v uvx)" || {
+    echo "arxiv-export/export.sh: uvx not found on PATH — the arxiv_latex_cleaner pass is a hard dependency and cannot run; refusing to ship an uncleaned bundle" >&2
+    exit 23
+}
+# Run the REAL cleaner unmodified. It erases and writes "<bundle>_arXiv". Its
+# stdout/stderr is the app's compile-log surface; a nonzero cleaner exit is a loud
+# failure naming arxiv_latex_cleaner (no fake-cleaned tarball).
+cleaned="${bundle}_arXiv"
+rm -rf "$cleaned"
+if ! "$cleaner_uvx" --from arxiv-latex-cleaner arxiv_latex_cleaner \
+        "$bundle" --config "$cleaner_config" >&2; then
+    echo "arxiv-export/export.sh: arxiv_latex_cleaner failed over the bundle" >&2
+    exit 24
+fi
+if [ ! -d "$cleaned" ]; then
+    echo "arxiv-export/export.sh: arxiv_latex_cleaner produced no cleaned folder at $cleaned" >&2
+    exit 25
+fi
+# Replace the staged bundle with the cleaned tree so the tar carries ONLY the
+# cleaner's output under the single top-level "arxiv-bundle" folder.
+rm -rf "$bundle"
+mv "$cleaned" "$bundle"
+
 # ── 5. tar gzip the bundle to {artifact} ──────────────────────────────────────
 # -C the staging dir so the archive carries the single top-level bundle folder.
 tar -czf "$artifact" -C "$work" "arxiv-bundle"
