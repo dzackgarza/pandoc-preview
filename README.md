@@ -1,64 +1,92 @@
 # Pandoc Preview
 
-Pandoc Preview is a local, source-first editor for mathematical research manuscripts.
-It gives a project-editor surface - file tree, source editor, search, quick open, command palette, and live HTML or PDF preview - while rendering through the user's real Pandoc and TeX workflow.
+A local writing workstation for mathematical papers.
 
-The source text stays canonical.
-Templates, filters, macros, bibliographies, figures, and export commands stay in the existing toolchain; the app gives that toolchain one writing surface.
+Pandoc Preview gives research manuscripts an editor surface with a file tree,
+source editor, search, quick open, and live preview. The preview is produced by
+the configured Pandoc and TeX commands, using the same templates, filters,
+macros, bibliography, and figure assets that will be used for export.
 
-## Status
+The goal is to replace the hand-built loop of editor windows, file watchers,
+Pandoc or LaTeX commands, browser/PDF viewers, citation-key lookup, figure
+directory glue, and publication export scripts with one local desktop app.
 
-Pandoc Preview is experimental source-build software for a single-user Linux workstation.
-It is currently developed against the author's Arch Linux setup.
+## Current Status
 
-No binary release is published.
-Hosted collaboration, account sync, multi-user projects, and cross-platform support are not current targets.
+Pandoc Preview is experimental source-build software for a single-user Linux
+workstation. It is currently developed against the author's Arch Linux setup.
 
-## Who it is for
+No binary release is published yet.
 
-Pandoc Preview is for researchers writing papers, preprints, theses, notes, or slides with Markdown, LaTeX, BibTeX, TikZ, and Pandoc.
+## Writing Workflow
 
-Use it when the current workflow is an editor plus watcher scripts, Pandoc or LaTeX commands, a browser or PDF viewer, citation-key copying, figure-directory glue, and export scripts.
+Open a research project folder, edit source files, and inspect live output from
+the real configured renderer.
 
-Do not use it as a general Markdown editor, a hosted Overleaf replacement, or a Typora-style inline WYSIWYG editor.
-The separate source pane is intentional.
+The app is centered on source-first mathematical writing:
 
-## How it fits
+- Markdown manuscripts rendered by Pandoc
+- LaTeX documents rendered through the local TeX toolchain
+- TikZ figure source rendered through the configured figure pipeline
+- BibTeX data used by citation completion and export
+- HTML and PDF preview paths
+- HTML, PDF, LaTeX, and arXiv-oriented export workflows
 
-Pandoc Preview uses the familiar source-left/output-right layout, but the layout is not the product.
-The important difference is that preview output comes from the configured local renderer rather than an approximate Markdown renderer owned by the editor.
+Ordinary editor behavior is baseline: open folders, switch files, search,
+quick-open, save, recover unsaved work, and keep source files on disk.
 
-It should feel like an ordinary local project editor: open folders, edit files, search, use quick-open, run commands, and keep source files on disk.
-Its specialization is the mathematical research toolchain around those files.
+## Why Use It
 
-## Core workflow
+Use Pandoc Preview when the important thing is not a generic Markdown preview,
+but seeing what the real research-writing toolchain will produce.
 
-- Open a research project folder.
-- Edit Markdown, LaTeX, TikZ, slide, or bibliography source.
-- Catch cheap source mistakes before a full render where the editor can do so.
-- Inspect HTML or PDF output produced by the configured Pandoc/TeX commands.
-- Insert citations and figures without leaving the writing context.
-- Export using the same templates, filters, macros, bibliography, and figure assets that made the preview work.
+The preview path matters for mathematical writing because theorem numbering,
+citations, cross-references, macros, templates, filters, and figure generation
+are global document behavior. A local Markdown renderer can look plausible while
+being wrong about the document that will actually be submitted or archived.
 
-## What is distinctive
+Pandoc Preview keeps the existing tools and files in charge. Pandoc, TeX,
+templates, filters, macros, bibliography files, and figures remain normal local
+assets instead of being converted into an app-owned document format.
 
-- **Exact preview path** - the preview is produced by the real configured renderer, not by a substitute Markdown parser.
-- **Source-first editing** - source text is the durable document, even when the preview is live.
-- **Mathematical feedback loop** - editor diagnostics catch cheap delimiter, math-mode, citation, and syntax mistakes before expensive renders.
-- **Tool-native integration** - Pandoc, TeX, Zotero or BibTeX, TikZ, templates, filters, macros, and figure files remain owned by their existing formats and tools.
-- **Publication continuity** - the same project assets support drafting, preview, PDF output, LaTeX export, arXiv-oriented bundles, and archived source handoff.
-- **Visible failure** - missing configuration or renderer failure is an error, not a silent downgrade to a lower-fidelity preview.
+## Capabilities
 
-## What it is not
+### Real Renderer Preview
 
-- A hosted collaboration service.
-- An account-backed project manager.
-- A WYSIWYG editor that hides source syntax.
-- A general IDE.
-- An app-owned document ecosystem.
-- A cross-platform product.
+The live preview is generated by configured renderer commands. A renderer
+failure appears as a failure; the app does not silently substitute a lower
+fidelity renderer.
 
-## Install and run from source
+### Mathematical Editing Feedback
+
+The editor can surface cheap source mistakes before a full render: delimiter
+problems, math-mode issues, citation-key errors, TeX diagnostics, and structured
+compile output.
+
+### Citations and References
+
+The same bibliography supports editor completion and rendered output. Citation
+completion, per-file bibliography metadata, and references views reduce the
+copy-key-and-recompile loop.
+
+### Figures and TikZ
+
+Figure source and generated assets stay in the project. TikZ and figure
+workflows are routed through configured tools so the preview reflects the files
+and templates used by export.
+
+### Publication Exports
+
+The same source assets can drive HTML, PDF, LaTeX, and arXiv-oriented output.
+Export workflows use the configured local toolchain rather than a separate app
+schema.
+
+### Source Safety
+
+The app guards unsaved edits, restores session state, and avoids overwriting a
+file that changed underneath the editor.
+
+## Install and Run from Source
 
 Install the local tools needed for the source build and first-run setup:
 
@@ -77,19 +105,19 @@ just setup
 just dev
 ```
 
-`just deps` fetches dependencies and pinned submodules.
-`just setup` writes the required config file.
-`just dev` launches the desktop app.
+`just deps` fetches dependencies and pinned submodules. `just setup` writes the
+required config file. `just dev` launches the desktop app.
 
-When the window opens, choose a project folder and open a source file.
-The preview pane renders through the configured toolchain and updates as the source changes.
+When the window opens, choose a project folder and open a source file. The
+preview pane renders through the configured toolchain and updates as the source
+changes.
 
 Run `just --list` for the current command surface.
 
-## Toolchain requirements
+## Toolchain Requirements
 
-The source build checks required tools loudly.
-The full research-writing loop can also use these command-line tools, depending on the configured workflows:
+The source build checks required tools loudly. The full research-writing loop can
+also use these command-line tools, depending on the configured workflows:
 
 - `lualatex` and `latexmk` for PDF builds
 - `pdf2svg` for figure preview paths
@@ -97,7 +125,6 @@ The full research-writing loop can also use these command-line tools, depending 
 - `ripgrep` for workspace search
 - `latexpand` and `arxiv_latex_cleaner` for arXiv-oriented source bundles
 
-The app does not hide missing tools behind fallback behavior.
 Install the tool or remove the workflow that requires it.
 
 ## Configuration
@@ -108,19 +135,20 @@ The config lives at:
 ${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml
 ```
 
-The app refuses to start without a complete config.
-Run `just setup` to create one.
-Renderer, export, lint, and search behavior are configured there rather than hard-coded into the editor.
+The app refuses to start without a complete config. Run `just setup` to create
+one. Renderer, export, lint, and search behavior are configured there rather
+than hard-coded into the editor.
 
-## Pandoc assets
+## Pandoc Assets
 
-Templates, filters, CSL files, and bibliography assets come from the pinned `pandoc-config` git submodule.
-`just deps` fetches it, and `just install-assets` links those assets into `~/.pandoc` while preserving real files already present there.
+Templates, filters, CSL files, and bibliography assets come from the pinned
+`pandoc-config` git submodule. `just deps` fetches it, and `just install-assets`
+links those assets into `~/.pandoc` while preserving real files already present
+there.
 
 ## Development
 
 This is a Tauri 2, Svelte 5, Vite, Tailwind, and CodeMirror 6 application.
-Those implementation details matter for contributors, not for deciding whether the app fits a writing workflow.
 
 Use `just --list` for build, run, proof, and typecheck commands.
 
