@@ -379,6 +379,10 @@
 
   const fileName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
   const dirOf = (path: string) => path.slice(0, path.lastIndexOf("/"));
+  // A tikz file renders via the one render primitive with the tikz template (the
+  // tikz-renderer plugin) instead of the active html5 renderer — the same way a
+  // markdown file renders via the preview template. Detected by extension.
+  const isTikzFile = (path: string) => path.endsWith(".tikz");
 
   onMount(async () => {
     // The startup gate (the Rust doctor battery) has already proven the config
@@ -1391,12 +1395,17 @@
     setStatus("rendering");
     const baseDir = dirOf(currentFile);
     try {
-      // Phase F / F6 / P113: in slides mode the SAME scheduler drives the slides
-      // renderer plugin (api.renderSlides -> revealjs-renderer, pandoc --to
-      // revealjs) so the SAME preview iframe shows a reveal.js DECK; otherwise the
-      // active html5 renderer. The deck/HTML both land in `html`, re-rendered on
-      // idle as the buffer changes.
-      const render = slidesMode ? api.renderSlides : api.renderPreview;
+      // The SAME scheduler drives every render mode, each a render against a
+      // different template through the SAME plugin firewall: a tikz file renders
+      // via the tikz-renderer plugin (the user-owned standalone-tikz.tex template,
+      // compiled to an inline SVG); slides mode via the slides renderer plugin
+      // (pandoc --to revealjs); otherwise the active html5 renderer. The output
+      // always lands in `html` and re-renders on idle as the buffer changes.
+      const render = isTikzFile(currentFile)
+        ? api.renderTikz
+        : slidesMode
+          ? api.renderSlides
+          : api.renderPreview;
       const res = await render(
         content,
         baseDir,

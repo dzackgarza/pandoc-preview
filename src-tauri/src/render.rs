@@ -117,3 +117,68 @@ pub async fn render_slides(
     .await
     .expect("slides render task panicked")
 }
+
+/// The renderer plugin id for the tikz FILE render mode: the `tikz-renderer`
+/// plugin (pandoc/latex against the user-owned `standalone-tikz.tex` template, the
+/// sibling of the active html5 renderer). A tikz file is the SAME render primitive
+/// as markdown — one render against a template — only the template differs. The
+/// app core names WHICH renderer plugin renders a tikz file; the plugin owns the
+/// template wrap + the pdflatex→pdf2svg compile and returns the SVG-bearing HTML
+/// into the SAME preview iframe.
+const TIKZ_RENDERER_ID: &str = "tikz-renderer";
+
+fn render_tikz_sync(
+    source: String,
+    base_dir: String,
+    base_url: String,
+    mathjax_url: String,
+) -> Result<RenderResult> {
+    if !PathBuf::from(&base_dir).is_dir() {
+        return Err(Error::InvalidArgument(format!(
+            "base_dir {base_dir} is not a directory"
+        )));
+    }
+    if mathjax_url.trim().is_empty() {
+        return Err(Error::InvalidArgument(
+            "mathjax_url must not be empty (the local MathJax asset URL)".into(),
+        ));
+    }
+
+    // The tikz file is rendered by the tikz-renderer plugin (the user-owned
+    // standalone-tikz.tex template + pdflatex→pdf2svg). The core owns NO tikz
+    // knowledge: it names the plugin and forwards the SAME render context the HTML
+    // preview uses (the plugin uses only the buffer + base_dir).
+    let outcome = crate::plugins::render_named(
+        TIKZ_RENDERER_ID.to_string(),
+        source,
+        base_dir,
+        base_url,
+        mathjax_url,
+    )?;
+    Ok(RenderResult {
+        ok: outcome.ok,
+        html: outcome.html,
+        log: outcome.log,
+    })
+}
+
+/// Render a tikz FILE buffer to a standalone preview figure (an inline SVG) through
+/// the tikz renderer plugin. The sibling of `render_preview`: same render context,
+/// same plugin firewall, but the `tikz-renderer` plugin (the user-owned
+/// `standalone-tikz.tex` template, compiled pdflatex→pdf2svg) instead of the active
+/// html5 renderer. The frontend calls this instead of `render_preview` when the
+/// open file is a tikz file. The SVG-bearing HTML paints into the SAME preview
+/// iframe; editing re-renders it on idle, exactly as markdown does.
+#[tauri::command]
+pub async fn render_tikz(
+    source: String,
+    base_dir: String,
+    base_url: String,
+    mathjax_url: String,
+) -> Result<RenderResult> {
+    tauri::async_runtime::spawn_blocking(move || {
+        render_tikz_sync(source, base_dir, base_url, mathjax_url)
+    })
+    .await
+    .expect("tikz render task panicked")
+}

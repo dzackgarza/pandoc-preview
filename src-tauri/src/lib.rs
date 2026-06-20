@@ -175,6 +175,7 @@ pub fn run() {
             fsops::delete_path,
             render::render_preview,
             render::render_slides,
+            render::render_tikz,
             plugins::run_plugin,
             plugins::configure_plugin,
             plugins::launch_diagram_tool,

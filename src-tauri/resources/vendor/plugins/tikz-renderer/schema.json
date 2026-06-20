@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "tikz-renderer plugin config",
+  "description": "The tikz renderer is self-contained: it wraps the buffer in the user-owned standalone-tikz.tex template (which owns its preamble) and compiles. It requires no config — an absent [plugin.tikz-renderer] section validates as the empty object.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {}
+}

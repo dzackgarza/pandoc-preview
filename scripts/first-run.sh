@@ -328,6 +328,23 @@ else
     ln -sfn "$RENDERER_VENDOR" "$RENDERER_DEST"
 fi
 
+# Install the shipped tikz renderer plugin. A tikz file is rendered by this sibling
+# renderer (the user-owned standalone-tikz.tex template, compiled to an inline SVG)
+# the same way markdown is rendered by the html5 renderer; the frontend names it
+# (render_tikz) when the open file is a tikz file. App-owned vendored code,
+# symlinked so updates stay atomic; a real-directory user override is preserved.
+TIKZ_RENDERER_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/tikz-renderer"
+if [ ! -d "$TIKZ_RENDERER_VENDOR" ]; then
+    echo "FATAL: vendored tikz renderer plugin missing: $TIKZ_RENDERER_VENDOR" >&2
+    exit 1
+fi
+TIKZ_RENDERER_DEST="$PLUGINS_DIR/tikz-renderer"
+if [ -e "$TIKZ_RENDERER_DEST" ] && [ ! -L "$TIKZ_RENDERER_DEST" ]; then
+    echo "preserve (user override): $TIKZ_RENDERER_DEST" >&2
+else
+    ln -sfn "$TIKZ_RENDERER_VENDOR" "$TIKZ_RENDERER_DEST"
+fi
+
 # Install the shipped export-category plugins. Export is entirely the pandoc
 # plugin suite: pandoc-html-export and pandoc-pdf-export are app-owned vendored
 # code (the single source of truth), symlinked into the plugins dir so updates

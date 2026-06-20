@@ -182,6 +182,21 @@ export const renderSlides = (
   mathjaxUrl: string,
 ) => invoke<RenderResult>("render_slides", { source, baseDir, baseUrl, mathjaxUrl });
 
+/**
+ * Render a tikz FILE buffer to a standalone preview figure (an inline SVG) through
+ * the tikz-renderer plugin — the sibling of renderPreview. A tikz file is the same
+ * render primitive as markdown, only with a different (user-owned) template. The
+ * SVG-bearing HTML paints into the SAME preview iframe; editing re-renders it on
+ * idle. The frontend calls this instead of renderPreview when the open file is a
+ * tikz file.
+ */
+export const renderTikz = (
+  source: string,
+  baseDir: string,
+  baseUrl: string,
+  mathjaxUrl: string,
+) => invoke<RenderResult>("render_tikz", { source, baseDir, baseUrl, mathjaxUrl });
+
 /** Run a discovered plugin by id against the real open buffer (Milestone A). */
 export const runPlugin = (
   pluginId: string,

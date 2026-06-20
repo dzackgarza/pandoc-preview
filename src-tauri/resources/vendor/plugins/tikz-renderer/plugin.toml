@@ -1,0 +1,36 @@
+# The tikz renderer — the one render primitive (pandoc/latex + a user-owned
+# template) applied to a tikz FILE. A tikz file is rendered exactly like a
+# markdown file, only with a different template: the user-owned
+# ~/.pandoc/templates/standalone-tikz.tex, which OWNS its own preamble via
+# \usepackage{dzg-tikz} against the centralized ~/.pandoc/styles tree. The app
+# injects NOTHING — no shared palette, no per-figure preamble, no env vars: the
+# template imports whatever styles/macros the user's styles tree provides.
+#
+# Render context is just the buffer (the tikz source on stdin) and the open file's
+# directory (argv {base_dir}, also the cwd). render.sh wraps the source in the
+# template at its QTikz `<>` marker, compiles it (pdflatex -> pdf2svg), and emits a
+# standalone HTML document embedding the inline SVG — the same RenderResult
+# contract the html5 renderer returns. The frontend names this renderer (via the
+# render_tikz command) when the open file is a tikz file, exactly as it names the
+# active html5 renderer for markdown.
+#
+# Vendored shipped asset: the canonical copy lives in
+# src-tauri/resources/vendor/plugins/tikz-renderer. scripts/first-run.sh symlinks
+# it into the configured plugins dir alongside the html5 renderer.
+id = "tikz-renderer"
+name = "TikZ Renderer"
+description = "Renders a tikz file to preview SVG via pandoc against a user-owned template."
+category = "renderer"
+kind = "command"
+config_schema = "schema.json"
+
+[exec]
+# The tikz source arrives on stdin; standalone HTML (embedding the inline SVG) on
+# stdout. {base_dir} is the open file's directory (cwd + the document-relative
+# TEXINPUTS root). No injected placeholders: the template owns its preamble.
+command = ["{plugin_dir}/render.sh", "{base_dir}"]
+
+[[doctor_checks]]
+id = "tikz-render-toolchain"
+description = "the tikz file render path resolves: pdflatex + pdf2svg present and the user-owned standalone-tikz.tex template compiles"
+command = ["{plugin_dir}/check-render.sh"]
