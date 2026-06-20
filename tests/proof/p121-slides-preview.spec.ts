@@ -40,24 +40,21 @@ import {
 // command (an empty preview) would each fail a clause below.
 //
 // ADMISSIBLE because it FAILS on a plausibly broken app:
-//   - the slides mode is UNWIRED (setPreviewMode('slides') does not exist / does
-//     nothing): the evaluate throws or the preview never gains reveal.js structure
-//     -> clauses (1)/(2);
+//   - the slides render target is UNSELECTABLE (setRenderTarget('revealjs-renderer')
+//     does nothing / the plugin is undiscovered): the preview never gains reveal.js
+//     structure -> clauses (1)/(2);
 //   - the slides path emits ORDINARY single-document HTML instead of a reveal.js
 //     deck (the html5 renderer still runs): no `.reveal`/`<section>` markers
 //     -> clause (1);
 //   - the slides path does NOT re-render on idle (frozen first render): the appended
-//     witness is absent from the deck after the debounce -> clause (2);
-//   - the slides command is unwired entirely: the preview is empty -> clause (1).
+//     witness is absent from the deck after the debounce -> clause (2).
 //
-// RED today: there is NO slides fast-feedback preview surface — no slides preview
-// mode in PreviewPane/App.svelte, no slides renderer wired into the compile-on-idle
-// scheduler. The app exposes the HTML preview (and the F1 PDF preview) only. So
-// activating the slides preview mode through the harness throws (the hook does not
-// exist), and the preview never becomes a reveal.js deck. The app BOOTS cleanly
-// (the canonical pandoc/html5 renderer config + the schema-valid
-// [plugin.revealjs-renderer] section is all that is provisioned), so the failure is
-// the MISSING slides preview, never a boot or config-schema error.
+// The slides target is the shipped revealjs-renderer plugin (vendored,
+// self-contained: `pandoc --to revealjs` + the reveal.js template), selected through
+// the discovery-driven render-target selector — NOT a bespoke slides mode. The app
+// boots cleanly (the canonical pandoc/html5 renderer is the default; revealjs is a
+// discovered candidate the selector switches to), so a failure is the slides render
+// target not producing a deck, never a boot/config-schema error.
 
 const EDIT_WITNESS = 'Successive minima bound the covolume −163.';
 
@@ -74,15 +71,15 @@ test('slides preview re-renders demo.md into a reveal.js deck on idle carrying t
   await openAndSelectDemo(tauriPage, manifest.project);
   await waitForPreview(tauriPage, `return d.querySelector('h1') !== null;`);
 
-  // Activate the SLIDES preview mode (app-owned UI: the slides renderer wired into
-  // the compile-on-idle scheduler, re-rendering the reveal.js deck into the
-  // existing preview iframe). Driven through the SAME harness transport every
-  // dynamic surface uses (window.__PPE_E2E__.setPreviewMode), the sibling of the
-  // F1 PDF preview's setPreviewMode('pdf'). RED today: setPreviewMode('slides') is
-  // unwired -> this evaluate throws (or has no effect), the faithful "no slides
-  // preview surface" failure.
+  // Select the SLIDES render target — the shipped revealjs-renderer plugin — through
+  // the discovery-driven render-target selector. Slides is NOT a bespoke mode: it is
+  // the SAME render primitive with the revealjs writer + the reveal.js template,
+  // picked like any other render target. Driven through the harness transport
+  // (window.__PPE_E2E__.setRenderTarget), which re-renders the open buffer through
+  // that renderer + its default template into the SAME preview iframe and tracks
+  // edits on idle.
   await tauriPage.evaluate(
-    `(() => { window.__PPE_E2E__.setPreviewMode('slides'); return null; })()`,
+    `(() => { window.__PPE_E2E__.setRenderTarget('revealjs-renderer', null); return null; })()`,
   );
 
   // After the compile-on-idle debounce, the preview iframe is a reveal.js DECK:

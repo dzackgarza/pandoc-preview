@@ -956,163 +956,6 @@ command = "$PANDOC_BIN --from markdown --to latex --standalone"
 macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
 EOF
     ;;
-p124-arxiv-tikz.spec.ts)
-    # P116 (Phase G / G3 — TikZ EXTERNALIZED to a precompiled PDF figure, with NO
-    # tikz source remaining in the bundle). The witness must carry (a) the shared P1
-    # witnesses so the compiled PDF is recognisably this document, (b) the same
-    # flatten + macro-materialize exercise p122 binds (a sibling SECTION .tex \input
-    # plus a use of \RR), so the bundle pipeline G1/G2 already cover stays exercised,
-    # and (c) at least ONE raw-LaTeX tikz diagram (a tikzpicture AND a tikzcd) so the
-    # pandoc-emitted root .tex carries a `\begin{tikzpicture}`/`\begin{tikzcd}`
-    # environment that G3 must PRECOMPILE to a bundled PDF and REWRITE to a
-    # `\includegraphics{<fig>.pdf}`.
-    #
-    # The G3 plugin extends G1/G2's `export.sh` (SAME vendored arxiv-export plugin):
-    # after G1's flatten + macro-materialization produce the self-contained bundle
-    # and BEFORE G2's latexmk `.bbl` bake, it drives the EXISTING tikzcd.lua filter's
-    # pdflatex compile core (run_pdflatex_and_convert via standalone-tikz.tex) to emit
-    # each diagram as a PDF written INTO the bundle, and rewrites the .tex so each
-    # diagram becomes `\includegraphics{<fig>.pdf}`. The [plugin.arxiv-export] config
-    # section is EXACTLY p122/p123's (command + macros_dir) — its schema is
-    # additionalProperties:false, so NO extra config key is added (an unknown key
-    # would fail config-schema at load and the app would never boot, masking the
-    # tikz-left-inline RED).
-    #
-    # The SECTION file reuses p122's verbatim — it uses \RR and carries the
-    # "Minkowski bound" witness, so the flatten + macro-materialize legs stay alive.
-    cat > "$PROJECT_DIR/section-minkowski.tex" <<'PPE_P124_SECTION_EOF'
-\section{Minkowski bound}
-
-A symmetric convex body in $\RR^n$ of large enough volume contains a nonzero
-lattice point: this yields the Minkowski bound. Flattened section sentinel
-PPE-FLATTENED-SECTION across all included files.
-PPE_P124_SECTION_EOF
-    # Append (1) the same raw-LaTeX \input of the section plus an inline \RR p122
-    # uses (so the flatten + materialize legs stay exercised), and (2) TWO raw-LaTeX
-    # tikz diagrams — a tikzpicture (two named nodes + an edge, the P100 tikz witness
-    # shape) and a tikzcd (the categorical-diagram form), each fenced as a pandoc
-    # `{=latex}` raw block so `pandoc --to latex` passes the environment through
-    # verbatim into the emitted root .tex. A G1/G2-only bundle (no G3) leaves these
-    # `\begin{tikzpicture}`/`\begin{tikzcd}` environments INLINE in a bundled .tex —
-    # exactly the RED this spec catches. Only THIS spec's demo.md copy is mutated;
-    # the shared fixture demo.md is untouched.
-    printf '\n\nLattices live in $\\RR^n$.\n\n\\input{section-minkowski.tex}\n' >> "$DEMO_FILE"
-    cat >> "$DEMO_FILE" <<'PPE_P124_TIKZ_EOF'
-
-A commutative diagram of lattice maps:
-
-```{=latex}
-\begin{tikzpicture}
-  \node (a) at (0,0) {Aleph};
-  \node (b) at (2,0) {Beth};
-  \draw (a) -- (b);
-\end{tikzpicture}
-```
-
-```{=latex}
-\begin{tikzcd}
-  A \arrow[r, "f"] \arrow[d] & B \arrow[d] \\
-  C \arrow[r]                & D
-\end{tikzcd}
-```
-PPE_P124_TIKZ_EOF
-    # G2×G3 INTERACTION: the witness ALSO carries a \cite + \bibliography (the SAME
-    # p123 shape) so the flattened root has a bibliography → has_bib=true → G2's REAL
-    # latexmk .bbl bake AND its post-bake build-intermediate cleanup RUN. That cleanup
-    # deletes latexmk's root byproducts (main.pdf/.aux/.log/…); it MUST NOT recurse
-    # into figures/ and delete the G3-externalized figures/tikz-N.pdf diagram PDFs.
-    # With both legs present, this spec's figure-survival assertions (precompiled
-    # figure PDF present + valid pdfinfo, \includegraphics resolves to it on disk) now
-    # run AFTER the .bbl cleanup, PROVING the externalized figure PDFs survive it.
-    # The bibliography reaches the bundle as a project-RELATIVE references.bib exactly
-    # as in p123 (the DM19 entry is Dolgachev & Mumford 2019).
-    printf '\n\nThe bound is sharpened in [@DM19].\n\n\\bibliographystyle{plain}\n\\bibliography{references}\n' >> "$DEMO_FILE"
-    cp "$REPO_ROOT/tests/proof/fixtures/references.bib" "$PROJECT_DIR/references.bib"
-    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
-    # its [plugin.arxiv-export] config section — IDENTICAL to p122/p123's (command +
-    # macros_dir; schema additionalProperties:false forbids any extra key).
-    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
-    cat >> "$CONFIG_PATH" <<EOF
-
-[plugin.arxiv-export]
-command = "$PANDOC_BIN --from markdown --to latex --standalone"
-macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
-EOF
-    ;;
-p125-arxiv-figure-gate.spec.ts)
-    # P117 (Phase G / G4 — every bundled figure is in an arXiv-acceptable format;
-    # a non-convertible figure FAILS the export LOUDLY with NO tarball). arXiv does
-    # NO on-the-fly conversion and this pipeline is SVG/tikz-centric, so the gate
-    # must (compliance) CONVERT every referenced SVG to a PDF/PNG/JPG and rewrite
-    # the `.tex` reference, and (loud-fail) when a referenced figure CANNOT be made
-    # compliant EXIT NON-ZERO, NAME the offending file, and write NO tarball.
-    #
-    # The arXiv target is the SAME vendored arxiv-export FIREWALL plugin p122/p123/
-    # p124 drive — its `export.sh` orchestrating script, riding the SAME generic
-    # export firewall (run_plugin in plugins.rs); the app core is unchanged. The
-    # spec drives runPlugin('arxiv-export', target.tar.gz) BY ID, exactly as the
-    # other arxiv specs do, against the REAL open buffer.
-    #
-    # TWO witness documents in ONE hermetic project (the plugin runs against
-    # whatever file is open, so the spec opens each in turn and exports each):
-    #
-    #   (1) demo.md — the COMPLIANCE witness. It already carries the shared P1
-    #       witnesses + a `![scatter](fig/plot.png)` (an already-PDF/PNG/JPG figure
-    #       that must pass through untouched). This case APPENDS a markdown image
-    #       referencing a REAL, well-formed SVG (`![lattice](fig/p125-lattice.svg)`).
-    #       pandoc `--to latex` emits an SVG INCLUSION (`\includesvg{...}` for the
-    #       `.svg` extension), so the emitted root `.tex` references a `.svg` figure
-    #       arXiv would reject. The staged SVG is the committed
-    #       tests/proof/fixtures/p125-lattice.svg (a 3x3 lattice + bounding box) —
-    #       a figure cairosvg CONVERTS to a valid PDF, so the compliance gate CAN
-    #       make it compliant: convert SVG->PDF and rewrite the reference.
-    #
-    #   (2) badfig.md — the LOUD-FAIL witness. It references a ZERO-BYTE `.svg`
-    #       (`![broken](fig/p125-broken.svg)`) that CANNOT be made compliant:
-    #       cairosvg fails loudly on an empty/parse-error SVG (xml.parsers.expat
-    #       ExpatError, exit 1, NO PDF emitted) and a zero-byte file is not a valid
-    #       PDF/PNG/JPG either. The figure gate must therefore FAIL the export
-    #       LOUDLY — exit NON-ZERO, NAME `p125-broken.svg` in the log, write NO
-    #       tarball — never silently pass a figure arXiv would reject.
-    #
-    # The [plugin.arxiv-export] config section is EXACTLY p122/p123/p124's (command
-    # + macros_dir) — its schema is additionalProperties:false, so NO extra config
-    # key is added (an unknown key would fail config-schema at load and the app
-    # would never boot, masking the missing-gate RED).
-    #
-    # The COMPLIANCE figure: a real, well-formed SVG cairosvg converts to a valid
-    # PDF. Staged into the project's fig/ dir as a project-RELATIVE resource the
-    # `\includesvg{fig/p125-lattice.svg}` names (cwd = the source file's parent at
-    # run time, the same way the figures/references.bib are made relative).
-    cp "$REPO_ROOT/tests/proof/fixtures/p125-lattice.svg" "$PROJECT_DIR/fig/p125-lattice.svg"
-    printf '\n\nA lattice diagram:\n\n![lattice](fig/p125-lattice.svg)\n' >> "$DEMO_FILE"
-    # The NON-CONVERTIBLE figure: a ZERO-BYTE `.svg` (empty, no XML element).
-    # cairosvg cannot parse it (expat "no element found"), so it can never be made
-    # compliant — the gate must loud-fail naming it.
-    : > "$PROJECT_DIR/fig/p125-broken.svg"
-    # The LOUD-FAIL witness document references that zero-byte SVG. It is a SEPARATE
-    # project file so the spec exports the COMPLIANCE witness first (proving boot +
-    # export + the firewall all work), then switches to THIS file and exports again
-    # to drive the loud-fail leg — so a RED on the loud-fail leg is the MISSING gate,
-    # not a boot/open/render error.
-    cat > "$PROJECT_DIR/badfig.md" <<'PPE_P125_BADFIG_EOF'
-# Broken Figure Witness
-
-This document references a figure that cannot be made arXiv-compliant.
-
-![broken](fig/p125-broken.svg)
-PPE_P125_BADFIG_EOF
-    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
-    # its [plugin.arxiv-export] config section — IDENTICAL to p122/p123/p124's
-    # (command + macros_dir; schema additionalProperties:false forbids any extra key).
-    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
-    cat >> "$CONFIG_PATH" <<EOF
-
-[plugin.arxiv-export]
-command = "$PANDOC_BIN --from markdown --to latex --standalone"
-macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
-EOF
-    ;;
 p126-arxiv-cleaner.spec.ts)
     # P118 (Phase G / G5 — the REAL google-research/arxiv-latex-cleaner pass strips
     # comments, draft commands, and unused assets, and removes dot-files; with the
@@ -1187,174 +1030,6 @@ PPE_P126_WITNESS_EOF
     # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
     # its [plugin.arxiv-export] config section — IDENTICAL to p122/p123/p124/p125's
     # (command + macros_dir; schema additionalProperties:false forbids any extra key).
-    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
-    cat >> "$CONFIG_PATH" <<EOF
-
-[plugin.arxiv-export]
-command = "$PANDOC_BIN --from markdown --to latex --standalone"
-macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
-EOF
-    ;;
-p127-arxiv-capstone.spec.ts)
-    # P119 (Phase G / G6 — the CAPSTONE: the ONE real arXiv bundle satisfies EVERY
-    # arXiv hard requirement, AND an over-size bundle FAILS LOUDLY with NO tarball).
-    # The arXiv target is the SAME vendored arxiv-export FIREWALL plugin p122–p126
-    # drive — its `export.sh` orchestrating script running the FULL pipeline
-    # (md->tex->flatten->materialize->tikz-externalize->figure-format-gate->latexmk-
-    # bake-`.bbl`->delete-`.bib`->cleaner->dot-file-sweep->tar), extended with a
-    # FINAL 50 MB SIZE-CAP check the spec's Leg 2 drives. The app core is unchanged
-    # (the same export firewall run_plugin in plugins.rs); the spec drives
-    # runPlugin('arxiv-export', target.tar.gz) BY ID against the REAL open buffer,
-    # exactly as the other arxiv specs do.
-    #
-    # TWO witness documents in ONE hermetic project (the plugin runs against whatever
-    # file is open, so the spec opens each in turn and exports each):
-    #
-    #   LEG 1 — demo.md (the ARXIV-READY witness). It must exercise EVERY gate so the
-    #     ONE emitted tarball can be asserted against ALL arXiv hard requirements at
-    #     once. It carries:
-    #       • the shared P1 witnesses ("Geometry of Numbers") + the \input section
-    #         carrying "Minkowski bound" + the custom macro \RR (flatten + macro-
-    #         materialize + the self-contained empty-TEXMFHOME compile — P114);
-    #       • a pandoc \cite[@DM19] + raw \bibliography{references} against the staged
-    #         project-relative references.bib (the `.bbl` bake + no-`.bib` — P115);
-    #       • TWO raw-LaTeX tikz diagrams, a tikzpicture and a tikzcd (tikz
-    #         externalization to a bundled PDF figure — P116);
-    #       • a markdown image referencing a REAL well-formed SVG
-    #         (![lattice](fig/p125-lattice.svg)) the figure-format gate must convert
-    #         to PDF (every figure PDF/PNG/JPG, no `.svg` — P117);
-    #       • the cleaner pass strips comments/auxiliaries and removes dot-files, so
-    #         the emitted tarball carries no `.aux`/`.log`/`.out`/`.dvi` and no dot-
-    #         files (P118 + the arXiv auxiliary-file requirement).
-    #     This is exactly the union of p124's witness (section/\RR/cite/tikz) and
-    #     p125's compliance witness (the lattice SVG), so the ONE bundle exercises the
-    #     whole pipeline and Leg 1 asserts clauses (a)–(h) of P119 on that single
-    #     artifact by independent processes.
-    #
-    #   LEG 2 — oversize.md (the OVER-SIZE LOUD-FAIL witness). It references a single
-    #     large figure — a >50 MB VALID PDF (oversize.pdf, built below) — via a raw-
-    #     LaTeX \includegraphics. A PDF figure PASSES the figure-format gate (its
-    #     magic bytes are %PDF-) and is KEPT by the cleaner (it is referenced), and
-    #     the cleaner only RASTER-resizes images (resize_images/im_size in
-    #     cleaner-config.yaml) — it does NOT down-rescale a PDF — so the >50 MB
-    #     payload SURVIVES the whole pipeline and the bundle's UNCOMPRESSED size
-    #     exceeds arXiv's 50 MB cap. The G6 size-cap check must therefore FAIL the
-    #     export LOUDLY: exit NON-ZERO, NAME the measured over-cap size in the log,
-    #     and write NO tarball. The plugin config has NO size-cap key (schema
-    #     additionalProperties:false forbids it), so the cap is the plugin's own
-    #     hard-coded 50 MB arXiv cap — driven purely by the on-disk asset size, not
-    #     config. It is a SEPARATE project file so the spec exports the arXiv-ready
-    #     witness first (proving boot + export + the firewall + every gate all work),
-    #     then switches to THIS file and exports again to drive the over-size leg — so
-    #     a RED on Leg 2 is the MISSING cap, not a boot/open/render error.
-    #
-    # The [plugin.arxiv-export] config section is EXACTLY p122–p126's (command +
-    # macros_dir) — its schema is additionalProperties:false, so NO extra config key
-    # is added (an unknown key would fail config-schema at load and the app would
-    # never boot, masking the missing-cap RED).
-    #
-    # ── Leg 1 witness: the full-pipeline arXiv-ready document ──────────────────
-    # The SECTION file reuses p122/p124's verbatim — it uses \RR and carries the
-    # "Minkowski bound" witness, so the flatten + macro-materialize legs stay alive.
-    cat > "$PROJECT_DIR/section-minkowski.tex" <<'PPE_P127_SECTION_EOF'
-\section{Minkowski bound}
-
-A symmetric convex body in $\RR^n$ of large enough volume contains a nonzero
-lattice point: this yields the Minkowski bound. Flattened section sentinel
-PPE-FLATTENED-SECTION across all included files.
-PPE_P127_SECTION_EOF
-    # (1) the same raw-LaTeX \input of the section plus an inline \RR p122 uses.
-    printf '\n\nLattices live in $\\RR^n$.\n\n\\input{section-minkowski.tex}\n' >> "$DEMO_FILE"
-    # (2) TWO raw-LaTeX tikz diagrams (p124's verbatim) so the emitted root .tex
-    # carries a `\begin{tikzpicture}` AND a `\begin{tikzcd}` the figure-gate/tikz-
-    # externalization must precompile to bundled PDFs.
-    cat >> "$DEMO_FILE" <<'PPE_P127_TIKZ_EOF'
-
-A commutative diagram of lattice maps:
-
-```{=latex}
-\begin{tikzpicture}
-  \node (a) at (0,0) {Aleph};
-  \node (b) at (2,0) {Beth};
-  \draw (a) -- (b);
-\end{tikzpicture}
-```
-
-```{=latex}
-\begin{tikzcd}
-  A \arrow[r, "f"] \arrow[d] & B \arrow[d] \\
-  C \arrow[r]                & D
-\end{tikzcd}
-```
-PPE_P127_TIKZ_EOF
-    # (3) a \cite + \bibliography (p123/p124's shape) so the `.bbl` is baked and the
-    # `.bib` deleted; the staged project-relative references.bib (DM19 = Dolgachev &
-    # Mumford 2019) resolves it.
-    printf '\n\nThe bound is sharpened in [@DM19].\n\n\\bibliographystyle{plain}\n\\bibliography{references}\n' >> "$DEMO_FILE"
-    cp "$REPO_ROOT/tests/proof/fixtures/references.bib" "$PROJECT_DIR/references.bib"
-    # (4) a REAL, well-formed SVG (p125's compliance figure) the figure-format gate
-    # must convert to PDF and rewrite the reference; cairosvg converts it cleanly.
-    cp "$REPO_ROOT/tests/proof/fixtures/p125-lattice.svg" "$PROJECT_DIR/fig/p127-lattice.svg"
-    printf '\n\nA lattice diagram:\n\n![lattice](fig/p127-lattice.svg)\n' >> "$DEMO_FILE"
-
-    # ── Leg 2 witness: the over-size document + the >50 MB PDF figure ──────────
-    # Build a VALID PDF whose single page embeds a >50 MB INCOMPRESSIBLE binary
-    # stream (os.urandom), so the bundle's UNCOMPRESSED size (the cap is measured by
-    # an independent `du` over the unpacked tree) exceeds arXiv's 50 MB cap and gzip
-    # cannot shrink it. Pure-stdlib Python (no third-party imports → no uv needed).
-    # The PDF is REFERENCED (kept by the cleaner) and a real PDF (passes the figure-
-    # format gate), so it survives every gate to the final size-cap check.
-    OVERSIZE_PDF="$PROJECT_DIR/fig/oversize.pdf"
-    python3 - "$OVERSIZE_PDF" <<'PPE_P127_BIGPDF_EOF'
-import os, sys
-target = 55 * 1024 * 1024  # 55 MiB of incompressible payload (> arXiv's 50 MB cap)
-payload = os.urandom(target)
-catalog = b"<< /Type /Catalog /Pages 2 0 R >>"
-pages   = b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>"
-page    = b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << >> >>"
-content = b"BT /F1 24 Tf 20 100 Td (oversize) Tj ET"
-content_obj = b"<< /Length %d >>\nstream\n%s\nendstream" % (len(content), content)
-big = b"<< /Length %d >>\nstream\n%s\nendstream" % (len(payload), payload)
-bodies = [catalog, pages, page, content_obj, big]
-out = bytearray(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n")
-offsets = []
-for i, body in enumerate(bodies, start=1):
-    offsets.append(len(out))
-    out += b"%d 0 obj\n" % i + body + b"\nendobj\n"
-xref_pos = len(out)
-n = len(bodies) + 1
-out += b"xref\n0 %d\n" % n
-out += b"0000000000 65535 f \n"
-for off in offsets:
-    out += b"%010d 00000 n \n" % off
-out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (n, xref_pos)
-with open(sys.argv[1], "wb") as f:
-    f.write(out)
-PPE_P127_BIGPDF_EOF
-    if [ ! -s "$OVERSIZE_PDF" ]; then
-        echo "FATAL: p127 over-size PDF figure was not built at $OVERSIZE_PDF" >&2
-        exit 1
-    fi
-    OVERSIZE_BYTES="$(stat -c %s "$OVERSIZE_PDF")"
-    if [ "$OVERSIZE_BYTES" -le 52428800 ]; then
-        echo "FATAL: p127 over-size PDF is only $OVERSIZE_BYTES bytes (<= 50 MB) — would not bust the cap" >&2
-        exit 1
-    fi
-    # The over-size witness references that >50 MB PDF via raw-LaTeX
-    # \includegraphics so pandoc emits the reference verbatim and the figure-format
-    # gate sees a real PDF.
-    cat > "$PROJECT_DIR/oversize.md" <<'PPE_P127_OVERSIZE_EOF'
-# Over-size Bundle Witness
-
-This document references a figure that pushes the bundle past arXiv's 50 MB cap.
-
-```{=latex}
-\includegraphics[width=2cm]{fig/oversize.pdf}
-```
-PPE_P127_OVERSIZE_EOF
-    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
-    # its [plugin.arxiv-export] config section — IDENTICAL to p122–p126's (command +
-    # macros_dir; schema additionalProperties:false forbids any extra key).
     install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
     cat >> "$CONFIG_PATH" <<EOF
 
@@ -1612,20 +1287,13 @@ p121-slides-preview.spec.ts)
     #
     # The canonical config above already set up the default pandoc (html5) renderer +
     # [plugins].dir (so the app boots and the HTML preview works); here we ADD the
-    # SPEC-OWNED revealjs-renderer plugin fixture into that SAME dir (the renderer-
-    # plugin sibling shape, OSOT) and its [plugin.revealjs-renderer] config section —
-    # the raw `pandoc --to revealjs --embed-resources` command the slides-mode
-    # compile-on-idle path drives. Only a schema-valid [plugin.revealjs-renderer]
-    # section is written: NO new app-core config keys are added (the schema rejects
-    # unknown keys and would fail the startup gate), so the app BOOTS cleanly and the
-    # RED failure is the MISSING slides fast-feedback preview, never a config-schema
-    # boot error.
+    # shipped revealjs-renderer plugin (vendored, self-contained: it owns its
+    # `pandoc --to revealjs` invocation and resolves the reveal.js template, so an
+    # absent [plugin.revealjs-renderer] section is a complete valid state — its
+    # empty schema rejects a config command). The render-target selector picks it
+    # for the markdown file; the slides deck is the SAME render primitive with the
+    # revealjs writer + the reveal.js template, NOT a bespoke mode.
     install_plugin_fixtures "$PLUGINS_DIR" revealjs-renderer
-    cat >> "$CONFIG_PATH" <<EOF
-
-[plugin.revealjs-renderer]
-command = "$PANDOC_BIN --from markdown --to revealjs --standalone --embed-resources"
-EOF
     # The slide-separator demo (provisioned AS demo.md so the proven
     # openAndSelectDemo selection path applies). Pandoc's revealjs writer turns each
     # top-level heading into a horizontal slide and a horizontal-rule `---` into a
@@ -2092,37 +1760,20 @@ p132-tikz-file-render.spec.ts)
 PPE_P128_EOF
     ;;
 p108-watch-file-reload.spec.ts)
-    # P98 (Phase D / D-9): watch-file reload of the OPEN owned figure. The open
-    # file (the one carrying the P48 fingerprint) must carry ONE owned tikz figure
-    # whose distinctive rendered content is in the figure SOURCE itself, so an
-    # external rewrite of that file changes the rendered signature. Provision
-    # demo.md as a minimal markdown doc carrying a single `{=latex}` tikz figure
-    # whose node is filled RED — the figure compile seam P100 activated renders it
-    # to an inline <svg> with fill `rgb(100%, 0%, 0%)` (verified against the real
-    # pdflatex+pdf2svg toolchain; the SAME signature p101 verifies). The spec then
-    # has an INDEPENDENT process rewrite this file with the SAME figure filled BLUE
-    # (`rgb(0%, 0%, 100%)`) and asserts the preview RELOADS to the blue signature
-    # (the stale red render gone) via the P48 fingerprint divergence — and that an
-    # unsaved in-app buffer edit (no on-disk change, no fingerprint divergence)
-    # triggers NO spurious reload.
-    #
-    # NOTE (the RED today): nothing watches the open owned figure file, so an
-    # external on-disk rewrite produces no preview reload — the stale red render
-    # persists and the blue signature never appears. The figure itself compiles
-    # (P100's seam is active), so the initial red render is present and the failure
-    # is the missing watch-reload, not a boot/setup error. The GREEN wiring (D-9)
-    # reuses the EXISTING P48 fingerprint to detect the open file's divergence and
-    # reload the preview.
-    cat > "$DEMO_FILE" <<'PPE_P108_RED_EOF'
+    # P98 (Phase D / D-9): watch-file reload of the OPEN file. The watch-reload is
+    # GENERIC — it reuses the P48 fingerprint (FNV-1a content hash + ns mtime) to
+    # detect that the open file's on-disk content DIVERGED from what was loaded, and
+    # reloads the preview; an unchanged file (same fingerprint) triggers NO reload.
+    # The witness is plain markdown carrying a DISTINCTIVE marker (no renderer
+    # dependency — the obligation is the watch-reload, not any figure compile): the
+    # spec has an INDEPENDENT process rewrite the marker on disk and asserts the
+    # preview reloads to the new marker, and that an unsaved in-app edit (no on-disk
+    # change, no fingerprint divergence) fires NO spurious reload.
+    cat > "$DEMO_FILE" <<'PPE_P108_EOF'
 # P108 — watch-file reload witness
 
-```{=latex}
-\begin{tikzpicture}
-  \node[fill=red, draw=black, shape=rectangle, minimum width=2cm, minimum height=2cm] (a) at (0,0) {Aleph};
-\end{tikzpicture}
-```
-
-PPE_P108_RED_EOF
+WATCH-WITNESS-ALEPH
+PPE_P108_EOF
     ;;
 p110-workspace-search.spec.ts)
     # P101 (Phase E / E1): global full-text WORKSPACE content search across the

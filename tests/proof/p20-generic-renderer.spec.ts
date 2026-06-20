@@ -18,8 +18,9 @@ import { openAndSelectDemo, waitForPreview, previewQuery } from './support/app';
 // <h1>), so waiting on <h1> succeeds under either renderer; the decisive
 // assertion is the marker.
 //
-// RED today: render_preview ignores [renderer] and always runs pandoc, so the
-// preview carries no rendered-by marker — the renderer abstraction does not exist.
+// Fails on a broken app where the preview render ignores the selected renderer and
+// always runs pandoc: the preview would carry no rendered-by marker — the
+// renderer abstraction (discovery-driven render target) would not exist.
 
 test('the active generic renderer plugin renders the preview, not the hardcoded pandoc path', async ({
   tauriPage,
