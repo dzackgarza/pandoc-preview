@@ -114,8 +114,6 @@
     onCursor,
     onSnippetsLoaded,
     onTikzCommandsLoaded,
-    onJumpToPreview,
-    onResyncPreview,
     sourcePath,
   }: {
     config: Config;
@@ -128,14 +126,6 @@
     // handing the bar the command names so its tikz palette can surface them. The
     // SAME parsed list the CM6 completion source is built from.
     onTikzCommandsLoaded: (names: string[]) => void;
-    // P109 / D-4: the TikzIt Ctrl+J jump-to-source action — fired when the
-    // cursor sits on an owned-tikz node line and Ctrl+J is pressed, so the app
-    // resolves the node (via the D-1 model) to its rendered preview target and
-    // selects/scrolls to it.
-    onJumpToPreview: () => void;
-    // P109 / D-4: the TikzIt Ctrl+T re-parse action — fired on Ctrl+T so the app
-    // re-parses the edited owned tikz source and re-syncs the preview model.
-    onResyncPreview: () => void;
     // The real on-disk path of the open buffer (or null for an identity-less
     // buffer). The static-lint source needs it to run the pandoc-md-lint plugin
     // through the generic firewall (which resolves the run's working directory
@@ -333,14 +323,6 @@
             // cursor (P53). Composed alongside the existing bindings, never
             // replacing them; the same command expandEmmet() fires in-harness.
             { key: "Ctrl-e", run: expandAbbreviation },
-            // P109 / D-4: the TikzIt jump-to-source / re-parse round-trip.
-            // Ctrl-j jumps from the owned-tikz node line under the cursor to the
-            // matching rendered preview element; Ctrl-t re-parses the edited
-            // source and re-syncs the preview model. The app owns the preview
-            // side, so these delegate to the App callbacks. The SAME actions the
-            // harness hooks jumpSourceToPreview / resyncPreviewFromSource fire.
-            { key: "Ctrl-j", run: () => (onJumpToPreview(), true) },
-            { key: "Ctrl-t", run: () => (onResyncPreview(), true) },
           ]),
           // P103 / Phase E (E2): the structural-motion keymap, COMPOSED alongside
           // the bindings above (a SEPARATE keymap.of, never replacing them). Each
@@ -942,15 +924,6 @@
     return doc.slice(begin, endAt + endMarker.length);
   }
 
-  /** P109 / D-4: the owned `\begin{tikzpicture}…\end{tikzpicture}` envelope the
-   * buffer carries, the SAME extract the copy-subgraph action parses — exported
-   * so the source↔preview jump can re-parse it through the D-1 backend to build
-   * the per-node preview target overlay. Fails LOUDLY when the buffer carries no
-   * tikzpicture. */
-  export function ownedTikzEnvelopeText(): string {
-    return ownedTikzEnvelope();
-  }
-
   /** E2E (P104 / D-8): the live editor selection's text — the contiguous source
    * span the user selected (the SAME `selection.main` range seedSelection sets).
    * The copy-subgraph action intersects this with the parsed picture to form the
@@ -1037,100 +1010,6 @@
       w.__PPE_TIKZ_PARSE_CACHE__ = { ...(w.__PPE_TIKZ_PARSE_CACHE__ ?? {}), [src]: parsed };
     })();
     throw new Error("parseTikz: source not yet parsed by the backend (no cached result)");
-  }
-
-  /** P109 / D-4: the owned tikzpicture envelope parsed through the D-1 / P90
-   * `parse_tikz` backend into its authoritative node model. The envelope-extract
-   * (ownedTikzEnvelope) + backend parse is the SAME source-side model P104's
-   * copy-subgraph rides; the jump's per-node correspondence is keyed off the
-   * node NAMES this model carries. Parked on a window global so the jump driver
-   * (an async fire-and-forget evaluate) and the cursor-name read (a synchronous
-   * evaluate) share one in-flight parse rather than each re-parsing. The async
-   * parse outlives this call; callers await `__PPE_TIKZ_MODEL__`. */
-  function refreshTikzModel(): void {
-    const source = ownedTikzEnvelope();
-    const w = window as unknown as {
-      __PPE_TIKZ_MODEL__?: Promise<{ source: string; graph: ParsedGraph }>;
-      __PPE_TIKZ_MODEL_RESOLVED__?: { source: string; graph: ParsedGraph };
-    };
-    w.__PPE_TIKZ_MODEL__ = (async () => {
-      const graph = await parseTikz(source);
-      const resolved = { source, graph };
-      // Settle the resolved model where the synchronous cursor-name read sees it.
-      w.__PPE_TIKZ_MODEL_RESOLVED__ = resolved;
-      return resolved;
-    })();
-  }
-
-  /** P109 / D-4: the line offset (0-based, into the buffer) where node `name`'s
-   * `\node …(<name>)…;` definition begins, located by scanning the owned tikz
-   * source for the node-definition line that names `name`. The match is the
-   * `\node` line whose parenthesised identifier — the SAME `(name)` token the
-   * D-1 parser's `paren_name` reads — equals `name`. Returns -1 when no such
-   * line exists in the buffer. */
-  function nodeDefinitionLineFrom(name: string): number {
-    const doc = view.state.doc;
-    const text = doc.toString();
-    const lines = text.split("\n");
-    let offset = 0;
-    for (const line of lines) {
-      if (line.includes("\\node")) {
-        const m = line.match(/\(([^)]*)\)/);
-        if (m && m[1].trim() === name) {
-          return offset;
-        }
-      }
-      offset += line.length + 1; // +1 for the consumed "\n"
-    }
-    return -1;
-  }
-
-  /** E2E (P109 / D-4): place the REAL CM6 cursor on the owned-tikz source line
-   * that DEFINES the node named `name` — the `\node …(<name>) at (…)…;` line in
-   * the open buffer. The node set is taken from the D-1 / P90 backend parse of
-   * the owned envelope (so a name that names no PARSED node is a loud error, not
-   * a raw substring coincidence); the line is then located by matching that
-   * name's node-definition line. Fire-and-forget; the in-flight backend parse is
-   * parked on `__PPE_TIKZ_MODEL__` (refreshTikzModel) so the subsequent
-   * `cursorTikzNodeName()` read resolves against the SAME model. A name that
-   * names no node in the open source is a LOUD error — never a silent no-jump. */
-  export function placeCursorOnTikzNodeLine(name: string): void {
-    refreshTikzModel();
-    const lineStart = nodeDefinitionLineFrom(name);
-    if (lineStart < 0) {
-      throw new Error(
-        `placeCursorOnTikzNodeLine: no \\node definition for "${name}" in the owned tikz source`,
-      );
-    }
-    view.dispatch({
-      selection: EditorSelection.cursor(lineStart),
-      effects: EditorView.scrollIntoView(lineStart, { y: "center" }),
-    });
-    view.focus();
-  }
-
-  /** E2E (P109 / D-4): the NAME of the owned-tikz node whose `\node` source line
-   * the cursor currently sits on, resolved against the D-1 / P90 backend model
-   * (the cached `__PPE_TIKZ_MODEL__` parse refreshed by
-   * placeCursorOnTikzNodeLine / refreshTikzModel) — null when the cursor is not
-   * on a node line OR the model is not yet parsed. The jump driver reads this to
-   * resolve the cursor to a node identity; matching against the parsed graph's
-   * node set is what keeps the cursor-to-node resolution keyed on the OWNED
-   * model rather than a bare buffer-line guess. */
-  export function cursorTikzNodeName(): string | null {
-    const w = window as unknown as {
-      __PPE_TIKZ_MODEL_RESOLVED__?: { source: string; graph: ParsedGraph };
-    };
-    const model = w.__PPE_TIKZ_MODEL_RESOLVED__;
-    if (!model) return null;
-    const head = view.state.selection.main.head;
-    const line = view.state.doc.lineAt(head);
-    if (!line.text.includes("\\node")) return null;
-    const m = line.text.match(/\(([^)]*)\)/);
-    if (!m) return null;
-    const name = m[1].trim();
-    // Only a name the D-1 model actually parsed as a node is a valid jump target.
-    return model.graph.nodes.some((n) => n.name === name) ? name : null;
   }
 
   /** Insert a snippet body at the cursor, expanding it through the SAME

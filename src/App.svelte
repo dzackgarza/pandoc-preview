@@ -54,13 +54,6 @@
     frontmatterBibliography,
     parseBibliography,
   } from "./lib/editor/citations";
-  import {
-    mapNodesToViewBox,
-    parseViewBox,
-    NODE_ATTR,
-    SELECTED_ATTR,
-    type TikzModelNode,
-  } from "./lib/editor/tikzjump";
 
   let config = $state<Config | null>(null);
   let configPath = $state("");
@@ -738,32 +731,6 @@
         // back through this to assert it re-parses STABLY to the selected
         // subgraph.
         parseTikz: (src: string) => editor.parseTikz_(src),
-        // P109 / D-4: place the REAL CM6 cursor on the owned-tikz source line
-        // that defines node `nodeName` (located via the D-1 model + the matching
-        // node-definition line). Fire-and-forget; a name that names no node is a
-        // LOUD error inside the editor method.
-        placeCursorOnTikzNodeLine: (nodeName: string) => {
-          editor.placeCursorOnTikzNodeLine(nodeName);
-        },
-        // P109 / D-4: the TikzIt Ctrl+J jump-to-source action — resolve the node
-        // under the cursor (via the D-1 model) to its rendered target element in
-        // the live preview and SELECT/scroll the preview to it. Fire-and-forget;
-        // the cursor not on a node line or a node with no rendered target is a
-        // LOUD error — never a silent no-op.
-        jumpSourceToPreview: () => {
-          void jumpSourceToPreview();
-        },
-        // P109 / D-4: the node identity the preview is CURRENTLY targeting (the
-        // node NAME on the element the jump marked in the live preview DOM), or
-        // null when nothing is targeted. Read off the ACTUAL preview DOM.
-        previewJumpTarget: (): string | null => previewJumpTarget(),
-        // P109 / D-4: the TikzIt Ctrl+T re-parse action — re-parse the edited
-        // owned tikz source with the D-1 parser, re-render the preview from the
-        // edited model, and rebuild the per-node source↔preview target overlay.
-        // Fire-and-forget.
-        resyncPreviewFromSource: () => {
-          void resyncPreviewFromSource();
-        },
         cursorOffset: () => editor.cursorOffset(),
         // P70: the live @codemirror/lint diagnostics (forceLinting-flushed) and
         // their count, read from the SAME field the gutter renders.
@@ -1642,171 +1609,6 @@
     const set = new Set(availableTemplates.filter(matches));
     set.add(target.template);
     return [...set].sort();
-  }
-
-  // ---- source↔preview line jump for owned tikz (P109 / D-4) ---------------
-  //
-  // The TikzIt Ctrl+J jump-to-source / Ctrl+T re-parse round-trip. The SOURCE
-  // side is the D-1 / P90 owned tikz model (node `name` + `(x, y)` coord) parsed
-  // from the editor buffer; the RENDERED side is the figure's inline <svg> in the
-  // preview iframe (the P100 seam). The mapping is a COORDINATE map
-  // (lib/editor/tikzjump.ts): pdf2svg carries no per-node identity, so each
-  // node's authoritative coordinate is mapped affinely onto the SVG viewBox and
-  // a per-node TARGET element (carrying the node NAME on data-ppe-tikz-node) is
-  // placed at that position INSIDE the SVG. Ctrl+J selects the target element for
-  // the node under the cursor; Ctrl+T re-parses + re-renders and rebuilds the
-  // targets from the new model.
-
-  // The preview iframe's rendered document (same-origin srcdoc), or null before
-  // the first render mounts it.
-  function previewDocument(): Document | null {
-    const frame = document.querySelector<HTMLIFrameElement>(
-      'iframe[title="Rendered preview"]',
-    );
-    return frame?.contentDocument ?? null;
-  }
-
-  // Build (or rebuild) the per-node target overlay inside the LAST rendered
-  // figure SVG in the preview, from the owned model `nodes`. One <circle> per
-  // node, placed at the node's coordinate-mapped position in the SVG viewBox and
-  // tagged with the node NAME on data-ppe-tikz-node. Removes any prior overlay
-  // first so a re-sync reflects the edited model. Returns the number of targets
-  // placed. Fails LOUDLY when no figure SVG is rendered — the jump must have a
-  // real rendered figure to target.
-  function buildTikzJumpTargets(nodes: readonly TikzModelNode[]): number {
-    const doc = previewDocument();
-    if (!doc) throw new Error("buildTikzJumpTargets: preview document unreachable");
-    const svgs = doc.querySelectorAll<SVGSVGElement>("svg");
-    const svg = svgs[svgs.length - 1];
-    if (!svg) throw new Error("buildTikzJumpTargets: no rendered figure SVG in the preview");
-
-    const SVG_NS = "http://www.w3.org/2000/svg";
-    // Drop any prior overlay (re-sync rebuilds from the edited model).
-    svg.querySelectorAll(`[${NODE_ATTR}]`).forEach((el) => el.remove());
-
-    const vb = parseViewBox(svg);
-    const mapped = mapNodesToViewBox(nodes, vb);
-    const r = Math.max(vb.width, vb.height) * 0.04;
-    for (const m of mapped) {
-      const circle = doc.createElementNS(SVG_NS, "circle");
-      circle.setAttribute(NODE_ATTR, m.name);
-      circle.setAttribute("cx", String(m.svgX));
-      circle.setAttribute("cy", String(m.svgY));
-      circle.setAttribute("r", String(r));
-      circle.setAttribute("fill", "none");
-      circle.setAttribute("stroke", "none");
-      circle.setAttribute("pointer-events", "none");
-      svg.appendChild(circle);
-    }
-    return mapped.length;
-  }
-
-  // Resolve the owned tikz model (node name + coord) from the current buffer
-  // through the D-1 / P90 backend parser, then (re)build the preview target
-  // overlay from it. Shared by the jump (which ensures targets exist before
-  // selecting) and the Ctrl+T re-sync (which rebuilds after a render).
-  async function syncTikzJumpTargets(): Promise<void> {
-    const source = editor.ownedTikzEnvelopeText();
-    const graph = await api.parseTikz(source);
-    const nodes: TikzModelNode[] = graph.nodes.map((n) => ({
-      name: n.name,
-      x: n.x,
-      y: n.y,
-    }));
-    // After a re-render the iframe re-parses its srcdoc asynchronously; wait for
-    // the new figure SVG (with drawing content) to mount before placing targets,
-    // so the overlay rides the EDITED model's freshly-rendered figure.
-    await waitForRenderedFigureSvg();
-    buildTikzJumpTargets(nodes);
-  }
-
-  // Poll the preview iframe until the last <svg> carries real drawing content
-  // (the figure compiled and mounted), bounded so a genuinely missing render
-  // fails loudly rather than hanging. Returns once a drawn figure SVG is present.
-  async function waitForRenderedFigureSvg(): Promise<void> {
-    const deadline = Date.now() + 20_000;
-    for (;;) {
-      const doc = previewDocument();
-      const svgs = doc?.querySelectorAll<SVGSVGElement>("svg");
-      const svg = svgs && svgs[svgs.length - 1];
-      if (
-        svg &&
-        svg.querySelector("path, line, g, text, polyline, rect") !== null
-      ) {
-        return;
-      }
-      if (Date.now() > deadline) {
-        throw new Error(
-          "syncTikzJumpTargets: no rendered figure SVG in the preview after re-render",
-        );
-      }
-      await new Promise((r) => setTimeout(r, 100));
-    }
-  }
-
-  // Ctrl+J: resolve the node under the cursor (via the D-1 model) and SELECT its
-  // target element in the preview — mark it in the DOM (data-ppe-jump-selected)
-  // and scroll it into view. The cursor NOT on a node line, or a node with no
-  // built target, is a LOUD error — never a silent scroll-to-top / no-op.
-  async function jumpSourceToPreview(): Promise<void> {
-    // placeCursorOnTikzNodeLine kicked off the D-1 backend parse and parked it on
-    // __PPE_TIKZ_MODEL__; await it so the cursor→node resolution reads a settled
-    // model (the parse and the jump fire in separate evaluate round-trips).
-    const pending = (
-      window as unknown as {
-        __PPE_TIKZ_MODEL__?: Promise<unknown>;
-      }
-    ).__PPE_TIKZ_MODEL__;
-    if (pending) await pending;
-    const name = editor.cursorTikzNodeName();
-    if (!name) {
-      throw new Error(
-        "jumpSourceToPreview: cursor is not on an owned-tikz node line",
-      );
-    }
-    // Always (re)build the per-node target overlay from the CURRENT owned model
-    // against the freshly-rendered figure SVG — so the jump rides the live model
-    // regardless of any concurrent re-render (e.g. a Ctrl+T re-sync in flight).
-    await syncTikzJumpTargets();
-    const doc = previewDocument();
-    if (!doc) throw new Error("jumpSourceToPreview: preview document unreachable");
-    const target = doc.querySelector(`[${NODE_ATTR}="${name}"]`);
-    if (!target) {
-      throw new Error(
-        `jumpSourceToPreview: node "${name}" has no rendered target element`,
-      );
-    }
-    // Clear the prior selection and mark this one — the selection lives in the
-    // DOM, so the jump-target read reports the ACTUAL marked element.
-    doc.querySelectorAll(`[${SELECTED_ATTR}]`).forEach((el) =>
-      el.removeAttribute(SELECTED_ATTR),
-    );
-    target.setAttribute(SELECTED_ATTR, "true");
-    target.scrollIntoView({ block: "center", inline: "center" });
-  }
-
-  // Read the node identity the preview is CURRENTLY targeting — the node NAME on
-  // the element the jump marked (data-ppe-jump-selected) in the live preview DOM,
-  // or null when nothing is targeted. NOT a parallel JS variable: it reads the
-  // attribute off the actual marked DOM element.
-  function previewJumpTarget(): string | null {
-    const doc = previewDocument();
-    if (!doc) return null;
-    const sel = doc.querySelector(`[${SELECTED_ATTR}]`);
-    return sel?.getAttribute(NODE_ATTR) ?? null;
-  }
-
-  // Ctrl+T: re-parse the (edited) owned tikz source with the D-1 parser and
-  // re-render the preview from the edited model, then rebuild the per-node target
-  // overlay so the jump's source↔preview mapping reflects the EDITED model. The
-  // re-render is the SAME doRender the debounced path runs, awaited so the new
-  // SVG is mounted before the targets are rebuilt; the stale pre-edit targets do
-  // not persist.
-  async function resyncPreviewFromSource(): Promise<void> {
-    if (currentFile) {
-      await doRender(editor.getContent());
-    }
-    await syncTikzJumpTargets();
   }
 
   // ---- project / file operations ------------------------------------------
@@ -2980,8 +2782,6 @@
               onTikzCommandsLoaded={(names) => {
                 tikzCommandNames = names;
               }}
-              onJumpToPreview={() => void jumpSourceToPreview()}
-              onResyncPreview={() => void resyncPreviewFromSource()}
               sourcePath={() => currentFile}
             />
           </div>

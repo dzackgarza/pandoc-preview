@@ -8,11 +8,11 @@
 #
 # Render context is just the buffer (the tikz source on stdin) and the open file's
 # directory (argv {base_dir}, also the cwd). render.sh wraps the source in the
-# template at its QTikz `<>` marker, compiles it (pdflatex -> pdf2svg), and emits a
+# template at its QTikz `$body$` marker, compiles it (pdflatex -> pdf2svg), and emits a
 # standalone HTML document embedding the inline SVG — the same RenderResult
-# contract the html5 renderer returns. The frontend names this renderer (via the
-# render_tikz command) when the open file is a tikz file, exactly as it names the
-# active html5 renderer for markdown.
+# contract the html5 renderer returns. The frontend selects this renderer (the
+# render command, by file type) when the open file is a tikz file, exactly as it
+# uses the active html5 renderer for markdown.
 #
 # Vendored shipped asset: the canonical copy lives in
 # src-tauri/resources/vendor/plugins/tikz-renderer. scripts/first-run.sh symlinks

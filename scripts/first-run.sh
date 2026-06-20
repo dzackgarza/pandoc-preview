@@ -306,7 +306,7 @@ fi
 # Install the shipped tikz renderer plugin. A tikz file is rendered by this sibling
 # renderer (the user-owned standalone-tikz.tex template, compiled to an inline SVG)
 # the same way markdown is rendered by the html5 renderer; the frontend names it
-# (render_tikz) when the open file is a tikz file. App-owned vendored code,
+# (the render command selects this target) when the open file is a tikz file. App-owned vendored code,
 # symlinked so updates stay atomic; a real-directory user override is preserved.
 TIKZ_RENDERER_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/tikz-renderer"
 if [ ! -d "$TIKZ_RENDERER_VENDOR" ]; then
