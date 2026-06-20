@@ -1,0 +1,54 @@
+{
+  "run_id": "20260620T032406Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p128-view-toggle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p128-view-toggle.spec.ts",
+            "title": "three-way view toggle hides a pane and preserves the split ratio on return, persisting the mode",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4472,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "ratio-before-toggle",
+          "value": 0.775
+        },
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "ratio-after-return",
+          "value": 0.7752
+        },
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "editor-width-preview-mode",
+          "value": 0
+        },
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "preview-width-editor-mode",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

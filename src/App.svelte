@@ -20,6 +20,7 @@
     RenderStatus,
     RepoState,
     SearchResult,
+    ViewMode,
   } from "./lib/types";
   import { CONFLICT_PREFIX } from "./lib/types";
   import type { OutlineItem } from "codemirror-lang-latex";
@@ -354,6 +355,13 @@
   let split = $state<SplitLayout | undefined>(undefined);
   let editorPaneEl = $state<HTMLElement | null>(null);
   let previewPaneEl = $state<HTMLElement | null>(null);
+  // Phase H / H.2 / P121 — the three-way editor|preview view mode. Seeded from
+  // the config-owned [editor].view_mode on launch (so a persisted mode is
+  // restored), mutated by the view:editor/preview/split commands. Switching it
+  // SHOWS/HIDES a dockview panel via split.setView (the SplitviewComponent
+  // visibility API) — never a teardown/rebuild — and persists the new mode to
+  // config.toml so it survives a restart (the P9 round-trip class).
+  let viewMode = $state<ViewMode>("split");
 
   const fileName = (path: string) => path.slice(path.lastIndexOf("/") + 1);
   const dirOf = (path: string) => path.slice(0, path.lastIndexOf("/"));
@@ -370,6 +378,10 @@
     // default and a saved selection is honored on launch.
     pdfCompileMode = config.preview.pdf_compile_mode;
     pdfCompileSpeed = config.preview.pdf_compile_speed;
+    // P121 — seed the three-way view mode from the config-owned [editor].view_mode
+    // so a persisted mode is restored at launch; applied to the splitview once the
+    // layout is built below.
+    viewMode = config.editor.view_mode;
     // Discovered plugins drive the category-aware menu/command-palette populator
     // (export-category plugins surface their own "Export: <name>" entries; P66).
     discoveredPlugins = await api.listPlugins();
@@ -813,6 +825,17 @@
         setPreviewMode: (mode: "preview" | "pdf" | "slides") => {
           setPreviewMode(mode);
         },
+        // Phase H / H.2 / P121: the three-way view-mode toggle. setViewMode runs
+        // the SAME path the view:editor/preview/split palette commands run —
+        // shows/hides the editor or preview dockview panel via the
+        // SplitviewComponent visibility API (ratio-preserving, no rebuild) and
+        // persists the chosen mode to the config-owned [editor].view_mode.
+        // Fire-and-forget: the spec awaits the resulting pane geometry and the
+        // on-disk config. viewMode reports the current mode the layout holds.
+        setViewMode: (mode: ViewMode) => {
+          void setViewMode(mode);
+        },
+        viewMode: (): ViewMode => viewMode,
         pdfStatus: () => pdfStatus,
         pdfPreviewArtifact: (): string | null => pdfArtifact,
         // Phase F / F4 / P110: the auto/manual + fast/full PDF-compile controls.
@@ -879,6 +902,9 @@
     split = createSplitLayout(splitContainer);
     editorPaneEl = split.editorPane;
     previewPaneEl = split.previewPane;
+    // P121 — apply the restored view mode to the freshly-built splitview so a
+    // persisted `editor`/`preview` mode opens with the matching pane hidden.
+    split.setView(viewMode);
 
     // P49: reopen the last session's file from host-fs session state and, when
     // its recovery store is ahead of disk, surface a restore offer. Done last,
@@ -1104,6 +1130,24 @@
       },
       { id: "show_preview", label: "Show Preview", run: () => (activeTab = "preview") },
       { id: "show_log", label: "Show Log", run: () => (activeTab = "log") },
+      // Phase H / H.2 / P121 — the three-way view-mode toggle. Each runs the SAME
+      // setViewMode the E2E hook drives: it shows/hides a dockview panel via the
+      // SplitviewComponent visibility API and persists the chosen mode to config.
+      {
+        id: "view:editor",
+        label: "View: Editor Only",
+        run: () => void setViewMode("editor"),
+      },
+      {
+        id: "view:preview",
+        label: "View: Preview Only",
+        run: () => void setViewMode("preview"),
+      },
+      {
+        id: "view:split",
+        label: "View: Split",
+        run: () => void setViewMode("split"),
+      },
       // P110 — the explicit Recompile PDF command: compiles the PDF NOW with the
       // current fast/full selection, bypassing the auto/manual gate (its purpose
       // under MANUAL). Switches to the PDF pane so the recompiled artifact paints.
@@ -2455,6 +2499,31 @@
       settingsOpen = false;
       toastSuccess("Settings saved.");
       if (currentFile) scheduleRender(editor.getContent());
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
+  // Phase H / H.2 / P121 — switch the three-way view mode. SHOWS/HIDES the
+  // editor or preview panel through split.setView (the dockview
+  // SplitviewComponent per-view visibility API) — NEVER a teardown/rebuild, so
+  // the editor:preview ratio and the portal mounts survive — then PERSISTS the
+  // new mode to the config-owned [editor].view_mode so it is restored on the next
+  // launch (the P9 round-trip class). A loud failure on either leg surfaces as a
+  // toast; the mode is never silently dropped.
+  async function setViewMode(mode: ViewMode): Promise<void> {
+    if (!split || !config) {
+      throw new Error("setViewMode called before the layout/config was ready");
+    }
+    viewMode = mode;
+    split.setView(mode);
+    const next: Config = {
+      ...config,
+      editor: { ...config.editor, view_mode: mode },
+    };
+    try {
+      await api.saveConfig(next);
+      config = next;
     } catch (e) {
       toastError(String(e));
     }

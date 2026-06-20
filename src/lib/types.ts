@@ -18,6 +18,12 @@ export type PdfCompileMode = "auto" | "manual";
  *  command, "full" runs the latexmk multi-pass driver (P109). */
 export type PdfCompileSpeed = "fast" | "full";
 
+/** P121 (Phase H / H.2) — the three-way editor|preview view mode. "split" shows
+ *  both panes (the default), "editor" shows only the editor, "preview" shows only
+ *  the preview. Config-owned (config.rs `ViewMode`), realized by toggling the
+ *  dockview SplitviewComponent's per-view visibility. */
+export type ViewMode = "editor" | "preview" | "split";
+
 export interface Config {
   general: {
     theme: "dark" | "light";
@@ -60,6 +66,10 @@ export interface Config {
     // with. Like `bibliography`, the renderer layers it onto pandoc as --csl from
     // this value. Required; load-validated (ExistingFile in config.rs).
     csl: ExistingFile;
+    // P121 (Phase H / H.2) — the three-way editor|preview view mode the layout
+    // opens in and persists. Required; the canonical config bakes "split". An
+    // unknown variant is a hard load error in config.rs (no runtime default).
+    view_mode: ViewMode;
   };
   preview: {
     debounce_ms: number;

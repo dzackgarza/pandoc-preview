@@ -237,6 +237,26 @@ pub struct Editor {
     /// with. Like `bibliography`, the renderer layers it onto the pandoc command as
     /// `--csl`, sourced from this value. Required and load-validated (ExistingFile).
     pub csl: ExistingFile,
+    /// Phase H / H.2 / P121 — the three-way editor|preview view mode the layout
+    /// opens in and persists. `Split` shows both panes (the default), `Editor`
+    /// shows only the editor, `Preview` shows only the preview. Config-persisted UI
+    /// state restored at launch; mutated by the view:editor/preview/split commands.
+    /// Required: the canonical config bakes the opinionated value (`split`); a
+    /// config omitting it is a hard load error and an unknown variant is a LOUD
+    /// deserialize error (no runtime default, no silent coercion).
+    pub view_mode: ViewMode,
+}
+
+/// The three-way editor|preview view mode (P121). `Split` shows both panes;
+/// `Editor`/`Preview` show only that pane. Mirrors the `ViewMode` type in
+/// src/lib/types.ts and the `view_mode` toggle realized by the dockview
+/// SplitviewComponent's per-view visibility API.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ViewMode {
+    Editor,
+    Preview,
+    Split,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

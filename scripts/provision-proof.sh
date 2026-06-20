@@ -209,6 +209,7 @@ line_wrapping = false
 line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
+view_mode = "split"
 
 [preview]
 debounce_ms = 200
@@ -342,6 +343,7 @@ line_wrapping = false
 line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
+view_mode = "split"
 
 [preview]
 debounce_ms = 200
@@ -404,6 +406,7 @@ line_wrapping = false
 line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
+view_mode = "split"
 
 [preview]
 debounce_ms = 200
@@ -777,6 +780,7 @@ line_wrapping = false
 line_numbers = true
 bibliography = "$ABS_SPEC_DIR/home/.pandoc/bib/references.bib"
 csl = "$ABS_SPEC_DIR/home/.pandoc/csl/alpha-preview.csl"
+view_mode = "split"
 $EDITOR_EXTRA
 
 [preview]
