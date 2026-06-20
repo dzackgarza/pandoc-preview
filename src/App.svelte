@@ -47,10 +47,6 @@
   import SearchPanel from "./lib/components/SearchPanel.svelte";
   import { parseCompileLog, type LogEntry } from "./lib/editor/complog";
   import {
-    parseTikzFigureLog,
-    type TikzFigureLogEntry,
-  } from "./lib/editor/tikzfigurelog";
-  import {
     buildLabelIndex,
     type ProjectFile,
   } from "./lib/editor/labels";
@@ -236,20 +232,6 @@
   // raw-log surface stays untouched. The Compile Log pane renders these as a
   // clickable list ALONGSIDE the raw text; clicking jumps the editor to the line.
   const logEntries = $derived<LogEntry[]>(parseCompileLog(log));
-  // The buffer content the active `log` was produced from. Captured at render
-  // time so the figure-compile log entries (D-6 / P95) can map each diagnostic's
-  // verbatim figure source line back to its EDITOR-BUFFER line by matching that
-  // exact line in this content — the buffer the failed figure compile saw.
-  let renderedContent = $state("");
-  // Figure-compile log entries (D-6 / P95): a pure parse of the SAME raw `log`
-  // for the tikz FIGURE-compile diagnostics tikzcd.lua emits on a failed
-  // tikz→SVG compile, mapped to the editor-buffer source line via tikzfigurelog.ts.
-  // DISTINCT from `logEntries` (the P11/P74 pandoc-render log): this is the third
-  // surface, the figure-compile log, rendered in its own TikZ Log tab. Derived
-  // from `log` + `renderedContent` so it always reflects the same render.
-  const tikzFigureLogEntries = $derived<TikzFigureLogEntry[]>(
-    parseTikzFigureLog(log, renderedContent),
-  );
   let status = $state<RenderStatus>("idle");
   // Ordered record of every render-status transition (drives the preview
   // indicator). Exposed to the E2E harness so the stale -> rendering -> ok
@@ -266,7 +248,7 @@
   // once on mount from the app resource dir; convertFileSrc turns the absolute
   // path into the asset-protocol URL the webview can load.
   let mathjaxUrl = $state("");
-  let activeTab = $state<"preview" | "pdf" | "log" | "tikzlog">("preview");
+  let activeTab = $state<"preview" | "pdf" | "log">("preview");
   // The SELECTED preview surface ("preview" = HTML, "pdf" = embedded pdf.js),
   // tracked independently of the FOREGROUND tab. The Compile Log / TikZ Log tabs
   // are transient diagnostic overlays the user flips to and back; viewing one must
@@ -822,17 +804,6 @@
         // the pane calls editor.goToLine(entry.line), the SAME jump this hook's
         // sibling goToLine drives.
         structuredLog: (): LogEntry[] => logEntries,
-        // D-6 / P95: the structured parse of the FIGURE-compile diagnostics the
-        // TikZ Log tab currently shows — the SAME tikzFigureLogEntries the tab
-        // renders as a clickable list (parseTikzFigureLog over the real render
-        // `log`, mapped to the editor-buffer source line). Each entry is
-        // {line, message}; activating an entry calls editor.goToLine(entry.line),
-        // the SAME jump the sibling goToLine drives.
-        tikzFigureLog: (): TikzFigureLogEntry[] => tikzFigureLogEntries,
-        activateTikzFigureLogEntry: (index: number) => {
-          const entry = tikzFigureLogEntries[index];
-          if (entry && entry.line > 0) editor.goToLine(entry.line);
-        },
         foldAll: () => editor.foldAllFolds(),
         unfoldAll: () => editor.unfoldAllFolds(),
         getFoldedRanges: () => editor.getFoldedRanges(),
@@ -1499,9 +1470,6 @@
       );
       if (seq !== renderSeq) return;
       log = res.log;
-      // The buffer this log was produced from, so the figure-compile log entries
-      // (D-6 / P95) map their source lines back to this exact buffer.
-      renderedContent = content;
       if (res.ok) {
         html = res.html;
         setStatus("ok");
@@ -3026,8 +2994,6 @@
             {log}
             {logEntries}
             onEntryClick={(entry) => editor.goToLine(entry.line)}
-            tikzFigureLogEntries={tikzFigureLogEntries}
-            onTikzEntryClick={(entry) => editor.goToLine(entry.line)}
             {status}
             {pdfStatus}
             {onPdfViewerMount}

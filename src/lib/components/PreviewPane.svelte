@@ -1,15 +1,12 @@
 <script lang="ts">
   import type { PdfCompileMode, PdfCompileSpeed, PdfProblem, RenderStatus } from "../types";
   import type { LogEntry } from "../editor/complog";
-  import type { TikzFigureLogEntry } from "../editor/tikzfigurelog";
 
   let {
     html,
     log,
     logEntries,
     onEntryClick,
-    tikzFigureLogEntries,
-    onTikzEntryClick,
     status,
     pdfStatus,
     onPdfViewerMount,
@@ -29,13 +26,6 @@
     // onEntryClick(entry), which jumps the editor to entry.line.
     logEntries: LogEntry[];
     onEntryClick: (entry: LogEntry) => void;
-    // Figure-compile log entries (D-6 / P95): the tikz FIGURE-compile diagnostics
-    // parsed from the SAME raw `log`, rendered as a clickable list in the TikZ Log
-    // tab (DISTINCT from the Compile Log tab's pandoc-render entries). Activating
-    // an entry calls onTikzEntryClick(entry), which jumps the editor to the
-    // offending tikz source line entry.line.
-    tikzFigureLogEntries: TikzFigureLogEntry[];
-    onTikzEntryClick: (entry: TikzFigureLogEntry) => void;
     status: RenderStatus;
     // The PDF compile-on-idle scheduler's OWN status (Phase F / F1 / P107), the
     // sibling of `status` for the HTML preview: drives the PDF tab's status
@@ -63,7 +53,7 @@
     // pointer-events are disabled so the cursor crossing it cannot swallow the
     // drag's pointermove stream.
     dragging?: boolean;
-    activeTab: "preview" | "pdf" | "log" | "tikzlog";
+    activeTab: "preview" | "pdf" | "log";
   } = $props();
 
   // Svelte action: hand the mounted PDF viewer container up to App.svelte so its
@@ -77,7 +67,7 @@
   <div
     class="flex items-center gap-1 border-b border-zinc-200 bg-zinc-50 px-2 dark:border-zinc-700 dark:bg-zinc-800"
   >
-    {#each [["preview", "Preview"], ["pdf", "PDF"], ["log", "Compile Log"], ["tikzlog", "TikZ Log"]] as const as [id, label] (id)}
+    {#each [["preview", "Preview"], ["pdf", "PDF"], ["log", "Compile Log"]] as const as [id, label] (id)}
       <button
         class="relative border-b-2 px-3 py-1.5 text-sm {activeTab === id
           ? 'border-sky-500 font-medium text-zinc-900 dark:text-zinc-100'
@@ -86,9 +76,6 @@
       >
         {label}
         {#if id === "log" && status === "error"}
-          <span class="absolute -top-0 -right-0 h-2 w-2 rounded-full bg-red-500"></span>
-        {/if}
-        {#if id === "tikzlog" && tikzFigureLogEntries.length > 0}
           <span class="absolute -top-0 -right-0 h-2 w-2 rounded-full bg-red-500"></span>
         {/if}
       </button>
@@ -220,38 +207,6 @@
         data-testid="pdf-viewer"
         use:mountPdfViewer
       ></div>
-    </div>
-  {:else if activeTab === "tikzlog"}
-    <!-- Figure-compile log (D-6 / P95): the tikz FIGURE-compile diagnostics, a
-         clickable list parsed from the raw `log` and mapped to the offending
-         tikz SOURCE line. Clicking jumps the editor to that source line. This is
-         the figure-compile surface, DISTINCT from the Compile Log tab's
-         pandoc-render entries. -->
-    <div class="flex h-full grow flex-col overflow-hidden">
-      {#if tikzFigureLogEntries.length > 0}
-        <ul
-          class="shrink-0 divide-y divide-zinc-200 overflow-auto border-b border-zinc-200 bg-white dark:divide-zinc-700 dark:border-zinc-700 dark:bg-zinc-800"
-          data-testid="tikz-figure-log"
-        >
-          {#each tikzFigureLogEntries as entry, i (i)}
-            <li>
-              <button
-                type="button"
-                class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                onclick={() => onTikzEntryClick(entry)}
-              >
-                <span class="font-mono font-semibold text-red-600 dark:text-red-400"
-                  >figure</span
-                >
-                <span class="font-mono text-zinc-400">L{entry.line}</span>
-                <span class="grow text-zinc-700 dark:text-zinc-200">{entry.message}</span>
-              </button>
-            </li>
-          {/each}
-        </ul>
-      {:else}
-        <p class="p-3 text-xs text-zinc-400">No figure-compile errors.</p>
-      {/if}
     </div>
   {:else}
     <div class="flex h-full grow flex-col overflow-hidden">
