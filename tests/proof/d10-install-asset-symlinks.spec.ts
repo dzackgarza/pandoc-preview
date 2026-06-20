@@ -16,7 +16,6 @@ import { fileURLToPath } from 'node:url';
 // hermetic $HOME (never the real ~/.pandoc).
 
 const REQUIRED_FILTERS = [
-  'tikzcd.lua',
   'convert_amsthm_envs.lua',
   'obsidian_callouts.lua',
   'obsidian.lua',

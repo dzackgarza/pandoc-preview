@@ -63,9 +63,6 @@ link_dir "$PANDOC_CONFIG/bib" "$HOME/.pandoc/bib"
 # startup gate otherwise); create it if absent. Figure CONTENT is user-owned and
 # never vendored.
 mkdir -p "$HOME/.pandoc/figures"
-# The SHARED figure palette (Phase D / D-2 / P91): the starter shared.tikzstyles +
-# shared.tikzdefs every compiled figure \input's. These ARE vendored starter data
-# assets (like csl/bib), symlinked in so a fresh machine has a config-declarable
-# palette; a user override (a real file where the symlink would go) is preserved,
-# never clobbered — so a user growing their own palette keeps it.
-link_dir "$PANDOC_CONFIG/figures" "$HOME/.pandoc/figures"
+# No shared palette is installed: a tikz file renders via the user-owned
+# standalone-tikz.tex template (symlinked above with the other templates), which
+# owns its preamble and styles via \usepackage{dzg-tikz} against the styles tree.

@@ -112,35 +112,21 @@ PREVIEW_TEMPLATE="$HOME/.pandoc/templates/pandoc_preview_template.html"
 BIBLIOGRAPHY="$HOME/.pandoc/bib/references.bib"
 # The shipped alphabetic citation style (hyperlinked [Label] citations).
 CSL="$HOME/.pandoc/csl/alpha-preview.csl"
-# The shared figure palette (Phase D / D-2 / P91): the ONE .tikzstyles + .tikzdefs
-# every compiled figure \input's. install-assets symlinks the vendored starters
-# into the figures dir; the [figures] table below points config at them.
-TIKZSTYLES="$FIGURES_DIR/shared.tikzstyles"
-TIKZDEFS="$FIGURES_DIR/shared.tikzdefs"
-# The per-figure preamble template (Phase D / D-3 / P92): the standalone LaTeX
-# document each compiled figure body is wrapped in, with the QTikz <> source
-# marker. install-assets symlinks the vendored starter standalone-tikz.tex into
-# the templates dir; the [figures] table below points config at it.
-FIGURE_TEMPLATE="$HOME/.pandoc/templates/standalone-tikz.tex"
 # Obsidian fidelity: lists may follow a paragraph with no blank line in a vault;
 # the extension makes pandoc parse them as lists (Obsidian does). Citeproc resolves
 # [@key] citations against the installed bibliography (override it with your own).
 FROM_FORMAT_EXT="$FROM_FORMAT+lists_without_preceding_blankline"
-# tikzcd.lua compiles each tikzpicture/tikzcd block to PDF (pdflatex) then SVG
-# (pdf2svg) and inlines the SVG into the preview HTML. It is installed alongside
-# its load dependency utilities.lua and its standalone-tikz.tex template, and reads
-# PANDOC_DIR/FIGURES_DIR/SVG_DIR from the environment (the renderer exports them
-# from PANDOC_RESOURCE_PATH). It loads LAST so it sees blocks after the other
-# filters have run. The tikz-toolchain doctor check fails the startup gate if
-# pdflatex or pdf2svg is absent, so the converter is a proven hard dependency here.
 # Citations render preprint-style: --citeproc enables processing, --metadata
 # link-citations hyperlinks the labels to the bibliography, and
 # reference-section-title gives the bibliography a separated "References" heading.
+# Tikz is NOT inline-compiled in the markdown preview: a tikz file is its own
+# render mode (the tikz-renderer plugin against the user-owned template), so the
+# markdown command loads no tikz filter.
 # P84/C1: the --bibliography / --csl paths are NOT baked into this command — they
 # are the ONE config-declared source (editor.bibliography / editor.csl below), which
 # the renderer layers onto the command as render context. The path lives in exactly
 # one place (the config key); the canonical command carries no bib/csl literal.
-PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua --lua-filter=$FILTERS_DIR/tikzcd.lua$EXTRA_ARGS_CMD"
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
 # Escape for a TOML basic string ("..."): backslash first, then double-quote.
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}
@@ -225,20 +211,6 @@ pdf_full_command = "latexmk-pdf-export"
 [directories]
 styles = "$STYLES_DIR"
 figures = "$FIGURES_DIR"
-
-# The shared figure palette (Phase D / D-2 / P91): the ONE TikZiT-native
-# .tikzstyles style file and ONE .tikzdefs preamble every compiled figure
-# \input's. Both are required, load-validated existing files; the renderer
-# forwards them to the figure compile. Edit the shared files (or open them in
-# TikZiT) to grow the palette shared by every figure.
-[figures]
-tikzstyles = "$TIKZSTYLES"
-tikzdefs = "$TIKZDEFS"
-# The per-figure preamble template (Phase D / D-3 / P92): the standalone LaTeX
-# document each figure body is wrapped in, with the QTikz <> source marker.
-# Required, load-validated existing file; swap it (or edit its content) to change
-# the preamble every figure compiles under.
-template = "$FIGURE_TEMPLATE"
 
 # The app is renderer-agnostic: the preview is produced by a renderer plugin
 # discovered from the plugins directory below. The shipped pandoc renderer houses

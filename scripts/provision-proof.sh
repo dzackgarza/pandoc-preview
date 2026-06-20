@@ -66,33 +66,6 @@ figures = "$ABS_SPEC_DIR/home/.pandoc/figures"
 EOF
 }
 
-# The [figures] table (Phase D / D-2 / P91, required schema field): the shared
-# figure palette every compiled figure \input's. Both paths are required,
-# load-validated ExistingFiles; without this table config-schema fails the
-# Figures/required-field check and the app never boots. The vendored starter
-# shared.tikzstyles + shared.tikzdefs are installed into the figures dir by
-# install-assets (run via emit_pandoc_renderer / install-assets.sh), so these
-# paths resolve to real files at config load. Every valid synthesized config
-# appends it (the canonical witness config, write_valid_config, d13, d15 all call
-# it); p101 swaps in its own red/blue .tikzstyles fixture at this same path.
-emit_figures() {
-    local out="$1"
-    # Phase D / D-3 / P92: the per-figure preamble template ([figures].template,
-    # required load-validated ExistingFile). Defaults to the vendored starter
-    # standalone-tikz.tex install-assets symlinks into the templates dir (it
-    # carries the QTikz `<>` source marker plus the $tikzstyles$/$tikzdefs$ palette
-    # markers). p102 overrides it to its own per-figure .tikztemplate fixture (arg
-    # 2) so the spec can swap the active template's content on disk.
-    local template="${2:-$ABS_SPEC_DIR/home/.pandoc/templates/standalone-tikz.tex}"
-    cat >> "$out" <<EOF
-
-[figures]
-tikzstyles = "$ABS_SPEC_DIR/home/.pandoc/figures/shared.tikzstyles"
-tikzdefs = "$ABS_SPEC_DIR/home/.pandoc/figures/shared.tikzdefs"
-template = "$template"
-EOF
-}
-
 # Generic-plugin fixtures (Milestone A). The plugins dir is a core-config value
 # (render-rebuild-plan.md), not a constant: each spec copies the committed
 # fixtures into a hermetic plugins dir and wires [plugins].dir below.
@@ -157,7 +130,7 @@ dir = "$plugins_dir"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua --lua-filter=$fdir/tikzcd.lua"
+command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
 
 [plugin.pandoc-renderer.style]
 figure_width = "75%"
@@ -227,7 +200,6 @@ pdf_fast_command = "pandoc-pdf-export"
 pdf_full_command = "latexmk-pdf-export"
 EOF
         emit_directories "$CONFIG_PATH"
-        emit_figures "$CONFIG_PATH"
         # The pandoc renderer is the active renderer (its checks are the doctor's
         # pandoc-executable/pandoc-invocation rows; D1/D5 assert on them); it also
         # sets [plugins].dir = $PLUGINS_DIR, the dir the export plugins install into.
@@ -332,11 +304,10 @@ ratio = 0.5
 EOF
         ;;
     d11-*) # C4/D3: required-filter check. Valid env (write_valid_config installs the
-        # filters via emit_pandoc_renderer), then remove a required filter that is
-        # NOT command-referenced (tikzcd, deferred to F) so required-filter is the
-        # SOLE failing check — the command still runs, only the required set is short.
+        # filters via emit_pandoc_renderer), then remove a required HTML-preview
+        # filter so required-filter is the SOLE failing check.
         write_valid_config "$PANDOC_BIN"
-        rm -f "$ABS_SPEC_DIR/home/.pandoc/filters/tikzcd.lua"
+        rm -f "$ABS_SPEC_DIR/home/.pandoc/filters/obsidian.lua"
         ;;
     d13-*) # C3: the gum configurator must LOCK the required filters in. Start from a
         # valid env whose command LACKS the required filters; the wizard re-adds them.
@@ -369,7 +340,6 @@ pdf_fast_command = "pandoc-pdf-export"
 pdf_full_command = "latexmk-pdf-export"
 EOF
         emit_directories "$CONFIG_PATH"
-        emit_figures "$CONFIG_PATH"
         install_plugin_fixtures "$PLUGINS_DIR" pandoc-renderer
         env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
         cat >> "$CONFIG_PATH" <<EOF
@@ -440,7 +410,6 @@ pdf_fast_command = "pandoc-pdf-export"
 pdf_full_command = "latexmk-pdf-export"
 EOF
         emit_directories "$CONFIG_PATH"
-        emit_figures "$CONFIG_PATH"
         # The filters/template must be installed so the command first-run.sh writes
         # during recovery is runnable (every recovery spec does this).
         env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
@@ -844,17 +813,6 @@ EOF
     # specs that exercise export (p07/p08/p17/p47/p66) install the relevant plugin
     # in their own case below. The default config carries no export config.
     emit_directories "$CONFIG_PATH"
-    # Phase D / D-3 / P92: p102 points [figures].template at its OWN per-figure
-    # .tikztemplate fixture (the spy-carrying template the spec swaps on disk for
-    # the discriminator leg) instead of the default starter standalone-tikz.tex.
-    case "$SPEC" in
-    p102-perfigure-template.spec.ts)
-        emit_figures "$CONFIG_PATH" "$ABS_SPEC_DIR/home/.pandoc/figures/perfigure-spy.tikztemplate"
-        ;;
-    *)
-        emit_figures "$CONFIG_PATH"
-        ;;
-    esac
     # Renderer setup (Milestone B): the core is renderer-agnostic and delegates the
     # preview to the active renderer plugin. Default = pandoc renderer (keeps the
     # preview byte-identical to the old core path); p20 swaps in the generic

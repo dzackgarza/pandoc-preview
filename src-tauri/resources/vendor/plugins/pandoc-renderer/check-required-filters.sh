@@ -6,10 +6,7 @@
 # filter(s) on stderr so the doctor report says exactly which is absent.
 set -euo pipefail
 
-# utilities.lua is not loaded as a --lua-filter; it is a require dependency of
-# tikzcd.lua (loaded via package.path from ~/.pandoc/filters). tikzcd errors at
-# load without it, so it is just as required as the filters proper.
-REQUIRED=(tikzcd.lua utilities.lua convert_amsthm_envs.lua obsidian_callouts.lua obsidian.lua)
+REQUIRED=(convert_amsthm_envs.lua obsidian_callouts.lua obsidian.lua)
 dir="$HOME/.pandoc/filters"
 
 missing=()

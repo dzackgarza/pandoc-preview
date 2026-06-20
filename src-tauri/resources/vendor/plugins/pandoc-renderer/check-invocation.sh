@@ -5,14 +5,6 @@
 # on PPE_PLUGIN_CONFIG ({"command": "..."}); run it verbatim (shlex-tokenized).
 set -euo pipefail
 
-# Export the tikz->SVG compile env (PANDOC_DIR/FIGURES_DIR/SVG_DIR) the canonical
-# command's tikzcd.lua filter reads at load time — the SAME env render.sh layers on
-# at render time (OSOT in tikz-env.sh). Without it the filter errors at load (it
-# cannot find its standalone-tikz.tex template) and this probe would falsely report
-# the whole invocation broken.
-# shellcheck source=tikz-env.sh
-. "$(dirname "${BASH_SOURCE[0]}")/tikz-env.sh"
-
 cfg="${PPE_PLUGIN_CONFIG:-}"
 [ -n "$cfg" ] || cfg='{}'
 command_str="$(printf '%s' "$cfg" | jq -r '.command')"

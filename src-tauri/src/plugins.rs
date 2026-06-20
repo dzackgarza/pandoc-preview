@@ -34,16 +34,6 @@ const PH_BASE_URL: &str = "{base_url}";
 const PH_MATHJAX: &str = "{mathjax}";
 const PH_BIBLIOGRAPHY: &str = "{bibliography}";
 const PH_CSL: &str = "{csl}";
-/// Phase D / D-2 / P91: the config-declared shared figure palette
-/// (`config.figures.tikzstyles` / `.tikzdefs`) the renderer forwards as render
-/// context, exactly as `{bibliography}`/`{csl}`. The figure compile `\input`s them.
-const PH_TIKZSTYLES: &str = "{tikzstyles}";
-const PH_TIKZDEFS: &str = "{tikzdefs}";
-/// Phase D / D-3 / P92: the config-declared per-figure preamble template
-/// (`config.figures.template`) the renderer forwards as render context, exactly
-/// as `{tikzstyles}`/`{tikzdefs}`. The figure compile wraps each tikz body in it,
-/// substituting the source at the template's QTikz `<>` marker.
-const PH_FIGURE_TEMPLATE: &str = "{figure_template}";
 
 /// Environment variable carrying the active plugin's `[plugin.<id>]` config as
 /// JSON, so a renderer/check script can read its own config (e.g. the pandoc
@@ -766,22 +756,6 @@ pub fn render_named(
             cfg.editor.bibliography.path().display().to_string(),
         ),
         (PH_CSL, cfg.editor.csl.path().display().to_string()),
-        // P91: the shared figure palette the figure compile \input's, sourced from
-        // the ONE config-declared place ([figures].tikzstyles / .tikzdefs).
-        (
-            PH_TIKZSTYLES,
-            cfg.figures.tikzstyles.path().display().to_string(),
-        ),
-        (
-            PH_TIKZDEFS,
-            cfg.figures.tikzdefs.path().display().to_string(),
-        ),
-        // P92: the config-declared per-figure preamble template the figure compile
-        // wraps each tikz body in, sourced from the ONE place ([figures].template).
-        (
-            PH_FIGURE_TEMPLATE,
-            cfg.figures.template.path().display().to_string(),
-        ),
     ];
     let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
     let argv: Vec<String> = plugin

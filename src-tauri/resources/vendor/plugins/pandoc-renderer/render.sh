@@ -19,20 +19,6 @@ mathjax="$3"
 # carries --citeproc and the citation metadata but NOT the bib/csl paths.
 bibliography="$4"
 csl="$5"
-# Phase D / D-2 / P91: the ONE config-declared shared figure palette
-# (config.figures.tikzstyles / .tikzdefs), forwarded by the app as render context
-# exactly as bibliography/csl are. The tikz compile (tikzcd.lua -> standalone-
-# tikz.tex) \input's these into every figure's preamble, so a style/def declared
-# in the shared file is in scope for every figure by name. Exported as
-# TIKZSTYLES_FILE / TIKZDEFS_FILE below (the env tikzcd.lua reads).
-tikzstyles="$6"
-tikzdefs="$7"
-# Phase D / D-3 / P92: the ONE config-declared per-figure preamble template
-# (config.figures.template), forwarded by the app as render context. The tikz
-# compile (tikzcd.lua) wraps each figure body in this template, substituting the
-# source at the template's QTikz `<>` marker. Exported as FIGURE_TEMPLATE_FILE
-# below (the env tikzcd.lua reads).
-figure_template="$8"
 
 # The core always sets PPE_PLUGIN_CONFIG; default to an empty object defensively.
 cfg="${PPE_PLUGIN_CONFIG:-}"
@@ -44,32 +30,6 @@ command_str="$(printf '%s' "$cfg" | jq -r '.command')"
 # schema marks it required, so a valid (booted) config always carries it — no
 # guard, same as .command above.
 figure_width="$(printf '%s' "$cfg" | jq -r '.style.figure_width')"
-
-# Tikz->SVG preview compile env (Phase D / D-0): the canonical command carries
-# --lua-filter=.../tikzcd.lua, which compiles each tikzpicture/tikzcd block to a
-# PDF (pdflatex) then an SVG (pdf2svg) and inlines the SVG into the preview HTML.
-# That filter reads PANDOC_DIR/FIGURES_DIR/SVG_DIR from the environment (not baked
-# into the command). The derivation is OSOT in tikz-env.sh, sourced here and by the
-# doctor's check-invocation.sh so the filter sees the same env in both paths.
-# shellcheck source=tikz-env.sh
-. "$(dirname "${BASH_SOURCE[0]}")/tikz-env.sh"
-
-# Phase D / D-2 / P91: export the config-declared shared figure palette so
-# tikzcd.lua \input's it into every compiled figure. These are render context the
-# app forwards on argv (config.figures.tikzstyles / .tikzdefs), NOT derived from
-# PANDOC_RESOURCE_PATH, so they are exported here rather than in tikz-env.sh (the
-# doctor's empty-stdin invocation probe loads the filter but compiles no figure,
-# so it never reads these — the filter reads them lazily at figure-compile time).
-# A booted app always supplies both (required, config-validated ExistingFiles).
-export TIKZSTYLES_FILE="$tikzstyles"
-export TIKZDEFS_FILE="$tikzdefs"
-# Phase D / D-3 / P92: export the config-declared per-figure preamble template so
-# tikzcd.lua wraps each figure body in it (substituting the source at the QTikz
-# `<>` marker) INSTEAD of the baked standalone-tikz.tex. Render context the app
-# forwards on argv (config.figures.template), read lazily at figure-compile time
-# (the doctor's empty-stdin probe loads the filter but compiles no figure). A
-# booted app always supplies it (required, config-validated ExistingFile).
-export FIGURE_TEMPLATE_FILE="$figure_template"
 
 # Tokenize the raw command with a shlex-class parser (quotes respected, NO shell
 # expansion) — run it, do not interpret it. The first token is the executable.

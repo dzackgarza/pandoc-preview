@@ -5,13 +5,8 @@ import { recordObservation } from './support/observations';
 // check: every REQUIRED HTML-preview filter must resolve in ~/.pandoc/filters; a
 // missing one is a fatal validation failure (required-filter-set.md). Provisioning
 // installs the filters (write_valid_config -> emit_pandoc_renderer -> install-assets)
-// then removes tikzcd.lua — a required, vendored filter that is not yet referenced
-// by the command (deferred to Milestone F) — so required-filter is the SOLE failing
-// check: the command still runs (it does not reference tikzcd), only the required
-// set is short.
-//
-// RED today: no required-filter check exists, so the doctor never notices the
-// missing filter — it reports all-OK and exits 0.
+// then removes obsidian.lua — a required, vendored HTML-preview filter — so
+// required-filter is the SOLE failing check.
 
 test('--doctor fails required-filter when a required filter is missing', async () => {
   const manifest = loadDoctorManifest();
@@ -28,7 +23,7 @@ test('--doctor fails required-filter when a required filter is missing', async (
   expect(
     /required-filter[\s\S]{0,120}\bFAIL\b|\bFAIL\b[\s\S]{0,120}required-filter/.test(report),
   ).toBe(true);
-  expect(report.includes('tikzcd.lua')).toBe(true);
+  expect(report.includes('obsidian.lua')).toBe(true);
 
   // The failure is the missing filter, not the config — config-class checks are OK.
   expect(
