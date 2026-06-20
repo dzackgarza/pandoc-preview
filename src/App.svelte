@@ -476,6 +476,16 @@
             },
           );
         },
+        // H.3 (P122) batch / multi-format export. Fire the ONE batch action: the
+        // SAME per-plugin export path (runPluginToPath) looped over every
+        // discovered export-category plugin, writing each plugin's artifact into
+        // baseDir named by its declared extension, gated by the SAME save-gate
+        // (P47) the single export uses. Fire-and-forget (mirrors exportViaPluginById
+        // / runPlugin); the spec awaits the on-disk artifacts. A failed target
+        // export rejects loud — no silent partial run.
+        exportAll: (baseDir: string) => {
+          void exportAll(baseDir);
+        },
         configurePlugin: (pluginId: string) => {
           void api.configurePlugin(pluginId);
         },
@@ -1209,6 +1219,15 @@
         id: `export-plugin:${plugin.id}`,
         label: `Export: ${plugin.name} (.${plugin.extension})`,
         run: () => void exportViaPlugin(plugin),
+      });
+    }
+    // H.3 (P122): ONE batch-export entry that loops the per-plugin export path
+    // over every discovered export-category plugin, writing N artifacts at once.
+    if (discoveredPlugins.some((p) => p.category === "export" && p.extension !== null)) {
+      cmds.push({
+        id: "export:all",
+        label: "Export: All Configured Targets",
+        run: () => void exportAllViaDialog(),
       });
     }
     return cmds;
@@ -2202,6 +2221,64 @@
       const res = await runPluginToPath(plugin.id, target);
       if (res.success) toastSuccess(`Exported ${target}`);
       else toastError("Export failed — see compile log.");
+    } catch (e) {
+      toastError(String(e));
+    }
+  }
+
+  /** The discovered export-category plugins with a declared output extension —
+   * the configured export targets the per-plugin export path (exportViaPlugin /
+   * runPluginToPath) runs ONE at a time. Batch export loops THESE. */
+  function exportPlugins(): PluginInfo[] {
+    return discoveredPlugins.filter((p) => p.category === "export" && p.extension !== null);
+  }
+
+  /** H.3 BATCH / MULTI-FORMAT EXPORT (P122). ONE action exports the open buffer
+   * to EVERY configured export target at once, writing N real artifacts into
+   * `baseDir` in a single invocation. This adds NO new export mechanism: it
+   * COMPOSES the EXISTING per-plugin export path (runPluginToPath) in a LOOP over
+   * the discovered export-category plugins, each target named by that plugin's
+   * declared extension. The SAME save-gate (P47) the single export funnels
+   * through guards the run — resolved ONCE up front so an identity-less buffer
+   * resolves a durable destination before any target runs (never a silent partial
+   * run). A failed target export is LOUD: the loop throws, leaving the failure
+   * surfaced rather than reporting a partial success. */
+  async function exportAll(baseDir: string) {
+    // P47 save-gate: resolve a durable destination first. A durable buffer passes
+    // through; an identity-less one resolves (or the run aborts loud). Resolving
+    // here once gives every target a stable source basename and means the loop's
+    // per-plugin runPluginToPath calls all pass the gate without re-prompting.
+    const source = await requireDurablePath();
+    if (!source) {
+      throw new Error("No durable destination resolved — batch export not run.");
+    }
+    const plugins = exportPlugins();
+    if (plugins.length === 0) {
+      throw new Error("No export-category plugin is discoverable — nothing to batch export.");
+    }
+    const base = fileName(source).replace(/\.[^/.]*$/, "");
+    toastInfo(`Exporting ${plugins.length} targets…`);
+    for (const plugin of plugins) {
+      const target = `${baseDir}/${base}.${plugin.extension}`;
+      const res = await runPluginToPath(plugin.id, target);
+      if (!res.success) {
+        throw new Error(`Export target ${plugin.name} (.${plugin.extension}) failed: ${target}`);
+      }
+    }
+    toastSuccess(`Exported ${plugins.length} targets to ${baseDir}`);
+  }
+
+  /** Menu/palette entry point for batch export: prompt for the base directory the
+   * N artifacts land in, then run the same exportAll loop the E2E hook drives. */
+  async function exportAllViaDialog() {
+    if (exportPlugins().length === 0) {
+      toastError("No export-category plugin is discoverable.");
+      return;
+    }
+    const baseDir = await open({ directory: true, title: "Export All — Choose Output Folder" });
+    if (typeof baseDir !== "string") return;
+    try {
+      await exportAll(baseDir);
     } catch (e) {
       toastError(String(e));
     }

@@ -1,0 +1,35 @@
+{
+  "run_id": "20260620T042805Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p130-batch-export.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p130-batch-export.spec.ts",
+            "title": "One batch-export action writes a real artifact for every configured export target",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 2975,
+            "errors": [
+              "Error: TauriPage command 'eval' failed: window.__PPE_E2E__.exportAll is not a function. (In 'window.__PPE_E2E__.exportAll(\"/tmp/pandoc-preview-proof-runs/20260620T042805Z/p130-batch-export/batch-export-out\")', 'window.__PPE_E2E__.exportAll' is undefined)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    }
+  ]
+}
