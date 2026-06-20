@@ -1,0 +1,51 @@
+{
+  "run_id": "20260620T013800Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p127-arxiv-capstone.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p127-arxiv-capstone.spec.ts",
+            "title": "the ONE arXiv bundle satisfies EVERY arXiv hard requirement, and an over-size bundle fails the export loudly with no tarball",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 18919,
+            "errors": [
+              "Error: The export did NOT fail loudly on an over-size bundle: success=true, exit_code=0. A bundle whose uncompressed size exceeds arXiv's 50 MB cap must exit non-zero. Log tail:\n\n"
+            ]
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p127-arxiv-capstone.spec.ts",
+          "name": "arxiv-capstone-uncompressed-bytes",
+          "value": 81795
+        },
+        {
+          "spec": "p127-arxiv-capstone.spec.ts",
+          "name": "arxiv-capstone-figure-formats",
+          "value": "fig/plot.png=PNG,figures/tikz-0.pdf=PDF,figures/tikz-1.pdf=PDF,fig/p127-lattice.pdf=PDF"
+        },
+        {
+          "spec": "p127-arxiv-capstone.spec.ts",
+          "name": "arxiv-capstone-bbl",
+          "value": "main.bbl"
+        }
+      ]
+    }
+  ]
+}
