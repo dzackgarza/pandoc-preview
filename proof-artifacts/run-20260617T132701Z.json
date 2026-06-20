@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 6297,
-            "errors": [
-              "Error: TauriPage command 'click' failed: timeout (5000ms) waiting for button[data-insert-matrix]"
-            ]
+            "errors": ["Error: TauriPage command 'click' failed: timeout (5000ms) waiting for button[data-insert-matrix]"]
           }
         ]
       },

@@ -72,7 +72,14 @@ pub async fn render(
     mathjax_url: String,
 ) -> Result<RenderResult> {
     tauri::async_runtime::spawn_blocking(move || {
-        render_sync(renderer_id, template, source, base_dir, base_url, mathjax_url)
+        render_sync(
+            renderer_id,
+            template,
+            source,
+            base_dir,
+            base_url,
+            mathjax_url,
+        )
     })
     .await
     .expect("render task panicked")

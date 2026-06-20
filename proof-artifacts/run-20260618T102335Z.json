@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 13022,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\label{sec:INTRO}\")"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.getEditorText().includes(\"\\\\label{sec:INTRO}\")"]
           }
         ]
       },

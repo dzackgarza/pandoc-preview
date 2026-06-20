@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 2799,
-            "errors": [
-              "Error: renderedToken: needle not found in cm-content: \\oint"
-            ]
+            "errors": ["Error: renderedToken: needle not found in cm-content: \\oint"]
           }
         ]
       },
@@ -43,9 +41,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 12796,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.cursorLine() === 13"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.cursorLine() === 13"]
           }
         ]
       },

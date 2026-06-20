@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 18239,
-            "errors": [
-              "Error: TauriPage command 'wait_for_selector' failed: timeout waiting for [data-view=\"explorer\"]"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_selector' failed: timeout waiting for [data-view=\"explorer\"]"]
           }
         ]
       },

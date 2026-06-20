@@ -290,23 +290,38 @@ It is admissible only if it FAILS on a plausibly broken app.
 
 ### Milestone — Phase D: figures & TikZ (P90–P100)
 
-**2026-06-20 REALIGNMENT (issue #2 — ratified by the user).** Phase D built tikz as an INLINE-IN-MARKDOWN subsystem: a tikzcd.lua filter compiled each fenced tikz block to an SVG inside the markdown preview, fed by a config-injected `[figures]` palette/template (`tikzstyles`/`tikzdefs`/`template`) the renderer forwarded as `{tikzstyles}`/`{tikzdefs}`/`{figure_template}` env/placeholders. The user ruled this a bespoke injection drift: tikz is the SAME render primitive as markdown — "pandoc + a template" — applied to a tikz FILE, with the template OWNING its preamble (`\usepackage{dzg-tikz}` over the user's styles tree). The inline-in-markdown machinery and the entire injection surface are REMOVED; a tikz file now renders standalone via the `tikz-renderer` sibling plugin (`render_tikz`, the user-owned `standalone-tikz.tex` template → pdflatex → pdf2svg → inline SVG), selected by file type exactly as markdown selects the html5 renderer. This fixes the issue-#2 boot failure at the root: there is no `[figures]` `ExistingFile` and no `shared.*` asset left to drift or go missing.
+**2026-06-20 REALIGNMENT (issue #2 — ratified by the user).** Phase D built tikz as an INLINE-IN-MARKDOWN subsystem: a tikzcd.lua filter compiled each fenced tikz block to an SVG inside the markdown preview, fed by a config-injected `[figures]` palette/template (`tikzstyles`/`tikzdefs`/`template`) the renderer forwarded as `{tikzstyles}`/`{tikzdefs}`/`{figure_template}` env/placeholders.
+The user ruled this a bespoke injection drift: tikz is the SAME render primitive as markdown — "pandoc + a template" — applied to a tikz FILE, with the template OWNING its preamble (`\usepackage{dzg-tikz}` over the user's styles tree).
+The inline-in-markdown machinery and the entire injection surface are REMOVED; a tikz file now renders standalone via the `tikz-renderer` sibling plugin (`render_tikz`, the user-owned `standalone-tikz.tex` template → pdflatex → pdf2svg → inline SVG), selected by file type exactly as markdown selects the html5 renderer.
+This fixes the issue-#2 boot failure at the root: there is no `[figures]` `ExistingFile` and no `shared.*` asset left to drift or go missing.
 
 Disposition of the Phase D obligations under this realignment:
 
-- **P90 (D-1 parser) — KEPT.** The owned-tikz parser (`cargo test tikz_roundtrip`) is model-only; it serves authoring/copy in file mode. Unchanged.
-- **P100 (D-0 inline tikz→SVG in markdown) — REPLACED** by the new file-mode obligation **P128** below (a tikz FILE renders standalone as an inline SVG via the user-owned template). Burden transferred: "tikz source compiles to a real vector figure in the live preview, raw source not echoed" is re-proven against the file render path.
-- **P91 (D-2 shared `.tikzstyles`/`.tikzdefs` palette) — RETIRED.** The injected shared palette is the invented mechanism. The legitimate underlying need ("the user's styles govern figures") is carried by P128: the template owns its preamble via `\usepackage{dzg-tikz}`, so a style the user defines in the styles tree governs the rendered figure. No config palette, no `shared.*` asset.
-- **P92 (D-3 config-declared per-figure template) — RETIRED.** The config `template` key is the invented mechanism. The legitimate need ("the template governs the compile") is carried by P128: the user-owned `standalone-tikz.tex` (editable, at a fixed path) is what every tikz file compiles under.
-- **P93 (D-4 source↔preview jump) — REWORK PENDING.** The node-line→rendered-element jump is generic; it must re-point from the inline preview re-render to the file-mode render. Spec + `tikzjump.ts` rework outstanding.
+- **P90 (D-1 parser) — KEPT.** The owned-tikz parser (`cargo test tikz_roundtrip`) is model-only; it serves authoring/copy in file mode.
+  Unchanged.
+- **P100 (D-0 inline tikz→SVG in markdown) — REPLACED** by the new file-mode obligation **P128** below (a tikz FILE renders standalone as an inline SVG via the user-owned template).
+  Burden transferred: "tikz source compiles to a real vector figure in the live preview, raw source not echoed" is re-proven against the file render path.
+- **P91 (D-2 shared `.tikzstyles`/`.tikzdefs` palette) — RETIRED.** The injected shared palette is the invented mechanism.
+  The legitimate underlying need ("the user's styles govern figures") is carried by P128: the template owns its preamble via `\usepackage{dzg-tikz}`, so a style the user defines in the styles tree governs the rendered figure.
+  No config palette, no `shared.*` asset.
+- **P92 (D-3 config-declared per-figure template) — RETIRED.** The config `template` key is the invented mechanism.
+  The legitimate need ("the template governs the compile") is carried by P128: the user-owned `standalone-tikz.tex` (editable, at a fixed path) is what every tikz file compiles under.
+- **P93 (D-4 source↔preview jump) — REWORK PENDING.** The node-line→rendered-element jump is generic; it must re-point from the inline preview re-render to the file-mode render.
+  Spec + `tikzjump.ts` rework outstanding.
 - **P94 (D-5 tikz-command DB) — KEPT.** Authoring assist, independent of the render mechanism.
-- **P95 (D-6 inline figure-compile error log) — REPLACE PENDING.** File-mode compile errors surface via the `tikz-renderer` plugin's `log`/stderr; a new spec asserting a malformed tikz file surfaces a clickable error replaces the inline `tikzfigurelog.ts` path. Outstanding.
+- **P95 (D-6 inline figure-compile error log) — REPLACE PENDING.** File-mode compile errors surface via the `tikz-renderer` plugin's `log`/stderr; a new spec asserting a malformed tikz file surfaces a clickable error replaces the inline `tikzfigurelog.ts` path.
+  Outstanding.
 - **P96 (D-7 dual-asset registry for non-tikz figures) — KEPT.** Orthogonal to tikz.
 - **P97 (D-8 subgraph copy) — KEPT.** Model-only clipboard operation.
 - **P98 (D-9 watch-file reload) — REWORK PENDING.** Generic watch/reload; re-point its fixture from an inline-figure markdown doc to a tikz FILE rendered via `render_tikz`. Outstanding.
-- **Phase G arXiv (the tikz-externalize legs P116/P117 + capstone) — REWORK PENDING.** `arxiv-export/export.sh` drove `tikzcd.lua` to externalize inline tikz; with inline tikz gone, the bundle references precompiled tikz files. Outstanding.
+- **Phase G arXiv (the tikz-externalize legs P116/P117 + capstone) — REWORK PENDING.** `arxiv-export/export.sh` drove `tikzcd.lua` to externalize inline tikz; with inline tikz gone, the bundle references precompiled tikz files.
+  Outstanding.
 
-UPDATE (2026-06-20): the injection-only specs `p100-tikz-render`, `p101-shared-tikzstyles`, `p102-perfigure-template`, and `p105-tikz-error-map` are now DELETED (with their provisioning), and **P128 is authored** as `tests/proof/p132-tikz-file-render.spec.ts` (+ provisioning: a real `figure.tikz` opened via the discovery-driven matrix → inline SVG, raw source absent). The frontend inline figure-compile log (`tikzfigurelog.ts` + the TikZ Log tab) is removed (P95 superseded by the standard Compile Log). P128's spec is authored but NOT yet run — the proof suite needs a display (`just proof`); it is committed for the GUI run to turn green. P93 (jump) and P98 (watch-reload) remain rework-pending (their specs `p109`/`p108` stay red until reworked to file-mode); `tikzjump.ts` is kept as the mechanism P93 reuses. P116/P117 (arXiv) rework-pending.
+UPDATE (2026-06-20): the injection-only specs `p100-tikz-render`, `p101-shared-tikzstyles`, `p102-perfigure-template`, and `p105-tikz-error-map` are now DELETED (with their provisioning), and **P128 is authored** as `tests/proof/p132-tikz-file-render.spec.ts` (+ provisioning: a real `figure.tikz` opened via the discovery-driven matrix → inline SVG, raw source absent).
+The frontend inline figure-compile log (`tikzfigurelog.ts` + the TikZ Log tab) is removed (P95 superseded by the standard Compile Log).
+P128's spec is authored but NOT yet run — the proof suite needs a display (`just proof`); it is committed for the GUI run to turn green.
+P93 (jump) and P98 (watch-reload) remain rework-pending (their specs `p109`/`p108` stay red until reworked to file-mode); `tikzjump.ts` is kept as the mechanism P93 reuses.
+P116/P117 (arXiv) rework-pending.
 
 P100 (added 2026-06-18) covers the Phase D foundational sub-milestone D-0 "activate + prove the tikz→SVG preview compile pipeline", authored from [[phase-d-figures-tikz]] (the 2026-06-18 SCOPE DISCOVERY note).
 It is the DISCOVERED FOUNDATION beneath D-2/D-3/D-6: those obligations assume a figure-compile-to-SVG preview seam, but investigation found that seam DORMANT — the tikz preview compile path is a required-on-disk filter that is deliberately never loaded into the renderer command, no proof has ever exercised tikz→SVG rendering, and the tikz toolchain is not surfaced by the doctor battery.
@@ -640,12 +655,10 @@ It is proven through the real app on a real display via `tauri-plugin-playwright
 It is admissible only if it FAILS on a plausibly broken app.
 P120 (comfort modes) is ratified below; P122 (batch export) is ratified below; H.6 (autocorrect/magic quotes) is DEPRIORITIZED and is deliberately NOT allocated an obligation — a correctness hazard (smart-quote substitution corrupting `"` inside `\text{}` / `$…$` LaTeX-bearing source), recorded so its absence is not mistaken for an oversight.
 
-P120 (added 2026-06-20) covers the Phase H sub-milestone H.1 "distraction-free / typewriter / readability modes", authored from [[phase-h-qol.md]] (the H.1 section + the drafted P120 at "## Proposed proof obligations") and ratified by the 2026-06-20 controller decision ("execute all phases, no stops"; obligations P120–P123 as drafted, ceiling P119 from Phase G, P124 reserved spare; Phase H specs continue p128+).
-It is THREE INDEPENDENT EDITOR-PRESENTATION comfort modes — each refining surfaces that already ship via the established `Compartment` + post-mount-reconfigure machinery (`spellCompartment`, `src/lib/components/EditorPane.svelte`) and an App-shell CSS state, NOT a new editor engine: (a) TYPEWRITER keeps the caret line vertically centered in the editor viewport (the published CM6 typewriter recipe — `EditorView.scrollMargins` / scroll-into-view centering — in a `typewriterCompartment` next to `spellCompartment`, reconfigured post-mount from config); (b) DISTRACTION-FREE hides the sidebar / insertion bar / status bar (an App-shell CSS state driven from `src/App.svelte` — a `viewComfort` $state toggling a CSS class that hides `ActivityBar`/`InsertionBar`/`StatusBar` — NOT editor infra); (c) READABILITY adds a sentence-level CM6 `Decoration` coloring layer (a thin decoration over sentence spans in a `readabilityCompartment`, NOT a new engine, respecting the SAME math/code exclusion predicate the fork exposes that Phase A/B share).
+P120 (added 2026-06-20) covers the Phase H sub-milestone H.1 "distraction-free / typewriter / readability modes", authored from [[phase-h-qol.md]] (the H.1 section + the drafted P120 at "## Proposed proof obligations") and ratified by the 2026-06-20 controller decision ("execute all phases, no stops"; obligations P120–P123 as drafted, ceiling P119 from Phase G, P124 reserved spare; Phase H specs continue p128+). It is THREE INDEPENDENT EDITOR-PRESENTATION comfort modes — each refining surfaces that already ship via the established `Compartment` + post-mount-reconfigure machinery (`spellCompartment`, `src/lib/components/EditorPane.svelte`) and an App-shell CSS state, NOT a new editor engine: (a) TYPEWRITER keeps the caret line vertically centered in the editor viewport (the published CM6 typewriter recipe — `EditorView.scrollMargins` / scroll-into-view centering — in a `typewriterCompartment` next to `spellCompartment`, reconfigured post-mount from config); (b) DISTRACTION-FREE hides the sidebar / insertion bar / status bar (an App-shell CSS state driven from `src/App.svelte` — a `viewComfort` $state toggling a CSS class that hides `ActivityBar`/`InsertionBar`/`StatusBar` — NOT editor infra); (c) READABILITY adds a sentence-level CM6 `Decoration` coloring layer (a thin decoration over sentence spans in a `readabilityCompartment`, NOT a new engine, respecting the SAME math/code exclusion predicate the fork exposes that Phase A/B share).
 RESEARCH-FIRST (HARD RULE #0): all three lean on PUBLISHED CM6 extensions (typewriter scroll-margin, readability decorations) + the EXISTING Compartment/reconfigure machinery — refine, do NOT greenfield an editor engine; the published CM6 example(s) leveraged are named in the RED commit.
 The three toggles are config-owned (`config.rs::Editor` — a `[editor.comfort]` sub-table of booleans `{distraction_free, typewriter, readability}`, validated in `validate()`, round-tripped by `save_config`, the P9 invariant — mirrored in `src/lib/types.ts`), every mode OFF by default, restored at launch; the `App.svelte` command palette carries `comfort:distraction-free` / `comfort:typewriter` / `comfort:readability` entries toggling each.
-READABILITY is FOLDED into P120 (promoted from the reserved P124 spare) so the third BUILT mode is PROVEN, not dead code; with readability folded in, P124 remains the reserved spare but is now UNUSED.
-CRITICAL CONFIG TRAP (the F4 + H.2 lesson): the new `[editor.comfort]` sub-table is REQUIRED config (NO `#[serde(default)]`, `deny_unknown_fields`) — single-user pre-launch Linux dev software, no fallbacks, no soft defaults, fail loud — so it MUST be emitted by BOTH `scripts/first-run.sh` (the generated config heredoc) AND `scripts/provision-proof.sh`, defaulted to ALL FALSE (every mode OFF), or the config-load specs d14/p10/p09 break; emitting the new required field in `config.rs` WITHOUT emitting it in those two scripts is the exact regression that broke d14/p10 twice this milestone.
+READABILITY is FOLDED into P120 (promoted from the reserved P124 spare) so the third BUILT mode is PROVEN, not dead code; with readability folded in, P124 remains the reserved spare but is now UNUSED. CRITICAL CONFIG TRAP (the F4 + H.2 lesson): the new `[editor.comfort]` sub-table is REQUIRED config (NO `#[serde(default)]`, `deny_unknown_fields`) — single-user pre-launch Linux dev software, no fallbacks, no soft defaults, fail loud — so it MUST be emitted by BOTH `scripts/first-run.sh` (the generated config heredoc) AND `scripts/provision-proof.sh`, defaulted to ALL FALSE (every mode OFF), or the config-load specs d14/p10/p09 break; emitting the new required field in `config.rs` WITHOUT emitting it in those two scripts is the exact regression that broke d14/p10 twice this milestone.
 The comfort defaults are OFF, so P120 does NOT weaken P13/P14/P15 — those chrome-measurement specs run UNCHANGED (the distraction-free chrome is present until the mode is explicitly enabled).
 It states the OBSERVABLE behaviour ONLY — no `Compartment`-reconfigure, scroll-margin, decoration-layer, CSS-class, config-subtable, or palette-wiring internals (the wiring belongs to the implementer, not this obligation).
 It is proven through the real app on a real display via `tauri-plugin-playwright`, with the caret-line viewport offset, the chrome DOM presence/visibility, and the sentence-decoration marks read from the live editor/shell DOM, and the comfort toggles driven from a hermetic `XDG_CONFIG_HOME`, independently of the app's own report.
@@ -667,8 +680,7 @@ It does NOT weaken P7/P8/P12/P66 — the per-plugin export specs run UNCHANGED; 
 It is proven through the real app on a real display via `tauri-plugin-playwright`, with the real configured export-category plugin commands (real pandoc / lualatex per plugin) producing the artifacts and an INDEPENDENT process reading the chosen directory and the on-disk bytes, independently of the app's own report.
 A batch with a PDF target runs `lualatex` (a hard dependency, the P8 engine), so the proof allows generous waits; it is admissible only if it FAILS on a plausibly broken app.
 
-- **P120 — Comfort modes change the editor presentation and round-trip through config.** Three independent editor-presentation comfort modes, each enabled via its command-palette toggle / `__PPE_E2E__` hook, observed on REAL editor/shell DOM (no mode satisfied by a symbol/command merely existing):
-  (1) TYPEWRITER — enabling it MOVES the caret line toward the VERTICAL CENTER of the editor viewport: the caret line's offset from the viewport top falls within a CENTERED band (e.g. within a few px of half the editor-viewport height), MEASURABLY different from its un-centered offset with the mode OFF (the same buffer + caret position, toggled on vs off, yields a centered vs non-centered caret-line offset).
+- **P120 — Comfort modes change the editor presentation and round-trip through config.** Three independent editor-presentation comfort modes, each enabled via its command-palette toggle / `__PPE_E2E__` hook, observed on REAL editor/shell DOM (no mode satisfied by a symbol/command merely existing): (1) TYPEWRITER — enabling it MOVES the caret line toward the VERTICAL CENTER of the editor viewport: the caret line's offset from the viewport top falls within a CENTERED band (e.g. within a few px of half the editor-viewport height), MEASURABLY different from its un-centered offset with the mode OFF (the same buffer + caret position, toggled on vs off, yields a centered vs non-centered caret-line offset).
   (2) DISTRACTION-FREE — enabling it REMOVES/HIDES the sidebar + insertion bar + status bar (observed via their DOM ABSENCE or zero-visibility — the `ActivityBar`/`InsertionBar`/`StatusBar` elements are gone / not laid out), and DISABLING it RESTORES all three (they reappear / are laid out again).
   (3) READABILITY — enabling it ADDS VISIBLE sentence-level decoration marks in the editor DOM (the sentence-decoration spans/marks are PRESENT when the mode is ON and ABSENT when it is OFF — folded from the reserved P124 spare so the third built mode is PROVEN, not dead).
   (4) ROUND-TRIP — the enabled modes, after a save + relaunch under a hermetic `XDG_CONFIG_HOME`, are STILL active (typewriter still centers, distraction-free still hides the chrome, readability still marks — the `[editor.comfort]` booleans round-tripped through the on-disk `config.toml`, the P9 class).
@@ -693,56 +705,33 @@ A batch with a PDF target runs `lualatex` (a hard dependency, the P8 engine), so
 
 - **P128 — a tikz FILE renders standalone as an inline vector figure in the live preview, via the user-owned template, and a style the user defines governs the render.** (added 2026-06-20; the issue-#2 realignment replacement for P100, carrying the burden retired off P91/P92.) Opening a tikz FILE (a `.tikz` file whose content is a `tikzpicture`/`tikzcd` body) in the app renders it in the live preview as a real inline VECTOR figure (an `<svg>` carrying drawing content — `path`/`line`/`g`/`text`), and the raw tikz source is NOT shown verbatim — proving the file is COMPILED, not echoed, through the file-mode render path (the `tikz-renderer` plugin wrapping the source in the user-owned `standalone-tikz.tex` template, pdflatex → pdf2svg). The template OWNS its preamble via `\usepackage{dzg-tikz}` over the user's styles tree: a named tikz style/macro the user defines ONLY in that styles tree visibly determines the rendered figure (and changing that definition changes the render), with NO app-injected palette, NO `[figures]` config table, and NO `shared.*` asset.
   The preview SVG is read from the preview DOM by the harness, independently of the app's own report.
-  Admissible because it fails on: a tikz file that renders RAW SOURCE (no `<svg>` with drawing content appears — the file was not compiled); a render that IGNORES the user's styles tree (a figure using a user-defined style does not reflect it, or changing the style in the styles tree does not change the render — proving an injected/hardcoded palette rather than the template-owned preamble); and a tikz file routed through the MARKDOWN renderer (the source is rendered as a code block / passed through, not compiled to a figure). It is NOT satisfied by an assertion that a `render_tikz`/`tikz-renderer`/`isTikzFile` symbol merely EXISTS — the proof must open a real `.tikz` file on a real display and confirm the compiled inline SVG appears, the raw source does not, and a user-styles-tree change moves the render.
+  Admissible because it fails on: a tikz file that renders RAW SOURCE (no `<svg>` with drawing content appears — the file was not compiled); a render that IGNORES the user's styles tree (a figure using a user-defined style does not reflect it, or changing the style in the styles tree does not change the render — proving an injected/hardcoded palette rather than the template-owned preamble); and a tikz file routed through the MARKDOWN renderer (the source is rendered as a code block / passed through, not compiled to a figure).
+  It is NOT satisfied by an assertion that a `render_tikz`/`tikz-renderer`/`isTikzFile` symbol merely EXISTS — the proof must open a real `.tikz` file on a real display and confirm the compiled inline SVG appears, the raw source does not, and a user-styles-tree change moves the render.
   It folds the old `tikz-toolchain` doctor gate: the `tikz-renderer` plugin's doctor check fails loud if pdflatex/pdf2svg or the user-owned template is absent.
 
 ### Render-matrix realignment (2026-06-20, issue #2 → systemic)
 
-The tikz drift was the tip of a pattern: a *render target* (input type × output mode +
-template + engine) was reified into bespoke machinery, hardcoded into the core, or left
-half-wired. The ratified model: the app owns only the input data, the current output mode
-(the expected data contract — html bytes for the live preview, a file for export), and
-GUI exposure; **which renderer/export plugin and which template fill a cell is discovered
-+ user-selected**, never hardcoded. Plugins declare `inputs` in their manifest; the app
-builds the (open file type → candidate render targets) matrix from discovery.
+The tikz drift was the tip of a pattern: a *render target* (input type × output mode + template + engine) was reified into bespoke machinery, hardcoded into the core, or left half-wired.
+The ratified model: the app owns only the input data, the current output mode (the expected data contract — html bytes for the live preview, a file for export), and GUI exposure; **which renderer/export plugin and which template fill a cell is discovered
++ user-selected**, never hardcoded.
+  Plugins declare `inputs` in their manifest; the app builds the (open file type → candidate render targets) matrix from discovery.
 
 Status of the realignment obligations:
 
-- **BUILT (WS1/WS2, verified: build + typecheck + hermetic --doctor).** Plugins declare
-  `inputs`; one `render(renderer_id, template, …)` IPC replaces the per-mode commands;
-  the frontend resolves the renderer by file type from discovery (default `[renderer].active`);
-  the hardcoded `SLIDES_RENDERER_ID`/`TIKZ_RENDERER_ID` consts and `isTikzFile`/`slidesMode`
-  booleans are gone; a `{template}` placeholder is forwarded to renderers.
+- **BUILT (WS1/WS2, verified: build + typecheck + hermetic --doctor).** Plugins declare `inputs`; one `render(renderer_id, template, …)` IPC replaces the per-mode commands; the frontend resolves the renderer by file type from discovery (default `[renderer].active`); the hardcoded `SLIDES_RENDERER_ID`/`TIKZ_RENDERER_ID` consts and `isTikzFile`/`slidesMode` booleans are gone; a `{template}` placeholder is forwarded to renderers.
 
-- **P129 — render-target selector (PENDING, GUI-proof-gated).** With a markdown file open,
-  the user can select among the discovered render targets compatible with the current
-  input + output (e.g. Article preview vs Slides for html; Article PDF vs Beamer PDF for
-  export); selecting a target re-renders through it (the selected renderer + template,
-  forwarded via `{template}`), and the choice persists across relaunch (config round-trip,
-  the `view_mode` precedent). Admissible only if it fails on: no selector; a selector that
-  does not change the rendered output; a non-persisted choice.
+- **P129 — render-target selector (PENDING, GUI-proof-gated).** With a markdown file open, the user can select among the discovered render targets compatible with the current input + output (e.g. Article preview vs Slides for html; Article PDF vs Beamer PDF for export); selecting a target re-renders through it (the selected renderer + template, forwarded via `{template}`), and the choice persists across relaunch (config round-trip, the `view_mode` precedent).
+  Admissible only if it fails on: no selector; a selector that does not change the rendered output; a non-persisted choice.
 
-- **P130 — slides as a template selection (PENDING, GUI-proof-gated).** Selecting the
-  Slides target renders the SAME markdown as a reveal.js DECK in the preview iframe (the
-  shipped `revealjs-renderer` plugin = `pandoc --to revealjs` + the `pandoc_revealjs_template.html`
-  template); the Beamer PDF target exports the same source to a beamer PDF via the pdf
-  export plugin + `beamer_template.latex`. Slides is NOT a bespoke mode — it is a
-  discovered render target. (Replaces the deleted dead `slidesMode`/`revealjs-renderer`-const
-  wiring; ship the vendored `revealjs-renderer` plugin, doctor-clean like `tikz-renderer`.)
+- **P130 — slides as a template selection (PENDING, GUI-proof-gated).** Selecting the Slides target renders the SAME markdown as a reveal.js DECK in the preview iframe (the shipped `revealjs-renderer` plugin = `pandoc --to revealjs` + the `pandoc_revealjs_template.html` template); the Beamer PDF target exports the same source to a beamer PDF via the pdf export plugin + `beamer_template.latex`. Slides is NOT a bespoke mode — it is a discovered render target.
+  (Replaces the deleted dead `slidesMode`/`revealjs-renderer`-const wiring; ship the vendored `revealjs-renderer` plugin, doctor-clean like `tikz-renderer`.)
 
 - **DEFERRED to a follow-up (recorded so not silently dropped).**
-  - **P131 — `.tex` render cell**: opening a `.tex` file renders it (tex→html and/or
-    tex→pdf) via a latex renderer/export target + template, instead of falling through to
-    the markdown renderer (garbage today).
-  - **P132 — `.bib` handling**: a bibtex editor grammar (the editor forces the latex
-    grammar on every file today) and a decision on whether `.bib` is a render target
-    (formatted bibliography preview) vs citation-data-only.
-  - **Per-file-type editor language** selection (md/tex/tikz → latex grammar; bib → bibtex)
-    folded into the above.
+  - **P131 — `.tex` render cell**: opening a `.tex` file renders it (tex→html and/or tex→pdf) via a latex renderer/export target + template, instead of falling through to the markdown renderer (garbage today).
+  - **P132 — `.bib` handling**: a bibtex editor grammar (the editor forces the latex grammar on every file today) and a decision on whether `.bib` is a render target (formatted bibliography preview) vs citation-data-only.
+  - **Per-file-type editor language** selection (md/tex/tikz → latex grammar; bib → bibtex) folded into the above.
 
-- **Carried tikz debt** (from the Phase D realignment note above): **P128** (file-mode
-  tikz render) + the **P93/P95/P98** file-mode reworks + retiring the injection-only
-  `p100/p101/p102/p105` specs — all GUI-proof-gated, driven red→green with the suite.
+- **Carried tikz debt** (from the Phase D realignment note above): **P128** (file-mode tikz render) + the **P93/P95/P98** file-mode reworks + retiring the injection-only `p100/p101/p102/p105` specs — all GUI-proof-gated, driven red→green with the suite.
 
 ## Verification vehicle
 

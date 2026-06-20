@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 18622,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (window.__PPE_E2E__.currentFile() ?? '').endsWith('/demo.md')"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: (window.__PPE_E2E__.currentFile() ?? '').endsWith('/demo.md')"]
           }
         ]
       },

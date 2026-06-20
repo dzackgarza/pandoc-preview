@@ -47,9 +47,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 12796,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.cursorLine() === 13"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.cursorLine() === 13"]
           }
         ]
       },
