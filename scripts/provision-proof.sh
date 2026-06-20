@@ -1562,6 +1562,30 @@ p08-export-pdf.spec.ts)
 command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
 EOF
     ;;
+p130-batch-export.spec.ts)
+    # P130 (Phase H / H.3 — batch / multi-format export): ONE action exports the
+    # open document to ALL configured export targets at once. The batch loops the
+    # SAME per-plugin export firewall p07/p08 each drive once over the discovered
+    # export-category plugins — so this spec must provision 2+ export targets so
+    # "N files for N targets" is a real multi-target claim. The canonical config
+    # above already set up the pandoc renderer + [plugins].dir (so the preview
+    # works); here we ADD BOTH shipped export-category plugins (vendored alongside
+    # pandoc-renderer, OSOT) into that SAME dir and their config sections — the raw
+    # HTML and PDF export commands p07/p08 emit VERBATIM (the html target's
+    # --embed-resources self-contained artifact; the pdf target's
+    # --pdf-engine=lualatex). The spec drives exportAll(baseDir) and asserts baseDir
+    # holds one real non-empty artifact per target (.html + .pdf), each carrying the
+    # P1 witnesses (the html H1; the pdf text via pdftotext).
+    install_plugin_fixtures "$PLUGINS_DIR" pandoc-html-export pandoc-pdf-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.pandoc-html-export]
+command = "$PANDOC_BIN --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources"
+
+[plugin.pandoc-pdf-export]
+command = "$PANDOC_BIN --from markdown --standalone --pdf-engine=lualatex"
+EOF
+    ;;
 p116-pdf-preview.spec.ts)
     # P107 (Phase F / F1): the LIVE PDF preview — an embedded pdf.js viewer fed by
     # a compile-on-idle scheduler that drives the CONFIGURED PDF compile command
@@ -2593,7 +2617,11 @@ esac
 # both drive lualatex IN THE APP (via the FAST single-pass and/or FULL latexmk
 # in-app PDF compiles), so they need the SAME cold-cache warmup so the in-app
 # compiles land within the spec's wait windows.
-if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ] || [ "$SPEC" = "p118-multipass-references.spec.ts" ] || [ "$SPEC" = "p119-compile-toggle.spec.ts" ] || [ "$SPEC" = "p120-inline-warnings.spec.ts" ] || [ "$SPEC" = "p123-arxiv-bbl.spec.ts" ]; then
+# p130 (the H.3 batch-export witness) drives lualatex IN THE APP via the pdf
+# target of the SINGLE batch action (pandoc-pdf-export, --pdf-engine=lualatex), so
+# it needs the SAME cold-cache warmup so the batched PDF lands within the spec's
+# poll window.
+if [ "$SPEC" = "p08-export-pdf.spec.ts" ] || [ "$SPEC" = "p116-pdf-preview.spec.ts" ] || [ "$SPEC" = "p117-build-isolation.spec.ts" ] || [ "$SPEC" = "p118-multipass-references.spec.ts" ] || [ "$SPEC" = "p119-compile-toggle.spec.ts" ] || [ "$SPEC" = "p120-inline-warnings.spec.ts" ] || [ "$SPEC" = "p123-arxiv-bbl.spec.ts" ] || [ "$SPEC" = "p130-batch-export.spec.ts" ]; then
     WARMUP_PDF="$ABS_SPEC_DIR/lualatex-warmup.pdf"
     # cwd = the source file's parent, mirroring the app's export contract.
     (
