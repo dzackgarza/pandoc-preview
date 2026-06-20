@@ -1,142 +1,46 @@
 # Pandoc Preview
 
-Overleaf-style markdown editor for mathematical writing: a CodeMirror 6 editor on the
-left, a live pandoc-rendered HTML preview on the right, a project file tree, a tabbed
-preview / compile-log / problems pane, an amsthm-aware insertion bar, native menus,
-toasts, and a Zotero-style settings dialog backed by an XDG TOML config.
-
-Built with Tauri 2 (Rust core) and Svelte 5 + Vite + Tailwind (frontend).
-
-## Architecture: the plugin firewall
-
-The Rust core owns no document-tool knowledge.
-Everything that knows about pandoc, LaTeX, BibTeX, or any external binary lives in a
-**firewall plugin** discovered at startup and declared by category:
-
-- **renderer** — `pandoc-renderer`: markdown → preview HTML (also drives the reveal.js
-  slides preview).
-- **export** — `pandoc-html-export` (self-contained HTML), `pandoc-pdf-export` (pandoc +
-  lualatex), `latexmk-pdf-export` (multi-pass latexmk with auto-BibTeX, the
-  reference-resolving PDF path), `arxiv-export` (a flattened, self-contained arXiv-ready
-  `.tar.gz`).
-- **lint** — `pandoc-md-lint`: math/delimiter balance via the real `chktex`/`lacheck`
-  plus a markdown-native `$`-balance check.
-- **search** — `workspace-search`: global full-text search via the real `ripgrep`.
-
-The core surfaces each plugin’s real command line, stderr, and exit status in the
-Compile Log tab, and refuses to start when a configured plugin’s tools or assets are
-missing — every configured plugin contributes a startup doctor check that fails loudly
-rather than degrading.
-Plugins are configured under `[plugins]` / `[plugin.<id>]` in the config.
-
-## Features
-
-**Editing.** CodeMirror 6 with composable completion: math-mode-only expansion,
-autotrigger space-expansion with chaining, regex/postfix triggers, mirrored tabstops and
-variables, a user snippet dictionary (quicktex format consumed directly), Emmet
-abbreviations, and visual-selection wrap/transform.
-Spellcheck honors a custom math dictionary.
-Structural motions move by section / environment / math-zone.
-Three comfort modes — typewriter (centered caret line), distraction-free (hide the
-chrome), and readability (sentence coloring).
-
-**Math & figures.** Math renders with MathJax (always — no engine option, since KaTeX
-cannot cover pandoc’s full math syntax) and renders offline with no network.
-TikZ / `tikzcd` pictures render as inline vector figures in the live preview, driven by
-a shared `.tikzstyles` palette and a per-figure preamble template; source ↔ preview jump
-selects the matching rendered node, figures are hover-editable, and external diagram
-sources can be registered, edited in an external editor, externalized, and inserted into
-a configured global figures directory.
-
-**Citations.** A single config-declared bibliography feeds both the editor and the
-preview. `@`-trigger completion fuzzy-matches on metadata and previews the entry before
-insert; a per-file `bibliography:` frontmatter override is honored; the references
-sidebar lists only the document’s cited keys in the configured CSL style; label
-completion spans the whole project.
-
-**Insertion bar.** Replaces the formatting toolbar: amsthm environments, tikz/`tikzcd`
-scaffolds, a matrix builder, a table builder, a snippet dropdown, a code-block-type
-dropdown, a footnote modal, and insert-image-from-clipboard.
-
-**Preview & export.** Resizable split with a ratio-preserving sidebar toggle, a
-VSCode-style activity bar, and a three-way editor / preview / split view toggle.
-A live PDF preview renders the real compiled PDF in an embedded pdf.js viewer with
-auto/manual and fast/full compile controls; build intermediates stay out of the source
-tree. The compile log is structured — warnings surface as Problems distinct from hard
-errors, and entries jump to the offending source line.
-One batch-export action writes a real artifact for every configured export target at
-once. A reading-time metric and word count sit in the status bar.
-
-**Project & workspace.** A file tree that mutates the real directory
-(create/rename/delete), global workspace search (boolean operators, per-directory
-restriction, relevancy heatmap, click-to-open-at-line), a command palette
-(Ctrl+Shift+P), and quick-open (Ctrl+P).
-
-**Reliability.** Unsaved edits are captured durably for recovery; launch restores the
-last session and offers newer recovery content; the repo-state machine reflects and
-mutates real git state; saving is gated on durable file identity, refuses to clobber an
-externally modified file, and a dirty buffer is guarded on close.
+A desktop markdown editor for mathematical writing: edit on the left, see a live preview on the right, and export to HTML, PDF, or an arXiv-ready bundle. It is like Overleaf, but you write markdown and pandoc does the rendering, so the preview matches what pandoc produces. For Linux.
 
 ## Requirements
 
-- `pandoc` — the renderer, HTML export, and arXiv export backend.
-- A pandoc **PDF engine** (`lualatex`) and `latexmk` — PDF export and the
-  reference-resolving PDF path.
-- `chktex` and `lacheck` — the markdown lint plugin.
-- `ripgrep` — workspace search.
-- The **TikZ toolchain** (`lualatex` + `pdf2svg`) — inline tikz figure rendering.
-- `latexpand` and `arxiv_latex_cleaner` — the arXiv export bundle.
-- `gum` — the first-run setup script.
-- `bun`, `cargo`, `just`, and the Linux webview deps for Tauri (`webkit2gtk-4.1`).
+The editor runs real command-line tools for rendering, export, linting, and search, and checks for them at startup, naming any that are missing. The shipped setup uses all of them:
 
-The startup doctor verifies the tools each configured plugin needs; a missing tool fails
-loudly at launch rather than at use.
+- `pandoc` — preview and export
+- `lualatex` and `latexmk` — PDF export
+- `pdf2svg` — TikZ figures in the preview
+- `chktex` and `lacheck` — the markdown/math linter
+- `ripgrep` — workspace search
+- `latexpand` and `arxiv_latex_cleaner` — the arXiv export bundle
+- `gum` — first-run setup
+- `bun`, `cargo`, `just`, and `webkit2gtk-4.1` — to build and run
 
-## Setup and run
+## Install and run
 
 ```sh
-just deps    # bun install + cargo fetch + submodule init
-just setup   # gum walkthrough → writes the XDG config
-just dev     # run the app
-just build   # release bundles (deb, rpm, appimage)
+just deps     # fetch dependencies
+just setup    # interactive first-run setup; writes your config
+just dev      # launch the editor
 ```
 
-The app refuses to start without a complete config at
-`${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`; `just setup`
-(`scripts/first-run.sh`) is the only thing that creates it.
-Re-run with `scripts/first-run.sh --force` to overwrite.
-Settings changed in-app (Tools → Settings…) are written back to the same file.
+The editor needs a config before it will start; `just setup` walks you through writing one (re-run `scripts/first-run.sh --force` to redo it). When the window opens, point it at a folder and click a `.md` file — the rendered preview appears on the right and updates as you type. Settings you change in-app (Tools → Settings) are written back to the same config.
 
-## Pandoc assets (pinned dependency)
+Run `just --list` for the other commands (release builds, etc.).
 
-The pandoc assets (templates, filters, CSL, bibliography) are owned by
-[`pandoc-config`](https://github.com/dzackgarza/pandoc-config) and consumed here at a
-**commit-pinned** version via the git submodule at
-`src-tauri/resources/vendor/pandoc-config`. `just deps` runs
-`git submodule update --init`; `scripts/install-assets.sh` symlinks them into
-`~/.pandoc` (preserving any real-file override there).
-The firewall plugins (`src-tauri/resources/vendor/plugins/`) and the MathJax bundle
-(`src-tauri/resources/mathjax/`) are app-owned and not part of the submodule.
+## What it does
 
-Bump the pin with:
+- **Editing** — completions that expand in math mode, snippets, Emmet abbreviations, spellcheck with a custom math dictionary, and writing-focus modes (typewriter, distraction-free, readability).
+- **Math and figures** — MathJax everywhere, working offline. TikZ and `tikzcd` diagrams render inline; you can jump between a figure and its source, edit it, and keep figures in a shared folder.
+- **Citations** — one bibliography drives both the editor and the preview. Type `@` to complete a citation with a preview of the entry, override the bibliography per file, and get a references list of only the keys you cited.
+- **Inserting structure** — a bar for amsthm environments, matrices, tables, code blocks, footnotes, and pasted images, in place of a formatting toolbar.
+- **Export** — self-contained HTML, PDF (single-pass or multi-pass with bibliography resolution), and an arXiv-ready `.tar.gz`. One action exports to every configured target at once.
+- **Working in a project** — a file tree, full-text search across the folder, a command palette (Ctrl+Shift+P), and quick-open (Ctrl+P).
+- **Not losing work** — unsaved edits are recovered after a crash, the last session is restored on launch, a save won't silently overwrite a file that changed underneath you, and closing with unsaved changes is guarded.
 
-```sh
-git -C src-tauri/resources/vendor/pandoc-config fetch origin
-git -C src-tauri/resources/vendor/pandoc-config checkout <new-commit>
-git add src-tauri/resources/vendor/pandoc-config && git commit
-```
+## Configuration
 
-## Layout
+The config lives at `${XDG_CONFIG_HOME:-~/.config}/pandoc-preview/config.toml`. It has no built-in defaults — the editor refuses to start until it is complete, which is what `just setup` produces. The renderer, export targets, linter, and search are plugins listed in that file; add or change them there.
 
-- `src/` — Svelte frontend: editor, file tree, preview tabs, insertion bar, settings,
-  toasts, status bar, command palette / quick-open; `src/lib/editor/` holds the
-  CodeMirror extensions (completion, snippets, spellcheck, comfort modes).
-- `src-tauri/src/` — Rust core: `config.rs` (XDG TOML schema + validation), `fsops.rs`
-  (file tree + file CRUD), `render.rs` (preview render dispatch), `plugins.rs` (the
-  firewall — plugin discovery, the substitution engine, doctor checks), `lib.rs` (app
-  builder + native menus).
-  The core carries no pandoc/tool knowledge.
-- `src-tauri/resources/vendor/plugins/` — the firewall plugins (renderer, export, lint,
-  search), each with its `plugin.toml`, command, and startup `check-*.sh` doctor
-  scripts.
-- `scripts/first-run.sh` — gum-based initial config walkthrough.
+## Pandoc assets
+
+The templates, filters, CSL, and bibliography come from [`pandoc-config`](https://github.com/dzackgarza/pandoc-config), pinned to a specific commit as a git submodule. `just deps` fetches it, and the install step symlinks the assets into `~/.pandoc`, preserving any file you have overridden there.
