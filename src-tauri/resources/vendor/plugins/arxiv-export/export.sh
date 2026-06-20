@@ -312,6 +312,162 @@ with open(root_tex, "w", encoding="utf-8") as f:
     f.write(rewritten)
 PY_TIKZ_EOF
 
+# ── 3c. Figure-format compliance gate ──────────────────────────────────────────
+# Phase G / G4 (P117). arXiv does NO on-the-fly conversion and the pdfLaTeX target
+# accepts ONLY PDF/PNG/JPG, while this pipeline is SVG-centric. After the bundle
+# root main.tex is flattened, materialized and tikz-externalized (steps 2/3/3b) and
+# BEFORE the latexmk .bbl bake (step 4), enumerate EVERY figure the root .tex still
+# references — both \includegraphics{...} (raster figures step 3 copied) AND
+# \includesvg{...} (the SVG inclusions pandoc emits for a `.svg` extension, which
+# step 3 did NOT copy). For each, detect the REAL on-disk format by magic bytes
+# (NOT the filename extension):
+#   • already PDF/PNG/JPG → pass through untouched.
+#   • SVG → convert to PDF with cairosvg run through the approved `uvx` runner
+#     (`inkscape`/`rsvg-convert` are not installed and cairosvg is not owned), copy
+#     the PDF into the bundle, and REWRITE the reference to \includegraphics of it.
+#   • anything else (a non-convertible figure: cairosvg cannot parse it / no PDF) →
+#     FAIL LOUDLY: exit NON-ZERO, NAME the offending figure on stderr, and (because
+#     set -e aborts before the tar step) produce NO tarball. NEVER ship an arXiv-
+#     rejectable figure.
+# The SVG source for an \includesvg{...} reference is read from the source dir
+# ($PWD, the cwd the core set to the file's parent) — the same place step 3 reads
+# document-relative resources. The converter binary is the `uvx` runner the
+# pandoc-config cleaner already uses (uvx --from cairosvg cairosvg <in> -o <out>).
+uvx_bin="$(command -v uvx)" || {
+    echo "arxiv-export/export.sh: uvx not found on PATH — the figure-format gate needs cairosvg via the uvx runner to convert SVG figures" >&2
+    exit 15
+}
+python3 - "$bundle/main.tex" "$bundle" "$PWD" "$uvx_bin" <<'PY_FIGGATE_EOF'
+import os, re, subprocess, sys
+
+root_tex, bundle, src_dir, uvx_bin = sys.argv[1:5]
+body = open(root_tex, encoding="utf-8").read()
+
+# Both figure-inclusion commands the bundle root may carry: \includegraphics for
+# raster figures (step 3 already copied them into the bundle at their document-
+# relative path) and \includesvg for the `.svg` extension (NOT yet in the bundle;
+# its source lives under src_dir). Capture the command, the optional [opts], and
+# the braced target so each can be rewritten in place.
+INCLUDE_RE = re.compile(
+    r"\\include(graphics|svg)\s*(\[[^\]]*\])?\s*\{([^}]+)\}"
+)
+
+# arXiv-acceptable formats for the pdfLaTeX target, by MAGIC BYTES (not extension).
+def magic_format(path):
+    with open(path, "rb") as fh:
+        head = fh.read(8)
+    if head[:5] == b"%PDF-":
+        return "PDF"
+    if head[:8] == b"\x89PNG\r\n\x1a\n":
+        return "PNG"
+    if head[:3] == b"\xff\xd8\xff":
+        return "JPEG"
+    return None
+
+def resolve_in_bundle(target):
+    # An \includegraphics target step 3 copied: it sits in the bundle at its
+    # document-relative path (with or without a missing extension).
+    direct = os.path.join(bundle, target)
+    if os.path.isfile(direct):
+        return direct
+    for ext in (".pdf", ".png", ".jpg", ".jpeg", ".PDF", ".PNG", ".JPG"):
+        cand = os.path.join(bundle, re.sub(r"\.[^./]+$", "", target) + ext)
+        if os.path.isfile(cand):
+            return cand
+    return None
+
+out_parts = []
+last = 0
+for m in INCLUDE_RE.finditer(body):
+    cmd, opts, target = m.group(1), m.group(2) or "", m.group(3).strip()
+    out_parts.append(body[last:m.start()])
+    last = m.end()
+
+    is_svg = target.lower().endswith(".svg") or cmd == "svg"
+    if not is_svg:
+        # A raster figure step 3 copied into the bundle. Verify its REAL format is
+        # arXiv-acceptable by magic bytes; a non-compliant raster is a loud failure.
+        on_disk = resolve_in_bundle(target)
+        if on_disk is None:
+            sys.stderr.write(
+                f"arxiv-export: figure-format gate: referenced figure {target} "
+                f"resolves to no file in the bundle\n"
+            )
+            sys.exit(16)
+        fmt = magic_format(on_disk)
+        if fmt is None:
+            sys.stderr.write(
+                f"arxiv-export: figure-format gate: referenced figure {target} is "
+                f"NOT an arXiv-acceptable format (PDF/PNG/JPG) by magic bytes — "
+                f"cannot ship it\n"
+            )
+            sys.exit(17)
+        # Compliant raster: pass the reference through unchanged.
+        out_parts.append(m.group(0))
+        continue
+
+    # An SVG figure (\includesvg{...}, or an .svg target). arXiv would reject it;
+    # convert it to PDF with cairosvg via the uvx runner. The SVG source is the
+    # document-relative file under src_dir (pandoc references it by that path).
+    svg_src = os.path.join(src_dir, target)
+    if not os.path.isfile(svg_src):
+        sys.stderr.write(
+            f"arxiv-export: figure-format gate: referenced SVG figure {target} "
+            f"does not exist at {svg_src}\n"
+        )
+        sys.exit(18)
+
+    # Place the converted PDF in the bundle beside the SVG's document-relative path
+    # (same dir, .pdf extension), so the rewritten \includegraphics resolves.
+    pdf_rel = re.sub(r"\.svg$", ".pdf", target, flags=re.IGNORECASE)
+    if pdf_rel == target:
+        pdf_rel = target + ".pdf"
+    pdf_dst = os.path.join(bundle, pdf_rel)
+    os.makedirs(os.path.dirname(pdf_dst) or ".", exist_ok=True)
+
+    proc = subprocess.run(
+        [uvx_bin, "--from", "cairosvg", "cairosvg", svg_src, "-o", pdf_dst],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0 or not os.path.isfile(pdf_dst) or os.path.getsize(pdf_dst) == 0:
+        # A non-convertible figure: cairosvg could not make it arXiv-compliant
+        # (e.g. a zero-byte / malformed SVG — expat "no element found"). FAIL
+        # LOUDLY naming the offending figure; set -e aborts before the tar step so
+        # NO tarball is produced.
+        sys.stderr.write(
+            f"arxiv-export: figure-format gate: could not convert SVG figure "
+            f"{target} to an arXiv-acceptable PDF (cairosvg rc={proc.returncode}); "
+            f"offending file: {os.path.basename(target)}\n{proc.stderr}\n"
+        )
+        sys.exit(19)
+    # Confirm the converted figure really is a PDF by magic bytes before shipping.
+    if magic_format(pdf_dst) != "PDF":
+        sys.stderr.write(
+            f"arxiv-export: figure-format gate: cairosvg output for {target} is not "
+            f"a valid PDF by magic bytes; offending file: {os.path.basename(target)}\n"
+        )
+        sys.exit(20)
+
+    # Rewrite the SVG inclusion to an \includegraphics of the converted bundle PDF,
+    # preserving any [opts].
+    out_parts.append(f"\\includegraphics{opts}{{{pdf_rel}}}")
+
+out_parts.append(body[last:])
+rewritten = "".join(out_parts)
+
+# Defensive loud check: no SVG inclusion may survive in the rewritten root.
+if re.search(r"\\includesvg", rewritten) or re.search(
+    r"\\includegraphics(?:\[[^\]]*\])?\{[^}]*\.svg\}", rewritten, re.IGNORECASE
+):
+    sys.stderr.write(
+        "arxiv-export: figure-format gate: an SVG inclusion survived the rewrite\n"
+    )
+    sys.exit(21)
+
+with open(root_tex, "w", encoding="utf-8") as f:
+    f.write(rewritten)
+PY_FIGGATE_EOF
+
 # ── 4. Bake the .bbl via the REAL latexmk multi-pass BibTeX build ──────────────
 # Only when the document carries a \bibliography{...} BibTeX driver (the sentinel
 # from step 3). A document WITHOUT a bibliography has no .bbl to bake and no .bib

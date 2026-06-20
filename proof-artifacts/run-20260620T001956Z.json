@@ -1,0 +1,44 @@
+{
+  "run_id": "20260620T001956Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p125-arxiv-figure-gate.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p125-arxiv-figure-gate.spec.ts",
+            "title": "the arXiv bundle makes every figure arXiv-acceptable; a non-convertible figure fails the export loudly with no tarball",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 9754,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p125-arxiv-figure-gate.spec.ts",
+          "name": "arxiv-figure-formats",
+          "value": "fig/plot.png=PNG,fig/p125-lattice.pdf=PDF"
+        },
+        {
+          "spec": "p125-arxiv-figure-gate.spec.ts",
+          "name": "arxiv-figure-loud-fail-exit",
+          "value": "19"
+        }
+      ]
+    }
+  ]
+}

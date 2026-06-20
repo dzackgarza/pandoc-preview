@@ -13,6 +13,13 @@ macros_dir="$(printf '%s' "$cfg" | jq -er '.macros_dir')"
 latexpand_bin="$(command -v latexpand)"
 # tar — the bundle archiver.
 tar_bin="$(command -v tar)"
+# uvx — the runner the figure-format gate (G4/P117) drives cairosvg through to
+# convert SVG figures to arXiv-acceptable PDFs (inkscape/rsvg-convert are absent,
+# cairosvg is not owned). A missing runner is a broken export environment.
+uvx_bin="$(command -v uvx)" || {
+    echo "arxiv-export/check-tools.sh: uvx not found on PATH — the figure-format gate needs cairosvg via the uvx runner to convert SVG figures" >&2
+    exit 4
+}
 
 if [ ! -d "$macros_dir" ]; then
     echo "arxiv-export/check-tools.sh: macros source dir does not exist: $macros_dir" >&2
@@ -24,4 +31,4 @@ if [ ! -f "$macro_tier" ]; then
     exit 3
 fi
 
-printf 'latexpand: %s, tar: %s, macros: %s\n' "$latexpand_bin" "$tar_bin" "$macro_tier"
+printf 'latexpand: %s, tar: %s, uvx: %s, macros: %s\n' "$latexpand_bin" "$tar_bin" "$uvx_bin" "$macro_tier"
