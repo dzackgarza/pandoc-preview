@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "beamer-pdf-export plugin config",
+  "description": "The beamer export is self-contained: it owns its pandoc --to beamer + lualatex invocation and resolves the beamer template itself. It requires no config — an absent [plugin.beamer-pdf-export] section validates as the empty object.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {}
+}

@@ -1,0 +1,35 @@
+# Beamer slides PDF export — slides→pdf is the SAME pdf render primitive with the
+# beamer writer: `pandoc --from markdown --to beamer --pdf-engine=lualatex` against
+# pandoc's OWN built-in beamer template (no machine-specific template file — robust
+# out of the box; a user-supplied beamer template is a future selector enhancement).
+# A discovered export target (category "export", extension "pdf"), sibling of
+# pandoc-pdf-export; it appears in the export menu as "Export: Beamer Slides (.pdf)".
+# Self-contained (it owns its pandoc/lualatex invocation), so an absent
+# [plugin.beamer-pdf-export] section is a complete valid state.
+#
+# Vendored shipped asset; first-run symlinks it into the plugins dir.
+id = "beamer-pdf-export"
+name = "Beamer Slides"
+description = "Exports the document to a beamer slide-deck PDF via pandoc --to beamer + lualatex (pandoc's built-in beamer template)."
+category = "export"
+kind = "command"
+# The output file extension this export target writes (read by the menu populator).
+extension = "pdf"
+config_schema = "schema.json"
+# Beamer slides are rendered from a markdown document.
+inputs = ["markdown"]
+
+[exec]
+# The generic export firewall invokes: export.sh <file> <artifact>.
+command = ["{plugin_dir}/export.sh", "{file}", "{artifact}"]
+
+# No app-owned config (pandoc's built-in beamer template + the markdown source are
+# the whole pipeline), so "Configure" is a no-op. The [configure] table is still
+# required by every manifest.
+[configure]
+command = ["true"]
+
+[[doctor_checks]]
+id = "beamer-export-toolchain"
+description = "the beamer pdf export path resolves: pandoc + lualatex present and the beamer template exists"
+command = ["{plugin_dir}/check-export.sh"]

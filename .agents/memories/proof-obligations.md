@@ -313,7 +313,7 @@ UPDATE (2026-06-20) — full spec disposition so NO spec tests a removed mechani
 - **REPLACED:** P100 → **P128** authored as `tests/proof/p132-tikz-file-render.spec.ts` (+ provisioning: a real `figure.tikz` opened via the discovery matrix → inline SVG, raw source absent; verified provisioning + a real tikz→SVG render).
 - **REWORKED to the new model (no longer red):** `p108-watch-file-reload` (P98) → a generic markdown text-marker witness (the watch-reload is renderer-independent); `p121-slides-preview` → drives the shipped revealjs-renderer via the render-target selector (`setRenderTarget('revealjs-renderer', null)`) — verified the revealjs render.sh emits a real `.reveal > .slides > section` deck. The frontend inline figure-compile log (`tikzfigurelog.ts` + the TikZ Log tab) is removed.
 - **P93/P109 (source↔preview jump) — RETIRED as ill-conceived (not deferred).** The obligation assumes a source-line → rendered-SVG-element correspondence, but `pdf2svg` output carries NO per-node identity and procedural tikz (e.g. a loop drawing an N×N grid) has no 1:1 line↔element mapping at all — the feature is not well-defined. It was agent-invented. The entire scaffolding is DELETED: `tikzjump.ts`, the App.svelte jump handler + harness hooks, the EditorPane Ctrl+J/Ctrl+T keybindings + `ownedTikzEnvelopeText`/`refreshTikzModel`/`placeCursorOnTikzNodeLine`/`cursorTikzNodeName`/`__PPE_TIKZ_MODEL__`. (P90 parser + P97 subgraph copy, which share `parse_tikz`, are unaffected.)
-- **FUTURE obligations (deferred, no red spec):** the P130 beamer (slides→pdf) export-template leg, and P131/P132 (`.tex`/`.bib` cells).
+- **BUILT (2026-06-20, verified by smoke test + hermetic --doctor):** **P130 beamer** — the `beamer-pdf-export` plugin (`pandoc --to beamer --pdf-engine=lualatex` against pandoc's BUILT-IN beamer template — the shipped `beamer_template.latex` is machine-broken: it `\input`s a stale absolute path; a user-supplied beamer template is a future selector enhancement). A discovered export target ("Export: Beamer Slides (.pdf)"); md→beamer PDF verified (6 KB %PDF). **P131 `.tex` render input** — the `latex-renderer` plugin (`pandoc --from latex --to html5`, `inputs = ["latex"]`); opening a `.tex` file dispatches to it through the discovery matrix; .tex→HTML verified. `.bib` is NOT a render cell (citation data, already handled) — see the disposition note below.
 
 All reworked/authored specs are verified as far as possible without a display (provisioning boots doctor-clean, render.sh produces the asserted output); the full `just proof` E2E run still requires the GUI session.
 
@@ -739,15 +739,20 @@ Status of the realignment obligations:
   discovered render target. (Replaces the deleted dead `slidesMode`/`revealjs-renderer`-const
   wiring; ship the vendored `revealjs-renderer` plugin, doctor-clean like `tikz-renderer`.)
 
-- **DEFERRED to a follow-up (recorded so not silently dropped).**
-  - **P131 — `.tex` render cell**: opening a `.tex` file renders it (tex→html and/or
-    tex→pdf) via a latex renderer/export target + template, instead of falling through to
-    the markdown renderer (garbage today).
-  - **P132 — `.bib` handling**: a bibtex editor grammar (the editor forces the latex
-    grammar on every file today) and a decision on whether `.bib` is a render target
-    (formatted bibliography preview) vs citation-data-only.
-  - **Per-file-type editor language** selection (md/tex/tikz → latex grammar; bib → bibtex)
-    folded into the above.
+- **DEFERRED to a follow-up (recorded so not silently dropped).** `.tex` and `.bib` are
+  CATEGORICALLY DIFFERENT — not "two input cells":
+  - **P131 — `.tex` as a document render INPUT TYPE** (the genuine missing render cell):
+    a `.tex` file is a LaTeX document that renders to html/pdf, exactly like md/tikz — add a
+    latex renderer (e.g. `pandoc --from latex --to html5`, `inputs = ["latex"]`) + a latex
+    template so opening a `.tex` file dispatches to it through the discovery matrix instead
+    of falling through to the markdown renderer (garbage today). A thin renderer plugin like
+    the others.
+  - **`.bib` is NOT a render cell.** A `.bib` is a bibliography DATABASE — citation DATA the
+    app already consumes (`editor.bibliography`, citation completion, the references panel),
+    not a document to "render." The only conceivable gap is a bibtex EDITOR grammar for
+    *editing* a `.bib` (the editor applies the latex grammar to every file today) — an editor
+    concern, not a render-matrix obligation. (My earlier "P132 .bib render cell" was a
+    category error.)
 
 - **Carried tikz debt** (from the Phase D realignment note above): **P128** (file-mode
   tikz render) + the **P93/P95/P98** file-mode reworks + retiring the injection-only

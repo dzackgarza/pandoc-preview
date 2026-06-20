@@ -1,0 +1,34 @@
+# The LaTeX renderer — a .tex document is the SAME render primitive as markdown,
+# only the reader differs: `pandoc --from latex --to html5` against an html
+# template. A .tex file opened in the app renders to the live HTML preview through
+# this renderer (selected by the discovery matrix on the "latex" input type),
+# instead of falling through to the markdown renderer. Self-contained like
+# tikz-renderer / revealjs-renderer: it owns its pandoc invocation, so an absent
+# [plugin.latex-renderer] section is a complete valid state.
+#
+# Vendored shipped asset; first-run symlinks it into the plugins dir.
+id = "latex-renderer"
+name = "LaTeX Preview"
+description = "Renders a .tex document to preview HTML via pandoc --from latex --to html5 against an html template."
+category = "renderer"
+kind = "command"
+config_schema = "schema.json"
+# A .tex file is the input type this renderer handles.
+inputs = ["latex"]
+# The html template the rendered document is wrapped in (shared with the markdown
+# preview); the selector may pick another html template.
+default_template = "pandoc_preview_template.html"
+
+[exec]
+# The .tex buffer arrives on stdin; standalone preview HTML on stdout. {template}
+# is the selected html template basename, resolved by render.sh.
+command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}", "{template}"]
+
+# "Configure" opens the html template for editing (the render's config surface).
+[configure]
+command = ["{plugin_dir}/configure.sh", "{config_dir}"]
+
+[[doctor_checks]]
+id = "latex-render-toolchain"
+description = "the latex preview render path resolves: pandoc present and the html template exists"
+command = ["{plugin_dir}/check-render.sh"]

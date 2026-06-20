@@ -336,13 +336,29 @@ else
     ln -sfn "$REVEALJS_RENDERER_VENDOR" "$REVEALJS_RENDERER_DEST"
 fi
 
+# Install the shipped LaTeX renderer plugin. A .tex document renders to the live
+# preview via this renderer (pandoc --from latex --to html5), selected by file
+# type — the same way markdown uses the html5 renderer. Self-contained vendored
+# code, symlinked; a real-directory user override is preserved.
+LATEX_RENDERER_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/latex-renderer"
+if [ ! -d "$LATEX_RENDERER_VENDOR" ]; then
+    echo "FATAL: vendored latex renderer plugin missing: $LATEX_RENDERER_VENDOR" >&2
+    exit 1
+fi
+LATEX_RENDERER_DEST="$PLUGINS_DIR/latex-renderer"
+if [ -e "$LATEX_RENDERER_DEST" ] && [ ! -L "$LATEX_RENDERER_DEST" ]; then
+    echo "preserve (user override): $LATEX_RENDERER_DEST" >&2
+else
+    ln -sfn "$LATEX_RENDERER_VENDOR" "$LATEX_RENDERER_DEST"
+fi
+
 # Install the shipped export-category plugins. Export is entirely the pandoc
 # plugin suite: pandoc-html-export and pandoc-pdf-export are app-owned vendored
 # code (the single source of truth), symlinked into the plugins dir so updates
 # stay atomic and a real-directory user override is preserved. The
 # [plugin.<id>].command sections written above are validated against each
 # plugin's schema by the generic plugin-config check.
-for export_plugin in pandoc-html-export pandoc-pdf-export arxiv-export; do
+for export_plugin in pandoc-html-export pandoc-pdf-export beamer-pdf-export arxiv-export; do
     EXPORT_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/$export_plugin"
     if [ ! -d "$EXPORT_VENDOR" ]; then
         echo "FATAL: vendored export plugin missing: $EXPORT_VENDOR" >&2

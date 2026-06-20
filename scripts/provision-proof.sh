@@ -89,7 +89,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "tikz-renderer" ] || [ "$id" = "revealjs-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "latexmk-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ] || [ "$id" = "arxiv-export" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "tikz-renderer" ] || [ "$id" = "revealjs-renderer" ] || [ "$id" = "latex-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "beamer-pdf-export" ] || [ "$id" = "latexmk-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ] || [ "$id" = "arxiv-export" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
