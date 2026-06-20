@@ -696,6 +696,54 @@ A batch with a PDF target runs `lualatex` (a hard dependency, the P8 engine), so
   Admissible because it fails on: a tikz file that renders RAW SOURCE (no `<svg>` with drawing content appears — the file was not compiled); a render that IGNORES the user's styles tree (a figure using a user-defined style does not reflect it, or changing the style in the styles tree does not change the render — proving an injected/hardcoded palette rather than the template-owned preamble); and a tikz file routed through the MARKDOWN renderer (the source is rendered as a code block / passed through, not compiled to a figure). It is NOT satisfied by an assertion that a `render_tikz`/`tikz-renderer`/`isTikzFile` symbol merely EXISTS — the proof must open a real `.tikz` file on a real display and confirm the compiled inline SVG appears, the raw source does not, and a user-styles-tree change moves the render.
   It folds the old `tikz-toolchain` doctor gate: the `tikz-renderer` plugin's doctor check fails loud if pdflatex/pdf2svg or the user-owned template is absent.
 
+### Render-matrix realignment (2026-06-20, issue #2 → systemic)
+
+The tikz drift was the tip of a pattern: a *render target* (input type × output mode +
+template + engine) was reified into bespoke machinery, hardcoded into the core, or left
+half-wired. The ratified model: the app owns only the input data, the current output mode
+(the expected data contract — html bytes for the live preview, a file for export), and
+GUI exposure; **which renderer/export plugin and which template fill a cell is discovered
++ user-selected**, never hardcoded. Plugins declare `inputs` in their manifest; the app
+builds the (open file type → candidate render targets) matrix from discovery.
+
+Status of the realignment obligations:
+
+- **BUILT (WS1/WS2, verified: build + typecheck + hermetic --doctor).** Plugins declare
+  `inputs`; one `render(renderer_id, template, …)` IPC replaces the per-mode commands;
+  the frontend resolves the renderer by file type from discovery (default `[renderer].active`);
+  the hardcoded `SLIDES_RENDERER_ID`/`TIKZ_RENDERER_ID` consts and `isTikzFile`/`slidesMode`
+  booleans are gone; a `{template}` placeholder is forwarded to renderers.
+
+- **P129 — render-target selector (PENDING, GUI-proof-gated).** With a markdown file open,
+  the user can select among the discovered render targets compatible with the current
+  input + output (e.g. Article preview vs Slides for html; Article PDF vs Beamer PDF for
+  export); selecting a target re-renders through it (the selected renderer + template,
+  forwarded via `{template}`), and the choice persists across relaunch (config round-trip,
+  the `view_mode` precedent). Admissible only if it fails on: no selector; a selector that
+  does not change the rendered output; a non-persisted choice.
+
+- **P130 — slides as a template selection (PENDING, GUI-proof-gated).** Selecting the
+  Slides target renders the SAME markdown as a reveal.js DECK in the preview iframe (the
+  shipped `revealjs-renderer` plugin = `pandoc --to revealjs` + the `pandoc_revealjs_template.html`
+  template); the Beamer PDF target exports the same source to a beamer PDF via the pdf
+  export plugin + `beamer_template.latex`. Slides is NOT a bespoke mode — it is a
+  discovered render target. (Replaces the deleted dead `slidesMode`/`revealjs-renderer`-const
+  wiring; ship the vendored `revealjs-renderer` plugin, doctor-clean like `tikz-renderer`.)
+
+- **DEFERRED to a follow-up (recorded so not silently dropped).**
+  - **P131 — `.tex` render cell**: opening a `.tex` file renders it (tex→html and/or
+    tex→pdf) via a latex renderer/export target + template, instead of falling through to
+    the markdown renderer (garbage today).
+  - **P132 — `.bib` handling**: a bibtex editor grammar (the editor forces the latex
+    grammar on every file today) and a decision on whether `.bib` is a render target
+    (formatted bibliography preview) vs citation-data-only.
+  - **Per-file-type editor language** selection (md/tex/tikz → latex grammar; bib → bibtex)
+    folded into the above.
+
+- **Carried tikz debt** (from the Phase D realignment note above): **P128** (file-mode
+  tikz render) + the **P93/P95/P98** file-mode reworks + retiring the injection-only
+  `p100/p101/p102/p105` specs — all GUI-proof-gated, driven red→green with the suite.
+
 ## Verification vehicle
 
 Real app on a real display via `tauri-plugin-playwright` (precedent: the sibling repo `~/gitclones/pandoc-preview-greenfield` proof harness; see also the `tauri-playwright` skill).
