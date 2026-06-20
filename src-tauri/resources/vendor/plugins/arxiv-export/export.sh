@@ -720,6 +720,35 @@ if [ -n "$dotleft" ]; then
     exit 30
 fi
 
+# ── 4d. FINAL arXiv 50 MB SIZE-CAP gate ───────────────────────────────────────
+# Phase G / G6 (P119). arXiv hard-rejects a submission whose total UNCOMPRESSED
+# size exceeds 50 MB. AFTER the bundle is fully assembled, flattened, baked,
+# cleaned and dot-swept and BEFORE the tar, measure the bundle's total
+# uncompressed size with the REAL coreutils `du` (this plugin owns NO size
+# accounting) and gate on arXiv's 50 MB cap. If the bundle is at/over the cap,
+# FAIL LOUDLY: exit NON-ZERO, NAME the measured size and the 50 MB cap on stderr
+# (the app's compile-log surface), and produce NO tarball — set -e never reaches
+# the tar step. NEVER ship an over-budget bundle that arXiv would reject.
+#
+# The cap is arXiv's own 50 MB hard limit (52428800 bytes), hard-coded here — NOT
+# a config key (the plugin's schema is additionalProperties:false, so no size-cap
+# key exists). It is driven purely by the on-disk bundle size.
+arxiv_cap_bytes=52428800  # arXiv's 50 MB hard cap (50 * 1024 * 1024).
+# `du --bytes --summarize` reports the bundle's total uncompressed size in bytes
+# (the SAME independent measurement the capstone proof reads off the unpacked tree).
+bundle_bytes="$(du --bytes --summarize "$bundle" | cut -f1)"
+if ! printf '%s' "$bundle_bytes" | grep -qE '^[0-9]+$'; then
+    echo "arxiv-export/export.sh: du did not report a numeric uncompressed size for the bundle: $bundle_bytes" >&2
+    exit 31
+fi
+if [ "$bundle_bytes" -ge "$arxiv_cap_bytes" ]; then
+    bundle_mb=$(( bundle_bytes / 1048576 ))
+    echo "arxiv-export/export.sh: bundle uncompressed size is $bundle_bytes bytes (${bundle_mb} MB) — at/over arXiv's 50 MB cap ($arxiv_cap_bytes bytes); refusing to ship an over-size tarball" >&2
+    exit 32
+fi
+
 # ── 5. tar gzip the bundle to {artifact} ──────────────────────────────────────
 # -C the staging dir so the archive carries the single top-level bundle folder.
+# Only reached when the bundle is UNDER arXiv's 50 MB cap (the gate above exits
+# loud before here on an over-size bundle, leaving NO tarball at the target).
 tar -czf "$artifact" -C "$work" "arxiv-bundle"
