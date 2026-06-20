@@ -129,7 +129,7 @@ The cleaner's config (image cap, `commands_to_delete`, regex rules) is a shipped
 The only owned surface here is the orchestration that calls `tar` and the independent-process validation of arXiv-acceptance (P119). Greenfield rejected.
 
 Tar the cleaned bundle to `{output}` (the chosen `.tar.gz` path): main `.tex` + `.bbl` at the root, all `.sty`/macros bundled, figures compliant, NO `.bib`, NO `.aux`/`.log`/`.out`, NO hidden/dot files or dot-prefixed directories, under 50 MB. This is the single externally-uploadable artifact.
-**Proof: P119** (the end-to-end bundle-integrity proof; subsumes the per-step properties but asserts them all on the ONE real tarball).
+**Proof: P119 (RATIFIED 2026-06-20 into [[proof-obligations]]).** (the end-to-end bundle-integrity proof; subsumes the per-step properties but asserts them all on the ONE real tarball).
 
 ## Proposed proof obligations (P114–P119)
 
