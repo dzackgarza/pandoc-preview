@@ -24,15 +24,27 @@ import { openAndSelectDemo, waitForHarness, waitForPreview, appendAtEnd, sleep }
 //   (2) LIVE UPDATE. Editing the buffer to change the word count (appendAtEnd —
 //       the real docChanged pipeline) updates the displayed reading time to
 //       ceil(newWords / reading_wpm). The metric is not stale.
-//   (3) CONFIG-OWNED (NOT HARDCODED). The provisioned reading_wpm is a
-//       DISTINCTIVE, non-round 137 (provision-proof.sh p129 case), so
-//       ceil(words/137) cannot coincide with the value a hardcoded default (e.g.
-//       200 wpm) would yield. Clause (1)'s equality to ceil(words/configWpm) — for
-//       the WPM read from disk, not a literal — therefore fails on a dead/hardcoded
-//       config. The same buffer provisioned against a DIFFERENT reading_wpm would
-//       show a DIFFERENT reading time (a re-run with another WPM flips the expected
-//       value), which is exactly the "different config → different result" the
-//       obligation names.
+//   (3) CONFIG-OWNED (NOT HARDCODED) — GENUINELY DISCRIMINATING. The provisioned
+//       reading_wpm is a DISTINCTIVE, non-round 137 (provision-proof.sh p129 case),
+//       AND the buffer is grown to a word count that lands ceil(words/137) in a
+//       minute-bucket that is UNIQUE versus every plausible hardcoded default
+//       divisor (100/200/250/300). For reading_wpm=137, EVERY word count in
+//       [412, 1199] satisfies this: ceil(words/137) equals NONE of
+//       ceil(words/100), ceil(words/200), ceil(words/250), ceil(words/300) on that
+//       whole range (verified exhaustively). Concretely at ~454 words
+//       ceil(454/137)=4 while ceil(454/200)=3, ceil(454/250)=2, ceil(454/300)=2,
+//       ceil(454/100)=5 — so a hardcoded-200 impl would show "3 min", a
+//       hardcoded-250/300 impl "2 min", a hardcoded-100 impl "5 min", but the real
+//       config-bound impl shows "4 min". Clause (1)'s equality to
+//       ceil(words/configWpm) — for the WPM read from disk, not a literal —
+//       therefore FAILS on any of those hardcoded divisors, not merely on a
+//       coincidence-free count. The spec ASSERTS the live word count falls inside
+//       the proven-unique window [412, 1199] (so the discriminator can never
+//       silently degenerate to a count where ceil collides with a default), then
+//       asserts the displayed reading time EQUALS the unique ceil(words/137). The
+//       same buffer provisioned against a DIFFERENT reading_wpm would show a
+//       DIFFERENT reading time, which is exactly the "different config → different
+//       result" the obligation names.
 //
 // The word count is read from the app's OWN status-cluster span (so the metric is
 // proven derived from the SAME count the app shows, not a recount); the WPM is read
@@ -44,8 +56,12 @@ import { openAndSelectDemo, waitForHarness, waitForPreview, appendAtEnd, sleep }
 //     returns null and the clause-(1) assertion fails — the faithful "metric is
 //     absent" failure.
 //   - HARDCODED WPM (the config is dead): a metric computed from a baked-in WPM
-//     would NOT equal ceil(words/137) for the provisioned distinctive 137 — clause
-//     (1)/(3) fails.
+//     would NOT equal ceil(words/137) for the provisioned distinctive 137. Because
+//     the buffer is grown into the proven-unique window [412, 1199], ceil(words/137)
+//     differs from ceil(words/100), ceil(words/200), ceil(words/250), AND
+//     ceil(words/300) — so a hardcoded divisor of ANY of the common defaults yields
+//     a DIFFERENT minute and clause (1)/(3) fails (not just a count where the ceils
+//     happen to coincide).
 //   - STALE metric (does not track the live word count): after appendAtEnd changes
 //     the word count, a metric that does not recompute would still show the old
 //     ceil — clause (2) fails.
@@ -117,47 +133,87 @@ test('reading-time metric reflects the word count and the config WPM', async ({
 
   // Baseline: the status cluster ALREADY shows the live word count (the existing
   // shipped surface, proving the app booted and a file is open — so a failure
-  // below is the MISSING reading-time metric, never a boot/open error). The
-  // reading-time metric must be DERIVED from THIS count.
-  const words0 = await shownWordCount(tauriPage);
-  expect(words0).not.toBeNull();
-  expect(words0 as number).toBeGreaterThan(0);
-
-  // ── Clause (1): DERIVED VALUE — the status cluster shows ceil(words / wpm) ──
-  // FIRST the metric must EXIST in the status cluster. RED today: StatusBar.svelte
-  // renders only `Ln/Col` and `{wordCount} words` — there is NO reading-time
-  // sibling span — so readingTimeMinutes() returns null and THIS assertion fails.
-  // The faithful "no reading-time metric in the status cluster" failure, observed
-  // AFTER the word count has rendered (so it is not a boot error). This gate fires
-  // before the config-WPM read below, so the RED cause is the absent metric, not a
-  // missing config key.
-  const reading0 = await readingTimeMinutes(tauriPage);
-  expect(reading0).not.toBeNull();
+  // below is the MISSING reading-time metric, never a boot/open error).
+  const baseWords = await shownWordCount(tauriPage);
+  expect(baseWords).not.toBeNull();
+  expect(baseWords as number).toBeGreaterThan(0);
 
   // The config-owned WPM, read INDEPENDENTLY of the app from the on-disk
   // config.toml (python tomllib). The GREEN impl adds [editor].reading_wpm
   // (config.rs Editor, range-validated, round-tripped — the P9 class) and the
   // matching p129 provisioning case writes a DISTINCTIVE, non-round
-  // reading_wpm = 137, so ceil(words/137) cannot coincide with the value a
-  // hardcoded default (e.g. 200 wpm) would yield — a dead/hardcoded metric fails
-  // the equality below. The same buffer provisioned against a DIFFERENT
-  // reading_wpm would change the expected value (a re-run with another WPM flips
-  // it), which is the "different config → different result" the obligation names.
+  // reading_wpm = 137. For 137, EVERY word count in [412, 1199] lands
+  // ceil(words/137) in a minute-bucket that is UNIQUE versus ceil(words/100),
+  // ceil(words/200), ceil(words/250) and ceil(words/300) (the plausible hardcoded
+  // defaults) — verified exhaustively. The buffer is grown below into that window,
+  // so the clause-(1) equality is GENUINELY discriminating: any hardcoded divisor
+  // yields a different minute and fails it. The same buffer provisioned against a
+  // DIFFERENT reading_wpm would change the expected value (the "different config →
+  // different result" the obligation names).
   const cfg = parseTomlFile(manifest.configPath);
   const wpm = (cfg.editor as Record<string, unknown> | undefined)?.reading_wpm;
   expect(typeof wpm).toBe('number');
   const readingWpm = wpm as number;
   expect(readingWpm).toBe(137);
-  const expected0 = Math.ceil((words0 as number) / readingWpm);
 
-  // Clause (3) folded in: the displayed value equals ceil(words / configWpm) for
-  // the WPM read from disk (137) — a hardcoded WPM would not satisfy this.
+  // The proven-unique window for reading_wpm=137: on [412, 1199] ceil(words/137)
+  // equals NONE of ceil(words/{100,200,250,300}). Both asserted word counts below
+  // MUST fall inside it, or the discriminator would silently degenerate.
+  const UNIQUE_LO = 412;
+  const UNIQUE_HI = 1199;
+
+  // Grow the buffer through the REAL docChanged pipeline (appendAtEnd) so the live
+  // word count lands inside the proven-unique window. demo.md ships small (~54
+  // words); appending 420 distinctive words pushes the count to ~474 — well inside
+  // [412, 1199], where ceil(474/137)=4 while ceil(474/200)=3, ceil(474/250)=2,
+  // ceil(474/300)=2, ceil(474/100)=5. A hardcoded-200 impl would show "3 min", a
+  // hardcoded-250/300 impl "2 min", a hardcoded-100 impl "5 min" — only the real
+  // config-bound impl shows "4 min".
+  const GROW = 420;
+  const grow = ' ' + Array.from({ length: GROW }, (_, i) => `gamma${i}`).join(' ');
+  await appendAtEnd(tauriPage, grow);
+
+  // Wait for the status cluster's own word count to reflect the growth.
+  let words0: number | null = null;
+  const growDeadline = Date.now() + 5_000;
+  while (Date.now() < growDeadline) {
+    words0 = await shownWordCount(tauriPage);
+    if (words0 !== null && words0 >= (baseWords as number) + GROW) break;
+    await sleep(100);
+  }
+  expect(words0).not.toBeNull();
+  expect(words0 as number).toBeGreaterThanOrEqual((baseWords as number) + GROW);
+  // SELF-VERIFYING DISCRIMINATOR GATE: the grown count must sit inside the window
+  // where ceil(words/137) is unique vs every common hardcoded divisor. If it does
+  // not, the test is NOT discriminating and must fail loudly here rather than pass
+  // green on a coincidental count.
+  expect(words0 as number).toBeGreaterThanOrEqual(UNIQUE_LO);
+  expect(words0 as number).toBeLessThanOrEqual(UNIQUE_HI);
+
+  // ── Clause (1): DERIVED VALUE — the status cluster shows ceil(words / wpm) ──
+  // FIRST the metric must EXIST in the status cluster. RED today: StatusBar.svelte
+  // renders only `Ln/Col` and `{wordCount} words` — there is NO reading-time
+  // sibling span — so readingTimeMinutes() returns null and THIS assertion fails.
+  const reading0 = await readingTimeMinutes(tauriPage);
+  expect(reading0).not.toBeNull();
+
+  const expected0 = Math.ceil((words0 as number) / readingWpm);
+  // Clause (3) folded in AND made discriminating: the displayed value equals
+  // ceil(words / configWpm) for the WPM read from disk (137). Because words0 is in
+  // the proven-unique window, ceil(words0/137) differs from ceil(words0/100),
+  // ceil(words0/200), ceil(words0/250) AND ceil(words0/300) — so a hardcoded
+  // divisor of ANY common default FAILS this equality. Guard the discriminator
+  // explicitly so a future regression that picks a colliding count cannot pass:
+  for (const dead of [100, 200, 250, 300]) {
+    expect(expected0).not.toBe(Math.ceil((words0 as number) / dead));
+  }
   expect(reading0).toBe(expected0);
 
   // ── Clause (2): LIVE UPDATE — editing the buffer updates the reading time ──
   // Append enough distinctive words to push the word count over the next
-  // ceil(words/137) boundary, so a recomputing metric MUST change its displayed
-  // value while a stale one would not. 200 added words ⇒ at least one more minute.
+  // ceil(words/137) boundary (into the NEXT unique bucket), so a recomputing
+  // metric MUST change its displayed value while a stale one would not. 200 added
+  // words ⇒ at least one more minute, still inside the proven-unique window.
   const ADDED = 200;
   const extra = ' ' + Array.from({ length: ADDED }, (_, i) => `lattice${i}`).join(' ');
   await appendAtEnd(tauriPage, extra);
@@ -173,16 +229,26 @@ test('reading-time metric reflects the word count and the config WPM', async ({
   }
   expect(words1).not.toBeNull();
   expect(words1 as number).toBeGreaterThanOrEqual((words0 as number) + ADDED);
+  // The post-edit count must ALSO stay inside the proven-unique window, so clause
+  // (2)'s equality is discriminating too.
+  expect(words1 as number).toBeGreaterThanOrEqual(UNIQUE_LO);
+  expect(words1 as number).toBeLessThanOrEqual(UNIQUE_HI);
   const expected1 = Math.ceil((words1 as number) / readingWpm);
   // The added words crossed a minute boundary, so the expected reading time
   // genuinely changed — a stale metric (still showing expected0) fails here.
   expect(expected1).toBeGreaterThan(expected0);
+  // Discriminating at the new count too: ceil(words1/137) differs from every
+  // common hardcoded divisor.
+  for (const dead of [100, 200, 250, 300]) {
+    expect(expected1).not.toBe(Math.ceil((words1 as number) / dead));
+  }
 
   const reading1 = await readingTimeMinutes(tauriPage);
   expect(reading1).not.toBeNull();
   expect(reading1).toBe(expected1);
 
   recordObservation({ spec: manifest.spec, name: 'reading-wpm', value: readingWpm });
+  recordObservation({ spec: manifest.spec, name: 'words-base', value: baseWords as number });
   recordObservation({ spec: manifest.spec, name: 'words-before', value: words0 as number });
   recordObservation({ spec: manifest.spec, name: 'reading-minutes-before', value: expected0 });
   recordObservation({ spec: manifest.spec, name: 'words-after', value: words1 as number });
