@@ -1,0 +1,44 @@
+{
+  "run_id": "20260620T012221Z",
+  "status": "passed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p126-arxiv-cleaner.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p126-arxiv-cleaner.spec.ts",
+            "title": "the arXiv bundle is cleaned by the REAL arxiv_latex_cleaner — comments, draft commands, unused assets, and dot-files are gone; the cleaner is a required step (no fake-cleaned tarball)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 5051,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p126-arxiv-cleaner.spec.ts",
+          "name": "arxiv-cleaner-bundle-files",
+          "value": 6
+        },
+        {
+          "spec": "p126-arxiv-cleaner.spec.ts",
+          "name": "arxiv-cleaner-bundled-images",
+          "value": "p126-dot.png,plot.png"
+        }
+      ]
+    }
+  ]
+}
