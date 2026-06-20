@@ -71,16 +71,18 @@ mkdir -p "$bundle"
 
 # The macro PACKAGE the document's preamble pulls in. It REQUIRES the system
 # math packages (amsmath/amssymb/amsthm — present in any TeX install, NOT personal
-# styles) then \input's the REAL materialized macro tier. The root .tex
+# styles) then carries the REAL materialized macro tier inline. The root .tex
 # \usepackage's it; latexpand leaves \usepackage alone, and the empty-TEXMFHOME
 # compile finds dzg-arxiv.sty in the bundle (no system dzg styles needed).
 #
-# The materialized macro tier lives under macros/ (a subdir), NOT beside the root
-# main.tex: the bundle's ROOT document must be the single shallowest .tex, so the
-# copied .tex macro file sits one level deeper. dzg-arxiv.sty (a .sty, not a .tex)
-# \input's it by its bundle-relative path.
-mkdir -p "$bundle/macros"
-cp "$macro_tier" "$bundle/macros/tier1-mathjax-simple.tex"
+# The REAL dzg macro tier content (the file defining the custom \RR) is embedded
+# DIRECTLY into dzg-arxiv.sty rather than copied to a separate macros/*.tex that
+# the .sty \input's. The G5 cleaner (step 4b) prunes any .tex left unreferenced by
+# the ROOT main.tex, and it does NOT follow \input references buried inside a .sty
+# — so a separate macros/*.tex would be pruned, breaking the self-contained
+# compile. Embedding the macro tier's REAL bytes into the always-kept root .sty
+# keeps the bundle self-contained through the cleaner while still materializing
+# the genuine macro source.
 cat > "$bundle/dzg-arxiv.sty" <<'STY_EOF'
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{dzg-arxiv}[2026/06/19 arXiv self-contained dzg macro package]
@@ -89,8 +91,11 @@ cat > "$bundle/dzg-arxiv.sty" <<'STY_EOF'
 \RequirePackage{amssymb}
 \RequirePackage{amsthm}
 \RequirePackage{graphicx}
-% The REAL dzg macro tier, materialized under macros/ in the bundle.
-\input{macros/tier1-mathjax-simple}
+% --- BEGIN materialized REAL dzg macro tier (tier1-mathjax-simple) ---
+STY_EOF
+cat "$macro_tier" >> "$bundle/dzg-arxiv.sty"
+cat >> "$bundle/dzg-arxiv.sty" <<'STY_EOF'
+% --- END materialized REAL dzg macro tier ---
 \endinput
 STY_EOF
 

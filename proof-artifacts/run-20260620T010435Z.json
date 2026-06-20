@@ -1,0 +1,122 @@
+{
+  "run_id": "20260620T010435Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "p122-arxiv-flatten.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p122-arxiv-flatten.spec.ts",
+            "title": "Export to the arxiv plugin yields a flattened, self-contained bundle that compiles with no system styles",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 5766,
+            "errors": [
+              "Error: No materialized macro/.sty file in the bundle defines \\RR. Bundle files: dzg-arxiv.sty. The bundle relies on the host texmf for the macros instead of copying them in."
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p123-arxiv-bbl.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p123-arxiv-bbl.spec.ts",
+            "title": "the arXiv bundle bakes a `.bbl` named to the main `.tex` carrying the cited reference, with no `.bib` present",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 6892,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p123-arxiv-bbl.spec.ts",
+          "name": "arxiv-bbl-name",
+          "value": "main.bbl"
+        },
+        {
+          "spec": "p123-arxiv-bbl.spec.ts",
+          "name": "arxiv-bbl-bytes",
+          "value": 481
+        }
+      ]
+    },
+    {
+      "spec": "p124-arxiv-tikz.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p124-arxiv-tikz.spec.ts",
+            "title": "the arXiv bundle externalizes every tikz diagram to a precompiled PDF figure, with no tikz source remaining",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 7520,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p124-arxiv-tikz.spec.ts",
+          "name": "arxiv-tikz-figures",
+          "value": 2
+        },
+        {
+          "spec": "p124-arxiv-tikz.spec.ts",
+          "name": "arxiv-tikz-figure-info",
+          "value": "Title:           "
+        }
+      ]
+    },
+    {
+      "spec": "p125-arxiv-figure-gate.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p125-arxiv-figure-gate.spec.ts",
+            "title": "the arXiv bundle makes every figure arXiv-acceptable; a non-convertible figure fails the export loudly with no tarball",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 9600,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p125-arxiv-figure-gate.spec.ts",
+          "name": "arxiv-figure-formats",
+          "value": "fig/plot.png=PNG,fig/p125-lattice.pdf=PDF"
+        },
+        {
+          "spec": "p125-arxiv-figure-gate.spec.ts",
+          "name": "arxiv-figure-loud-fail-exit",
+          "value": "19"
+        }
+      ]
+    }
+  ]
+}
