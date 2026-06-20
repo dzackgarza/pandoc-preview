@@ -1029,6 +1029,80 @@ command = "$PANDOC_BIN --from markdown --to latex --standalone"
 macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
 EOF
     ;;
+p125-arxiv-figure-gate.spec.ts)
+    # P117 (Phase G / G4 — every bundled figure is in an arXiv-acceptable format;
+    # a non-convertible figure FAILS the export LOUDLY with NO tarball). arXiv does
+    # NO on-the-fly conversion and this pipeline is SVG/tikz-centric, so the gate
+    # must (compliance) CONVERT every referenced SVG to a PDF/PNG/JPG and rewrite
+    # the `.tex` reference, and (loud-fail) when a referenced figure CANNOT be made
+    # compliant EXIT NON-ZERO, NAME the offending file, and write NO tarball.
+    #
+    # The arXiv target is the SAME vendored arxiv-export FIREWALL plugin p122/p123/
+    # p124 drive — its `export.sh` orchestrating script, riding the SAME generic
+    # export firewall (run_plugin in plugins.rs); the app core is unchanged. The
+    # spec drives runPlugin('arxiv-export', target.tar.gz) BY ID, exactly as the
+    # other arxiv specs do, against the REAL open buffer.
+    #
+    # TWO witness documents in ONE hermetic project (the plugin runs against
+    # whatever file is open, so the spec opens each in turn and exports each):
+    #
+    #   (1) demo.md — the COMPLIANCE witness. It already carries the shared P1
+    #       witnesses + a `![scatter](fig/plot.png)` (an already-PDF/PNG/JPG figure
+    #       that must pass through untouched). This case APPENDS a markdown image
+    #       referencing a REAL, well-formed SVG (`![lattice](fig/p125-lattice.svg)`).
+    #       pandoc `--to latex` emits an SVG INCLUSION (`\includesvg{...}` for the
+    #       `.svg` extension), so the emitted root `.tex` references a `.svg` figure
+    #       arXiv would reject. The staged SVG is the committed
+    #       tests/proof/fixtures/p125-lattice.svg (a 3x3 lattice + bounding box) —
+    #       a figure cairosvg CONVERTS to a valid PDF, so the compliance gate CAN
+    #       make it compliant: convert SVG->PDF and rewrite the reference.
+    #
+    #   (2) badfig.md — the LOUD-FAIL witness. It references a ZERO-BYTE `.svg`
+    #       (`![broken](fig/p125-broken.svg)`) that CANNOT be made compliant:
+    #       cairosvg fails loudly on an empty/parse-error SVG (xml.parsers.expat
+    #       ExpatError, exit 1, NO PDF emitted) and a zero-byte file is not a valid
+    #       PDF/PNG/JPG either. The figure gate must therefore FAIL the export
+    #       LOUDLY — exit NON-ZERO, NAME `p125-broken.svg` in the log, write NO
+    #       tarball — never silently pass a figure arXiv would reject.
+    #
+    # The [plugin.arxiv-export] config section is EXACTLY p122/p123/p124's (command
+    # + macros_dir) — its schema is additionalProperties:false, so NO extra config
+    # key is added (an unknown key would fail config-schema at load and the app
+    # would never boot, masking the missing-gate RED).
+    #
+    # The COMPLIANCE figure: a real, well-formed SVG cairosvg converts to a valid
+    # PDF. Staged into the project's fig/ dir as a project-RELATIVE resource the
+    # `\includesvg{fig/p125-lattice.svg}` names (cwd = the source file's parent at
+    # run time, the same way the figures/references.bib are made relative).
+    cp "$REPO_ROOT/tests/proof/fixtures/p125-lattice.svg" "$PROJECT_DIR/fig/p125-lattice.svg"
+    printf '\n\nA lattice diagram:\n\n![lattice](fig/p125-lattice.svg)\n' >> "$DEMO_FILE"
+    # The NON-CONVERTIBLE figure: a ZERO-BYTE `.svg` (empty, no XML element).
+    # cairosvg cannot parse it (expat "no element found"), so it can never be made
+    # compliant — the gate must loud-fail naming it.
+    : > "$PROJECT_DIR/fig/p125-broken.svg"
+    # The LOUD-FAIL witness document references that zero-byte SVG. It is a SEPARATE
+    # project file so the spec exports the COMPLIANCE witness first (proving boot +
+    # export + the firewall all work), then switches to THIS file and exports again
+    # to drive the loud-fail leg — so a RED on the loud-fail leg is the MISSING gate,
+    # not a boot/open/render error.
+    cat > "$PROJECT_DIR/badfig.md" <<'PPE_P125_BADFIG_EOF'
+# Broken Figure Witness
+
+This document references a figure that cannot be made arXiv-compliant.
+
+![broken](fig/p125-broken.svg)
+PPE_P125_BADFIG_EOF
+    # Install the vendored arxiv-export plugin into the same [plugins].dir and emit
+    # its [plugin.arxiv-export] config section — IDENTICAL to p122/p123/p124's
+    # (command + macros_dir; schema additionalProperties:false forbids any extra key).
+    install_plugin_fixtures "$PLUGINS_DIR" arxiv-export
+    cat >> "$CONFIG_PATH" <<EOF
+
+[plugin.arxiv-export]
+command = "$PANDOC_BIN --from markdown --to latex --standalone"
+macros_dir = "$ABS_SPEC_DIR/home/.pandoc/styles/macros"
+EOF
+    ;;
 p19-plugin-run-by-id.spec.ts)
     # A1: the generic plugin firewall runs a tools plugin by id. The canonical
     # config above already set up the pandoc renderer + [plugins].dir (so the
