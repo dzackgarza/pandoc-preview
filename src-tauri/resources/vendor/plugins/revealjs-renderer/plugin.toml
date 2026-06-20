@@ -1,0 +1,37 @@
+# The reveal.js slides renderer — a sibling of pandoc-renderer whose only
+# difference is the pandoc WRITER: `--to revealjs` instead of `--to html5`. Slides
+# are NOT a bespoke mode: a slide deck is the SAME md/latex → html render primitive
+# with the reveal.js writer + the reveal.js template. pandoc's own revealjs writer
+# emits the deck structure (<div class="reveal"><div class="slides"><section>…);
+# this plugin builds no slide renderer. The render-target selector picks it (and a
+# revealjs template) for a markdown/latex file; the deck HTML paints into the SAME
+# preview iframe, re-rendered on idle exactly as the html5 preview is.
+#
+# Self-contained like tikz-renderer: it owns its pandoc invocation (no config
+# command), so an absent [plugin.revealjs-renderer] section is a complete, valid
+# state. Vendored shipped asset; first-run symlinks it into the plugins dir.
+id = "revealjs-renderer"
+name = "Reveal.js Slides"
+description = "Renders a markdown/latex document to a reveal.js slide deck via pandoc --to revealjs against the reveal.js template."
+category = "renderer"
+kind = "command"
+config_schema = "schema.json"
+# A slide deck is rendered from the same inputs as the html5 preview.
+inputs = ["markdown", "latex"]
+# The reveal.js template the deck is built against; the selector may pick another.
+default_template = "pandoc_revealjs_template.html"
+
+[exec]
+# The buffer arrives on stdin; the standalone reveal.js deck HTML leaves on stdout.
+# {template} is the selected reveal.js template basename, resolved by render.sh.
+command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}", "{template}"]
+
+# "Configure" opens the reveal.js template for editing — the deck's whole config
+# surface (like tikz-renderer). The app just spawns this detached.
+[configure]
+command = ["{plugin_dir}/configure.sh", "{config_dir}"]
+
+[[doctor_checks]]
+id = "revealjs-render-toolchain"
+description = "the reveal.js slides render path resolves: pandoc present and the reveal.js template exists"
+command = ["{plugin_dir}/check-render.sh"]

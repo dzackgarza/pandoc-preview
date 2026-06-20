@@ -19,6 +19,11 @@ mathjax="$3"
 # carries --citeproc and the citation metadata but NOT the bib/csl paths.
 bibliography="$4"
 csl="$5"
+# The user-selected template BASENAME (the render-target selector; default = this
+# renderer's manifest default_template). render.sh resolves it against the templates
+# dir and layers it on as --template, so the canonical command carries NO --template
+# literal — the template is a selectable render-context value, not baked.
+template="$6"
 
 # The core always sets PPE_PLUGIN_CONFIG; default to an empty object defensively.
 cfg="${PPE_PLUGIN_CONFIG:-}"
@@ -30,6 +35,17 @@ command_str="$(printf '%s' "$cfg" | jq -r '.command')"
 # schema marks it required, so a valid (booted) config always carries it — no
 # guard, same as .command above.
 figure_width="$(printf '%s' "$cfg" | jq -r '.style.figure_width')"
+
+# Resolve the selected template basename against the templates dir (the sibling of
+# the global figures dir PANDOC_RESOURCE_PATH points at, e.g. ~/.pandoc/templates),
+# layered on as --template below. PANDOC_RESOURCE_PATH is guaranteed present (the
+# startup doctor gate refuses to boot without it).
+pandoc_dir="$(dirname "$PANDOC_RESOURCE_PATH")"
+template_path="$pandoc_dir/templates/$template"
+if [ ! -f "$template_path" ]; then
+    echo "pandoc-renderer: selected template not found: $template_path" >&2
+    exit 1
+fi
 
 # Tokenize the raw command with a shlex-class parser (quotes respected, NO shell
 # expansion) — run it, do not interpret it. The first token is the executable.
@@ -50,6 +66,7 @@ mapfile -t cmd < <(printf '%s' "$command_str" \
 # canonical command. PANDOC_RESOURCE_PATH is guaranteed present here: the startup
 # doctor gate (pandoc-resource-path check) refuses to boot the app without it.
 exec "${cmd[@]}" \
+    "--template=$template_path" \
     "--mathjax=$mathjax" \
     "--bibliography=$bibliography" \
     "--csl=$csl" \

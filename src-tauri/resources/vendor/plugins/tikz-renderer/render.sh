@@ -10,6 +10,10 @@
 set -euo pipefail
 
 base_dir="$1"
+# The user-selected template BASENAME (the render-target selector; default = this
+# renderer's manifest default_template, standalone-tikz.tex), resolved against the
+# templates dir below.
+template_name="$2"
 
 # The installed pandoc config dir (holding templates/ and the styles/ tree) is
 # derived from PANDOC_RESOURCE_PATH (the global figures dir), exactly as the html5
@@ -18,7 +22,7 @@ base_dir="$1"
 # caller somehow runs without it.
 : "${PANDOC_RESOURCE_PATH:?tikz-renderer: PANDOC_RESOURCE_PATH must be set (the global figures dir)}"
 pandoc_dir="$(dirname "$PANDOC_RESOURCE_PATH")"
-template="$pandoc_dir/templates/standalone-tikz.tex"
+template="$pandoc_dir/templates/$template_name"
 if [ ! -f "$template" ]; then
     echo "tikz-renderer: user-owned template not found: $template" >&2
     exit 1

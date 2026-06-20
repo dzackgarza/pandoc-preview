@@ -89,7 +89,7 @@ install_plugin_fixtures() {
     mkdir -p "$dest"
     local id src
     for id in "$@"; do
-        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "tikz-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "latexmk-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ] || [ "$id" = "arxiv-export" ]; then
+        if [ "$id" = "pandoc-renderer" ] || [ "$id" = "tikz-renderer" ] || [ "$id" = "revealjs-renderer" ] || [ "$id" = "pandoc-html-export" ] || [ "$id" = "pandoc-pdf-export" ] || [ "$id" = "latexmk-pdf-export" ] || [ "$id" = "pandoc-md-lint" ] || [ "$id" = "workspace-search" ] || [ "$id" = "arxiv-export" ]; then
             src="$VENDOR_PLUGINS/$id"
         else
             src="$PLUGINS_SRC/$id"
@@ -111,7 +111,6 @@ emit_pandoc_renderer() {
     # symlinks the vendored filters (incl. utilities.lua) into $HOME/.pandoc/filters.
     env HOME="$ABS_SPEC_DIR/home" bash "$REPO_ROOT/scripts/install-assets.sh" > /dev/null
     local fdir="$ABS_SPEC_DIR/home/.pandoc/filters"
-    local tpl="$ABS_SPEC_DIR/home/.pandoc/templates/pandoc_preview_template.html"
     # The bibliography citeproc resolves against. install-assets just symlinked the
     # vendored starter here; replace that symlink with the fixture, which carries
     # the keys the citation proof (p27) cites. --remove-destination replaces the
@@ -130,7 +129,7 @@ dir = "$plugins_dir"
 active = "pandoc-renderer"
 
 [plugin.pandoc-renderer]
-command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$tpl --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
+command = "$pandoc_path --from markdown+lists_without_preceding_blankline --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --lua-filter=$fdir/convert_amsthm_envs.lua --lua-filter=$fdir/obsidian_callouts.lua --lua-filter=$fdir/obsidian.lua"
 
 [plugin.pandoc-renderer.style]
 figure_width = "75%"

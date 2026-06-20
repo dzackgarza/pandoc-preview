@@ -212,6 +212,11 @@ export const configurePlugin = (pluginId: string) =>
  */
 export const listPlugins = () => invoke<PluginInfo[]>("list_plugins");
 
+/** Template basenames available in the user's templates dir; the render-target
+ * selector filters them by output format and forwards the chosen one as the
+ * render `template`. */
+export const listTemplates = () => invoke<string[]>("list_templates");
+
 // ── Firewall picker (Phase E / E3 / P104) ─────────────────────────────────────
 //
 // The command palette (Ctrl+Shift+P) and quick-open (Ctrl+P) both delegate the

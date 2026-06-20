@@ -153,6 +153,10 @@ export interface PluginInfo {
    * (open file type → candidate render targets) matrix from this. Empty for
    * non-render plugins (lint, search). */
   inputs: string[];
+  /** The default template basename this target wraps the buffer in (manifest
+   * `default_template`); the selector forwards it as the render `template` unless
+   * the user picks another. null for plugins that take no template. */
+  default_template: string | null;
 }
 
 /** Structured result of running a generic plugin by id (Milestone A). Mirrors

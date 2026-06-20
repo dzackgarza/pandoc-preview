@@ -26,12 +26,16 @@ config_schema = "schema.json"
 # A tikz file is just another input type the (open file → render target) matrix
 # routes to this renderer.
 inputs = ["tikz"]
+# The default template basename the tikz render wraps the source in; the selector
+# may pick another tikz-compatible template. render.sh resolves it against the
+# templates dir.
+default_template = "standalone-tikz.tex"
 
 [exec]
 # The tikz source arrives on stdin; standalone HTML (embedding the inline SVG) on
 # stdout. {base_dir} is the open file's directory (cwd + the document-relative
 # TEXINPUTS root). No injected placeholders: the template owns its preamble.
-command = ["{plugin_dir}/render.sh", "{base_dir}"]
+command = ["{plugin_dir}/render.sh", "{base_dir}", "{template}"]
 
 # "Configure" opens the user-owned template for editing — the whole config surface
 # (the template owns the preamble + styles). The app just spawns this detached.

@@ -85,6 +85,13 @@ pub struct PluginManifest {
     /// a default value.
     #[serde(default)]
     pub inputs: Vec<String>,
+    /// The template BASENAME this renderer/export wraps the buffer in by default
+    /// (e.g. `pandoc_preview_template.html`), resolved against the templates dir by
+    /// the plugin's own command. The render-target selector lets the user pick
+    /// another compatible template; this is the default forwarded as `{template}`
+    /// when nothing is selected. `None` for plugins that take no template.
+    #[serde(default)]
+    pub default_template: Option<String>,
     /// Doctor checks this plugin contributes to the battery. May be empty.
     #[serde(default)]
     pub doctor_checks: Vec<DoctorCheck>,
@@ -141,6 +148,10 @@ pub struct PluginInfo {
     /// webview builds the (open file type → candidate render targets) matrix from
     /// this across all discovered plugins.
     pub inputs: Vec<String>,
+    /// The default template basename this target wraps the buffer in (manifest
+    /// `default_template`); the selector forwards it as `{template}` unless the
+    /// user picks another. `None` for plugins that take no template.
+    pub default_template: Option<String>,
 }
 
 /// One doctor-battery row contributed by a plugin (the config-schema check or a
@@ -661,6 +672,7 @@ fn list_plugins_sync() -> Result<Vec<PluginInfo>> {
             category: p.manifest.category,
             extension: p.manifest.extension,
             inputs: p.manifest.inputs,
+            default_template: p.manifest.default_template,
         })
         .collect())
 }
@@ -671,6 +683,42 @@ pub async fn list_plugins() -> Result<Vec<PluginInfo>> {
     tauri::async_runtime::spawn_blocking(list_plugins_sync)
         .await
         .expect("list_plugins task panicked")
+}
+
+/// List the template BASENAMES available in the user's templates dir (the sibling
+/// of the config-declared styles dir, e.g. `~/.pandoc/templates`). The render-target
+/// selector filters these by output format (`.html` for html renderers, `.tex`/
+/// `.latex` for pdf export) and forwards the chosen basename as `{template}`; the
+/// plugin resolves it against the templates dir. Sorted; a missing templates dir is
+/// an empty list (no templates discoverable).
+fn list_templates_sync() -> Result<Vec<String>> {
+    let cfg = config::load()?;
+    // The templates dir is the sibling of the validated styles dir (both under the
+    // pandoc config dir, e.g. ~/.pandoc/{styles,templates}).
+    let styles = cfg.directories.styles.path();
+    let Some(pandoc_dir) = styles.parent() else {
+        return Ok(Vec::new());
+    };
+    let templates_dir = pandoc_dir.join("templates");
+    if !templates_dir.is_dir() {
+        return Ok(Vec::new());
+    }
+    let mut names: Vec<String> = std::fs::read_dir(&templates_dir)
+        .map_err(|e| Error::io(&templates_dir, e))?
+        .filter_map(|entry| entry.ok())
+        .filter(|e| e.path().is_file())
+        .filter_map(|e| e.file_name().into_string().ok())
+        .collect();
+    names.sort();
+    Ok(names)
+}
+
+/// List available template basenames for the webview (see `list_templates_sync`).
+#[tauri::command]
+pub async fn list_templates() -> Result<Vec<String>> {
+    tauri::async_runtime::spawn_blocking(list_templates_sync)
+        .await
+        .expect("list_templates task panicked")
 }
 
 /// The outcome of a render through the active renderer plugin. `render.rs` maps

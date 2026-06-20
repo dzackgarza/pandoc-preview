@@ -20,6 +20,10 @@ config_schema = "schema.json"
 # Input file types this renderer handles. The app builds the (open file → render
 # target) matrix from discovery; this renderer is a candidate for markdown files.
 inputs = ["markdown"]
+# The default template basename this renderer wraps the buffer in; the selector may
+# pick another html template. render.sh resolves it against the templates dir and
+# layers it on as --template.
+default_template = "pandoc_preview_template.html"
 
 [exec]
 # Render context on argv; the markdown buffer arrives on stdin; HTML on stdout.
@@ -29,7 +33,7 @@ inputs = ["markdown"]
 # Tikz is no longer inline-compiled by the markdown renderer: a tikz file is its
 # own render mode (the tikz-renderer plugin against the user-owned template), so
 # this command carries no tikz palette/template placeholders.
-command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}"]
+command = ["{plugin_dir}/render.sh", "{base_dir}", "{base_url}", "{mathjax}", "{bibliography}", "{csl}", "{template}"]
 
 # The pandoc configurator (C3): the app spawns this (detached) as the "Configure"
 # action; it opens a kitty popup running a gum wizard that edits the raw pandoc

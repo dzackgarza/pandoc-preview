@@ -178,6 +178,7 @@ pub fn run() {
             plugins::configure_plugin,
             plugins::launch_diagram_tool,
             plugins::list_plugins,
+            plugins::list_templates,
             clipboard::paste_clipboard_image,
             clipboard::register_vector_figure,
             clipboard::seed_clipboard_image,

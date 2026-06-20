@@ -108,7 +108,6 @@ FILTERS_DIR="$HOME/.pandoc/filters"
 # directory, the figures pane browses the figures directory.
 STYLES_DIR="$HOME/.pandoc/styles"
 FIGURES_DIR="$HOME/.pandoc/figures"
-PREVIEW_TEMPLATE="$HOME/.pandoc/templates/pandoc_preview_template.html"
 BIBLIOGRAPHY="$HOME/.pandoc/bib/references.bib"
 # The shipped alphabetic citation style (hyperlinked [Label] citations).
 CSL="$HOME/.pandoc/csl/alpha-preview.csl"
@@ -126,7 +125,11 @@ FROM_FORMAT_EXT="$FROM_FORMAT+lists_without_preceding_blankline"
 # are the ONE config-declared source (editor.bibliography / editor.csl below), which
 # the renderer layers onto the command as render context. The path lives in exactly
 # one place (the config key); the canonical command carries no bib/csl literal.
-PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --template=$PREVIEW_TEMPLATE --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
+# NOTE: no --template literal — the template is a SELECTABLE render-target value the
+# renderer resolves from the manifest default_template (pandoc_preview_template.html)
+# or the user's selection, layered on by render.sh. The canonical command carries
+# only the writer/reader semantics.
+PANDOC_COMMAND="$PANDOC_PATH --from $FROM_FORMAT_EXT --to html5 --standalone --embed-resources --citeproc --metadata=link-citations:true --metadata=reference-section-title:References --lua-filter=$FILTERS_DIR/convert_amsthm_envs.lua --lua-filter=$FILTERS_DIR/obsidian_callouts.lua --lua-filter=$FILTERS_DIR/obsidian.lua$EXTRA_ARGS_CMD"
 # Escape for a TOML basic string ("..."): backslash first, then double-quote.
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND//\\/\\\\}
 PANDOC_COMMAND_TOML=${PANDOC_COMMAND_TOML//\"/\\\"}
@@ -315,6 +318,22 @@ if [ -e "$TIKZ_RENDERER_DEST" ] && [ ! -L "$TIKZ_RENDERER_DEST" ]; then
     echo "preserve (user override): $TIKZ_RENDERER_DEST" >&2
 else
     ln -sfn "$TIKZ_RENDERER_VENDOR" "$TIKZ_RENDERER_DEST"
+fi
+
+# Install the shipped reveal.js slides renderer plugin. A slide deck is the same
+# md/latex → html render with the revealjs writer + the reveal.js template; the
+# render-target selector picks it. Self-contained vendored code, symlinked so
+# updates stay atomic; a real-directory user override is preserved.
+REVEALJS_RENDERER_VENDOR="$REPO_ROOT/src-tauri/resources/vendor/plugins/revealjs-renderer"
+if [ ! -d "$REVEALJS_RENDERER_VENDOR" ]; then
+    echo "FATAL: vendored reveal.js renderer plugin missing: $REVEALJS_RENDERER_VENDOR" >&2
+    exit 1
+fi
+REVEALJS_RENDERER_DEST="$PLUGINS_DIR/revealjs-renderer"
+if [ -e "$REVEALJS_RENDERER_DEST" ] && [ ! -L "$REVEALJS_RENDERER_DEST" ]; then
+    echo "preserve (user override): $REVEALJS_RENDERER_DEST" >&2
+else
+    ln -sfn "$REVEALJS_RENDERER_VENDOR" "$REVEALJS_RENDERER_DEST"
 fi
 
 # Install the shipped export-category plugins. Export is entirely the pandoc

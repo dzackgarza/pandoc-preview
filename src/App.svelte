@@ -73,6 +73,14 @@
   // "Export: <name> (.<extension>)" entry sourced from the discovered manifest,
   // never an app-core config table (P66).
   let discoveredPlugins = $state<PluginInfo[]>([]);
+  // Render-target selection (the discovery-driven matrix). `availableTemplates` is
+  // the user's template library (list_templates); `selectedRendererId` overrides the
+  // file-type-default renderer (e.g. picking the slides renderer for a markdown
+  // file); `selectedTemplate` overrides that renderer's default template. Both null
+  // = use the discovered default. The selector control writes them and re-renders.
+  let availableTemplates = $state<string[]>([]);
+  let selectedRendererId = $state<string | null>(null);
+  let selectedTemplate = $state<string | null>(null);
 
   let projectRoot = $state<string | null>(null);
   let tree = $state<FileNode[]>([]);
@@ -379,28 +387,45 @@
     return "markdown";
   };
 
+  // The discovered renderer plugins that can render the given file's input type —
+  // the candidate render targets the selector offers for the live HTML preview.
+  const renderTargetsFor = (path: string): PluginInfo[] => {
+    const type = inputTypeOf(path);
+    return discoveredPlugins.filter(
+      (p) => p.category === "renderer" && p.inputs.includes(type),
+    );
+  };
+
   // Resolve the render target (renderer plugin + template) for the current file's
-  // live HTML preview from DISCOVERY: the candidates are the discovered renderer
-  // plugins whose `inputs` include the file's type; the default is the configured
-  // active renderer when it qualifies, else the first candidate. (WS3 adds a UI
-  // selector that overrides this and a template; for now template = "" means the
-  // renderer's shipped default template.) Fails loud if no renderer handles the
-  // type — never a silent wrong-renderer fallback.
+  // live HTML preview from DISCOVERY + the user's selection: the candidates are the
+  // renderers whose `inputs` include the file's type; the renderer is the selected
+  // one when it qualifies, else the configured active renderer, else the first
+  // candidate; the template is the user-selected one, else that renderer's manifest
+  // default_template. Fails loud if no renderer handles the type or the chosen
+  // renderer declares no template — never a silent wrong-renderer/empty-template
+  // fallback.
   const resolveRenderTarget = (
     path: string,
   ): { rendererId: string; template: string } => {
     const type = inputTypeOf(path);
-    const candidates = discoveredPlugins.filter(
-      (p) => p.category === "renderer" && p.inputs.includes(type),
-    );
+    const candidates = renderTargetsFor(path);
     const active = config?.renderer?.active;
-    const chosen = candidates.find((p) => p.id === active) ?? candidates[0];
+    const chosen =
+      candidates.find((p) => p.id === selectedRendererId) ??
+      candidates.find((p) => p.id === active) ??
+      candidates[0];
     if (!chosen) {
       throw new Error(
         `no renderer plugin handles input type "${type}" for ${path}`,
       );
     }
-    return { rendererId: chosen.id, template: "" };
+    const template = selectedTemplate ?? chosen.default_template;
+    if (!template) {
+      throw new Error(
+        `renderer "${chosen.id}" declares no default_template (input type "${type}")`,
+      );
+    }
+    return { rendererId: chosen.id, template };
   };
 
   onMount(async () => {
@@ -434,6 +459,9 @@
     // Discovered plugins drive the category-aware menu/command-palette populator
     // (export-category plugins surface their own "Export: <name>" entries; P66).
     discoveredPlugins = await api.listPlugins();
+    // The user's template library — the render-target selector offers these,
+    // filtered by the chosen renderer's output format.
+    availableTemplates = await api.listTemplates();
     // Load the fixed-root explorer trees (macros/figures) now that config — and
     // thus directories.styles / directories.figures — is known.
     await refreshAuxTrees();
@@ -884,6 +912,24 @@
         setPreviewMode: (mode: "preview" | "pdf") => {
           setPreviewMode(mode);
         },
+        // P129/P130 — the discovery-driven render-target selector. setRenderTarget
+        // picks a renderer plugin (e.g. the slides renderer for a markdown file)
+        // and/or a template, re-rendering through it; renderTargets/renderTemplates
+        // expose the candidates the selector control offers; activeRenderTarget
+        // reports the resolved {rendererId, template} the preview is using.
+        renderTargets: () =>
+          currentFile
+            ? renderTargetsFor(currentFile).map((p) => ({
+                id: p.id,
+                name: p.name,
+              }))
+            : [],
+        renderTemplates: () => templatesForCurrentTarget(),
+        activeRenderTarget: () =>
+          currentFile ? resolveRenderTarget(currentFile) : null,
+        setRenderTarget: (rendererId: string | null, template: string | null) => {
+          setRenderTarget(rendererId, template);
+        },
         // Phase H / H.2 / P121: the three-way view-mode toggle. setViewMode runs
         // the SAME path the view:editor/preview/split palette commands run —
         // shows/hides the editor or preview dockview panel via the
@@ -1314,6 +1360,28 @@
         run: () => void exportAllViaDialog(),
       });
     }
+    // P129/P130 — the render-target selector. The candidate RENDERERS for the open
+    // file's input type (e.g. for markdown: the html5 renderer and, when shipped,
+    // the slides renderer) each get a "Render with: <name>" entry; the compatible
+    // TEMPLATES each get a "Template: <basename>" entry. Choosing one re-renders the
+    // SAME buffer through that renderer/template — slides is just picking the slides
+    // renderer, not a bespoke mode. Built from discovery, per the open file.
+    if (currentFile) {
+      for (const target of renderTargetsFor(currentFile)) {
+        cmds.push({
+          id: `render-target:${target.id}`,
+          label: `Render with: ${target.name}`,
+          run: () => setRenderTarget(target.id, null),
+        });
+      }
+      for (const tmpl of templatesForCurrentTarget()) {
+        cmds.push({
+          id: `render-template:${tmpl}`,
+          label: `Template: ${tmpl}`,
+          run: () => setRenderTarget(selectedRendererId, tmpl),
+        });
+      }
+    }
     return cmds;
   }
 
@@ -1578,6 +1646,34 @@
   function setPreviewMode(mode: "preview" | "pdf") {
     activeTab = mode;
     if (mode === "pdf") schedulePdf();
+  }
+
+  // Select a render target (renderer plugin + template) for the current file and
+  // re-render immediately. `rendererId` null = the file-type default renderer;
+  // `template` null = that renderer's default_template. The selector control and
+  // the E2E harness both route through here. (P129/P130 — discovery-driven matrix.)
+  function setRenderTarget(rendererId: string | null, template: string | null) {
+    selectedRendererId = rendererId;
+    selectedTemplate = template;
+    activeTab = "preview";
+    if (currentFile) void doRender(editor.getContent());
+  }
+
+  // The template basenames the selector offers for the current file + chosen
+  // renderer: filtered by the renderer's output format (the live preview is HTML,
+  // so html templates; a tikz renderer takes .tex templates). Always includes the
+  // renderer's default_template even if discovery missed it.
+  function templatesForCurrentTarget(): string[] {
+    if (!currentFile) return [];
+    const target = resolveRenderTarget(currentFile);
+    const isTikz = inputTypeOf(currentFile) === "tikz";
+    const matches = (t: string) =>
+      isTikz
+        ? t.endsWith(".tex") || t.endsWith(".latex")
+        : t.endsWith(".html") || t.endsWith(".htm");
+    const set = new Set(availableTemplates.filter(matches));
+    set.add(target.template);
+    return [...set].sort();
   }
 
   // ---- source↔preview line jump for owned tikz (P109 / D-4) ---------------
@@ -1934,6 +2030,10 @@
       const { content, fingerprint } = await api.readTextFile(path);
       currentFile = path;
       currentFingerprint = fingerprint; // P48: baseline for conflict detection
+      // A new document resets the render-target selection to its discovered
+      // default (a tikz file's chosen renderer/template must not carry to markdown).
+      selectedRendererId = null;
+      selectedTemplate = null;
       // Opening a different document shows its HTML preview: a stale PDF (or
       // pdf.js viewer) from the previously open file must never be presented as
       // this file's, so the view returns to the preview tab and the PDF artifact
