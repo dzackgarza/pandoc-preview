@@ -1,43 +1,5 @@
 # Founding Philosophy: Exact Pandoc Preview
 
+> **Canonical source — project wiki (single source of truth):** [Founding Philosophy: Exact Pandoc Preview](https://github.com/dzackgarza/pandoc-preview-greenfield2/wiki/Founding-Philosophy) Edit the doctrine there; this file is a pointer for iwe recall.
+
 **When this applies:** any product, performance, or UX decision — this is the app's reason to exist, in the user's verbatim words (opencode session ses_194d25aecffe, 2026-05-28, plus conception session 2026-05-19).
-
-**What it is for:** developing mathematical research manuscripts, preprints, and ultimately papers — the successor to a vim + custom scripts + browser preview + file-watcher live-TeXing setup ([Lineage: Vim Live-TeXing Setup](lineage-vim-live-texing-setup)), whose ideals trace to Gilles Castel's lecture-notes posts: "no delay is acceptable" between writing and seeing the rendered result.
-"It isn't a general-purpose editor at all — one could just edit their markdown in notepad or any one of millions of markdown editors... it is meant to be a tightly integrated environment for writing mathematical research" (user, 2026-06-13).
-
-**The purpose (verbatim):** "The PURPOSE of the app is to get an immediate visual preview of EXACTLY what a pandoc CLI command will produce.
-That's the ENTIRE philosophy of the app: it is a REPLACEMENT for a manual loop that watches a file, compiles in pandoc, and renders in a separate browser.
-This is NOT a standard piece of markdown viewing software and should not be compared to one."
-
-**Consequences, each user-stated:**
-
-- **Full re-render is by design, not a defect:** "Inserting a theorem in a section could change the numbering everywhere.
-  You HAVE to re-render the entire doc on changes... 'Optimizations' like re-rendering parts of the document are objectively wrong and produce a document that is NOT a faithful representation of what an independent full pandoc call would produce."
-  Agents reading the pipeline as "thrashing the react tree" are wrong: "This is completely necessary by design."
-  (Overrides any incremental-DOM instinct imported from markdown-it-class references.)
-- **No preemptive performance work, ever:** "LLMs should almost never surface performance, timing, or responsiveness.
-  Responsiveness issues are imagined unless there is a specific user-reported bug."
-  And: "no tests should EVER test timing information... completely hallucinated benchmarks with no basis in reality."
-- **Blocking UX is sometimes correct:** settings save blocks because "the pandoc command and flags MUST be validated, and you should NOT let the user edit a doc when there's transient state concerning how it's even rendered."
-  Settings are "a thin interface over managing the config file."
-  (Ownership note, 2026-06-13: that validation of the pandoc command/flags is now the **pandoc renderer plugin's**, not the app core's — the app blocks on the active renderer plugin's validation verdict; the blocking-UX principle is unchanged, only its owner moved.
-  See [Renderer Plugin Architecture](renderer-plugin-architecture).)
-- **Tight system integration is the point:** "One does not want 'Ctrl+O lets me select files'.
-  They want 'Ctrl+O opens an extremely familiar tool like fzf or dmenu'... Hand-rolled implementations are slop imitations of tools the users already know and love."
-  Native Tauri dialogs are the floor for standard open/save; familiar-system-tool integration (fzf/dmenu-class quick-open) is the spirit for power workflows.
-- **Pandoc is the only parser for pandoc-markdown constructs:** "Fenced divs, bracketed spans, citations, raw TeX, display math, inline math, footnotes, tables, attributes, and metadata blocks are never parsed by custom regex code... Fail closed.
-  If a block cannot be proven safe, leave it to Pandoc/Lua handling.
-  Do not guess."
-  (Stated for the flowmark wrapper; binds this app equally — no app-side regex over document structure.)
-- **Shell-layer operations are owned by the shell:** "The app must NEVER implement its own tilde expansion, environment variable substitution, glob expansion."
-  The sanctioned exception is one notation normalization (`~/` → `$HOME/`) before spawning; the shell resolves it.
-- **Arch Linux, right now, this machine:** "it's meant to run on arch linux, right now, in this environment, and if there is a 'best' tool for the job, the app doesn't hedge on it, it *requires* it and fails hard without it.
-  yay/paru/pacman installs are cheap, instant, stable, and reliable, and the point is productivity, not a 'lean' or 'minimal' or 'clean' app in any sense of the word."
-  Requiring heavyweight best-of-breed dependencies is the design, not bloat.
-- **Why fail-fast (user's framing, 2026-06-13):** "silent errors with the potential to corrupt research work or lead to user surprises are FAR more damaging than a program that crashes on errors (which is exactly what one would expect), since the latter case can be given to an agent to immediately repair the bug, rather than having to deal with surprises when you are trying to meet a publishing deadline."
-  See [Recovery and Git-State Requirements](recovery-and-git-state-requirements).
-- **Simplicity over coverage:** "An explicit goal is SIMPLICITY and MAINTAINABILITY and READABILITY of code.
-  Not code that covers a million edge cases, not multi-platform support.
-  Robust code for personal usage always."
-
-Related: [Product Destination: What Done Looks Like](product-destination-what-done-looks-like), [Contract Invariants and Ownership Boundaries](contract-invariants-and-ownership-boundaries), [Original App History: Eras and Burned Mistakes](original-app-history-eras-and-burned-mistakes).

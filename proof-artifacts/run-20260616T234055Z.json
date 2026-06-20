@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 16728,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: document.querySelectorAll('.cm-editor .cm-content .cm-line').length > 3"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: document.querySelectorAll('.cm-editor .cm-content .cm-line').length > 3"]
           }
         ]
       },

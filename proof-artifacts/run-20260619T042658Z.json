@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 3057,
-            "errors": [
-              "Error: TauriPage command 'eval' failed: unknown structural-motion command: \"rename-environment\""
-            ]
+            "errors": ["Error: TauriPage command 'eval' failed: unknown structural-motion command: \"rename-environment\""]
           }
         ]
       },

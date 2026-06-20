@@ -3,6 +3,12 @@
 Durable, resumable implementation plan for Phase D of the Competitive Parity Roadmap.
 Authored 2026-06-16. If interrupted, resume from the **Status / resume here** section at the bottom.
 
+> **PARTLY SUPERSEDED (2026-06-20) — D-2's style/def *injection* is rejected; D-3's configurable template stands.
+> See issue #2.** **D-3 (per-figure template) is legitimate config and survives:** the configurable, user-owned tikz template (QTikz `.pgs` `<>` model) is how the app replaces QTikz, and the vendored `tikzcd.lua` already wraps figures in `standalone-tikz.tex`. It is the SOLE tikz config unit — so the `[figures]` table collapses to just `template`. **D-2 (shared `.tikzstyles`/`.tikzdefs` palette) is rejected as drift:** the template owns its styles/defs via its preamble (`\usepackage{dzg-tikz}`) from the `~/.pandoc/styles` tree, so there are NO `[figures].tikzstyles`/`.tikzdefs` config keys, NO `{tikzstyles}`/`{tikzdefs}` render-context tokens, and NO `shared.*` palette in the figures dir (latex styles/defs are centralized in the styles tree — that missing `shared.tikzstyles` is what broke boot).
+> Native `.tikz`/`.tikzstyles`/`.tikzdefs` interop (launch TikzIt/QTikz; the style/def files live in the styles tree) is unaffected.
+> Separately, `editor.bibliography`/`.csl` injection onto the preview command is removed — pandoc's `--defaults`/template own those.
+> See wiki `Pandoc-Command-Model`, `Renderer-Plugin-Architecture`. The D-2 items below are retained for narrative, not as the plan of record; D-3 stands.
+
 This is a **repo artifact** (future-work + current-state), NOT a memory.
 The durable *priorities* and *mechanisms* live in memory: see the roadmap [[competitive-parity-roadmap]] ("## Phase D — Figure & TikZ management and live editing") and the per-program parity studies [[parity-research/tikzit]], [[parity-research/qtikz]], [[parity-research/ipe]]. The doctrine surfaces are [[plugins-diagrams-figures-requirements]] (the app NEVER owns tikz generation — it renders SVGs; figures dir is global-only `~/.pandoc/figures`; the library must re-open figures in their source tool), [[decision-provenance-user-owned-vs-framework-forced]] (blessed allowlist quiver/FreeTikZ/qtikz/tikzit/ipe/Inkscape; drawio/xournalpp banned), and the tracking surfaces [[feature-catalogue-and-implementation-status]] (Tier-3 figure/TikZ + Tier-6 QTikz/Ipe/Tikzit parity) and [[proof-obligations]] (P56 tikz/tikzcd scaffold, P62 clipboard image, both green).
 

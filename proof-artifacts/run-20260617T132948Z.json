@@ -41,9 +41,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 650,
-            "errors": [
-              "Error: TauriPage command 'fill' failed: The HTMLInputElement.value setter can only be used on instances of HTMLInputElement"
-            ]
+            "errors": ["Error: TauriPage command 'fill' failed: The HTMLInputElement.value setter can only be used on instances of HTMLInputElement"]
           }
         ]
       },

@@ -23,9 +23,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 12506,
-            "errors": [
-              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!document.querySelector('[data-testid=\"command-palette\"]')"
-            ]
+            "errors": ["Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: !!document.querySelector('[data-testid=\"command-palette\"]')"]
           }
         ]
       },

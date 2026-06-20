@@ -41,9 +41,7 @@
             "status": "failed",
             "expectedStatus": "passed",
             "durationMs": 573,
-            "errors": [
-              "Error: config.editor.snippet_dictionary is missing — the p63 run must point config at the fixture dict"
-            ]
+            "errors": ["Error: config.editor.snippet_dictionary is missing — the p63 run must point config at the fixture dict"]
           }
         ]
       },
