@@ -759,7 +759,7 @@ fn render_log(program: &str, args: &[String], output: &std::process::Output) -> 
 /// plugin's own config. An unknown renderer id is a loud error.
 pub fn render_named(
     renderer_id: String,
-    template: String,
+    template: Option<String>,
     buffer: String,
     base_dir: String,
     base_url: String,
@@ -792,22 +792,28 @@ pub fn render_named(
     // .csl), substituted in alongside {mathjax}. The renderer plugin layers them
     // onto its pandoc command; the app core holds no citation knowledge beyond
     // forwarding these config-owned paths as context.
-    let subs = [
-        (PH_PLUGIN_DIR, plugin.dir.display().to_string()),
-        (PH_CONFIG_DIR, config_dir.display().to_string()),
-        (PH_BASE_DIR, base_dir.clone()),
-        (PH_BASE_URL, base_url),
-        (PH_MATHJAX, mathjax_url),
-        (
-            PH_BIBLIOGRAPHY,
-            cfg.editor.bibliography.path().display().to_string(),
-        ),
-        (PH_CSL, cfg.editor.csl.path().display().to_string()),
-        // The user-selected template the renderer wraps the buffer in (render
-        // context, forwarded — the renderer's command takes --template={template}).
-        (PH_TEMPLATE, template),
+    let plugin_dir = plugin.dir.display().to_string();
+    let config_dir_s = config_dir.display().to_string();
+    let bibliography = cfg.editor.bibliography.path().display().to_string();
+    let csl = cfg.editor.csl.path().display().to_string();
+    let mut subs: Vec<(&str, &str)> = vec![
+        (PH_PLUGIN_DIR, plugin_dir.as_str()),
+        (PH_CONFIG_DIR, config_dir_s.as_str()),
+        (PH_BASE_DIR, base_dir.as_str()),
+        (PH_BASE_URL, base_url.as_str()),
+        (PH_MATHJAX, mathjax_url.as_str()),
+        (PH_BIBLIOGRAPHY, bibliography.as_str()),
+        (PH_CSL, csl.as_str()),
     ];
-    let subs: Vec<(&str, &str)> = subs.iter().map(|(p, v)| (*p, v.as_str())).collect();
+    // The user-selected template the renderer wraps the buffer in (render context,
+    // forwarded — the renderer's command takes --template={template}). `None` for a
+    // renderer that takes no template: its command never references {template}, so
+    // the placeholder is simply absent from the substitution set (renderer-agnostic
+    // escape hatch — the app core imposes no template requirement; each plugin's own
+    // template-exists doctor check enforces the templates IT requires).
+    if let Some(t) = template.as_deref() {
+        subs.push((PH_TEMPLATE, t));
+    }
     let argv: Vec<String> = plugin
         .manifest
         .exec
