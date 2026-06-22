@@ -15,7 +15,7 @@ pub struct RenderResult {
 
 fn render_sync(
     renderer_id: String,
-    template: String,
+    template: Option<String>,
     source: String,
     base_dir: String,
     base_url: String,
@@ -60,12 +60,15 @@ fn render_sync(
 /// (the open file's input type → a candidate renderer, defaulting to the configured
 /// active renderer; the user may pick another, e.g. the slides renderer);
 /// `template` is the user-selected template the plugin wraps the buffer in (default
-/// = the renderer's shipped template). This single command replaces the former
-/// per-mode render_preview/render_slides/render_tikz: the core holds no plugin ids.
+/// = the renderer's shipped template), or `None` for a renderer that takes no
+/// template (the renderer-agnostic escape hatch: a plugin whose command emits its
+/// own complete output and never references `{template}`). This single command
+/// replaces the former per-mode render_preview/render_slides/render_tikz: the core
+/// holds no plugin ids.
 #[tauri::command]
 pub async fn render(
     renderer_id: String,
-    template: String,
+    template: Option<String>,
     source: String,
     base_dir: String,
     base_url: String,

@@ -1,0 +1,3505 @@
+{
+  "run_id": "20260621T101014Z",
+  "status": "failed",
+  "display": {
+    "wayland": "",
+    "x11": ":88"
+  },
+  "versions": {
+    "pandoc": "pandoc 3.1.3",
+    "lualatex": "This is LuaHBTeX, Version 1.17.0 (TeX Live 2023/Debian)",
+    "gum": "gum version v0.17.0 (6045525)"
+  },
+  "specs": [
+    {
+      "spec": "d01-doctor-all-ok.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d01-doctor-all-ok.spec.ts",
+            "title": "--doctor reports every check OK with the real pandoc version and exits 0",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2772,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 0
+        },
+        {
+          "spec": "d01-doctor-all-ok.spec.ts",
+          "name": "pandoc-version",
+          "value": "3.1.3"
+        }
+      ]
+    },
+    {
+      "spec": "d02-launcher-no-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d02-launcher-no-config.spec.ts",
+            "title": "launcher with no config routes through gum first-run and boots the app",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 38502,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d02-launcher-no-config.spec.ts",
+          "name": "launcher-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d03-launcher-stale-key-regression.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d03-launcher-stale-key-regression.spec.ts",
+            "title": "launcher with the stale math key reconfigures, removes it, and boots",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 43361,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d03-launcher-stale-key-regression.spec.ts",
+          "name": "launcher-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d04-bare-binary-invalid-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d04-bare-binary-invalid-config.spec.ts",
+            "title": "bare binary with invalid config hard-fails on stderr naming config-schema, no window",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 165,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d04-bare-binary-invalid-config.spec.ts",
+          "name": "gate-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d05-doctor-pandoc-nonexecutable.spec.ts",
+            "title": "--doctor with a non-executable pandoc path fails pandoc-executable and exits 1",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 826,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d05-doctor-pandoc-nonexecutable.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d06-setup-reconfigure-existing.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d06-setup-reconfigure-existing.spec.ts",
+            "title": "just setup over an existing config reconfigures it to a valid config",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 39278,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d06-setup-reconfigure-existing.spec.ts",
+          "name": "setup-reconfigure-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d07-dev-routes-config-recovery.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d07-dev-routes-config-recovery.spec.ts",
+            "title": "just dev with an invalid config reconfigures it before starting tauri dev",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 42503,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d07-dev-routes-config-recovery.spec.ts",
+          "name": "dev-recovery-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d08-plugin-config-schema.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d08-plugin-config-schema.spec.ts",
+            "title": "the generic validator rejects a bad plugin section and accepts a good one, per declared schema",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1187,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d08-plugin-config-schema.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d09-plugin-doctor-check.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d09-plugin-doctor-check.spec.ts",
+            "title": "a discovered plugin contributes doctor checks that join the battery and reflect real conditions",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1209,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d09-plugin-doctor-check.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d10-install-asset-symlinks.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d10-install-asset-symlinks.spec.ts",
+            "title": "install-assets symlinks the vendored required filters into ~/.pandoc/filters",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 471,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d11-doctor-required-filter.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d11-doctor-required-filter.spec.ts",
+            "title": "--doctor fails required-filter when a required filter is missing",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1258,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d11-doctor-required-filter.spec.ts",
+          "name": "doctor-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "d12-install-preserves-override.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d12-install-preserves-override.spec.ts",
+            "title": "install-assets preserves a real-file user override and (re)links the rest",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 794,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d13-pandoc-configurator.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d13-pandoc-configurator.spec.ts",
+            "title": "the pandoc gum configurator writes a valid command with the required filters locked in",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 8034,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "d14-first-run-doctor-clean.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d14-first-run-doctor-clean.spec.ts",
+            "title": "the real first-run.sh leaves a system that passes --doctor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3113,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-doctor-exit",
+          "value": 0
+        },
+        {
+          "spec": "d14-first-run-doctor-clean.spec.ts",
+          "name": "first-run-plugins-count",
+          "value": 12
+        }
+      ]
+    },
+    {
+      "spec": "d15-dev-recovers-plugins-failure.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d15-dev-recovers-plugins-failure.spec.ts",
+            "title": "just dev recovers a plugins-class doctor failure instead of dead-ending",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 46443,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d15-dev-recovers-plugins-failure.spec.ts",
+          "name": "dev-plugins-recovery-exit",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "d16-startup-requires-resource-path.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/d16-startup-requires-resource-path.spec.ts",
+            "title": "bare binary with PANDOC_RESOURCE_PATH unset refuses to boot naming pandoc-resource-path, no window",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1204,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "d16-startup-requires-resource-path.spec.ts",
+          "name": "gate-exit-code",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p01-source-preview-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p01-source-preview-fidelity.spec.ts",
+            "title": "demo.md renders to the exact h1/em/ol witnesses in the preview iframe",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2387,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "h1",
+          "value": "Geometry of Numbers — Café"
+        },
+        {
+          "spec": "p01-source-preview-fidelity.spec.ts",
+          "name": "em",
+          "value": "naïve"
+        }
+      ]
+    },
+    {
+      "spec": "p02-live-rerender.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p02-live-rerender.spec.ts",
+            "title": "typing at the buffer end re-renders the preview with the new sentence",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3383,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p02-live-rerender.spec.ts",
+          "name": "sentence",
+          "value": "The discriminant equals −163."
+        }
+      ]
+    },
+    {
+      "spec": "p03-save-exact-bytes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p03-save-exact-bytes.spec.ts",
+            "title": "Save writes the editor buffer to disk byte-for-byte",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2450,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p03-save-exact-bytes.spec.ts",
+          "name": "on-disk-bytes",
+          "value": 383
+        }
+      ]
+    },
+    {
+      "spec": "p04-math-mathjax.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p04-math-mathjax.spec.ts",
+            "title": "mathjax typesets the formula inside pandoc math spans with exact MathML content",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2350,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p04-math-mathjax.spec.ts",
+          "name": "assistive-mml",
+          "value": "ζ(2)=π2/6"
+        }
+      ]
+    },
+    {
+      "spec": "p05-relative-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p05-relative-resource.spec.ts",
+            "title": "the scatter image decodes to exactly 64x48 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2915,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 64
+        },
+        {
+          "spec": "p05-relative-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 48
+        }
+      ]
+    },
+    {
+      "spec": "p06-file-manager.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p06-file-manager.spec.ts",
+            "title": "sidebar mirrors the directory and UI create/rename mutate real files",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1557,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p06-file-manager.spec.ts",
+          "name": "renamed-path",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p06-file-manager/project/chapter-two.md"
+        }
+      ]
+    },
+    {
+      "spec": "p07-export-html.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p07-export-html.spec.ts",
+            "title": "Export HTML writes a self-contained artifact carrying the P1 witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3379,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p07-export-html.spec.ts",
+          "name": "export-bytes",
+          "value": 2010387
+        }
+      ]
+    },
+    {
+      "spec": "p08-export-pdf.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p08-export-pdf.spec.ts",
+            "title": "Export PDF runs the configured lualatex plugin and carries the witnesses",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 11200,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p08-export-pdf.spec.ts",
+          "name": "pdf-producer",
+          "value": "Producer:        LuaTeX-1.17.0"
+        }
+      ]
+    },
+    {
+      "spec": "p09-settings-roundtrip.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p09-settings-roundtrip.spec.ts",
+            "title": "Settings changes persist to config.toml and re-style the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2109,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p09-settings-roundtrip.spec.ts",
+          "name": "config-font-size",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "spec": "p103-tikzcommands-db.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p103-tikzcommands-db.spec.ts",
+            "title": "a command present ONLY in the config-declared tikz-command DB is surfaced on the bar AND in completion, and choosing it inserts its declared body at the declared offset",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2384,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p103-tikzcommands-db.spec.ts",
+          "name": "tikz-db-surfaced",
+          "value": "dzgTestArrow"
+        },
+        {
+          "spec": "p103-tikzcommands-db.spec.ts",
+          "name": "tikz-db-cursor-offset",
+          "value": 18
+        },
+        {
+          "spec": "p103-tikzcommands-db.spec.ts",
+          "name": "tikz-db-discriminator",
+          "value": "dzgAltNode"
+        }
+      ]
+    },
+    {
+      "spec": "p104-subgraph-copy.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p104-subgraph-copy.spec.ts",
+            "title": "selecting a subgraph and invoking copy places EXACTLY that subgraph as canonical, re-parseable tikz on the system clipboard",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1619,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p104-subgraph-copy.spec.ts",
+          "name": "p104-clipboard-tikz",
+          "value": "\\begin{tikzpicture}\n\t\\begin{pgfonlayer}{nodelayer}\n\t\t\\node [style=object] (0) at (0, 2) {$A$};\n\t\t\\node [style=object] (1) at (2, 2) {$B$};\n\t\\end{pgfonlayer}\n\t\\begin{pgfonlayer}{edgelayer}\n\t\t\\draw [style=arrow] (0) to (1);\n\t\\end{pgfonlayer}\n\\end{tikzpicture}\n"
+        },
+        {
+          "spec": "p104-subgraph-copy.spec.ts",
+          "name": "p104-reparsed-nodes",
+          "value": "0,1"
+        },
+        {
+          "spec": "p104-subgraph-copy.spec.ts",
+          "name": "p104-reparsed-edges",
+          "value": "0->1"
+        }
+      ]
+    },
+    {
+      "spec": "p106-dual-asset-registry.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p106-dual-asset-registry.spec.ts",
+            "title": "a registered non-tikz figure edit launches the editor on the tracked SOURCE (not the render), with the pairing persisted on the host filesystem",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2465,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p106-dual-asset-registry.spec.ts",
+          "name": "p106-launched-on",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p106-dual-asset-registry/project/fig.svg"
+        },
+        {
+          "spec": "p106-dual-asset-registry.spec.ts",
+          "name": "p106-registry-sidecar",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p106-dual-asset-registry/xdg-state/pandoc-preview/figure-registry.json"
+        }
+      ]
+    },
+    {
+      "spec": "p107-vector-inclusion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p107-vector-inclusion.spec.ts",
+            "title": "the vector-figure-inclusion action writes the external SVG into the configured figures dir, references that exact file at the cursor, and registers it in the dual-asset registry",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1286,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p107-vector-inclusion.spec.ts",
+          "name": "p107-figures-dir",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p107-vector-inclusion/home/.pandoc/figures"
+        },
+        {
+          "spec": "p107-vector-inclusion.spec.ts",
+          "name": "p107-written-file",
+          "value": "vector-1782037529630-924917376.svg"
+        },
+        {
+          "spec": "p107-vector-inclusion.spec.ts",
+          "name": "p107-written-bytes",
+          "value": 354
+        },
+        {
+          "spec": "p107-vector-inclusion.spec.ts",
+          "name": "p107-image-ref-target",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p107-vector-inclusion/home/.pandoc/figures/vector-1782037529630-924917376.svg"
+        },
+        {
+          "spec": "p107-vector-inclusion.spec.ts",
+          "name": "p107-registry-sidecar",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p107-vector-inclusion/xdg-state/pandoc-preview/figure-registry.json"
+        }
+      ]
+    },
+    {
+      "spec": "p108-watch-file-reload.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p108-watch-file-reload.spec.ts",
+            "title": "an external rewrite of the open file reloads the preview to the new content, and an unchanged file triggers no spurious reload",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 8619,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p108-watch-file-reload.spec.ts",
+          "name": "initial-render-marker-a",
+          "value": "present"
+        },
+        {
+          "spec": "p108-watch-file-reload.spec.ts",
+          "name": "reloaded-render-marker-b",
+          "value": "present"
+        },
+        {
+          "spec": "p108-watch-file-reload.spec.ts",
+          "name": "no-spurious-reload-unsaved-marker-survives",
+          "value": "present"
+        }
+      ]
+    },
+    {
+      "spec": "p10-first-run-bootable.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p10-first-run-bootable.spec.ts",
+            "title": "first-run.sh config parses to the selected values and boots the editor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 15549,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p10-first-run-bootable.spec.ts",
+          "name": "first-run-font-size",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "spec": "p110-workspace-search.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p110-workspace-search.spec.ts",
+            "title": "the Search view finds Minkowski !lattice in chapter1.md (not chapter2.md) and clicking the hit opens chapter1.md at the Minkowski bound line",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1889,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p110-workspace-search.spec.ts",
+          "name": "p110-found",
+          "value": "chapter1.md"
+        },
+        {
+          "spec": "p110-workspace-search.spec.ts",
+          "name": "p110-negated-absent",
+          "value": "chapter2.md"
+        },
+        {
+          "spec": "p110-workspace-search.spec.ts",
+          "name": "p110-open-at-line",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "spec": "p111-search-scope-heatmap.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p111-search-scope-heatmap.spec.ts",
+            "title": "a search restricted to sections/ for Café lists only the in-subtree files (chapter2.md absent) and the three-match file carries a higher heat rank than the one-match file",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1263,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-scoped-high",
+          "value": "sections/intro.md"
+        },
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-out-absent",
+          "value": "chapter2.md"
+        },
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-high-rank",
+          "value": "3"
+        },
+        {
+          "spec": "p111-search-scope-heatmap.spec.ts",
+          "name": "p111-low-rank",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "spec": "p112-structural-motions.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p112-structural-motions.spec.ts",
+            "title": "section / environment / math-zone motions move the cursor structurally, relative to its position",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2007,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p112-structural-motions.spec.ts",
+          "name": "p112-next-section",
+          "value": 5
+        },
+        {
+          "spec": "p112-structural-motions.spec.ts",
+          "name": "p112-next-environment",
+          "value": 9
+        },
+        {
+          "spec": "p112-structural-motions.spec.ts",
+          "name": "p112-next-math-zone",
+          "value": 13
+        }
+      ]
+    },
+    {
+      "spec": "p113-command-palette.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p113-command-palette.spec.ts",
+            "title": "Ctrl+Shift+P firewall palette runs Fold All (buffer folds); Ctrl+P quick-open opens the picked file",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2116,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p113-command-palette.spec.ts",
+          "name": "p113-palette-fold",
+          "value": 4
+        },
+        {
+          "spec": "p113-command-palette.spec.ts",
+          "name": "p113-quickopen",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p113-command-palette/project/demo.md"
+        }
+      ]
+    },
+    {
+      "spec": "p114-surround-toggle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p114-surround-toggle.spec.ts",
+            "title": "surround/toggle edits transform the existing structure in place",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3482,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p114-surround-toggle.spec.ts",
+          "name": "p114-rename-environment",
+          "value": 1
+        },
+        {
+          "spec": "p114-surround-toggle.spec.ts",
+          "name": "p114-toggle-fraction",
+          "value": 1
+        },
+        {
+          "spec": "p114-surround-toggle.spec.ts",
+          "name": "p114-delete-delimiter-pair",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p115-frontmatter-editor.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p115-frontmatter-editor.spec.ts",
+            "title": "frontmatter editor rewrites ONLY the block (body byte-unchanged) and inserts a block when none exists",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1292,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p115-frontmatter-editor.spec.ts",
+          "name": "p115-new-title",
+          "value": "New Discriminant Title"
+        },
+        {
+          "spec": "p115-frontmatter-editor.spec.ts",
+          "name": "p115-added-bibliography",
+          "value": "refs.bib"
+        },
+        {
+          "spec": "p115-frontmatter-editor.spec.ts",
+          "name": "p115-inserted-title",
+          "value": "Inserted Title"
+        }
+      ]
+    },
+    {
+      "spec": "p116-pdf-preview.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p116-pdf-preview.spec.ts",
+            "title": "live PDF preview compiles demo.md on idle and renders a real page canvas",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 13385,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-pages-info",
+          "value": "Title:           "
+        },
+        {
+          "spec": "p116-pdf-preview.spec.ts",
+          "name": "pdf-viewer-canvas",
+          "value": "1@918x1188"
+        }
+      ]
+    },
+    {
+      "spec": "p117-build-isolation.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p117-build-isolation.spec.ts",
+            "title": "PDF build does not litter the source tree; the one-shot export still lands at its path",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 10995,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "d-created-files",
+          "value": "(none)"
+        },
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "d-litter",
+          "value": "(none)"
+        },
+        {
+          "spec": "p117-build-isolation.spec.ts",
+          "name": "output-pages-info",
+          "value": "Title:           "
+        }
+      ]
+    },
+    {
+      "spec": "p118-multipass-references.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p118-multipass-references.spec.ts",
+            "title": "the configured multi-pass latexmk driver resolves the citation and forward cross-reference",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 18412,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p118-multipass-references.spec.ts",
+          "name": "pdf-text",
+          "value": "Multi-pass references The estimate in equation (1) controls the lattice growth rate, a bound first established by [1]. Some intervening prose so the labelled equation appears strictly LATER in the document than the forward reference above. A single LaTeX pass therefore cannot know the equation’s number when it typesets that earlier reference, leaving it unresolved until a second pass reads the aux"
+        }
+      ]
+    },
+    {
+      "spec": "p119-compile-toggle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p119-compile-toggle.spec.ts",
+            "title": "the auto/manual + fast/full PDF-compile controls gate idle recompiles and select different configured commands with different artifacts",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 48618,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p119-compile-toggle.spec.ts",
+          "name": "fast-vs-full-log-differ",
+          "value": true
+        },
+        {
+          "spec": "p119-compile-toggle.spec.ts",
+          "name": "manual-suppressed-then-recompiled",
+          "value": true
+        },
+        {
+          "spec": "p119-compile-toggle.spec.ts",
+          "name": "auto-recompiled-on-edit",
+          "value": true
+        }
+      ]
+    },
+    {
+      "spec": "p11-compile-log.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p11-compile-log.spec.ts",
+            "title": "the compile log shows the real --from markdown command and a zero exit",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1907,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p11-compile-log.spec.ts",
+          "name": "exit-status-line",
+          "value": "exit status: exit status: 0"
+        }
+      ]
+    },
+    {
+      "spec": "p120-inline-warnings.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p120-inline-warnings.spec.ts",
+            "title": "a real LaTeX warning is surfaced as a structured Problems entry distinct from the raw log, and a clean compile surfaces none",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 20726,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p120-inline-warnings.spec.ts",
+          "name": "warning-severity",
+          "value": "warning"
+        },
+        {
+          "spec": "p120-inline-warnings.spec.ts",
+          "name": "warning-message",
+          "value": "LaTeX Warning: Reference `nonexistent-label-xyz' on page 1 undefined on input line 72."
+        },
+        {
+          "spec": "p120-inline-warnings.spec.ts",
+          "name": "warning-latex-log-line",
+          "value": "LaTeX Warning: Reference `nonexistent-label-xyz' on page 1 undefined on input line 72."
+        },
+        {
+          "spec": "p120-inline-warnings.spec.ts",
+          "name": "clean-warning-count",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "p121-slides-preview.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p121-slides-preview.spec.ts",
+            "title": "slides preview re-renders demo.md into a reveal.js deck on idle carrying the edited witness",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2373,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p121-slides-preview.spec.ts",
+          "name": "reveal-section-count",
+          "value": 4
+        },
+        {
+          "spec": "p121-slides-preview.spec.ts",
+          "name": "edit-witness",
+          "value": "Successive minima bound the covolume −163."
+        }
+      ]
+    },
+    {
+      "spec": "p122-arxiv-flatten.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p122-arxiv-flatten.spec.ts",
+            "title": "Export to the arxiv plugin yields a flattened, self-contained bundle that compiles with no system styles",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 7594,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p122-arxiv-flatten.spec.ts",
+          "name": "arxiv-bundle-files",
+          "value": 5
+        },
+        {
+          "spec": "p122-arxiv-flatten.spec.ts",
+          "name": "arxiv-macro-owner",
+          "value": "dzg-arxiv.sty"
+        },
+        {
+          "spec": "p122-arxiv-flatten.spec.ts",
+          "name": "arxiv-pdf-info",
+          "value": "Title:           "
+        }
+      ]
+    },
+    {
+      "spec": "p123-arxiv-bbl.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p123-arxiv-bbl.spec.ts",
+            "title": "the arXiv bundle bakes a `.bbl` named to the main `.tex` carrying the cited reference, with no `.bib` present",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 6149,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p123-arxiv-bbl.spec.ts",
+          "name": "arxiv-bbl-name",
+          "value": "main.bbl"
+        },
+        {
+          "spec": "p123-arxiv-bbl.spec.ts",
+          "name": "arxiv-bbl-bytes",
+          "value": 481
+        }
+      ]
+    },
+    {
+      "spec": "p126-arxiv-cleaner.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p126-arxiv-cleaner.spec.ts",
+            "title": "the arXiv bundle is cleaned by the REAL arxiv_latex_cleaner — comments, draft commands, unused assets, and dot-files are gone; the cleaner is a required step (no fake-cleaned tarball)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 5071,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p126-arxiv-cleaner.spec.ts",
+          "name": "arxiv-cleaner-bundle-files",
+          "value": 6
+        },
+        {
+          "spec": "p126-arxiv-cleaner.spec.ts",
+          "name": "arxiv-cleaner-bundled-images",
+          "value": "p126-dot.png,plot.png"
+        }
+      ]
+    },
+    {
+      "spec": "p128-view-toggle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p128-view-toggle.spec.ts",
+            "title": "three-way view toggle hides a pane and preserves the split ratio on return, persisting the mode",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2538,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "ratio-before-toggle",
+          "value": 0.775
+        },
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "ratio-after-return",
+          "value": 0.7752
+        },
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "editor-width-preview-mode",
+          "value": 0
+        },
+        {
+          "spec": "p128-view-toggle.spec.ts",
+          "name": "preview-width-editor-mode",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "spec": "p129-reading-time.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p129-reading-time.spec.ts",
+            "title": "reading-time metric reflects the word count and the config WPM",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2792,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "reading-wpm",
+          "value": 137
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "words-base",
+          "value": 54
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "words-before",
+          "value": 474
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "reading-minutes-before",
+          "value": 4
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "words-after",
+          "value": 674
+        },
+        {
+          "spec": "p129-reading-time.spec.ts",
+          "name": "reading-minutes-after",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "spec": "p12-export-custom-pipeline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p12-export-custom-pipeline.spec.ts",
+            "title": "A user-defined export-category plugin runs verbatim against the real source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2701,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p12-export-custom-pipeline.spec.ts",
+          "name": "witness-sha256",
+          "value": "685c99f9f2cf4d19cf16fd23e212367771f093d1b0f9250aebe5e8d0373f323b"
+        }
+      ]
+    },
+    {
+      "spec": "p130-batch-export.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p130-batch-export.spec.ts",
+            "title": "One batch-export action writes a real artifact for every configured export target",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 12318,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p130-batch-export.spec.ts",
+          "name": "batch-export-files",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p131-comfort-modes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p131-comfort-modes.spec.ts",
+            "title": "comfort modes center the caret, hide the chrome, mark sentences, and round-trip through config",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4537,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p131-comfort-modes.spec.ts",
+          "name": "caret-fraction-off",
+          "value": 2.3154
+        },
+        {
+          "spec": "p131-comfort-modes.spec.ts",
+          "name": "caret-fraction-typewriter-on",
+          "value": 0.5012
+        },
+        {
+          "spec": "p131-comfort-modes.spec.ts",
+          "name": "readability-mark-count",
+          "value": 171
+        }
+      ]
+    },
+    {
+      "spec": "p132-tikz-file-render.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p132-tikz-file-render.spec.ts",
+            "title": "a .tikz file renders standalone as an inline SVG via the user-owned template, not raw source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4659,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p132-tikz-file-render.spec.ts",
+          "name": "tikz-file-render",
+          "value": "svg"
+        }
+      ]
+    },
+    {
+      "spec": "p13-splitter-tracks-pointer.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p13-splitter-tracks-pointer.spec.ts",
+            "title": "Dragging the divider lands it at the pointer position",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2721,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p13-splitter-tracks-pointer.spec.ts",
+          "name": "divider-target-x",
+          "value": 1056
+        },
+        {
+          "spec": "p13-splitter-tracks-pointer.spec.ts",
+          "name": "divider-landed-x",
+          "value": 1056
+        }
+      ]
+    },
+    {
+      "spec": "p14-tab-switch-preserves-split.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p14-tab-switch-preserves-split.spec.ts",
+            "title": "Switching Preview <-> Compile Log does not move either pane",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2556,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p14-tab-switch-preserves-split.spec.ts",
+          "name": "editor-width-preview",
+          "value": 576
+        },
+        {
+          "spec": "p14-tab-switch-preserves-split.spec.ts",
+          "name": "editor-width-log",
+          "value": 576
+        }
+      ]
+    },
+    {
+      "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p15-sidebar-toggle-preserves-ratio.spec.ts",
+            "title": "Hiding the file-tree sidebar preserves the editor:preview ratio",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3215,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-visible",
+          "value": 0.5
+        },
+        {
+          "spec": "p15-sidebar-toggle-preserves-ratio.spec.ts",
+          "name": "ratio-sidebar-hidden",
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "spec": "p16-preview-math-offline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p16-preview-math-offline.spec.ts",
+            "title": "preview typesets math from a local (non-remote) MathJax source",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2430,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p16-preview-math-offline.spec.ts",
+          "name": "mathjax-script-src",
+          "value": "asset://localhost/%2Fhome%2Fdzack%2Fpandoc-preview-greenfield2%2Fsrc-tauri%2Ftarget%2Fdebug%2Fresources%2Fmathjax%2Ftex-full-svg-a11y.min.js"
+        }
+      ]
+    },
+    {
+      "spec": "p17-export-html-offline.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p17-export-html-offline.spec.ts",
+            "title": "shipped pandoc-html-export plugin inlines local MathJax and renders math offline",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 268,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p18-sidebar-collapse-control.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p18-sidebar-collapse-control.spec.ts",
+            "title": "the activity bar persists and its Explorer control collapses/expands the side bar",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2537,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p18-sidebar-collapse-control.spec.ts",
+          "name": "activity-bar",
+          "value": "explorer-collapses-sidebar"
+        }
+      ]
+    },
+    {
+      "spec": "p19-plugin-run-by-id.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p19-plugin-run-by-id.spec.ts",
+            "title": "A generic plugin runs by id against the real buffer and returns a structured result",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2362,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p19-plugin-run-by-id.spec.ts",
+          "name": "plugin-witness-sha256",
+          "value": "685c99f9f2cf4d19cf16fd23e212367771f093d1b0f9250aebe5e8d0373f323b"
+        }
+      ]
+    },
+    {
+      "spec": "p20-generic-renderer.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p20-generic-renderer.spec.ts",
+            "title": "the active generic renderer plugin renders the preview, not the hardcoded pandoc path",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 30791,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: timeout (30s)"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p22-configure-plugin-spawn.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p22-configure-plugin-spawn.spec.ts",
+            "title": "A plugin is configured by id: the app spawns its [configure] command",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2256,
+            "errors": []
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p23-filter-in-pipeline.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p23-filter-in-pipeline.spec.ts",
+            "title": "a vendored filter transforms the preview: the callout becomes a callout div",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2018,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p23-filter-in-pipeline.spec.ts",
+          "name": "callout-type",
+          "value": "note"
+        }
+      ]
+    },
+    {
+      "spec": "p24-template-macro.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p24-template-macro.spec.ts",
+            "title": "a tier-1 macro typesets via the template macros (no MathJax error)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3472,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p24-template-macro.spec.ts",
+          "name": "macro-mml",
+          "value": "R"
+        }
+      ]
+    },
+    {
+      "spec": "p25-callout-rendered.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p25-callout-rendered.spec.ts",
+            "title": "a callout renders its title as visible text, not just a tooltip attribute",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3056,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p25-callout-rendered.spec.ts",
+          "name": "callout-visible-title",
+          "value": "Determinant caveat"
+        }
+      ]
+    },
+    {
+      "spec": "p26-amsthm-label.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p26-amsthm-label.spec.ts",
+            "title": "a .remark environment renders a visible \"Remark.\" label",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3141,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p26-amsthm-label.spec.ts",
+          "name": "remark-label-content",
+          "value": "\"Remark.\""
+        }
+      ]
+    },
+    {
+      "spec": "p27-citation-resolved.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p27-citation-resolved.spec.ts",
+            "title": "a [@cite] renders as a bracketed hyperlinked label under a References section",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3971,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p27-citation-resolved.spec.ts",
+          "name": "citation-href",
+          "value": "#ref-DM19"
+        },
+        {
+          "spec": "p27-citation-resolved.spec.ts",
+          "name": "citation-label",
+          "value": "[DoMu19]"
+        }
+      ]
+    },
+    {
+      "spec": "p28-obsidian-list-fidelity.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p28-obsidian-list-fidelity.spec.ts",
+            "title": "an Obsidian compact list (no blank line) renders as a list",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4278,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p28-obsidian-list-fidelity.spec.ts",
+          "name": "list-item-rendered",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "spec": "p29-global-figures-resource.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p29-global-figures-resource.spec.ts",
+            "title": "the global-figures image decodes to exactly 80x32 real pixels",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2581,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p29-global-figures-resource.spec.ts",
+          "name": "naturalWidth",
+          "value": 80
+        },
+        {
+          "spec": "p29-global-figures-resource.spec.ts",
+          "name": "naturalHeight",
+          "value": 32
+        }
+      ]
+    },
+    {
+      "spec": "p30-preview-pagetitle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p30-preview-pagetitle.spec.ts",
+            "title": "the preview document title is the containing folder name",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1924,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p30-preview-pagetitle.spec.ts",
+          "name": "preview-title",
+          "value": "project"
+        }
+      ]
+    },
+    {
+      "spec": "p31-figure-width-config.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p31-figure-width-config.spec.ts",
+            "title": "the preview image max-width reflects the configured figure width (75%)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2713,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p31-figure-width-config.spec.ts",
+          "name": "img-max-width",
+          "value": "75%"
+        }
+      ]
+    },
+    {
+      "spec": "p32-editor-gutters-and-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p32-editor-gutters-and-highlighting.spec.ts",
+            "title": "Editor renders one line-number gutter, an inert-free toggle, fold gutter, and highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1501,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p32-editor-gutters-and-highlighting.spec.ts",
+          "name": "line-number-gutters",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p33-editor-comment-toggle.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p33-editor-comment-toggle.spec.ts",
+            "title": "Ctrl+/ block-comments the selected buffer and toggles back exactly",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1610,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p33-editor-comment-toggle.spec.ts",
+          "name": "comment-toggle-roundtrip",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p34-editor-find.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p34-editor-find.spec.ts",
+            "title": "Ctrl+F and the native Find menu both open the search panel; Escape closes it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1407,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p34-editor-find.spec.ts",
+          "name": "find-panel-routes",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p35-editor-indentation-guides.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p35-editor-indentation-guides.spec.ts",
+            "title": "Indented lines render indentation guides; non-indented lines do not",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1401,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p35-editor-indentation-guides.spec.ts",
+          "name": "indentation-guides",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p36-editor-math-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p36-editor-math-highlighting.spec.ts",
+            "title": "Inline $…$ math renders with LaTeX syntax highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 760,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p36-editor-math-highlighting.spec.ts",
+          "name": "inline-math-highlighted",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p37-editor-display-math-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p37-editor-display-math-highlighting.spec.ts",
+            "title": "Display math ($$…$$, block and single-line) renders with LaTeX highlighting",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1358,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p37-editor-display-math-highlighting.spec.ts",
+          "name": "display-math-highlighted",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p38-editor-markdown-highlighting.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p38-editor-markdown-highlighting.spec.ts",
+            "title": "Markdown constructs (heading, emphasis, strong) render highlighted",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1674,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p38-editor-markdown-highlighting.spec.ts",
+          "name": "markdown-prose-highlighted",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "spec": "p40-command-palette.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p40-command-palette.spec.ts",
+            "title": "Ctrl+Shift+P firewall palette runs Unfold All (pre-folded buffer unfolds)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 902,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p40-command-palette.spec.ts",
+          "name": "command-palette-unfold",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p41-outline-panel.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p41-outline-panel.spec.ts",
+            "title": "Outline lists headings and divs (with titles); clicking navigates",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 807,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p41-outline-panel.spec.ts",
+          "name": "outline-panel",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "spec": "p42-fold-persistence.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p42-fold-persistence.spec.ts",
+            "title": "Folds persist per file and restore on reopen",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1860,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p42-fold-persistence.spec.ts",
+          "name": "fold-persistence",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "spec": "p43-preview-status.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p43-preview-status.spec.ts",
+            "title": "preview indicator: edit marks Out of date, then Recompiling, then Up to date",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3516,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p43-preview-status.spec.ts",
+          "name": "status-sequence",
+          "value": "stale>rendering>ok"
+        }
+      ]
+    },
+    {
+      "spec": "p44-explorer-panes.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p44-explorer-panes.spec.ts",
+            "title": "Macros pane lists the styles dir and opens a .sty file; Figures pane roots at figures",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1429,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p44-explorer-panes.spec.ts",
+          "name": "macros-file",
+          "value": "dzg-macros.sty"
+        }
+      ]
+    },
+    {
+      "spec": "p45-recovery-autosave.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p45-recovery-autosave.spec.ts",
+            "title": "the recovery store holds a host-fs copy of the unsaved buffer within seconds",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3775,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p45-recovery-autosave.spec.ts",
+          "name": "recovered-buffer-bytes",
+          "value": 381
+        }
+      ]
+    },
+    {
+      "spec": "p46-repo-state.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p46-repo-state.spec.ts",
+            "title": "the repo-state indicator transitions noRepo→untracked→tracked, driving real git on disk",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2936,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p46-repo-state.spec.ts",
+          "name": "repo-state-transitions",
+          "value": "noRepo->untracked->tracked"
+        }
+      ]
+    },
+    {
+      "spec": "p47-save-gate.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p47-save-gate.spec.ts",
+            "title": "path-consuming actions are gated on a resolved durable destination",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 17652,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "identityless-recovery-backed",
+          "value": false
+        },
+        {
+          "spec": "p47-save-gate.spec.ts",
+          "name": "resolved-live-file-bytes",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "spec": "p48-save-conflict.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p48-save-conflict.spec.ts",
+            "title": "Save refuses to clobber an externally modified file, then an explicit overwrite resolves it",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 2565,
+            "errors": [
+              "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p49-session-restore.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p49-session-restore.spec.ts",
+            "title": "launch reopens the last session file and offers the newer recovery buffer",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2824,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p49-session-restore.spec.ts",
+          "name": "restored-recovery-bytes",
+          "value": 395
+        }
+      ]
+    },
+    {
+      "spec": "p50-close-guard.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p50-close-guard.spec.ts",
+            "title": "closing with a dirty buffer prompts, stays alive, and the final edit survives a Discard in the recovery store",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2348,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p50-close-guard.spec.ts",
+            "title": "discarding an untitled (identity-less) dirty buffer still leaves the final edit in the recovery store",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 802,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p50-close-guard.spec.ts",
+          "name": "discard-durable-buffer-bytes",
+          "value": 402
+        },
+        {
+          "spec": "p50-close-guard.spec.ts",
+          "name": "untitled-discard-durable-buffer-bytes",
+          "value": 48
+        }
+      ]
+    },
+    {
+      "spec": "p51-composable-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p51-composable-completion.spec.ts",
+            "title": "A registered app completion source composes with the LaTeX source (both surface)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1371,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p51-composable-completion.spec.ts",
+          "name": "completion-sources-compose",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p52-snippet-dictionary.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p52-snippet-dictionary.spec.ts",
+            "title": "A config-declared snippet dictionary offers its trigger and expands the body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 936,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p52-snippet-dictionary.spec.ts",
+          "name": "snippet-trigger-offered",
+          "value": "mthm"
+        },
+        {
+          "spec": "p52-snippet-dictionary.spec.ts",
+          "name": "snippet-cursor-offset",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "spec": "p53-emmet-expansion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p53-emmet-expansion.spec.ts",
+            "title": "Firing the Emmet-expand action replaces the abbreviation with its expanded markup",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1441,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p53-emmet-expansion.spec.ts",
+          "name": "emmet-abbreviation",
+          "value": "ul>li.item$*3"
+        },
+        {
+          "spec": "p53-emmet-expansion.spec.ts",
+          "name": "emmet-expanded",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "spec": "p54-spellcheck.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p54-spellcheck.spec.ts",
+            "title": "Spellcheck marks misspelled words while honoring a custom math dictionary",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 743,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p54-spellcheck.spec.ts",
+          "name": "spell-gibberish-marked",
+          "value": "zzxqwbgg"
+        },
+        {
+          "spec": "p54-spellcheck.spec.ts",
+          "name": "spell-mathterm-allowed",
+          "value": "cohomology"
+        }
+      ]
+    },
+    {
+      "spec": "p55-insertion-bar-amsthm.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p55-insertion-bar-amsthm.spec.ts",
+            "title": "The insertion bar replaced the formatting toolbar and inserts the theorem amsthm environment at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 877,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p55-insertion-bar-amsthm.spec.ts",
+          "name": "inserted-env-class",
+          "value": "theorem"
+        },
+        {
+          "spec": "p55-insertion-bar-amsthm.spec.ts",
+          "name": "insert-cursor-offset",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "spec": "p56-tikz-scaffold.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p56-tikz-scaffold.spec.ts",
+            "title": "The insertion bar inserts a tikzcd scaffold and a DISTINCT tikz scaffold at the cursor, cursor in the diagram body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1207,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p56-tikz-scaffold.spec.ts",
+          "name": "tikzcd-cursor-offset",
+          "value": 15
+        },
+        {
+          "spec": "p56-tikz-scaffold.spec.ts",
+          "name": "tikz-cursor-offset",
+          "value": 35
+        }
+      ]
+    },
+    {
+      "spec": "p57-matrix-builder.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p57-matrix-builder.spec.ts",
+            "title": "The insertion bar matrix builder inserts a pmatrix of exactly the chosen rows × cols at the cursor, cursor in the body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1530,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p57-matrix-builder.spec.ts",
+          "name": "matrix-row-separators",
+          "value": 1
+        },
+        {
+          "spec": "p57-matrix-builder.spec.ts",
+          "name": "matrix-cursor-offset",
+          "value": 16
+        }
+      ]
+    },
+    {
+      "spec": "p58-table-builder.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p58-table-builder.spec.ts",
+            "title": "The insertion bar table builder inserts a pandoc pipe table of exactly the chosen cols × body-rows at the cursor, cursor in the body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 971,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p58-table-builder.spec.ts",
+          "name": "table-body-rows",
+          "value": 2
+        },
+        {
+          "spec": "p58-table-builder.spec.ts",
+          "name": "table-cursor-offset",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "spec": "p59-snippet-dropdown.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p59-snippet-dropdown.spec.ts",
+            "title": "The insertion bar surfaces the config dictionary triggers and choosing one expands its body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1600,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p59-snippet-dropdown.spec.ts",
+          "name": "bar-snippet-triggers",
+          "value": "mthm"
+        },
+        {
+          "spec": "p59-snippet-dropdown.spec.ts",
+          "name": "bar-snippet-cursor-offset",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "spec": "p60-codeblock-dropdown.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p60-codeblock-dropdown.spec.ts",
+            "title": "The insertion bar code-block dropdown inserts a fence tagged with the chosen language at the cursor, cursor in the body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1464,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p60-codeblock-dropdown.spec.ts",
+          "name": "codeblock-language-tag",
+          "value": "python"
+        },
+        {
+          "spec": "p60-codeblock-dropdown.spec.ts",
+          "name": "codeblock-cursor-offset",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "spec": "p61-footnote-modal.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p61-footnote-modal.spec.ts",
+            "title": "The insertion bar footnote modal inserts a reference marker and a matching definition line carrying the exact typed body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1726,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p61-footnote-modal.spec.ts",
+          "name": "footnote-id",
+          "value": "1"
+        },
+        {
+          "spec": "p61-footnote-modal.spec.ts",
+          "name": "footnote-body",
+          "value": "P61 distinctive footnote body sentinel 8f3a2c"
+        }
+      ]
+    },
+    {
+      "spec": "p62-clipboard-image.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p62-clipboard-image.spec.ts",
+            "title": "the paste-image action writes the clipboard image into the configured figures dir and references that exact file at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1277,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "figures-dir",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p62-clipboard-image/home/.pandoc/figures"
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "written-file",
+          "value": "clipboard-1782040357671-600631349.png"
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-width",
+          "value": 7
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-height",
+          "value": 5
+        },
+        {
+          "spec": "p62-clipboard-image.spec.ts",
+          "name": "image-ref-target",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p62-clipboard-image/home/.pandoc/figures/clipboard-1782040357671-600631349.png"
+        }
+      ]
+    },
+    {
+      "spec": "p63-insertion-bar-controls.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar amsthm theorem button inserts the theorem fenced div at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 785,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Clicking the bar tikzcd and tikz diagram buttons inserts the distinct scaffolds at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 648,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar snippet dropdown option expands the snippet body at the tabstop",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 526,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p63-insertion-bar-controls.spec.ts",
+            "title": "Selecting the bar code-block dropdown option inserts a fence tagged with the chosen language",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 487,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-env-class",
+          "value": "theorem"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-tikzcd-cursor",
+          "value": 15
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-snippet-trigger",
+          "value": "mthm"
+        },
+        {
+          "spec": "p63-insertion-bar-controls.spec.ts",
+          "name": "click-codeblock-lang",
+          "value": "python"
+        }
+      ]
+    },
+    {
+      "spec": "p64-insertion-bar-paste-image.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p64-insertion-bar-paste-image.spec.ts",
+            "title": "Clicking the bar paste-image button writes the clipboard image into the configured figures dir and references it at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1365,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p64-insertion-bar-paste-image.spec.ts",
+          "name": "click-paste-written-file",
+          "value": "clipboard-1782040407577-716896596.png"
+        },
+        {
+          "spec": "p64-insertion-bar-paste-image.spec.ts",
+          "name": "click-paste-image-width",
+          "value": 7
+        },
+        {
+          "spec": "p64-insertion-bar-paste-image.spec.ts",
+          "name": "click-paste-image-height",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "spec": "p65-insertion-bar-modals.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar matrix builder modal inserts a pmatrix of exactly the chosen rows × cols at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1636,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar table builder modal inserts a pandoc pipe table of exactly the chosen cols × body-rows at the cursor",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 766,
+            "errors": []
+          },
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p65-insertion-bar-modals.spec.ts",
+            "title": "The bar footnote modal inserts a reference marker and a matching definition line carrying the exact typed body",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 562,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-matrix-shape",
+          "value": "2x3"
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-table-body-rows",
+          "value": 2
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-footnote-id",
+          "value": "1"
+        },
+        {
+          "spec": "p65-insertion-bar-modals.spec.ts",
+          "name": "modal-footnote-body",
+          "value": "P65 distinctive footnote body sentinel 4d7e1b"
+        }
+      ]
+    },
+    {
+      "spec": "p66-export-plugin-discovery.spec.ts",
+      "results": {
+        "status": "failed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p66-export-plugin-discovery.spec.ts",
+            "title": "an export-category plugin is discovered, surfaced in the menu with its extension, and contributes a doctor row",
+            "project": "tauri",
+            "status": "failed",
+            "expectedStatus": "passed",
+            "durationMs": 11424,
+            "errors": [
+              "Error: TauriPage command 'wait_for_function' failed: waitForFunction timeout: window.__PPE_E2E__.paletteCommandLabels().some((l) => l.includes('Witness Export'))"
+            ]
+          }
+        ]
+      },
+      "observations": []
+    },
+    {
+      "spec": "p70-static-lint-balance.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p70-static-lint-balance.spec.ts",
+            "title": "A real \\left/$ imbalance surfaces a real @codemirror/lint diagnostic before any compile, and balancing clears it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3761,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "baseline-lint-count",
+          "value": 0
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "imbalanced-lint-count",
+          "value": 3
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "delimiter-diagnostic-message",
+          "value": "unmatched \\left: this \\left has no matching \\right (unbalanced delimiter)"
+        },
+        {
+          "spec": "p70-static-lint-balance.spec.ts",
+          "name": "mathmode-diagnostic-message",
+          "value": "unterminated math mode: inline ($) opened here is never closed (dollar delimiter)"
+        }
+      ]
+    },
+    {
+      "spec": "p71-typographic-lint.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p71-typographic-lint.spec.ts",
+            "title": "ChkTeX typographic classes (sin→\\sin, x^10→x^{10}) fire only when enabled in the lint plugin config, scoped to math",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4096,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p71-typographic-lint.spec.ts",
+          "name": "math-operator-diagnostic-message",
+          "value": "You should perhaps use `\\sin' instead."
+        },
+        {
+          "spec": "p71-typographic-lint.spec.ts",
+          "name": "math-grouping-diagnostic-message",
+          "value": "You might wish to put this between a pair of `{}'"
+        }
+      ]
+    },
+    {
+      "spec": "p72-user-regex-lint.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p72-user-regex-lint.spec.ts",
+            "title": "A config-owned user-regex lint rule surfaces a diagnostic with its declared message, and a different rule set surfaces that rule instead",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4788,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p72-user-regex-lint.spec.ts",
+          "name": "rule-a-diagnostic-message",
+          "value": "resolve before submission"
+        },
+        {
+          "spec": "p72-user-regex-lint.spec.ts",
+          "name": "rule-b-diagnostic-message",
+          "value": "address this defect before merge"
+        }
+      ]
+    },
+    {
+      "spec": "p73-lint-suppression.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p73-lint-suppression.spec.ts",
+            "title": "An in-document ppe-lint-disable-line directive suppresses the named rule on its own line only, and removing it restores the diagnostic",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4541,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p73-lint-suppression.spec.ts",
+          "name": "undirected-grouping-message",
+          "value": "You might wish to put this between a pair of `{}'"
+        },
+        {
+          "spec": "p73-lint-suppression.spec.ts",
+          "name": "restored-grouping-message",
+          "value": "You might wish to put this between a pair of `{}'"
+        }
+      ]
+    },
+    {
+      "spec": "p74-structured-compile-log.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p74-structured-compile-log.spec.ts",
+            "title": "a structured compile-log entry parsed from the real preview-render warning jumps the editor to that source line, alongside the unchanged raw log",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1507,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "parsed-line",
+          "value": 5
+        },
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "parsed-severity",
+          "value": "warning"
+        },
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "parsed-message",
+          "value": "[WARNING] Note with key 'orphan' defined at line 5 column 1 but not used."
+        },
+        {
+          "spec": "p74-structured-compile-log.spec.ts",
+          "name": "cursor-landed-offset",
+          "value": 43
+        }
+      ]
+    },
+    {
+      "spec": "p77-math-mode-snippet.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p77-math-mode-snippet.spec.ts",
+            "title": "The SAME snippet trigger expands its prose body in prose and its math body in math; a math-only trigger is gated out of prose",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3340,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p77-math-mode-snippet.spec.ts",
+          "name": "p77-prose-body-count",
+          "value": 1
+        },
+        {
+          "spec": "p77-math-mode-snippet.spec.ts",
+          "name": "p77-math-only-gated-in-prose",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "spec": "p78-autotrigger.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p78-autotrigger.spec.ts",
+            "title": "Typing an autotrigger followed by a space expands its body in place with no popup and no accept; a second autotrigger immediately expands again (re-armed chain)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1283,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p78-autotrigger.spec.ts",
+          "name": "p78-first-body",
+          "value": "\\tilde{}"
+        },
+        {
+          "spec": "p78-autotrigger.spec.ts",
+          "name": "p78-rearm-body",
+          "value": "\\hat{}"
+        }
+      ]
+    },
+    {
+      "spec": "p79-regex-trigger.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p79-regex-trigger.spec.ts",
+            "title": "Typing a regex trigger substitutes its capture group into the body and expands in place with no popup; the matched trigger text is gone and the capture is the real matched letter, not a literal $1",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 838,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p79-regex-trigger.spec.ts",
+          "name": "p79-expanded-body",
+          "value": "\\bar{p}"
+        },
+        {
+          "spec": "p79-regex-trigger.spec.ts",
+          "name": "p79-matched-trigger",
+          "value": "pbar"
+        }
+      ]
+    },
+    {
+      "spec": "p80-mirrored-tabstops.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p80-mirrored-tabstops.spec.ts",
+            "title": "A snippet whose body repeats a tabstop number mirrors the text typed into the first slot into the second slot live, without a second keystroke there",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2579,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p80-mirrored-tabstops.spec.ts",
+          "name": "p80-mirrored-begin",
+          "value": "\\begin{theorem}"
+        },
+        {
+          "spec": "p80-mirrored-tabstops.spec.ts",
+          "name": "p80-mirrored-end",
+          "value": "\\end{theorem}"
+        }
+      ]
+    },
+    {
+      "spec": "p81-quicktex-native.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p81-quicktex-native.spec.ts",
+            "title": "The editor loads the user real two-map quicktex source directly: the same trigger expands its prose body in prose and its math body in math, and a multi-tabstop entry keeps its ordered slots",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2970,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p81-quicktex-native.spec.ts",
+          "name": "p81-prose-body-count",
+          "value": 1
+        },
+        {
+          "spec": "p81-quicktex-native.spec.ts",
+          "name": "p81-frac-denominator",
+          "value": "\\frac{PPEnumerator}{"
+        }
+      ]
+    },
+    {
+      "spec": "p82-snippet-variables.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p82-snippet-variables.spec.ts",
+            "title": "Expanding a snippet whose body contains $CLIPBOARD and $CURRENT_DATE resolves them to the real clipboard text and the host date, leaving no literal variable tokens",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2689,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p82-snippet-variables.spec.ts",
+          "name": "p82-clipboard-sentinel",
+          "value": "PPE-CLIP-WITNESS-Zeta-7351-naïve-café"
+        },
+        {
+          "spec": "p82-snippet-variables.spec.ts",
+          "name": "p82-host-year",
+          "value": "2026"
+        }
+      ]
+    },
+    {
+      "spec": "p83-transform-visual.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p83-transform-visual.spec.ts",
+            "title": "A transform-mirror entry derives the dependent slot from the source slot, and a ${VISUAL} entry wraps a real selection",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2663,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p83-transform-visual.spec.ts",
+          "name": "p83-transformed-label",
+          "value": "\\label{sec:INTRO}"
+        },
+        {
+          "spec": "p83-transform-visual.spec.ts",
+          "name": "p83-visual-wrap",
+          "value": "\\emph{PPE-VISUAL-Theta-8821}"
+        }
+      ]
+    },
+    {
+      "spec": "p84-bib-config-key.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p84-bib-config-key.spec.ts",
+            "title": "the configured bibliography is one frontend-readable value that governs the preview",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 3086,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p84-bib-config-key.spec.ts",
+          "name": "frontend-bibliography-path",
+          "value": "/tmp/pandoc-preview-proof-runs/20260621T101014Z/p84-bib-config-key/home/.pandoc/bib/references.bib"
+        }
+      ]
+    },
+    {
+      "spec": "p85-citation-completion.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p85-citation-completion.spec.ts",
+            "title": "typing @ surfaces a configured-bibliography candidate by a title word absent from its key, and accepting inserts pandoc citation syntax",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1700,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p85-citation-completion.spec.ts",
+          "name": "citation-completion-key",
+          "value": "xq7"
+        },
+        {
+          "spec": "p85-citation-completion.spec.ts",
+          "name": "citation-completion-title-query",
+          "value": "crystalline"
+        }
+      ]
+    },
+    {
+      "spec": "p86-citation-tooltip.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p86-citation-tooltip.spec.ts",
+            "title": "the selected citation completion option renders an info tooltip previewing the configured entry author, year, and title",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 1283,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p86-citation-tooltip.spec.ts",
+          "name": "citation-tooltip-key",
+          "value": "xq7"
+        },
+        {
+          "spec": "p86-citation-tooltip.spec.ts",
+          "name": "citation-tooltip-metadata",
+          "value": "Grothendieck|1977|Crystalline"
+        }
+      ]
+    },
+    {
+      "spec": "p87b-label-precision.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p87b-label-precision.spec.ts",
+            "title": "label completion offers genuine anchor definitions but NOT a markdown link fragment nor a bare prose #id (no over-harvest)",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2104,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p87b-label-precision.spec.ts",
+          "name": "label-precision",
+          "value": "real=sec:realprecision,lem:realprecision decoys-rejected=decoyfragment,decoyprose"
+        }
+      ]
+    },
+    {
+      "spec": "p87-cross-file-labels.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p87-cross-file-labels.spec.ts",
+            "title": "a label defined in another project file is offered for a cross-reference trigger while editing a second file, and accepting inserts a reference to it",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2609,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p87-cross-file-labels.spec.ts",
+          "name": "cross-file-label",
+          "value": "lem:xyz-cross"
+        }
+      ]
+    },
+    {
+      "spec": "p88-perfile-bib-override.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p88-perfile-bib-override.spec.ts",
+            "title": "a frontmatter `bibliography:` override file offers its file-local key while a file without the key still offers the global config bibliography key",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 2051,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p88-perfile-bib-override.spec.ts",
+          "name": "perfile-bib-local-key",
+          "value": "LOCALONLY"
+        },
+        {
+          "spec": "p88-perfile-bib-override.spec.ts",
+          "name": "perfile-bib-global-key",
+          "value": "GLOBALKEY"
+        }
+      ]
+    },
+    {
+      "spec": "p89-references-sidebar.spec.ts",
+      "results": {
+        "status": "passed",
+        "tests": [
+          {
+            "file": "/home/dzack/pandoc-preview-greenfield2/tests/proof/p89-references-sidebar.spec.ts",
+            "title": "the references sidebar lists only the cited keys, rendered in CSL style matching the preview",
+            "project": "tauri",
+            "status": "passed",
+            "expectedStatus": "passed",
+            "durationMs": 4023,
+            "errors": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "spec": "p89-references-sidebar.spec.ts",
+          "name": "references-sidebar-cited",
+          "value": "DM19"
+        },
+        {
+          "spec": "p89-references-sidebar.spec.ts",
+          "name": "references-sidebar-uncited-absent",
+          "value": "Vor08"
+        }
+      ]
+    }
+  ]
+}
