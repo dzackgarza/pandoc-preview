@@ -1,0 +1,27 @@
+name: PR claim-status sync
+
+# Re-renders a PR's `<!-- claim-status -->` block from the live state of the issues
+# it claims (via a `<!-- claims: N N -->` marker). Boxes are derived from issue
+# open/closed state, never hand-checked — so the block cannot go stale and a
+# resuming agent can trust it. PRs without the marker are skipped.
+#
+# Not triggered on `edited` (editing the body to write the block would loop).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  issues: read
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Render claim status from live issue state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: uv run scripts/pr-sync.py ${{ github.event.pull_request.number }}
