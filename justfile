@@ -72,3 +72,9 @@ test:
 test-ci:
     just -f .agents/justfile arch-no-pandoc-in-core
     just -d . -f ~/ai-review-ci/justfiles/rust.just test-ci
+
+# Re-render a draft PR's claim-status block from the live state of the issues it
+# claims. The PR body must carry a `<!-- claims: N N -->` marker. Boxes are derived
+# from issue open/closed state, never hand-checked; run on push / from CI.
+pr-sync pr:
+    scripts/pr-sync.py {{pr}}
