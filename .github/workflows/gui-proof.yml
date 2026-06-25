@@ -21,6 +21,8 @@ jobs:
           submodules: recursive
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
       - name: Set up uv
@@ -78,6 +80,11 @@ jobs:
           tar -xzf "$RUNNER_TEMP/codeql-bundle.tar.gz" -C "$RUNNER_TEMP/codeql" --strip-components=1
           echo "$RUNNER_TEMP/codeql" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/codeql/codeql" resolve packs
+      - name: Check out the global QC contract (ai-review-ci)
+        # `just test-ci` delegates to ~/ai-review-ci/justfiles/rust.just, which
+        # references sibling tool-configs/ and tool-artifacts/, so the whole repo
+        # must be present at $HOME/ai-review-ci. It is a public repo; no token.
+        run: git clone --depth 1 https://github.com/dzackgarza/ai-review-ci.git "$HOME/ai-review-ci"
       - name: Install project dependencies
         run: just deps
       - name: Run Svelte typecheck

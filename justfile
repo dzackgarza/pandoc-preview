@@ -65,12 +65,15 @@ typecheck:
 # Global QC contract (owned by ~/ai-review-ci): both git hooks run `just test`;
 # `test-ci` is the CI variant. Each runs the project's domain check
 # (arch-no-pandoc-in-core) before delegating to the global rust QC chain.
+# The domain check is a repo-owned script (scripts/check-no-pandoc-in-core.sh)
+# so it runs on a fresh checkout / in CI without the agent vault: `.agents` is a
+# tracked symlink into a private vault that intentionally dangles off-machine.
 test:
-    just -f .agents/justfile arch-no-pandoc-in-core
+    bash scripts/check-no-pandoc-in-core.sh
     just -d . -f ~/ai-review-ci/justfiles/rust.just test
 
 test-ci:
-    just -f .agents/justfile arch-no-pandoc-in-core
+    bash scripts/check-no-pandoc-in-core.sh
     just -d . -f ~/ai-review-ci/justfiles/rust.just test-ci
 
 # Re-render a draft PR's claim-status block from the live state of the issues it
