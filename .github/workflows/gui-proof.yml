@@ -90,7 +90,6 @@ jobs:
     timeout-minutes: 180
     env:
       CARGO_TERM_COLOR: always
-      TMPDIR: /tmp/pandoc-preview-proof-tmp
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -150,7 +149,18 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Install project dependencies
         run: just deps
+      - name: Install Playwright Chromium
+        # The proof harness runs `bun x playwright test`; the runner requires
+        # Playwright's Chromium driver present even though the specs drive the
+        # real Tauri webkit webview over the plugin socket. --with-deps pulls
+        # any browser system libraries not already installed above.
+        run: bunx playwright install --with-deps chromium
       - name: Run GUI proof suite
+        # TMPDIR is scoped to THIS step only and created before use. Setting it
+        # at job level made setup-go (and other setup actions) fail writing to a
+        # directory that does not exist until this step's mkdir runs.
+        env:
+          TMPDIR: /tmp/pandoc-preview-proof-tmp
         run: |
           mkdir -p "$TMPDIR"
           dbus-run-session -- xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" just proof
