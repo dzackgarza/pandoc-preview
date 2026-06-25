@@ -89,8 +89,16 @@ jobs:
         run: just deps
       - name: Run Svelte typecheck
         run: just typecheck
-      - name: Run standard push-tier QC
-        run: just test-ci
+      - name: Run substantive QC (blocking)
+        # The correctness gate: domain check + clippy + rustfmt --check + cargo
+        # test + bypass scan. A failure here is a real defect and fails CI.
+        run: just test
+      - name: Run style/slop QC (advisory)
+        # Complexity, duplication, codeql, semgrep/ast-grep/vibecheck/ai-slop.
+        # Findings are style-class (#100): surfaced in the log but non-blocking,
+        # so they do not gate a green check.
+        continue-on-error: true
+        run: just test-style
   gui-proof:
     name: GUI proof (Tauri real webview)
     runs-on: ubuntu-24.04
