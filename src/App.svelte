@@ -376,12 +376,16 @@
   // renderers whose `inputs` include the file's type; the renderer is the selected
   // one when it qualifies, else the configured active renderer, else the first
   // candidate; the template is the user-selected one, else that renderer's manifest
-  // default_template. Fails loud if no renderer handles the type or the chosen
-  // renderer declares no template — never a silent wrong-renderer/empty-template
-  // fallback.
+  // default_template, else null. Fails loud if no renderer handles the type. The
+  // template is null for a renderer that declares none (the renderer-agnostic
+  // escape hatch — a plugin whose command emits its own complete output and never
+  // references {template}); the app core imposes NO template requirement (that is
+  // plugin-owned knowledge, enforced by each plugin's own template-exists doctor
+  // check). A pandoc renderer always ships and declares an explicit template, so it
+  // never resolves to null.
   const resolveRenderTarget = (
     path: string,
-  ): { rendererId: string; template: string } => {
+  ): { rendererId: string; template: string | null } => {
     const type = inputTypeOf(path);
     const candidates = renderTargetsFor(path);
     const active = config?.renderer?.active;
@@ -395,11 +399,6 @@
       );
     }
     const template = selectedTemplate ?? chosen.default_template;
-    if (!template) {
-      throw new Error(
-        `renderer "${chosen.id}" declares no default_template (input type "${type}")`,
-      );
-    }
     return { rendererId: chosen.id, template };
   };
 
@@ -1609,7 +1608,8 @@
         ? t.endsWith(".tex") || t.endsWith(".latex")
         : t.endsWith(".html") || t.endsWith(".htm");
     const set = new Set(availableTemplates.filter(matches));
-    set.add(target.template);
+    // A renderer that declares no template (the escape hatch) offers none to add.
+    if (target.template !== null) set.add(target.template);
     return [...set].sort();
   }
 

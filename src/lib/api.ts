@@ -168,12 +168,14 @@ export const deletePath = (path: string) => invoke<void>("delete_path", { path }
  * `rendererId` is the chosen render target's plugin (the open file's input type → a
  * candidate renderer, defaulting to the configured active renderer; the user may
  * pick another, e.g. the slides renderer); `template` is the user-selected template
- * the plugin wraps the buffer in (default = the renderer's shipped template). The
+ * the plugin wraps the buffer in (default = the renderer's shipped template), or
+ * `null` for a renderer that takes no template (the escape-hatch renderer whose
+ * command emits its own complete output and never references `{template}`). The
  * output HTML paints into the preview iframe; editing re-renders on idle.
  */
 export const render = (
   rendererId: string,
-  template: string,
+  template: string | null,
   source: string,
   baseDir: string,
   baseUrl: string,
