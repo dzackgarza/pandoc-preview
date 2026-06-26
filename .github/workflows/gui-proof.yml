@@ -64,6 +64,7 @@ jobs:
             ripgrep \
             pdf2svg \
             poppler-utils \
+            python3-pil \
             just
       - name: Install gum
         run: |-
@@ -153,6 +154,7 @@ jobs:
             ripgrep \
             pdf2svg \
             poppler-utils \
+            python3-pil \
             just
       - name: Install gum
         run: |-
