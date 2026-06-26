@@ -2169,12 +2169,20 @@
    * handle the OPEN file's input type — the configured export targets the
    * per-plugin export path (exportViaPlugin / runPluginToPath) runs ONE at a time
    * (the discovery matrix's export side). Batch export loops THESE. None when no
-   * file is open. */
+   * file is open.
+   *
+   * An export plugin that declares NO `inputs` carries no input-type restriction
+   * and so applies to every input type (P66: a discovered export plugin surfaces
+   * regardless of the open buffer's type); a plugin that DOES declare `inputs`
+   * keeps the P122 gating — never a latex export offered for a markdown buffer. */
   function exportPlugins(): PluginInfo[] {
     if (!currentFile) return [];
     const type = inputTypeOf(currentFile);
     return discoveredPlugins.filter(
-      (p) => p.category === "export" && p.extension !== null && p.inputs.includes(type),
+      (p) =>
+        p.category === "export" &&
+        p.extension !== null &&
+        (p.inputs.length === 0 || p.inputs.includes(type)),
     );
   }
 
