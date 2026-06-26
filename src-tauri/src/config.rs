@@ -329,7 +329,7 @@ pub const READING_WPM_MAX: u32 = 2_000;
 /// offending value, no defaulting or clamping.
 pub fn validate(config: &Config) -> Result<()> {
     let fs = config.editor.font_size;
-    if fs < FONT_SIZE_MIN || fs > FONT_SIZE_MAX {
+    if !(FONT_SIZE_MIN..=FONT_SIZE_MAX).contains(&fs) {
         return Err(Error::InvalidArgument(format!(
             "editor.font_size must be between {FONT_SIZE_MIN} and {FONT_SIZE_MAX}, got {fs}"
         )));
@@ -341,7 +341,7 @@ pub fn validate(config: &Config) -> Result<()> {
         )));
     }
     let wpm = config.editor.reading_wpm;
-    if wpm < READING_WPM_MIN || wpm > READING_WPM_MAX {
+    if !(READING_WPM_MIN..=READING_WPM_MAX).contains(&wpm) {
         return Err(Error::InvalidArgument(format!(
             "editor.reading_wpm must be between {READING_WPM_MIN} and {READING_WPM_MAX}, got {wpm}"
         )));

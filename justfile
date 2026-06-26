@@ -65,13 +65,36 @@ typecheck:
 # Global QC contract (owned by ~/ai-review-ci): both git hooks run `just test`;
 # `test-ci` is the CI variant. Each runs the project's domain check
 # (arch-no-pandoc-in-core) before delegating to the global rust QC chain.
+# The domain check is a repo-owned script (scripts/check-no-pandoc-in-core.sh)
+# so it runs on a fresh checkout / in CI without the agent vault: `.agents` is a
+# tracked symlink into a private vault that intentionally dangles off-machine.
+#
+# CI gating (#100): the SUBSTANTIVE tier (`just test` — clippy, rustfmt --check,
+# cargo test, bypass scan) is the blocking gate; the STYLE/SLOP tier
+# (`just test-style` — complexity, duplication, codeql, semgrep/ast-grep/
+# vibecheck/ai-slop) runs advisory (continue-on-error) so style-class findings
+# are surfaced without blocking a green check.
 test:
-    just -f .agents/justfile arch-no-pandoc-in-core
+    bash scripts/check-no-pandoc-in-core.sh
     just -d . -f ~/ai-review-ci/justfiles/rust.just test
 
 test-ci:
-    just -f .agents/justfile arch-no-pandoc-in-core
+    bash scripts/check-no-pandoc-in-core.sh
     just -d . -f ~/ai-review-ci/justfiles/rust.just test-ci
+
+# Style/slop tier only — the recipes test-ci adds on top of `test`. Run advisory
+# in CI (their findings are style-class, non-blocking per #100); run directly to
+# inspect them locally. Each check runs independently so one set of findings
+# never hides the next; the recipe still exits non-zero if any check found
+# something, so the (tolerated) CI step honestly signals remaining style debt.
+test-style:
+    #!/usr/bin/env bash
+    rc=0
+    just -d . -f ~/ai-review-ci/justfiles/rust.just _jscpd            || rc=1
+    just -d . -f ~/ai-review-ci/justfiles/rust.just _lizard           || rc=1
+    just -d . -f ~/ai-review-ci/justfiles/rust.just _codeql           || rc=1
+    just -d . -f ~/ai-review-ci/justfiles/shared.just _global-qc      || rc=1
+    exit "$rc"
 
 # Re-render a draft PR's claim-status block from the live state of the issues it
 # claims. The PR body must carry a `<!-- claims: N N -->` marker. Boxes are derived
